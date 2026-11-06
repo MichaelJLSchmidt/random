@@ -1,0 +1,39 @@
+---
+// A vertical ink line with an open brush loop at each node.
+// data-scrub: the line follows scroll (only one scrubbed animation per page).
+import SpineLoop from '../generated/brush/SpineLoop.astro';
+interface Item {
+  label: string;
+  title: string;
+  body: string;
+  note?: string;
+}
+interface Props {
+  items: Item[];
+  scrub?: boolean;
+  id: string;
+}
+const { items, scrub = false, id } = Astro.props;
+---
+<ol class="spine" data-spine data-scrub={scrub ? '' : undefined} data-own>
+  <span class="spine-line" aria-hidden="true"></span>
+  {
+    items.map((it, i) => (
+      <li class="spine-node">
+        <SpineLoop class="loop" anim="manual" decorative idPrefix={`${id}-${i}`} />
+        <div>
+          <p class="eyebrow" data-rise>
+            {it.label}
+          </p>
+          <h3 data-rise>{it.title}</h3>
+          <p data-rise>{it.body}</p>
+          {it.note && (
+            <p class="caption" data-rise>
+              {it.note}
+            </p>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ol>

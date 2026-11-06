@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkList from '../../components/WorkList.astro';
+import SpotOpenLoop from '../../generated/brush/SpotOpenLoop.astro';
+---
+<Base title="Work" page="work">
+  <section class="section work-head" data-opening>
+    <div class="wrap grid">
+      <div class="col-text">
+        <p class="eyebrow" data-rise>Work</p>
+        <h1 data-split>Selected case studies</h1>
+        <p class="lede" data-rise>Placeholder introduction. Three projects, each told from first sketch to shipped system.</p>
+      </div>
+      <figure class="col-art loop-art">
+        <SpotOpenLoop anim="load" decorative />
+      </figure>
+    </div>
+  </section>
+  <section class="section" aria-label="Case studies" style="padding-top:0">
+    <div class="wrap">
+      <WorkList />
+    </div>
+  </section>
+</Base>
+<style>
+  .work-head {
+    padding-top: clamp(24px, 4vw, 64px);
+  }
+  .work-head .lede {
+    margin-top: 28px;
+  }
+  .loop-art {
+    margin: 0;
+    max-width: 320px;
+    justify-self: end;
+    align-self: center;
+  }
+</style>

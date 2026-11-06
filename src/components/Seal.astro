@@ -1,0 +1,29 @@
+---
+// The seal: a square vermilion stamp with a placeholder monogram.
+// Edge and speckle come from the grain field (scripts/brush/build.mjs).
+import shape from '../generated/brush/seal-shape.json';
+import { site } from '../config/site';
+interface Props {
+  size?: string;
+  class?: string;
+  label?: string;
+  [key: string]: unknown;
+}
+const { size, class: className, label, ...rest } = Astro.props;
+const [, , w, h] = shape.viewBox;
+---
+<span
+  class:list={['seal', className]}
+  style={size ? `--seal-size:${size}` : undefined}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  {...rest}
+>
+  <svg viewBox={`0 0 ${w} ${h}`} focusable="false" aria-hidden="true">
+    <g class="seal-vis">
+      <path class="seal-ink" d={shape.d} fill-rule="evenodd"></path>
+      <text x="50" y="64" text-anchor="middle" font-size="38">{site.monogram}</text>
+    </g>
+  </svg>
+</span>

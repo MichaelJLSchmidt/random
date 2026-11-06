@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import Totem from './Totem.astro';
+import BrushArrow from '../generated/brush/BrushArrow.astro';
+import { url } from '../lib/url';
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+}
+const items = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+---
+<ol class="work-list" data-own>
+  {
+    items.map((w, i) => (
+      <li class="work-row" data-work-row>
+        <a href={url(`work/${w.id}/`)}>
+          <span class="num caption" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span class="text">
+            <h3 data-row-title>{w.data.title}</h3>
+            <span class="meta">
+              <span class="caption" data-row-rise>
+                {w.data.role}
+              </span>
+              <span class="caption" data-row-rise>
+                {w.data.timeframe}
+              </span>
+            </span>
+          </span>
+          <span class="impact" data-row-rise>
+            <span class="metric">{w.data.metric.value}</span>
+            <span class="caption">{w.data.metric.label}</span>
+          </span>
+          <span class="cover" aria-hidden="true">
+            <span class="mat ink-grain" style="display:block">
+              <span class="layer-sketch" style="display:block">
+                <Totem name={w.data.totem} anim="manual" decorative idPrefix={`row-${w.id}-s`} />
+              </span>
+              <span class="layer-paint">
+                <Totem name={w.data.totem} anim="none" decorative idPrefix={`row-${w.id}-p`} />
+              </span>
+            </span>
+            <span class="arrow" style="display:block">
+              <BrushArrow anim="manual" decorative idPrefix={`row-${w.id}-a`} />
+            </span>
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ol>

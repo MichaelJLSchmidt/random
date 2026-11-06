@@ -1,0 +1,154 @@
+---
+import Base from '../layouts/Base.astro';
+import Portrait from '../generated/brush/Portrait.astro';
+import Icon from '../components/Icon.astro';
+import Spine from '../components/Spine.astro';
+import { about } from '../config/site';
+---
+<Base title="About" page="about">
+  <section class="section about-open" data-opening>
+    <div class="wrap grid">
+      <div class="col-text">
+        <p class="eyebrow" data-rise>About</p>
+        <h1 class="about-title" data-split>{about.headline}</h1>
+        {about.intro.map((p, i) => <p class={i === 0 ? 'lede' : ''} data-rise>{p}</p>)}
+      </div>
+      <figure class="col-art portrait">
+        <Portrait anim="load" />
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--deep" aria-labelledby="tools-h">
+    <div class="wrap grid">
+      <div class="col-text">
+        <p class="eyebrow" data-rise>Toolbox</p>
+        <h2 id="tools-h" data-split>What I bring to a team</h2>
+      </div>
+      <ul class="toolbox col-wide" data-toolbox data-own>
+        {
+          about.toolbox.map((t, i) => (
+            <li>
+              <span class="tool-icon">
+                <Icon name={t.icon} anim="manual" idPrefix={`tool-${i}`} />
+              </span>
+              <span data-rise>
+                <strong>{t.label}</strong>
+                <span class="caption tool-note">{t.note}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="roles-h">
+    <div class="wrap grid">
+      <div class="col-narrow">
+        <p class="eyebrow" data-rise>Roles</p>
+        <h2 id="roles-h" data-split>A short timeline</h2>
+      </div>
+      <div class="col-wide roles">
+        <Spine id="roles" scrub items={about.timeline.map((r) => ({ label: r.when, title: r.title, body: r.body }))} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--lg section--deep" aria-labelledby="principles-h">
+    <div class="wrap grid">
+      <p id="principles-h" class="eyebrow col-wide" data-rise>Principles</p>
+      <ol class="principles col-wide" data-own>
+        {about.principles.map((p) => <li class="principle" data-principle>{p}</li>)}
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .about-open {
+    padding-top: clamp(24px, 4vw, 64px);
+  }
+  .about-open .grid {
+    align-items: center;
+    row-gap: 40px;
+  }
+  .about-title {
+    margin-block: 16px 28px;
+    font-size: clamp(3rem, 6.5vw, 7rem);
+  }
+  .about-open p + p {
+    margin-top: 16px;
+  }
+  .portrait {
+    margin: 0;
+    width: min(100%, 460px);
+    justify-self: center;
+  }
+  @media (min-width: 1024px) {
+    .portrait {
+      grid-column: 8 / -1;
+    }
+  }
+  .toolbox {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 40px var(--gutter);
+    margin-top: 56px;
+    padding: 0;
+    list-style: none;
+  }
+  .toolbox li {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .tool-icon {
+    display: block;
+    width: 40px;
+  }
+  .toolbox strong {
+    display: block;
+    font-weight: 560;
+  }
+  .tool-note {
+    display: block;
+    color: var(--ink);
+  }
+  .roles {
+    margin-top: 56px;
+  }
+  .principles {
+    margin-top: 32px;
+    padding: 0;
+    list-style: none;
+    counter-reset: p;
+  }
+  .principle {
+    --soft: 100;
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 360;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variation-settings:
+      'SOFT' var(--soft),
+      'WONK' 0;
+    padding-block: clamp(20px, 3vw, 36px);
+    border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  }
+  .principle :global(.line) {
+    white-space: nowrap;
+  }
+  .principle::before {
+    counter-increment: p;
+    content: counter(p, decimal-leading-zero);
+    display: block;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-caption);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+</style>

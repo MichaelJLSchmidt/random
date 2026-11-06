@@ -1,0 +1,13 @@
+---
+import TotemCompass from '../generated/brush/TotemCompass.astro';
+import TotemKnot from '../generated/brush/TotemKnot.astro';
+import TotemStones from '../generated/brush/TotemStones.astro';
+const map = { compass: TotemCompass, knot: TotemKnot, stones: TotemStones };
+interface Props {
+  name: keyof typeof map;
+  [key: string]: unknown;
+}
+const { name, ...rest } = Astro.props;
+const C = map[name];
+---
+<C {...rest} />
