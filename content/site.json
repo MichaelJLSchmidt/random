@@ -114,5 +114,54 @@
   "footer": {
     "note": "Built with Next.js. Text is placeholder."
   },
-  "introSkip": "Skip intro"
+  "introSkip": "Skip intro",
+  "eggs": {
+    "shortcutsTitle": "Keyboard shortcuts",
+    "shortcutsClose": "Close",
+    "shortcuts": [
+      {
+        "keys": "← →",
+        "label": "Move along the cards"
+      },
+      {
+        "keys": "Enter",
+        "label": "Open the focused card"
+      },
+      {
+        "keys": "Hold Space",
+        "label": "Look closer at the focused card"
+      },
+      {
+        "keys": "Esc",
+        "label": "Back to the start"
+      },
+      {
+        "keys": "T",
+        "label": "Turn the focused card sideways"
+      },
+      {
+        "keys": "M",
+        "label": "Deal a new hand (start page)"
+      },
+      {
+        "keys": "draw",
+        "label": "Type it on the start page"
+      },
+      {
+        "keys": "?",
+        "label": "This list"
+      }
+    ],
+    "dealt": "New hand dealt.",
+    "turned": "Turned sideways: {line}",
+    "rare": "A rare card.",
+    "workshopDrawn": "Workshop method: {title}. {howTo}",
+    "workshopAgain": "Draw another",
+    "coffee": {
+      "title": "Coffee?",
+      "projectType": "Say hello"
+    },
+    "coffeeDealt": "One more card: Coffee?",
+    "tableFlipped": "{name}: {line}"
+  }
 }

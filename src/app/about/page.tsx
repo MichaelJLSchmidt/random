@@ -3,6 +3,7 @@ import About from '@content/about.mdx'
 import topo from '../../../public/topo/meta.json'
 import { AboutTopo } from '@/components/about-topo'
 import { PageTitle } from '@/components/page-title'
+import { OnTheTable } from '@/eggs/on-the-table'
 import { PageTransition } from '@/components/page-transition'
 import { site } from '@/lib/content'
 
@@ -19,6 +20,7 @@ export default function AboutPage() {
         <div className="prose">
           <About />
         </div>
+        <OnTheTable />
         <p className="topo-credit meta" data-reveal="tags">
           {site.about.topoLabel}. {site.about.attribution}.
           {topo.placeholder && <span className="topo-placeholder"> {site.about.placeholderNote}</span>}

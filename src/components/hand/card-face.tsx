@@ -24,6 +24,13 @@ export function CardFace({ card }: { card: HandCard }) {
           </ViewTransition>
           <span className="card-type">{card.projectType}</span>
         </span>
+        {/* Eggs: the line on the long edge (Tap) and the summary (Inspect); both are announced when shown. */}
+        <span className="card-tapline" aria-hidden="true">
+          {card.tapLine}
+        </span>
+        <span className="card-inspect" aria-hidden="true">
+          {card.inspect}
+        </span>
       </span>
     </ViewTransition>
   )

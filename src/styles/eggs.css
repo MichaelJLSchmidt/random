@@ -1,0 +1,291 @@
+/*
+ * Easter eggs (src/eggs). Only transform, opacity and clip-path move; the
+ * holographic foil exists only for the rare pull.
+ */
+
+/* ---------- Hand: tap (turned sideways), inspect (2x), tap line, summary ---------- */
+.card-tapline,
+.card-inspect {
+  position: absolute;
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-soft);
+  pointer-events: none;
+}
+/* Along the left long edge, bottom to top: reads left to right once the card turns 90 degrees. */
+.card-tapline {
+  top: 6cqi;
+  bottom: 6cqi;
+  left: 4cqi;
+  width: 16cqi;
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  font-size: clamp(5px, 5.2cqi, 7px);
+  line-height: 1.25;
+}
+.card-inspect {
+  left: 6cqi;
+  right: 6cqi;
+  bottom: 6cqi;
+  font-size: clamp(5px, 5.2cqi, 7px);
+  line-height: 1.35;
+}
+.card-band {
+  transition: opacity var(--dur-fast) var(--ease-out-soft);
+}
+
+.hand-slot .hand-card[data-tapped] {
+  z-index: 4;
+  rotate: 90deg;
+  translate: 0 calc(var(--dy) * var(--arc-k) - var(--ch) * (1 - var(--visible)) - var(--cw) * 0.62);
+}
+.hand-slot:has([data-tapped]) {
+  z-index: 4;
+}
+.hand-card[data-tapped] .card-tapline {
+  opacity: 1;
+}
+.hand-card[data-tapped] .card-band {
+  opacity: 0.25;
+}
+
+.hand-slot:has([data-inspect]) {
+  z-index: 6;
+}
+.hand-slot .hand-card[data-inspect] {
+  rotate: 0deg;
+  scale: var(--inspect-scale, 2);
+  translate: 0 calc(var(--ch) * (var(--visible) - 1));
+}
+.hand-card[data-inspect] .card-inspect {
+  opacity: 1;
+}
+.hand-card,
+.hand-deck {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* ---------- Rare pull: one holographic glint, 1200 ms, once ---------- */
+.card-band {
+  z-index: 1;
+}
+.hand-card[data-rare] .card-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+      112deg,
+      transparent 32%,
+      rgb(255 140 210 / 0.38) 41%,
+      rgb(140 220 255 / 0.42) 48%,
+      rgb(255 236 150 / 0.36) 55%,
+      transparent 64%
+    )
+    no-repeat 0 0 / 260% 100%;
+  mix-blend-mode: color-dodge;
+  animation: rare-glint var(--dur-glint) var(--ease-out-soft) both;
+  pointer-events: none;
+}
+@keyframes rare-glint {
+  from {
+    background-position: 120% 0;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    background-position: -30% 0;
+    opacity: 0;
+  }
+}
+
+/* ---------- Coffee? (fifth card) ---------- */
+:root:not([data-intro]) .hand-coffee:not([data-drawn]) {
+  opacity: 0;
+}
+.hand-coffee[data-drawn] {
+  animation: vt-fade-in var(--rv-dur, 0s) both;
+}
+
+/* ---------- Shortcut sheet ---------- */
+.shortcuts {
+  width: min(28rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--ink-mid);
+  color: var(--text);
+}
+.shortcuts::backdrop {
+  background: color-mix(in srgb, var(--ink-field) 60%, transparent);
+}
+.shortcuts-title {
+  min-height: 1.4em;
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-xl);
+}
+.shortcuts-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+}
+.shortcuts-list div {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+.shortcuts-list dd {
+  margin: 0;
+}
+.shortcuts kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Workshop draw (Management) ---------- */
+.workshop {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+.workshop-card {
+  position: relative;
+  width: min(100%, 20rem);
+  aspect-ratio: 184 / 132;
+  transform-style: preserve-3d;
+}
+.workshop-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  backface-visibility: hidden;
+}
+.workshop-front {
+  display: grid;
+  align-content: end;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background:
+    radial-gradient(120% 90% at 0% 100%, color-mix(in oklab, var(--id-glow) 45%, transparent), transparent 70%),
+    var(--id-field);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--id-accent) 30%, transparent);
+}
+.workshop-card:not([data-drawn]) .workshop-front {
+  visibility: hidden;
+}
+.workshop-card[data-drawn] .workshop-back {
+  visibility: hidden;
+}
+.workshop-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--wght-h2);
+}
+.workshop-howto {
+  margin: 0;
+  color: var(--text);
+}
+
+/* ---------- About: what's on the table ---------- */
+.on-table {
+  margin-top: var(--space-8);
+}
+.on-table-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.on-table-card {
+  position: relative;
+  display: block;
+  width: 9.5rem;
+  aspect-ratio: 132 / 184;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform var(--spring-play-dur) var(--spring-play);
+}
+.on-table-card[data-open] {
+  transform: rotateY(180deg);
+}
+.on-table-back,
+.on-table-front {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  border-radius: inherit;
+  backface-visibility: hidden;
+}
+.on-table-back {
+  place-items: center;
+  padding: var(--space-3);
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
+    var(--glacier-mid, var(--ink-mid));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent),
+    inset 0 0 0 6px var(--glacier-mid, var(--ink-mid)),
+    inset 0 0 0 7px color-mix(in srgb, var(--text) 9%, transparent);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--wght-card);
+}
+.on-table-front {
+  align-content: end;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  transform: rotateY(180deg);
+  background: var(--glacier-field);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-lines) 45%, transparent);
+  text-align: left;
+}
+.on-table-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  color: var(--glacier-lines);
+}
+.on-table-line {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+/* Calm: cross-fade instead of the turn; reduced: instant swap. */
+:root:not([data-motion='full']) .on-table-card,
+:root:not([data-motion='full']) .on-table-card[data-open] {
+  transform: none;
+}
+:root:not([data-motion='full']) .on-table-back,
+:root:not([data-motion='full']) .on-table-front {
+  backface-visibility: visible;
+  transform: none;
+  transition: opacity var(--reveal-calm) var(--ease-out-soft);
+}
+:root[data-motion='reduced'] :is(.on-table-back, .on-table-front) {
+  transition: none;
+}
+:root:not([data-motion='full']) .on-table-card:not([data-open]) .on-table-front,
+:root:not([data-motion='full']) .on-table-card[data-open] .on-table-back {
+  opacity: 0;
+}

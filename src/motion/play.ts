@@ -128,6 +128,16 @@ export function settleLift() {
   for (const other of row.querySelectorAll<HTMLElement>('.hand-slot')) other.style.removeProperty('--gap')
 }
 
+/** Calls a play off while the card is still lifting (the double-tap egg). False when nothing was lifting. */
+export function cancelPlay() {
+  if (!lift) return false
+  settleLift()
+  table.takeIntent()
+  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+  table.route(location.pathname.slice(base.length) || '/', false)
+  return true
+}
+
 /** Back to the table: the field contracts into the open card's slot, then navigate. */
 export function returnHome(href = '/') {
   if (!navigate) return false

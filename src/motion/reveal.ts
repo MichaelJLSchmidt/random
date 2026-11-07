@@ -151,38 +151,39 @@ export function completeReveals() {
   sequenceEnd = now()
 }
 
-/** Home, first visit: the hand is drawn face down from an off-screen deck at the bottom right. */
-function drawHand(start: number) {
-  const cards = [...document.querySelectorAll<HTMLElement>('.hand-fan .hand-card')].filter(
-    (c) => c.getClientRects().length > 0,
+/** Hand cards currently laid out in the fan (not the ghost of an open card). */
+export const fanCards = () =>
+  [...document.querySelectorAll<HTMLElement>('.hand-fan .hand-card')].filter(
+    (c) => c.getClientRects().length > 0 && !c.hasAttribute('aria-current'),
   )
-  const anims: Animation[] = []
-  cards.forEach((card, i) => {
+
+/** Where the deck sits: off screen, bottom right, relative to a card's slot. */
+export function deckOffset(card: HTMLElement) {
+  const slot = card.parentElement!.getBoundingClientRect()
+  return [
+    innerWidth + slot.width - (slot.left + slot.width / 2),
+    innerHeight + slot.height * 0.6 - (slot.top + slot.height / 2),
+  ]
+}
+
+/** Cards are drawn face down from the deck and flip face up mid-flight (620 ms, 110 ms apart). */
+export function drawCards(cards: HTMLElement[], start: number) {
+  return cards.map((card, i) => {
     const cs = getComputedStyle(card)
     const rest = {
       translate: cs.translate === 'none' ? '0px 0px' : cs.translate,
       rotate: cs.rotate === 'none' ? '0deg' : cs.rotate,
     }
-    const slot = card.parentElement!.getBoundingClientRect()
-    const dx = innerWidth + slot.width - (slot.left + slot.width / 2)
-    const dy = innerHeight + slot.height * 0.6 - (slot.top + slot.height / 2)
+    const [dx, dy] = deckOffset(card)
     card.dataset.drawn = ''
-    anims.push(
-      card.animate(
-        [
-          {
-            translate: `${dx}px ${dy}px`,
-            rotate: '28deg',
-            transform: 'perspective(800px) rotateY(180deg)',
-            opacity: 1,
-          },
-          { ...rest, transform: 'perspective(800px) rotateY(0deg)', opacity: 1 },
-        ],
-        { duration: D.draw * 1000, delay: (start + i * S.draw) * 1000, easing: bezier(ease.draw), fill: 'backwards' },
-      ),
+    return card.animate(
+      [
+        { translate: `${dx}px ${dy}px`, rotate: '28deg', transform: 'perspective(800px) rotateY(180deg)', opacity: 1 },
+        { ...rest, transform: 'perspective(800px) rotateY(0deg)', opacity: 1 },
+      ],
+      { duration: D.draw * 1000, delay: (start + i * S.draw) * 1000, easing: bezier(ease.draw), fill: 'backwards' },
     )
   })
-  return anims
 }
 
 /** The first-visit sequence on home. Returns a cleanup that completes it. */
@@ -195,7 +196,7 @@ function intro(main: HTMLElement) {
   }
   const full = readTier() === 'full'
   const o = orders('first')
-  if (full) drawHand(at.draw)
+  if (full) drawCards(fanCards(), at.draw)
   const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome], .hand-deck')]
   const links = [...main.querySelectorAll<HTMLElement>('[data-order="chrome"]')]
   ;[...links, ...chrome].forEach((el, i) => mark(el, o.chrome + i * S.tags))

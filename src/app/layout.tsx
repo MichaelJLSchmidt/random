@@ -9,6 +9,7 @@ import { Reveals } from '@/components/reveals'
 import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { identityCss, palette } from '@/design/palette'
+import { Eggs } from '@/eggs/eggs'
 import { site } from '@/lib/content'
 import { prefsScript } from '@/motion/preferences'
 import { pathFields } from '@/motion/table-store'
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LiveRegion />
         <RouteFocus />
         <Reveals />
+        <Eggs />
       </body>
     </html>
   )

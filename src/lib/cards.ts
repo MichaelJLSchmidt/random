@@ -12,6 +12,8 @@ export type HandCard = {
   railLabel: string
   /** One line for Inspect. */
   inspect: string
+  /** Printed along the long edge; readable when the card is turned sideways (Tap). */
+  tapLine: string
   index: number
 }
 
@@ -25,6 +27,7 @@ export const handCards: HandCard[] = handOrder.map((id, index) => {
       identity: cardIdentity[id],
       railLabel: railLabel[id],
       inspect: managementCard.summary,
+      tapLine: managementCard.tapLine,
       index,
     }
   }
@@ -38,6 +41,7 @@ export const handCards: HandCard[] = handOrder.map((id, index) => {
     identity: cardIdentity[id],
     railLabel: railLabel[id],
     inspect: study.inspect,
+    tapLine: study.tapLine,
     index,
   }
 })

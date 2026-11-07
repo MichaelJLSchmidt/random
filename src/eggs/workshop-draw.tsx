@@ -1,0 +1,58 @@
+'use client'
+
+import { useRef, useState } from 'react'
+import { announce } from '@/components/live-region'
+import { site, workshops } from '@/lib/content'
+import { spring, springCss } from '@/motion/tokens'
+import { readTier } from '@/motion/use-tier'
+import { buzz } from './haptics'
+
+const flip = springCss(spring.play)
+
+/** Management: "Draw a workshop method" turns a card over to a random method. */
+export function WorkshopDraw() {
+  const [index, setIndex] = useState<number | null>(null)
+  const card = useRef<HTMLDivElement>(null)
+
+  const draw = () => {
+    let next = Math.floor(Math.random() * workshops.length)
+    if (next === index) next = (next + 1) % workshops.length
+    const method = workshops[next]
+    const tier = readTier()
+    const el = card.current!
+    buzz(8)
+    if (tier === 'full') {
+      el.animate(
+        [{ transform: 'perspective(900px) rotateY(180deg)' }, { transform: 'perspective(900px) rotateY(0deg)' }],
+        {
+          duration: flip.duration * 1000,
+          easing: flip.easing,
+        },
+      )
+    } else if (tier === 'calm') {
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 })
+    }
+    setIndex(next)
+    announce(site.eggs.workshopDrawn.replace('{title}', method.title).replace('{howTo}', method.howTo))
+  }
+
+  const method = index === null ? null : workshops[index]
+  return (
+    <section className="workshop" aria-label={site.management.workshopButton}>
+      <div ref={card} className="workshop-card" data-drawn={method ? '' : undefined}>
+        <div className="workshop-face workshop-back card-back" aria-hidden="true" />
+        <div className="workshop-face workshop-front" data-identity="saffron">
+          {method && (
+            <>
+              <p className="workshop-title">{method.title}</p>
+              <p className="workshop-howto">{method.howTo}</p>
+            </>
+          )}
+        </div>
+      </div>
+      <button type="button" className="button" onClick={draw}>
+        {method ? site.eggs.workshopAgain : site.management.workshopButton}
+      </button>
+    </section>
+  )
+}

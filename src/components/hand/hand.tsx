@@ -2,9 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { type CSSProperties, useEffect, useLayoutEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
 import { cardForPath, handCards, handLabels } from '@/lib/cards'
-import { play, registerNavigate, returnHome, settleLift } from '@/motion/play'
+import { site } from '@/lib/content'
+import { drawCards } from '@/motion/reveal'
+import { cancelPlay, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
@@ -40,6 +43,9 @@ export function Hand() {
   const lastActive = useRef(active)
   if (active && lastActive.current !== active) roving.current = active
   lastActive.current = active
+  // Egg: typing "draw" on the start page deals a fifth card, "Coffee?".
+  const [coffee, setCoffee] = useState(false)
+  const coffeeRef = useRef<HTMLAnchorElement>(null)
 
   // Navigation for play / return, prefetch of every card route, Escape returns.
   useEffect(() => {
@@ -58,10 +64,40 @@ export function Hand() {
     }
   }, [router])
 
-  // Inside the view transition's update: the lifted card drops back as the ghost.
+  // Inside the view transition's update: the lifted card drops back as the ghost; tapped cards untap.
   useLayoutEffect(() => {
     settleLift()
+    untapAll()
   }, [path])
+
+  // Eggs on the hand: inspect, tap (T, or a double tap while a card lifts), Mulligan on the deck.
+  useEffect(() => {
+    const nav = root.current!
+    const off = attachHandEggs(nav)
+    const onDoubleTap = (e: Event) => {
+      const card = (e as CustomEvent<HTMLElement>).detail
+      if (cancelPlay()) tap(card)
+    }
+    const onCoffee = () => setCoffee(true)
+    nav.addEventListener('egg:double-tap', onDoubleTap)
+    addEventListener('egg:coffee', onCoffee)
+    return () => {
+      off()
+      nav.removeEventListener('egg:double-tap', onDoubleTap)
+      removeEventListener('egg:coffee', onCoffee)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!home) setCoffee(false)
+  }, [home])
+
+  useEffect(() => {
+    const card = coffeeRef.current
+    if (!coffee || !card) return
+    if (table.get().tier === 'full') drawCards([card], 0)
+    else card.dataset.drawn = ''
+  }, [coffee])
 
   // Slots, hover intent, keyboard.
   useEffect(() => {
@@ -106,11 +142,6 @@ export function Hand() {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement
       if (!el.dataset.roving || e.altKey || e.ctrlKey || e.metaKey) return
-      if (e.key === ' ') {
-        e.preventDefault()
-        el.click()
-        return
-      }
       const list = items()
       const i = list.indexOf(el)
       const next =
@@ -304,6 +335,19 @@ export function Hand() {
                 </Link>
               </li>
             ))}
+            {coffee && home && (
+              <li className="hand-slot" data-slot="coffee" style={{ '--r': '15deg', '--dy': '24px' } as CSSProperties}>
+                <Link ref={coffeeRef} href="/contact" className="hand-card hand-coffee" transitionTypes={[NAV]}>
+                  <span className="card-face" data-identity="saffron">
+                    <span className="card-band">
+                      <span className="card-title">{site.eggs.coffee.title}</span>
+                      <span className="card-type">{site.eggs.coffee.projectType}</span>
+                    </span>
+                  </span>
+                  <CardBack />
+                </Link>
+              </li>
+            )}
           </ul>
           <Link
             href="/projects"
