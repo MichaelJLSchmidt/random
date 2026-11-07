@@ -441,6 +441,8 @@ export class FieldEngine {
     const interval = this.lastFrame ? now - this.lastFrame : 0
     this.lastFrame = now
     if (continuous && interval) this.monitor(now, interval)
+    // The monitor may have switched to the CSS field: no WebGL frame after that.
+    if (this.mode !== 'gl') return
     if (now - this.lastDraw < 1000 / F.fps - 2) return
     const dt = this.lastDraw ? Math.min(now - this.lastDraw, 100) / 1000 : 0
     this.lastDraw = now
@@ -471,6 +473,7 @@ export class FieldEngine {
   }
 
   private draw() {
+    if (this.mode !== 'gl' || !this.gl) return
     const t = this.tracks
     const f = this.frame
     const motion = t.motion.value[0]
