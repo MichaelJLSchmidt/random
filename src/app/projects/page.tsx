@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { projects, site } from '@/lib/content'
-import { RevealHeading } from '@/components/reveal-heading'
+import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = { title: site.projects.title }
@@ -10,7 +10,7 @@ export default function ProjectsPage() {
     <PageTransition>
       <div className="page">
         <header className="page-header">
-          <RevealHeading>{site.projects.title}</RevealHeading>
+          <PageTitle>{site.projects.title}</PageTitle>
           <p className="lede">{site.projects.intro}</p>
         </header>
         <ul className="project-list">

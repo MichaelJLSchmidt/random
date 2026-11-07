@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { contact } from '@/lib/content'
-import { RevealHeading } from '@/components/reveal-heading'
+import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = { title: contact.title }
@@ -10,7 +10,7 @@ export default function ContactPage() {
     <PageTransition>
       <div className="page">
         <header className="page-header">
-          <RevealHeading>{contact.title}</RevealHeading>
+          <PageTitle>{contact.title}</PageTitle>
           <p className="lede">{contact.intro}</p>
         </header>
         <dl className="contact-list">

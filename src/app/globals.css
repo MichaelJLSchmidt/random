@@ -149,12 +149,7 @@ a:hover {
 }
 
 .section-heading {
-  font-size: var(--text-sm);
-  font-family: var(--font-mono);
-  font-weight: var(--wght-body);
-  letter-spacing: var(--tracking-mono);
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: var(--text-xl);
 }
 
 /* Home */
@@ -166,7 +161,6 @@ a:hover {
 
 .display {
   font-size: var(--text-display);
-  font-weight: var(--wght-display);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-display);
   max-width: 16ch;

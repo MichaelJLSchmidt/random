@@ -1,15 +1,19 @@
 import localFont from 'next/font/local'
 
-// One variable sans (wght 100–900) for display and body; animate weight only.
+// Mona Sans: one variable sans for display and body. The file carries only the
+// weight axis (200–900), so the width is fixed at 100%; only weight animates.
+// Unmodified Latin subset from @fontsource-variable/mona-sans (OFL, RFN "Mona").
 export const sans = localFont({
-  src: '../fonts/Geist-Variable.latin.woff2',
-  variable: '--font-geist',
-  weight: '100 900',
+  src: '../fonts/MonaSans-wght.latin.woff2',
+  variable: '--font-mona',
+  weight: '200 900',
+  style: 'normal',
   display: 'swap',
   adjustFontFallback: 'Arial',
+  declarations: [{ prop: 'font-stretch', value: '100%' }],
 })
 
-// Monospace for metadata.
+// Geist Mono for metadata.
 export const mono = localFont({
   src: '../fonts/GeistMono-Variable.latin.woff2',
   variable: '--font-geist-mono',

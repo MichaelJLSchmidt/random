@@ -59,7 +59,7 @@
   --accent: #b9c3ff;
 
   /* Type */
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-mona), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -68,11 +68,7 @@
   --text-xl: clamp(1.4rem, 1.22rem + 0.9vw, 1.9rem);
   --text-2xl: clamp(1.9rem, 1.45rem + 2.2vw, 3.1rem);
   --text-display: clamp(2.5rem, 1.55rem + 4.8vw, 5.75rem);
-  --wght-body: 400;
-  --wght-medium: 500;
-  --wght-strong: 600;
-  --wght-display: 580;
-  --wght-hover: 680;
+  /* Weights (--wght-thin … --wght-h1) come from src/motion/tokens.ts. */
   --leading-tight: 1.02;
   --leading-snug: 1.18;
   --leading-body: 1.6;

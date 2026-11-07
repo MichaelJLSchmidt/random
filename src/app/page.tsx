@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { CardHand } from '@/components/card/card-hand'
 import { CaseStudyCard } from '@/components/card/case-study-card'
 import { caseStudies, site } from '@/lib/content'
+import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 
 export default function HomePage() {
@@ -9,9 +10,7 @@ export default function HomePage() {
     <PageTransition>
       <div className="page">
         <section className="hero" aria-labelledby="page-heading">
-          <h1 id="page-heading" className="display" tabIndex={-1}>
-            {site.home.headline}
-          </h1>
+          <PageTitle className="display">{site.home.headline}</PageTitle>
           <p className="lede">{site.home.intro}</p>
         </section>
 

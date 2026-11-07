@@ -8,7 +8,7 @@ import { FlipCard } from '@/components/card/flip-card'
 import { PageTransition } from '@/components/page-transition'
 import { cardNumber, caseStudies, getCaseStudy, site } from '@/lib/content'
 import { cardType, navBack, navForward } from '@/motion/transitions'
-import { RevealHeading } from '@/components/reveal-heading'
+import { PageTitle } from '@/components/page-title'
 
 export const dynamicParams = false
 
@@ -53,7 +53,7 @@ export default async function CaseStudyPage({ params }: Props) {
           <p className="meta">
             {cardNumber(index)} · {study.discipline} · {study.year}
           </p>
-          <RevealHeading>{study.title}</RevealHeading>
+          <PageTitle>{study.title}</PageTitle>
           <p className="lede">{study.summary}</p>
         </header>
         <div className="case-card">

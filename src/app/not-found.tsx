@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Deck } from '@/components/card/deck'
 import { site } from '@/lib/content'
-import { RevealHeading } from '@/components/reveal-heading'
+import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = { title: site.notFound.title }
@@ -14,7 +14,7 @@ export default function NotFound() {
         <Deck />
         <header className="page-header">
           <p className="meta">404</p>
-          <RevealHeading>{site.notFound.title}</RevealHeading>
+          <PageTitle>{site.notFound.title}</PageTitle>
           <p className="lede">{site.notFound.body}</p>
           <p>
             <Link href="/">{site.notFound.homeLink}</Link>

@@ -27,7 +27,7 @@ src/
     transitions.ts          View-transition type and class names
     preferences.ts          Pre-paint script: motion tier and foil preference
   styles/                   tokens.css, type.css, view-transitions.css, foil.css
-  fonts/                    Geist / Geist Mono variable (wght axis), Latin subset, OFL
+  fonts/                    Mona Sans (wght axis only) and Geist Mono, Latin subsets, OFL
 scripts/                    audit, smoke, budget, vitals, lighthouse, serve-static
 ```
 

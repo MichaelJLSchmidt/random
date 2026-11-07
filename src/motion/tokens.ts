@@ -48,6 +48,21 @@ export const distance = {
   lift: 14,
 } as const
 
+/*
+ * Font weights (Mona Sans, wght 200–900). Kept here because several of them are
+ * animation endpoints; motionCss() also emits them as --wght-<name>.
+ * Every element whose weight animates reserves the box of its final weight.
+ */
+export const weight = {
+  thin: 200,
+  body: 400,
+  medium: 520,
+  strong: 600,
+  card: 640,
+  h2: 680,
+  h1: 760,
+} as const
+
 /** Degrees. */
 export const angle = {
   tilt: 7,
@@ -100,8 +115,11 @@ export function motionCss(): string {
   const easings = Object.entries(ease)
     .map(([k, v]) => `--ease-${k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}:${bezier(v)}`)
     .join(';')
+  const weights = Object.entries(weight)
+    .map(([k, v]) => `--wght-${k}:${v}`)
+    .join(';')
   return [
-    `:root{${easings};${vars('full')}}`,
+    `:root{${easings};${weights};${vars('full')}}`,
     `:root[data-motion="calm"]{${vars('calm')}}`,
     `:root[data-motion="reduced"]{${vars('reduced')}}`,
     // No-JS fallback: the pre-paint script normally sets data-motion="reduced".

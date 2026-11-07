@@ -1,19 +1,28 @@
 /*
- * Type system: one variable sans (Geist, wght 100–900) for display and body,
- * Geist Mono for metadata. Weight is the only animated font property, through
- * the registered --wght custom property (never width, never font-size).
+ * Type system: Mona Sans (wght axis only, width fixed at 100%) for display and
+ * body, Geist Mono for metadata. Weight is the only animated font property,
+ * through the registered --wght custom property (never width or size).
+ *
+ * Resting weights: page h1 760, h2 680, card titles 640, body 400.
  */
 
-h1,
-h2,
-h3,
-.display {
-  --wght: var(--wght-strong);
-  font-weight: var(--wght);
+html {
+  font-stretch: 100%;
 }
 
-.display {
-  --wght: var(--wght-display);
+h1 {
+  --wght: var(--wght-h1);
+}
+h2 {
+  --wght: var(--wght-h2);
+}
+h3 {
+  --wght: var(--wght-card);
+}
+h1,
+h2,
+h3 {
+  font-weight: var(--wght);
 }
 
 .meta,
@@ -23,8 +32,38 @@ time {
 }
 
 /*
- * Weight on hover/focus. The hidden ::after copy is set at the hover weight in
- * the same grid cell, so the box never changes width and nothing reflows.
+ * Weight-animated text (WeightText). Each word is an inline grid holding the
+ * live word and a hidden copy at the final weight in the same cell, so every
+ * word box — and therefore every line break — is fixed at the final weight
+ * from first paint. Spaces sit in the parent at the final weight too.
+ */
+.wt {
+  font-weight: var(--wght-final);
+}
+
+.wt-word {
+  display: inline-grid;
+}
+
+.wt-word > span,
+.wt-word::after {
+  grid-area: 1 / 1;
+}
+
+.wt-word > span {
+  font-weight: var(--wght);
+}
+
+.wt-word::after {
+  content: attr(data-text);
+  font-weight: var(--wght-final);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/*
+ * Links whose weight changes on hover use the same reservation trick:
+ * the hidden ::after copy sits in the same grid cell at the hover weight.
  */
 .weight-link {
   --wght: var(--wght-body);
@@ -40,7 +79,7 @@ time {
 
 .weight-link::after {
   content: attr(data-text);
-  font-weight: var(--wght-hover);
+  font-weight: var(--wght-strong);
   visibility: hidden;
   pointer-events: none;
 }
@@ -48,10 +87,5 @@ time {
 .weight-link:hover,
 .weight-link:focus-visible,
 .weight-link[aria-current='page'] {
-  --wght: var(--wght-hover);
-}
-
-/* Heading reveal: words are inline-block spans created by splitText. */
-.reveal .split-word {
-  will-change: transform, opacity;
+  --wght: var(--wght-strong);
 }

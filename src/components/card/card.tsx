@@ -18,9 +18,7 @@ export function CardFront({ study, index, headingLevel: Title = 'p' }: FrontProp
         <span>{cardNumber(index)}</span>
         <span>{study.year}</span>
       </div>
-      <Title className={styles.title} data-text={study.title}>
-        <span>{study.title}</span>
-      </Title>
+      <Title className={styles.title}>{study.title}</Title>
       <div className={styles.window} data-motif={study.motif}>
         <Motif name={study.motif} />
         <span className={styles.foil} data-foil-layer aria-hidden="true" />
