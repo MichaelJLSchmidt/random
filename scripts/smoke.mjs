@@ -80,6 +80,41 @@ await page.goBack()
 await page.waitForTimeout(900)
 check('history back works', new URL(page.url()).pathname === new URL(root).pathname, page.url())
 
+// Flip: button swaps faces; hidden face is inert; status announced politely.
+await page.goto(`${root}work/timetable/`, { waitUntil: 'networkidle' })
+const faceState = () => page.evaluate(() => [...document.querySelectorAll('[aria-controls] ~ *, .case-card [inert]')].length && {
+  frontInert: document.querySelector('.case-card [id] > :first-child')?.hasAttribute('inert'),
+  backInert: document.querySelector('.case-card [id] > :last-child')?.hasAttribute('inert'),
+  live: document.querySelector('[role=status]')?.textContent,
+})
+await page.getByRole('button', { name: 'Show details' }).click()
+await page.waitForTimeout(1200)
+let st = await faceState()
+check('flip shows back face', st.frontInert === true && st.backInert === false && st.live === 'Showing details', JSON.stringify(st))
+check('facts reachable after flip', await page.getByText('Formats').isVisible())
+await page.getByRole('button', { name: 'Show cover' }).click()
+await page.waitForTimeout(1200)
+st = await faceState()
+check('flip back to front', st.frontInert === false && st.backInert === true, JSON.stringify(st))
+
+// Entrance: with the hand below the fold, cards are dealt in when scrolled into view.
+const short = await context.newPage()
+await short.setViewportSize({ width: 1280, height: 420 })
+await short.goto(root, { waitUntil: 'networkidle' })
+await short.waitForTimeout(600)
+const slotTransforms = () => short.$$eval('main ol > li > div', (els) => els.map((el) => getComputedStyle(el).transform))
+const beforeScroll = await slotTransforms()
+await short.locator('main ol').scrollIntoViewIfNeeded()
+await short.waitForTimeout(1800)
+const afterScroll = await slotTransforms()
+const identity = (t) => t === 'none' || t === 'matrix(1, 0, 0, 1, 0, 0)'
+check(
+  'hand entrance matches tier',
+  afterScroll.every(identity) && (motion === 'full' ? !beforeScroll.every(identity) : beforeScroll.every(identity)),
+  `before ${beforeScroll.filter((t) => !identity(t)).length} moved, after ${afterScroll.filter((t) => !identity(t)).length} moved`,
+)
+await short.close()
+
 check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
 await browser.close()
 process.exit(failures ? 1 : 0)

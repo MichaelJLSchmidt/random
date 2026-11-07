@@ -1,0 +1,177 @@
+/* Card placements: link, hand (fan), stack, deck, flip. */
+
+.cardLink {
+  display: block;
+  width: fit-content;
+  border-radius: calc(var(--card-w) * 0.05);
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cardLabel {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.cardLink:focus-visible {
+  outline-offset: 5px;
+  border-radius: calc(var(--card-w) * 0.06);
+}
+
+/* Lift on hover/focus: transform only, distance from the motion tokens (0 in calm/reduced). */
+.lift {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* ---------- Hand and stack ---------- */
+
+.hand {
+  --card-w: min(76vw, 19rem);
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Stack (narrow screens): cards overlap vertically; the top of each stays visible. */
+.hand > li {
+  position: relative;
+  z-index: 0;
+}
+
+.hand > li + li {
+  margin-top: calc(var(--card-w) * 88 / 63 * var(--stack-overlap) * -1);
+}
+
+.hand > li:hover,
+.hand > li:focus-within {
+  z-index: 5;
+}
+
+.hand > li:hover .lift,
+.hand > li:focus-within .lift {
+  transform: translateY(calc(var(--travel-lift) * -1));
+}
+
+/* Hand (wide screens): all cards share one cell and fan out from a point below them. */
+@media (min-width: 56rem) {
+  .hand {
+    --card-w: clamp(14rem, 22vw, 18.5rem);
+    grid-template-areas: 'card';
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .hand > li,
+  .hand > li + li {
+    grid-area: card;
+    margin: 0;
+    transform-origin: 50% 135%;
+    transform: translateX(calc(var(--offset) * var(--hand-spread)))
+      translateY(calc(var(--lift) * 4%)) rotate(calc(var(--offset) * var(--hand-angle)));
+  }
+
+  .hand > li:hover .lift,
+  .hand > li:focus-within .lift {
+    transform: translateY(calc(var(--travel-lift) * -1.6));
+  }
+}
+
+/* ---------- Deck (decorative pile of backs) ---------- */
+
+.deck {
+  --card-w: clamp(9rem, 26vw, 12rem);
+  display: grid;
+  grid-template-areas: 'card';
+  width: fit-content;
+}
+
+.deck > * {
+  grid-area: card;
+  transform: translate(calc(var(--i) * var(--deck-offset)), calc(var(--i) * var(--deck-offset) * -1))
+    rotate(calc((var(--i) - 1) * 2deg));
+}
+
+/* ---------- Flip ---------- */
+
+.flip {
+  --card-w: clamp(15rem, 34vw, 21rem);
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+  perspective: 1400px;
+}
+
+.flipInner,
+.side {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+}
+
+/* In the full tier the back face is turned away; calm and reduced cross-fade instead. */
+:root[data-motion='full'] .backSide {
+  transform: rotateY(180deg);
+}
+
+.flipButton {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+}
+
+.flipButton:hover {
+  border-color: var(--grey-600);
+}
+
+/* Without JavaScript the flip cannot run; the back face's content is in <noscript>. */
+@media (scripting: none) {
+  .flipButton {
+    display: none;
+  }
+}
+
+/* Facts on the back face. */
+.facts {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4.5cqi;
+  margin: 0;
+  padding: 8cqi 8.5cqi;
+}
+
+.facts h2 {
+  font-family: var(--font-mono);
+  font-size: max(0.6875rem, 4.2cqi);
+  font-weight: var(--wght-body);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.facts dl {
+  display: grid;
+  gap: 4cqi;
+  margin: 0;
+}
+
+.facts dt {
+  font-family: var(--font-mono);
+  font-size: max(0.6875rem, 3.9cqi);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: 0.8cqi 0 0;
+  font-size: max(0.875rem, 5.6cqi);
+  line-height: 1.25;
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Deck } from '@/components/card/deck'
 import { site } from '@/lib/content'
 import { RevealHeading } from '@/components/reveal-heading'
 
@@ -8,6 +9,7 @@ export const metadata: Metadata = { title: site.notFound.title }
 export default function NotFound() {
   return (
     <div className="page not-found">
+      <Deck />
       <header className="page-header">
         <p className="meta">404</p>
         <RevealHeading>{site.notFound.title}</RevealHeading>

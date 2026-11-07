@@ -25,10 +25,12 @@
   "caseStudy": {
     "backLink": "All case studies",
     "factsHeading": "At a glance",
-    "previous": "Previous case study",
-    "next": "Next case study",
     "flipToBack": "Show details",
-    "flipToFront": "Show cover"
+    "flipToFront": "Show cover",
+    "showingBack": "Showing details",
+    "showingFront": "Showing cover",
+    "nextLabel": "Next case study",
+    "previousLabel": "Previous case study"
   },
   "projects": {
     "title": "Projects",
@@ -37,7 +39,8 @@
   "notFound": {
     "title": "Page not found",
     "body": "There is nothing at this address. It may have moved, or the link may be mistyped.",
-    "homeLink": "Go to the home page"
+    "homeLink": "Go to the home page",
+    "deckLabel": "A face-down deck"
   },
   "gate": {
     "title": "Private preview",

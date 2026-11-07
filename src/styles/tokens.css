@@ -105,8 +105,8 @@
   --card-w: clamp(13rem, 24vw, 18rem);
   --card-radius: 5cqi;
   --hand-angle: 7deg;
-  --hand-spread: 62%;
-  --stack-peek: 22%;
+  --hand-spread: 70%;
+  --stack-overlap: 0.62;
   --deck-offset: 4px;
 
   /* Layers */

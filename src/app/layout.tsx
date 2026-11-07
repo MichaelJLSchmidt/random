@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { LiveRegion } from '@/components/live-region'
+import { MotionProvider } from '@/components/motion-provider'
 import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -39,11 +40,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           {site.skipLink}
         </a>
-        <SiteHeader />
-        <main id="main" tabIndex={-1}>
-          {children}
-        </main>
-        <SiteFooter />
+        <MotionProvider>
+          <SiteHeader />
+          <main id="main" tabIndex={-1}>
+            {children}
+          </main>
+          <SiteFooter />
+        </MotionProvider>
         <LiveRegion />
         <RouteFocus />
       </body>

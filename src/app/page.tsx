@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import { cardNumber, caseStudies, site } from '@/lib/content'
+import { CardHand } from '@/components/card/card-hand'
+import { CaseStudyCard } from '@/components/card/case-study-card'
+import { caseStudies, site } from '@/lib/content'
 
 export default function HomePage() {
   return (
@@ -15,25 +17,13 @@ export default function HomePage() {
         <h2 id="work-heading" className="section-heading">
           {site.home.workHeading}
         </h2>
-        <ol className="work-list">
-          {caseStudies.map((study, index) => (
-            <li key={study.slug}>
-              <p className="meta" aria-hidden="true">
-                {cardNumber(index)}
-              </p>
-              <h3>
-                <Link href={`/work/${study.slug}`} data-return-focus={`/work/${study.slug}`}>
-                  {study.title}
-                </Link>
-              </h3>
-              <p>{study.summary}</p>
-              <p className="meta">
-                {study.discipline}, {study.year}
-              </p>
-            </li>
+        <CardHand
+          labelledBy="work-heading"
+          items={caseStudies.map((study, index) => (
+            <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" />
           ))}
-        </ol>
-        <p>
+        />
+        <p className="after-hand">
           <Link href="/projects">{site.home.projectsLink}</Link>
         </p>
       </section>

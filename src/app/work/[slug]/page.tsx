@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { CardBack, CardFront } from '@/components/card/card'
+import { CaseStudyCard } from '@/components/card/case-study-card'
+import cardStyles from '@/components/card/layouts.module.css'
+import { FlipCard } from '@/components/card/flip-card'
 import { cardNumber, caseStudies, getCaseStudy, site } from '@/lib/content'
 import { RevealHeading } from '@/components/reveal-heading'
 
@@ -24,48 +28,69 @@ export default async function CaseStudyPage({ params }: Props) {
   const { study, index, previous, next } = entry
   const { default: Body } = await import(`@content/work/${slug}.mdx`)
 
+  const facts = (
+    <dl>
+      {study.facts.map((fact) => (
+        <div key={fact.label}>
+          <dt>{fact.label}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+
   return (
     <article className="page case-study">
-      <header className="case-header">
-        <p className="back">
-          <Link href="/">{site.caseStudy.backLink}</Link>
-        </p>
-        <p className="meta">
-          {cardNumber(index)} · {study.discipline} · {study.year}
-        </p>
-        <RevealHeading>{study.title}</RevealHeading>
-        <p className="lede">{study.summary}</p>
-        <section aria-labelledby="facts-heading">
-          <h2 id="facts-heading" className="sr-only">
-            {site.caseStudy.factsHeading}
-          </h2>
-          <dl className="facts">
-            {study.facts.map((fact) => (
-              <div key={fact.label}>
-                <dt>{fact.label}</dt>
-                <dd>{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+      <header className="case-intro">
+          <p className="back">
+            <Link href="/">{site.caseStudy.backLink}</Link>
+          </p>
+          <p className="meta">
+            {cardNumber(index)} · {study.discipline} · {study.year}
+          </p>
+          <RevealHeading>{study.title}</RevealHeading>
+          <p className="lede">{study.summary}</p>
       </header>
+      <div className="case-card">
+        <FlipCard
+          labels={{
+            toBack: site.caseStudy.flipToBack,
+            toFront: site.caseStudy.flipToFront,
+            showingBack: site.caseStudy.showingBack,
+            showingFront: site.caseStudy.showingFront,
+          }}
+          front={<CardFront study={study} index={index} />}
+          back={
+            <CardBack>
+              <section className={cardStyles.facts} aria-labelledby="facts-heading">
+                <h2 id="facts-heading">{site.caseStudy.factsHeading}</h2>
+                {facts}
+              </section>
+            </CardBack>
+          }
+          noScript={
+            <section className="facts-fallback" aria-label={site.caseStudy.factsHeading}>
+              {facts}
+            </section>
+          }
+        />
+      </div>
 
       <div className="prose">
         <Body />
       </div>
 
       <nav className="pager" aria-label="Case studies">
-        {previous && (
-          <Link href={`/work/${previous.slug}`} rel="prev">
-            <span className="meta">{site.caseStudy.previous}</span>
-            <span>{previous.title}</span>
-          </Link>
-        )}
-        {next && (
-          <Link href={`/work/${next.slug}`} rel="next">
-            <span className="meta">{site.caseStudy.next}</span>
-            <span>{next.title}</span>
-          </Link>
+        {[previous, next].map((other, i) =>
+          other ? (
+            <div key={other.slug} className="pager-item" data-rel={i === 0 ? 'prev' : 'next'}>
+              <CaseStudyCard
+                study={other}
+                index={caseStudies.indexOf(other)}
+                label={i === 0 ? site.caseStudy.previousLabel : site.caseStudy.nextLabel}
+              />
+            </div>
+          ) : null,
         )}
       </nav>
     </article>

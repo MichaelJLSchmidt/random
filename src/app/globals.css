@@ -184,11 +184,38 @@ a:hover {
   max-width: var(--measure);
 }
 
-/* Case study */
-.case-header {
+/* Case study: text on the left, the card beside it (sticky) on wide screens. */
+.case-study {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--space-8);
+  align-items: start;
+}
+
+.case-intro {
   display: grid;
   gap: var(--space-4);
   max-width: var(--measure);
+}
+
+.case-card {
+  margin-top: var(--space-7);
+}
+
+@media (min-width: 56rem) {
+  .case-study {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .case-card {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: var(--space-9);
+    margin-top: 0;
+  }
+  .pager {
+    grid-column: 1 / -1;
+  }
 }
 
 .back a {
@@ -196,28 +223,19 @@ a:hover {
   color: var(--text-muted);
 }
 
-.facts {
+.facts-fallback dl {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--space-4) var(--space-6);
-  margin: var(--space-4) 0 0;
+  gap: var(--space-3);
+  margin: 0;
 }
 
-.facts dt {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-mono);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.facts dd {
-  margin: var(--space-1) 0 0;
+.facts-fallback dd {
+  margin: 0;
 }
 
 .prose {
   max-width: var(--measure);
-  margin-top: var(--space-8);
+  margin-top: var(--space-7);
 }
 
 .prose > * + * {
@@ -242,27 +260,39 @@ a:hover {
 }
 
 .pager {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--space-4);
+  --card-w: clamp(10rem, 30vw, 13rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-6);
   margin-top: var(--space-9);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
 }
 
-.pager a {
+.pager-item {
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
+  gap: var(--space-3);
 }
 
-.pager a:hover {
-  border-color: var(--border-strong);
-}
-
-.pager a[rel='next'] {
+.pager-item[data-rel='next'] {
+  margin-inline-start: auto;
   text-align: end;
+}
+
+.pager-item[data-rel='next'] a > :last-child {
+  text-align: start;
+}
+
+.after-hand {
+  justify-self: center;
+}
+
+/* 404 */
+.not-found {
+  display: grid;
+  gap: var(--space-7);
+  justify-items: start;
 }
 
 /* Projects */

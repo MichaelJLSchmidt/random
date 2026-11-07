@@ -1,0 +1,147 @@
+/* The card: 63:88, container units for everything inside. */
+.card {
+  position: relative;
+  width: var(--card-w);
+  aspect-ratio: var(--card-ratio);
+  container-type: inline-size;
+  border-radius: calc(var(--card-w) * 0.05);
+  color: var(--text);
+  transform-style: preserve-3d;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  border-radius: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.04) inset,
+    0 18px 40px -18px rgb(0 0 0 / 0.8);
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+
+/* Hairline inner frame: part of the surface, never behind text. */
+.face::before {
+  content: '';
+  position: absolute;
+  inset: 3cqi;
+  border: 1px solid var(--border);
+  border-radius: 3cqi;
+  pointer-events: none;
+}
+
+.front {
+  grid-template-rows: auto auto 1fr auto;
+  gap: 3cqi;
+  padding: 7cqi 7.5cqi;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: max(0.6875rem, 4.4cqi);
+  letter-spacing: var(--tracking-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.title {
+  --wght: var(--wght-strong);
+  display: grid;
+  margin: 0;
+  font-size: max(1.05rem, 10.5cqi);
+  font-weight: var(--wght);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  transition: --wght var(--dur-base) var(--ease-standard);
+}
+
+/* Hidden copy at the hover weight keeps the title box (and the card) stable. */
+.title > span,
+.title::after {
+  grid-area: 1 / 1;
+}
+
+.title::after {
+  content: attr(data-text);
+  font-weight: var(--wght-hover);
+  visibility: hidden;
+}
+
+.window {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3cqi;
+  background:
+    radial-gradient(120% 90% at 72% 70%, var(--grey-300), transparent 70%),
+    var(--grey-50);
+  isolation: isolate;
+}
+
+.window svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--grey-500);
+  stroke-width: 0.55;
+}
+
+.window[data-motif='grid'] svg {
+  fill: var(--grey-400);
+  stroke: none;
+}
+
+.meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: max(0.6875rem, 4.2cqi);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.back {
+  padding: 7cqi;
+}
+
+.pattern {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3cqi;
+  background: var(--grey-50);
+  isolation: isolate;
+}
+
+.pattern svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--grey-300);
+  stroke-width: 0.5;
+}
+
+.pattern svg :global(.mark) {
+  fill: var(--grey-400);
+  stroke: none;
+}
+
+/* Foil layer slot (styled in foil.css). */
+.foil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Hover and focus on a linked card: weight only on the title. */
+:global(a):hover > .card .title,
+:global(a):focus-visible > .card .title {
+  --wght: var(--wght-hover);
+}
