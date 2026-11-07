@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { markFirstRenderDone } from '@/motion/navigation-state'
 
 /*
  * After a client navigation, move focus to the new page's <h1>. When the new
@@ -16,6 +17,7 @@ export function RouteFocus() {
   useEffect(() => {
     const from = previous.current
     previous.current = pathname
+    markFirstRenderDone()
     if (from === null || from === pathname) return
 
     const target =

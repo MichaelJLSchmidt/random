@@ -1,0 +1,57 @@
+/*
+ * Type system: one variable sans (Geist, wght 100–900) for display and body,
+ * Geist Mono for metadata. Weight is the only animated font property, through
+ * the registered --wght custom property (never width, never font-size).
+ */
+
+h1,
+h2,
+h3,
+.display {
+  --wght: var(--wght-strong);
+  font-weight: var(--wght);
+}
+
+.display {
+  --wght: var(--wght-display);
+}
+
+.meta,
+.facts dt,
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Weight on hover/focus. The hidden ::after copy is set at the hover weight in
+ * the same grid cell, so the box never changes width and nothing reflows.
+ */
+.weight-link {
+  --wght: var(--wght-body);
+  display: inline-grid;
+  font-weight: var(--wght);
+  transition: --wght var(--dur-fast) var(--ease-standard);
+}
+
+.weight-link > span,
+.weight-link::after {
+  grid-area: 1 / 1;
+}
+
+.weight-link::after {
+  content: attr(data-text);
+  font-weight: var(--wght-hover);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.weight-link:hover,
+.weight-link:focus-visible,
+.weight-link[aria-current='page'] {
+  --wght: var(--wght-hover);
+}
+
+/* Heading reveal: words are inline-block spans created by splitText. */
+.reveal .split-word {
+  will-change: transform, opacity;
+}

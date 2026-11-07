@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cardNumber, caseStudies, getCaseStudy, site } from '@/lib/content'
+import { RevealHeading } from '@/components/reveal-heading'
 
 export const dynamicParams = false
 
@@ -32,9 +33,7 @@ export default async function CaseStudyPage({ params }: Props) {
         <p className="meta">
           {cardNumber(index)} · {study.discipline} · {study.year}
         </p>
-        <h1 id="page-heading" tabIndex={-1}>
-          {study.title}
-        </h1>
+        <RevealHeading>{study.title}</RevealHeading>
         <p className="lede">{study.summary}</p>
         <section aria-labelledby="facts-heading">
           <h2 id="facts-heading" className="sr-only">

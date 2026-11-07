@@ -13,8 +13,8 @@ export function NavLinks({ items, className }: { items: Item[]; className?: stri
         const current = pathname === item.href || pathname.startsWith(`${item.href}/`)
         return (
           <li key={item.href}>
-            <Link href={item.href} aria-current={current ? 'page' : undefined} data-text={item.label}>
-              {item.label}
+            <Link href={item.href} aria-current={current ? 'page' : undefined} className="weight-link" data-text={item.label}>
+              <span>{item.label}</span>
             </Link>
           </li>
         )

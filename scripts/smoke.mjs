@@ -36,6 +36,17 @@ if (flag('password')) {
 await page.goto(root, { waitUntil: 'networkidle' })
 check('pre-paint motion tier', (await page.getAttribute('html', 'data-motion')) === motion, await page.getAttribute('html', 'data-motion'))
 
+// Weight-only hover: the link gets heavier but its box keeps its width.
+const navLink = page.locator('header nav a').last()
+const before = await navLink.boundingBox()
+const w0 = await navLink.evaluate((el) => getComputedStyle(el).fontWeight)
+await navLink.hover()
+await page.waitForTimeout(400)
+const after = await navLink.boundingBox()
+const w1 = await navLink.evaluate((el) => getComputedStyle(el).fontWeight)
+check('nav hover animates weight without reflow', Number(w1) > Number(w0) && Math.abs(after.width - before.width) < 0.5, `weight ${w0}→${w1}, width ${before.width.toFixed(1)}→${after.width.toFixed(1)}`)
+await page.mouse.move(0, 0)
+
 // Keyboard: activate the first case-study link with Enter.
 const firstCard = page.locator('[data-return-focus^="/work/"]').first()
 const target = await firstCard.getAttribute('data-return-focus')
@@ -44,6 +55,17 @@ await page.keyboard.press('Enter')
 await page.waitForURL((u) => u.pathname.replace(/\/$/, '').endsWith(target))
 await page.waitForTimeout(900)
 check('focus moves to page heading', (await active()).startsWith('h1:'), await active())
+const reveal = await page.evaluate(() => {
+  const el = document.querySelector('main h1 .reveal')
+  return { words: el?.querySelectorAll('.split-word').length ?? 0, opacity: el ? getComputedStyle(el).opacity : null }
+})
+check(
+  'heading reveal matches tier',
+  reveal.opacity === '1' && (motion === 'full' ? reveal.words > 0 : reveal.words === 0),
+  `${reveal.words} split words, opacity ${reveal.opacity}`,
+)
+const name = await page.evaluate(() => document.querySelector('main h1')?.textContent)
+check('heading text read once', (await page.locator('main h1').getAttribute('aria-label')) === null && name.length > 0)
 
 // Return via the back link: focus goes to the originating card.
 await page.getByRole('link', { name: 'All case studies' }).click()

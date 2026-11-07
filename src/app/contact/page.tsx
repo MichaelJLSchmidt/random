@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { contact } from '@/lib/content'
+import { RevealHeading } from '@/components/reveal-heading'
 
 export const metadata: Metadata = { title: contact.title }
 
@@ -7,9 +8,7 @@ export default function ContactPage() {
   return (
     <div className="page">
       <header className="page-header">
-        <h1 id="page-heading" tabIndex={-1}>
-          {contact.title}
-        </h1>
+        <RevealHeading>{contact.title}</RevealHeading>
         <p className="lede">{contact.intro}</p>
       </header>
       <dl className="contact-list">
