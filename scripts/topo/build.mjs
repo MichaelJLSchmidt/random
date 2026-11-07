@@ -153,6 +153,22 @@ for (let j = 0; j < SIZE; j++) {
   }
 }
 
+// A light blur (two separable 1-2-1 passes) keeps the contours calm; lakes stay flat.
+{
+  const tmp = new Float32Array(SIZE * SIZE)
+  const at = (f, i, j) => f[Math.min(SIZE - 1, Math.max(0, j)) * SIZE + Math.min(SIZE - 1, Math.max(0, i))]
+  for (let pass = 0; pass < 2; pass++) {
+    for (let j = 0; j < SIZE; j++)
+      for (let i = 0; i < SIZE; i++)
+        tmp[j * SIZE + i] = (at(grid, i - 1, j) + 2 * at(grid, i, j) + at(grid, i + 1, j)) / 4
+    for (let j = 0; j < SIZE; j++)
+      for (let i = 0; i < SIZE; i++) {
+        const k = j * SIZE + i
+        if (!lake[k]) grid[k] = (at(tmp, i, j - 1) + 2 * at(tmp, i, j) + at(tmp, i, j + 1)) / 4
+      }
+  }
+}
+
 let min = Infinity
 let max = -Infinity
 for (const h of grid) {

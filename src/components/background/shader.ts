@@ -115,8 +115,13 @@ void main() {
     float hm = mix(uElevRange.x, uElevRange.y, hNorm);
     float f = hm / uTopoLines.z;
     float fi = hm / uTopoLines.w;
-    float line = 1.0 - smoothstep(0.0, 1.0, abs(fract(f + 0.5) - 0.5) / max(fwidth(f) * 0.75, 1e-4));
-    float idx = 1.0 - smoothstep(0.0, 1.0, abs(fract(fi + 0.5) - 0.5) / max(fwidth(fi) * 1.0, 1e-4));
+    float wf = fwidth(f);
+    float wi = fwidth(fi);
+    float line = 1.0 - smoothstep(0.0, 1.0, abs(fract(f + 0.5) - 0.5) / max(wf * 0.75, 1e-4));
+    float idx = 1.0 - smoothstep(0.0, 1.0, abs(fract(fi + 0.5) - 0.5) / max(wi * 1.0, 1e-4));
+    // Where contours crowd (steep faces), the 100 m lines give way to the index lines, as on a printed map.
+    line *= 1.0 - smoothstep(0.12, 0.35, wf);
+    idx *= 1.0 - smoothstep(0.2, 0.5, wi);
     float bandH = mix(uElevRange.x, uElevRange.y, uTopoTime);
     float band = exp(-pow((hm - bandH) / ((uElevRange.y - uElevRange.x) * 0.05), 2.0));
     float lake = elev.g * uTopoShape;

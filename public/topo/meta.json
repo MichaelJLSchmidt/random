@@ -1,6 +1,6 @@
 {
-  "placeholder": true,
-  "source": "Noise-generated placeholder (not real terrain)",
+  "placeholder": false,
+  "source": "swissALTI3D 2 m, Federal Office of Topography swisstopo",
   "crs": "EPSG:2056",
   "box": [
     2624000,
@@ -10,7 +10,7 @@
   ],
   "size": 512,
   "min": 557,
-  "max": 2112,
+  "max": 4101,
   "interval": 100,
   "index": 500,
   "lakes": [

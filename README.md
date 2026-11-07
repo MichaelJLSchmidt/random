@@ -18,9 +18,9 @@ content/                    All editable text (JSON / MDX / one TS map). No comp
   case-studies.json         Exactly three case studies (checked at build)
   work/<slug>.mdx           Case-study bodies; management.mdx, about.mdx
   projects.json             Older projects (no detail pages); workshops.json (workshop draw)
-public/topo/                About contours: elevation.png, contours.svg, meta.json (placeholder for now)
+public/topo/                About contours from swissALTI3D: elevation.png, contours.svg, meta.json
 scripts/
-  topo/                     GDAL + Node pipeline for the About topography (README inside)
+  topo/                     swissALTI3D fetch + build for the About topography (README inside)
   smoke.mjs                 Behaviour check, 1440x900 and 390x844, per motion tier
   budget.mjs, audit.mjs, vitals.mjs, lighthouse.mjs, serve-static.mjs
 src/
@@ -73,31 +73,34 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   slow frames (average over 24 ms in two 60-frame windows), registered `@property` colours on
   stacked gradients take over with the same transitions. It pauses when the tab is hidden, while
   the mobile sheet is open, and on Save-Data (no breathing).
-- **Hand**: `<nav aria-label="Work">`, four real links plus "More projects". Desktop: a fan at the
-  bottom centre (72% visible on home, 45% elsewhere). Mobile: the fan on home, elsewhere a 48px
-  peek rail that opens a bottom sheet (a native popover). One tab stop (arrows, Home/End).
-- **Play / return / switch**: stage 1 lifts the card (WAAPI, play spring) while the field blooms;
+- **Hand**: `<nav aria-label="Work">`, four real links plus "More projects". Cards show index,
+  years, title band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246
+  cards, 72% visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows.
+  Mobile: the fan on home, elsewhere a 48px peek rail that opens a bottom sheet (a native
+  popover). One tab stop (arrows, Home/End).
+- **Detail pages**: the played card lies on the table at the left (sticky, a large copy of the same
+  face with the H1 in its band and the facts), the page reads on its right.
+- **Play / return / switch**: stage 1 lifts the card to where it will lie while the field blooms;
   stage 2 is React's view transition (`card-<slug>` and `card-title-<slug>` shared between the hand
-  card and the hero / H1). Return: Back, Escape, the wordmark, or leaving a card page.
+  card and the hero / H1), a same-shape zoom. Return: Back, Escape, the wordmark, browser back, or
+  leaving a card page. Browser back / forward are replayed as typed navigations, so they morph
+  too.
 
 | Effect                 | Full                                                           | Calm                          | Reduced             |
 | ---------------------- | -------------------------------------------------------------- | ----------------------------- | ------------------- |
 | Field breath and drift | 9 s breath, drift 0.012/s                                      | still                         | still, 200 ms swaps |
-| Hover a card           | lift 28px on the hover spring; field blends (80 ms)            | no lift, field blends         | instant             |
+| Hover a card           | lift to 90% shown on the hover spring; field blends (80 ms)    | shorter lift, field blends    | instant             |
 | Play                   | press, lift, bloom 800 ms, zoom 580 ms                         | navigate at once, 500 ms fade | near-instant        |
 | Return / switch        | 520 ms back to the slot / 560 ms in, OKLab crossfade           | same morph, 500 ms fade       | near-instant        |
 | Home first visit       | field from black, hand drawn and flipped, title, lines, chrome | fades, same order             | fades, same order   |
 | Headline               | deal and settle (wght 280 -> 680, opsz 24 -> 96)               | opacity + 4px, weight at once | opacity, 200 ms     |
 | Sections               | per preset (lines, lists, metrics, callouts ...)               | opacity + 4px, 300 ms         | opacity, 200 ms     |
 
-Browser back / forward swaps the page without a view transition (React does not animate popstate
-navigations); the field still follows the route.
-
 ## About topography
 
-`scripts/topo/README.md` has the exact steps for the real assets (swissALTI3D 2 m, LV95 box
-E 2624000-2646000, N 1152000-1174000). Until then a noise-generated placeholder is committed,
-labelled in `public/topo/meta.json`, in the SVG and on the page.
+Real contours of Interlaken between Lake Thun and Lake Brienz, with the Jungfrau region, built
+from swisstopo's swissALTI3D open data: `npm run topo` reads each 2 m tile's overview from the
+STAC API and writes `public/topo/` (details in `scripts/topo/README.md`).
 
 ## Easter eggs
 
