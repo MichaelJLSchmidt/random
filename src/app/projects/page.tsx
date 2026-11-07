@@ -11,12 +11,12 @@ export default function ProjectsPage() {
     <PageTransition>
       <div className="page">
         <header className="page-header">
-          <PageTitle>{site.projects.title}</PageTitle>
+          <PageTitle morph="projects">{site.projects.title}</PageTitle>
           <p className="lede">{site.projects.intro}</p>
         </header>
         <ul className="project-list">
           {projects.map((project) => (
-            <li key={project.title} data-fill-host="">
+            <li key={project.title} data-fill-host="" data-deal-row="">
               <h2>
                 {project.href ? (
                   <a href={project.href}>

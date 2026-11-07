@@ -28,6 +28,29 @@
   animation: none;
 }
 
+/*
+ * Nav label → page title. Names exist only while the matching transition type
+ * runs: the label is named while it is not the current page (old state), the
+ * h1 on its own page (new state), so exactly one pair forms.
+ */
+:root:active-view-transition-type(title-about) :is([data-title-from='about'], [data-title-to='about']),
+:root:active-view-transition-type(title-projects) :is([data-title-from='projects'], [data-title-to='projects']),
+:root:active-view-transition-type(title-contact) :is([data-title-from='contact'], [data-title-to='contact']) {
+  view-transition-name: page-title;
+}
+::view-transition-group(page-title) {
+  z-index: 60;
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-standard);
+}
+::view-transition-old(page-title),
+::view-transition-new(page-title) {
+  animation-duration: var(--dur-base);
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
 /* Shared card morph. */
 ::view-transition-group(.morph) {
   z-index: 50;

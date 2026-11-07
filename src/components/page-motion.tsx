@@ -2,9 +2,10 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { consumeDrawn } from '@/motion/draw-state'
 import { glint } from '@/motion/glint'
 import { INTRO_KEY } from '@/motion/preferences'
-import { duration, stagger, tiers } from '@/motion/tokens'
+import { duration, ease, stagger, tiers } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 
 const SKIP_EVENTS = ['pointerdown', 'wheel', 'touchstart', 'keydown', 'scroll'] as const
@@ -36,16 +37,43 @@ export function PageMotion() {
     const time = tiers[tier].time
     let cancelled = false
     let skip: (() => void) | null = null
+    const drawnHere = consumeDrawn(pathname)
+
+    // Project rows are dealt in after a client navigation (40 ms apart).
+    if (!isInitial && tier === 'full') {
+      document.querySelectorAll<HTMLElement>('main [data-deal-row]').forEach((row, i) => {
+        row.animate(
+          [
+            { transform: 'translate(-28px, 12px) rotate(-2deg)', opacity: 0.2 },
+            { transform: 'none', opacity: 1 },
+          ],
+          {
+            duration: duration.deal * 1000,
+            delay: (duration.fast + i * stagger.rows) * 1000,
+            easing: `cubic-bezier(${ease.out.join(',')})`,
+            fill: 'backwards',
+          },
+        )
+      })
+    }
 
     let heroTimer = 0
     const settle = (seconds: number, wordStagger: number) => {
       if (!title) return
+      // A transition needs a rendered before-change style: resolve the words at
+      // weight 200 and let a frame paint before settling them.
+      title.querySelectorAll('.wt-word').forEach((word) => getComputedStyle(word).getPropertyValue('--wght'))
       title.style.setProperty('--wt-dur', `${seconds}s`)
       title.style.setProperty('--wt-stagger', `${wordStagger}s`)
-      title.dataset.settled = ''
-      // Case studies: one tinted Glint across the hero card once the title has settled.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!cancelled) title.dataset.settled = ''
+        }),
+      )
+      // Case studies: one tinted Glint across the hero card once the title has
+      // settled, unless the card was just drawn (it already glinted on the way).
       const hero = document.querySelector<HTMLElement>('[data-hero] [data-foil-surface]')
-      if (hero && tier === 'full') heroTimer = window.setTimeout(() => glint(hero), seconds * 1000)
+      if (hero && tier === 'full' && !drawnHere) heroTimer = window.setTimeout(() => glint(hero), seconds * 1000)
     }
     const endIntro = () => {
       root.removeAttribute('data-intro')

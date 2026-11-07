@@ -115,6 +115,65 @@
   }
 }
 
+/* ---------- Touch fan (coarse pointers) ---------- */
+
+.handWrap {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+
+.fanCount {
+  display: none;
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .hand {
+    --card-w: min(66vw, 18rem);
+    grid-template-areas: 'card';
+    width: 100%;
+    padding-block: var(--space-4) var(--space-5);
+    overflow-x: clip;
+    overflow-y: visible;
+    touch-action: pan-y;
+  }
+
+  .hand > li,
+  .hand > li + li {
+    grid-area: card;
+    margin: 0;
+    transform: none;
+    z-index: var(--fan-z, 0);
+  }
+
+  .fan {
+    transform-origin: 50% 85%;
+    transform: translateX(calc(var(--fan-x, 0) * var(--card-w))) rotate(calc(var(--fan-r, 0) * 1deg))
+      scale(var(--fan-s, 1));
+  }
+
+  .fanCount {
+    display: block;
+  }
+
+  .hand > li:hover .lift,
+  .hand > li:focus-within .lift {
+    transform: none;
+  }
+}
+
+/* ---------- Drawing a card: lift wrapper animated before navigation ---------- */
+
+.draw {
+  width: fit-content;
+}
+
 /* ---------- Draw pile beside the hand ---------- */
 
 .pile {

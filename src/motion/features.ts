@@ -1,2 +1,2 @@
-// Loaded on demand by LazyMotion so animation features stay out of the initial bundle.
-export { domAnimation as default } from 'motion/react'
+// Loaded on demand by LazyMotion. domMax adds pan/drag, used by the touch fan.
+export { domMax as default } from 'motion/react'

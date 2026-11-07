@@ -84,7 +84,7 @@ export function startPointer() {
     if (!swallowClick) return
     swallowClick = false
     event.preventDefault()
-    event.stopPropagation()
+    event.stopImmediatePropagation()
   }
 
   // Title fill hosts: the Glint trails the fill sweep (fine pointers only).
@@ -105,7 +105,8 @@ export function startPointer() {
   document.addEventListener('pointerup', cancelHold, { passive: true })
   document.addEventListener('pointercancel', cancelHold, { passive: true })
   document.addEventListener('pointerover', onOver, { passive: true })
-  document.addEventListener('click', onClick, true)
+  // On window (capture) so it runs before the draw handler on document.
+  window.addEventListener('click', onClick, true)
   document.addEventListener('contextmenu', onContextMenu)
   return () => {
     document.removeEventListener('pointermove', onMove)
@@ -113,7 +114,7 @@ export function startPointer() {
     document.removeEventListener('pointerup', cancelHold)
     document.removeEventListener('pointercancel', cancelHold)
     document.removeEventListener('pointerover', onOver)
-    document.removeEventListener('click', onClick, true)
+    window.removeEventListener('click', onClick, true)
     document.removeEventListener('contextmenu', onContextMenu)
     cancelAnimationFrame(frame)
     if (hovered) reset(hovered)

@@ -12,7 +12,7 @@ export default function ContactPage() {
     <PageTransition>
       <div className="page">
         <header className="page-header">
-          <PageTitle>{contact.title}</PageTitle>
+          <PageTitle morph="contact">{contact.title}</PageTitle>
           <p className="lede">{contact.intro}</p>
         </header>
         <dl className="contact-list">

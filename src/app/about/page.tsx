@@ -11,7 +11,7 @@ export default function AboutPage() {
     <PageTransition>
       <div className="page">
         <header className="page-header">
-          <PageTitle>{site.about.title}</PageTitle>
+          <PageTitle morph="about">{site.about.title}</PageTitle>
           <p className="lede">{site.about.intro}</p>
         </header>
         <div className="prose">

@@ -23,26 +23,31 @@ type Props = {
  */
 export function CaseStudyCard({ study, index, label, headingLevel, direction = navForward, flippable }: Props) {
   const front = <CardFront study={study} index={index} headingLevel={headingLevel} fill />
+  const types = [direction, cardType(study.slug)]
   return (
-    <Link
-      href={`/work/${study.slug}`}
-      className={styles.cardLink}
-      data-return-focus={`/work/${study.slug}`}
-      transitionTypes={[direction, cardType(study.slug)]}
-    >
-      {label && <span className={`meta ${styles.cardLabel}`}>{label}</span>}
-      <CardMorph slug={study.slug}>
-        <CardFrame tint={study.theme}>
-          {flippable ? (
-            <div className={styles.flipper} data-flipper="">
-              {front}
-              <CardBack />
-            </div>
-          ) : (
-            front
-          )}
-        </CardFrame>
-      </CardMorph>
-    </Link>
+    <div className={styles.draw} data-draw-lift="">
+      <Link
+        href={`/work/${study.slug}`}
+        className={styles.cardLink}
+        data-return-focus={`/work/${study.slug}`}
+        data-draw={`/work/${study.slug}`}
+        data-transition-types={types.join(' ')}
+        transitionTypes={types}
+      >
+        {label && <span className={`meta ${styles.cardLabel}`}>{label}</span>}
+        <CardMorph slug={study.slug}>
+          <CardFrame tint={study.theme}>
+            {flippable ? (
+              <div className={styles.flipper} data-flipper="">
+                {front}
+                <CardBack />
+              </div>
+            ) : (
+              front
+            )}
+          </CardFrame>
+        </CardMorph>
+      </Link>
+    </div>
   )
 }

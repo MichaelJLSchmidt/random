@@ -21,6 +21,7 @@ export default function HomePage() {
           <div className="table" data-reveal="">
             <CardHand
               labelledBy="work-heading"
+              positionLabel={site.home.positionLabel}
               items={caseStudies.map((study, index) => (
                 <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" flippable />
               ))}

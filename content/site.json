@@ -20,7 +20,8 @@
     "headline": "Interfaces that feel as considered as they look.",
     "intro": "Product design and front-end engineering, from the first sketch to the code that ships. Below are three recent case studies.",
     "workHeading": "Case studies",
-    "projectsLink": "See all projects"
+    "projectsLink": "See all projects",
+    "positionLabel": "Card position"
   },
   "caseStudy": {
     "backLink": "All case studies",

@@ -205,24 +205,23 @@ async function introSuite({ motion, check, url, fresh }) {
     end.intro === null && end.weight === '760' && end.slots.every(flat),
     JSON.stringify(end).slice(0, 120),
   )
-  // Return visit: no intro, 500 ms weight-in (sampled every frame for 900 ms).
-  await p.goto(url('/'), { waitUntil: 'commit' })
-  await p.waitForSelector('main h1 .wt-word')
-  const samples = await p.evaluate(
-    () =>
-      new Promise((resolve) => {
-        const out = []
-        const start = performance.now()
-        const tick = () => {
-          out.push(
-            Math.round(parseFloat(getComputedStyle(document.querySelector('main h1 .wt-word > span')).fontWeight)),
-          )
-          if (performance.now() - start < 900) requestAnimationFrame(tick)
-          else resolve({ intro: document.documentElement.dataset.intro ?? null, out })
-        }
-        tick()
-      }),
-  )
+  // Return visit: no intro, 500 ms weight-in (sampled every frame from parse time).
+  await c.addInitScript(() => {
+    window.__samples = []
+    const start = performance.now()
+    const tick = () => {
+      const word = document.querySelector('main h1 .wt-word > span')
+      if (word) window.__samples.push(Math.round(parseFloat(getComputedStyle(word).fontWeight)))
+      if (performance.now() - start < 2500) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+  await p.goto(url('/'), { waitUntil: 'networkidle' })
+  await p.waitForTimeout(1200)
+  const samples = await p.evaluate(() => ({
+    intro: document.documentElement.dataset.intro ?? null,
+    out: window.__samples,
+  }))
   const between = samples.out.some((w) => w > 200 && w < 760)
   check(
     'return visit: weight-in only',
@@ -287,7 +286,8 @@ async function scrollSuite({ page, motion, check, url }) {
 async function hoverSuite({ page, context, device, motion, check, url }) {
   await page.goto(url('/'), { waitUntil: 'networkidle' })
   await page.waitForTimeout(700)
-  const card = page.locator('[data-hand] li').nth(1)
+  const card =
+    device === 'phone' ? page.locator('[data-hand] > li[data-active]') : page.locator('[data-hand] > li').nth(1)
   const surface = card.locator('[data-foil-surface]')
   await card.scrollIntoViewIfNeeded()
   const foilOpacity = () => surface.evaluate((el) => getComputedStyle(el.querySelector('[data-foil-layer]')).opacity)
@@ -349,6 +349,153 @@ async function hoverSuite({ page, context, device, motion, check, url }) {
   check('copying the email is announced', copied === 'Email address copied', copied)
 }
 
+const recordTransitions = () => {
+  window.__vt = []
+  const original = document.startViewTransition?.bind(document)
+  if (!original) return
+  document.startViewTransition = (arg) => {
+    const t = original(arg)
+    const entry = { at: performance.now(), types: [...(arg?.types ?? [])], groups: [] }
+    window.__vt.push(entry)
+    t.ready
+      .then(() => {
+        for (const a of document.getAnimations()) {
+          const m = (a.effect?.pseudoElement ?? '').match(/::view-transition-group\((.+)\)/)
+          if (m && !entry.groups.includes(m[1])) entry.groups.push(m[1])
+        }
+      })
+      .catch(() => {})
+    return t
+  }
+}
+
+async function transitionSuite({ device, motion, check, url, fresh }) {
+  const c = await fresh()
+  await c.addInitScript(() => localStorage.setItem('intro-seen', '1'))
+  await c.addInitScript(recordTransitions)
+  const p = await c.newPage()
+  const last = () => p.evaluate(() => window.__vt.at(-1) ?? null)
+  const named = (vt) => (vt?.groups ?? []).filter((g) => g.startsWith('card-') || g === 'page-title')
+
+  await p.goto(url('/'), { waitUntil: 'networkidle' })
+  await p.waitForTimeout(600)
+  if (device === 'desktop') {
+    // Drawing a card: lift first, then the morph (only that card).
+    const link = p.locator('[data-hand] a[data-draw$="shared-foundations"]')
+    await link.scrollIntoViewIfNeeded()
+    const t0 = Date.now()
+    await link.click()
+    await p.waitForTimeout(90)
+    const lifted = await p.evaluate(() => {
+      const w = document.querySelector('[data-hand] a[data-draw$="shared-foundations"]')?.closest('[data-draw-lift]')
+      return w ? getComputedStyle(w).transform : 'gone'
+    })
+    await p.waitForURL(/shared-foundations/)
+    const waited = Date.now() - t0
+    await p.waitForTimeout(700)
+    const vt = await last()
+    if (motion === 'full')
+      check(
+        'draw: card lifts before navigating',
+        lifted !== 'none' && waited >= 200,
+        `${lifted.slice(0, 40)}, navigated after ${waited} ms`,
+      )
+    else check('draw: no lift outside full, navigates at once', waited < 1500, `${waited} ms`)
+    check(
+      'draw morphs only that card',
+      vt?.types.join() === 'nav-forward,card-shared-foundations' && named(vt).join() === 'card-shared-foundations',
+      JSON.stringify(vt),
+    )
+
+    // Next case card morphs into the next hero.
+    await p.locator('.pager a[data-draw$="front-door"]').click()
+    await p.waitForURL(/front-door/)
+    await p.waitForTimeout(700)
+    const next = await last()
+    check(
+      'next-case card morphs into the next hero',
+      named(next).join() === 'card-front-door',
+      JSON.stringify(next?.types),
+    )
+
+    // Nav label morphs into the page title, nothing else.
+    await p.locator('header nav a', { hasText: 'About' }).click()
+    await p.waitForURL(/about/)
+    await p.waitForTimeout(700)
+    const about = await last()
+    check(
+      'nav label morphs into the About title',
+      about?.types.includes('title-about') && named(about).join() === 'page-title',
+      JSON.stringify(about),
+    )
+
+    // Projects: rows are dealt in.
+    await p.locator('header nav a', { hasText: 'Projects' }).click()
+    await p.waitForURL(/projects/)
+    await p.waitForTimeout(120)
+    const rows = await p.evaluate(
+      () => [...document.querySelectorAll('[data-deal-row]')].filter((r) => r.getAnimations().length).length,
+    )
+    check('project rows deal in (full only)', motion === 'full' ? rows > 1 : rows === 0, `${rows} animating`)
+
+    if (motion === 'full') {
+      // A second click during the lift cancels the draw.
+      await p.goto(url('/'), { waitUntil: 'networkidle' })
+      await p.waitForTimeout(500)
+      const card = p.locator('[data-hand] a[data-draw$="team-of-teams"]')
+      await card.scrollIntoViewIfNeeded()
+      const cb = await card.boundingBox()
+      await p.mouse.dblclick(cb.x + cb.width / 2, cb.y + cb.height * 0.3, { delay: 60 })
+      await p.waitForTimeout(700)
+      check('second click during the lift cancels the draw', !/team-of-teams/.test(p.url()), p.url())
+    }
+  } else {
+    const hand = p.locator('[data-hand]')
+    await hand.scrollIntoViewIfNeeded()
+    const box = await hand.boundingBox()
+    const cdp = await c.newCDPSession(p)
+    const y = box.y + box.height * 0.4
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 300, y }] })
+    for (let i = 1; i <= 8; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 300 - i * 22, y }] })
+      await p.waitForTimeout(16)
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await p.waitForTimeout(800)
+    const count = await p.locator('[data-hand] + p').innerText()
+    check(
+      'swipe snaps to the next card ("2/3")',
+      count === '2/3' && /\/random\/$/.test(p.url()),
+      `${count}, ${p.url()}`,
+    )
+    // Tapping a peeking neighbour centres it instead of opening it.
+    const active = await p.locator('[data-hand] > li[data-active] [data-foil-surface]').boundingBox()
+    const nb = await p.locator('[data-hand] > li').nth(2).locator('[data-foil-surface]').boundingBox()
+    const clip = await p.locator('[data-hand]').boundingBox()
+    await p.touchscreen.tap(
+      Math.min((active.x + active.width + nb.x + nb.width) / 2, clip.x + clip.width - 6),
+      nb.y + nb.height * 0.4,
+    )
+    await p.waitForTimeout(700)
+    check(
+      'tapping a peeking card centres it',
+      (await p.locator('[data-hand] + p').innerText()) === '3/3' && /\/random\/$/.test(p.url()),
+    )
+    // Arrow keys move within the hand.
+    await p.locator('[data-hand] a').first().focus()
+    await p.waitForTimeout(500)
+    await p.keyboard.press('ArrowRight')
+    await p.waitForTimeout(600)
+    const focused = await p.evaluate(() => document.activeElement?.getAttribute('data-draw'))
+    check(
+      'arrow keys move within the hand',
+      /shared-foundations/.test(focused ?? '') && (await p.locator('[data-hand] + p').innerText()) === '2/3',
+      focused,
+    )
+  }
+  await c.close()
+}
+
 // Later phases append their suites here.
-const suites = [typeSuite, introSuite, scrollSuite, hoverSuite]
+const suites = [typeSuite, introSuite, scrollSuite, hoverSuite, transitionSuite]
 await main()

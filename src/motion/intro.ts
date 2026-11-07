@@ -22,7 +22,7 @@ export function playIntro({ hand, deck, onDone }: { hand: HTMLElement; deck: HTM
   const r = duration.riffle
   slots.forEach((slot, i) => {
     // Delta from the slot to the deck, expressed in the slot's own (rotated) frame.
-    const box = slot.getBoundingClientRect()
+    const box = (slot.querySelector('[data-foil-surface]') ?? slot).getBoundingClientRect()
     const dx = deckX - (box.left + box.width / 2)
     const dy = deckY - (box.top + box.height / 2)
     const m = new DOMMatrix(getComputedStyle(slot.parentElement!).transform)

@@ -24,6 +24,8 @@ export const duration = {
   hold: 0.35,
   /** The Glint trails a title fill by this much. */
   glintTrail: 0.08,
+  /** Drawing a card: the lift before navigation. */
+  draw: 0.22,
   /** Page h1 weight-in on a return visit or after client navigation. */
   weightIn: 0.5,
   /** First-visit intro: h1 weight-in (plus word stagger). */
@@ -63,6 +65,8 @@ export const stagger = {
   words: 0.045,
   /** Lines of a section title rising from their mask. */
   lines: 0.06,
+  /** Project rows dealt in after navigating to /projects. */
+  rows: 0.04,
   /** Cards dealt into the hand. */
   deal: 0.08,
 } as const
@@ -115,6 +119,21 @@ export const weight = {
 /** Degrees. */
 export const angle = {
   tilt: 7,
+  /** Neighbours peeking out of the touch fan. */
+  fanPeek: 6,
+} as const
+
+/** Touch fan geometry: spacing in card widths, scale drop per step, release look-ahead (s). */
+export const fan = {
+  spread: 0.82,
+  scaleStep: 0.06,
+  projection: 0.2,
+} as const
+
+/** Drawing a card: lift and scale before the route morph starts. */
+export const draw = {
+  lift: 24,
+  scale: 1.04,
 } as const
 
 /*
