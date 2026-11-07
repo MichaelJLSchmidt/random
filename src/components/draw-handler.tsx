@@ -84,8 +84,14 @@ export function DrawHandler() {
     }
 
     document.addEventListener('click', onClick, true)
+    // Preload Motion when idle so a draw's lift starts on the first frame.
+    const preload = () => void import('motion')
+    const hasIdle = 'requestIdleCallback' in window
+    const idle = hasIdle ? requestIdleCallback(preload) : window.setTimeout(preload, 600)
     return () => {
       document.removeEventListener('click', onClick, true)
+      if (hasIdle) cancelIdleCallback(idle)
+      else clearTimeout(idle)
       active?.cancel()
     }
   }, [router])

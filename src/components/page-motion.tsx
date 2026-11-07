@@ -102,11 +102,16 @@ export function PageMotion() {
       return
     }
 
+    // Fetch the deal choreography while the fonts load, so the intro starts
+    // whole (title and cards together) and stays inside its 1.6 s budget.
+    const dealModule = introPending && tier === 'full' ? import('@/motion/deal') : null
+
     const run = async () => {
-      if (isInitial) await document.fonts.ready
+      if (isInitial) await Promise.all([document.fonts.ready, dealModule])
       if (cancelled) return
       if (!introPending || root.dataset.intro !== 'pending') {
         settle(duration.weightIn * time, 0)
+        if (introPending) endIntro() // the 3.5 s fallback already showed the end state
         return
       }
       const hand = document.querySelector<HTMLElement>('[data-hand]')
@@ -116,10 +121,10 @@ export function PageMotion() {
         endIntro()
         return
       }
+      const { playIntro } = await (dealModule ?? import('@/motion/deal'))
+      if (cancelled || root.dataset.intro !== 'pending') return
       root.dataset.intro = 'playing'
       settle(duration.introTitle * time, stagger.words * time)
-      const { playIntro } = await import('@/motion/deal')
-      if (cancelled || root.dataset.intro !== 'playing') return
       skip = playIntro({ hand, deck, onDone: endIntro }).skip
     }
     run()
