@@ -76,9 +76,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 3cqi;
-  background:
-    radial-gradient(120% 90% at 72% 70%, var(--grey-300), transparent 70%),
-    var(--grey-50);
+  background: radial-gradient(120% 90% at 72% 70%, var(--grey-300), transparent 70%), var(--grey-50);
   isolation: isolate;
 }
 

@@ -68,8 +68,8 @@
     grid-area: card;
     margin: 0;
     transform-origin: 50% 135%;
-    transform: translateX(calc(var(--offset) * var(--hand-spread)))
-      translateY(calc(var(--lift) * 4%)) rotate(calc(var(--offset) * var(--hand-angle)));
+    transform: translateX(calc(var(--offset) * var(--hand-spread))) translateY(calc(var(--lift) * 4%))
+      rotate(calc(var(--offset) * var(--hand-angle)));
   }
 
   .hand > li:hover .lift,

@@ -5,12 +5,20 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
 const [base = 'http://localhost:3000', ...flags] = process.argv.slice(2)
-const flag = (name) => flags.find((f) => f.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
+const flag = (name) =>
+  flags
+    .find((f) => f.startsWith(`--${name}=`))
+    ?.split('=')
+    .slice(1)
+    .join('=')
 const root = base.endsWith('/') ? base : `${base}/`
 const motion = flag('motion') ?? 'full'
 
 const browser = await chromium.launch()
-const context = await browser.newContext({ reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference', viewport: { width: 1280, height: 900 } })
+const context = await browser.newContext({
+  reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference',
+  viewport: { width: 1280, height: 900 },
+})
 if (motion === 'calm') await context.addInitScript(() => localStorage.setItem('motion', 'calm'))
 const page = await context.newPage()
 const errors = []
@@ -22,10 +30,13 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`)
   if (!ok) failures++
 }
-const active = () => page.evaluate(() => {
-  const el = document.activeElement
-  return el ? `${el.tagName.toLowerCase()}${el.getAttribute('data-return-focus') ? `[${el.getAttribute('data-return-focus')}]` : ''}:${(el.textContent ?? '').trim().slice(0, 40)}` : 'none'
-})
+const active = () =>
+  page.evaluate(() => {
+    const el = document.activeElement
+    return el
+      ? `${el.tagName.toLowerCase()}${el.getAttribute('data-return-focus') ? `[${el.getAttribute('data-return-focus')}]` : ''}:${(el.textContent ?? '').trim().slice(0, 40)}`
+      : 'none'
+  })
 
 if (flag('password')) {
   await page.goto(`${root}gate`)
@@ -34,7 +45,11 @@ if (flag('password')) {
 }
 
 await page.goto(root, { waitUntil: 'networkidle' })
-check('pre-paint motion tier', (await page.getAttribute('html', 'data-motion')) === motion, await page.getAttribute('html', 'data-motion'))
+check(
+  'pre-paint motion tier',
+  (await page.getAttribute('html', 'data-motion')) === motion,
+  await page.getAttribute('html', 'data-motion'),
+)
 
 // Weight-only hover: the link gets heavier but its box keeps its width.
 const navLink = page.locator('header nav a').last()
@@ -44,7 +59,11 @@ await navLink.hover()
 await page.waitForTimeout(400)
 const after = await navLink.boundingBox()
 const w1 = await navLink.evaluate((el) => getComputedStyle(el).fontWeight)
-check('nav hover animates weight without reflow', Number(w1) > Number(w0) && Math.abs(after.width - before.width) < 0.5, `weight ${w0}→${w1}, width ${before.width.toFixed(1)}→${after.width.toFixed(1)}`)
+check(
+  'nav hover animates weight without reflow',
+  Number(w1) > Number(w0) && Math.abs(after.width - before.width) < 0.5,
+  `weight ${w0}→${w1}, width ${before.width.toFixed(1)}→${after.width.toFixed(1)}`,
+)
 await page.mouse.move(0, 0)
 
 // Keyboard: activate the first case-study link with Enter.
@@ -82,15 +101,23 @@ check('history back works', new URL(page.url()).pathname === new URL(root).pathn
 
 // Flip: button swaps faces; hidden face is inert; status announced politely.
 await page.goto(`${root}work/timetable/`, { waitUntil: 'networkidle' })
-const faceState = () => page.evaluate(() => [...document.querySelectorAll('[aria-controls] ~ *, .case-card [inert]')].length && {
-  frontInert: document.querySelector('.case-card [id] > :first-child')?.hasAttribute('inert'),
-  backInert: document.querySelector('.case-card [id] > :last-child')?.hasAttribute('inert'),
-  live: document.querySelector('[role=status]')?.textContent,
-})
+const faceState = () =>
+  page.evaluate(
+    () =>
+      [...document.querySelectorAll('[aria-controls] ~ *, .case-card [inert]')].length && {
+        frontInert: document.querySelector('.case-card [id] > :first-child')?.hasAttribute('inert'),
+        backInert: document.querySelector('.case-card [id] > :last-child')?.hasAttribute('inert'),
+        live: document.querySelector('[role=status]')?.textContent,
+      },
+  )
 await page.getByRole('button', { name: 'Show details' }).click()
 await page.waitForTimeout(1200)
 let st = await faceState()
-check('flip shows back face', st.frontInert === true && st.backInert === false && st.live === 'Showing details', JSON.stringify(st))
+check(
+  'flip shows back face',
+  st.frontInert === true && st.backInert === false && st.live === 'Showing details',
+  JSON.stringify(st),
+)
 check('facts reachable after flip', await page.getByText('Formats').isVisible())
 await page.getByRole('button', { name: 'Show cover' }).click()
 await page.waitForTimeout(1200)
@@ -102,7 +129,8 @@ const short = await context.newPage()
 await short.setViewportSize({ width: 1280, height: 420 })
 await short.goto(root, { waitUntil: 'networkidle' })
 await short.waitForTimeout(600)
-const slotTransforms = () => short.$$eval('main ol > li > div', (els) => els.map((el) => getComputedStyle(el).transform))
+const slotTransforms = () =>
+  short.$$eval('main ol > li > div', (els) => els.map((el) => getComputedStyle(el).transform))
 const beforeScroll = await slotTransforms()
 await short.locator('main ol').scrollIntoViewIfNeeded()
 await short.waitForTimeout(1800)
@@ -114,6 +142,49 @@ check(
   `before ${beforeScroll.filter((t) => !identity(t)).length} moved, after ${afterScroll.filter((t) => !identity(t)).length} moved`,
 )
 await short.close()
+
+// View transitions: record types and which pseudo-element groups animate.
+await context.addInitScript(() => {
+  window.__vt = []
+  const original = document.startViewTransition?.bind(document)
+  if (!original) return
+  document.startViewTransition = (arg) => {
+    const t = original(arg)
+    const entry = { types: [...(arg?.types ?? [])], groups: [], durations: [] }
+    window.__vt.push(entry)
+    t.ready.then(() => {
+      for (const a of document.getAnimations()) {
+        const pe = a.effect?.pseudoElement ?? ''
+        const m = pe.match(/::view-transition-group\((.+)\)/)
+        if (m && !entry.groups.includes(m[1])) entry.groups.push(m[1])
+        if (pe) entry.durations.push(a.effect.getComputedTiming().duration)
+      }
+    }).catch(() => {})
+    return t
+  }
+})
+const vtPage = await context.newPage()
+const lastVT = async () => {
+  await vtPage.waitForTimeout(900)
+  return vtPage.evaluate(() => window.__vt.at(-1) ?? null)
+}
+const cardGroups = (vt) => (vt?.groups ?? []).filter((g) => g.startsWith('card-'))
+await vtPage.goto(root, { waitUntil: 'networkidle' })
+await vtPage.locator('a[data-return-focus$="/work/timetable"]').click()
+let vt = await lastVT()
+const maxDuration = (v) => Math.max(0, ...(v?.durations ?? []))
+check('card → case study: only that card morphs', vt?.types.join() === 'nav-forward,card-timetable' && cardGroups(vt).join() === 'card-timetable', JSON.stringify({ types: vt?.types, cards: cardGroups(vt), max: maxDuration(vt) }))
+check('transition durations follow tier', motion === 'reduced' ? maxDuration(vt) === 0 : maxDuration(vt) > 0, `max ${maxDuration(vt)}ms`)
+await vtPage.locator('.pager a[href$="/work/ledger"], .pager a[href$="/work/ledger/"]').click()
+vt = await lastVT()
+check('pager card → next case study morphs', vt?.types.join() === 'nav-forward,card-ledger' && cardGroups(vt).join() === 'card-ledger', JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }))
+await vtPage.getByRole('link', { name: 'All case studies' }).click()
+vt = await lastVT()
+check('back link → home morphs back', vt?.types.join() === 'nav-back,card-ledger' && cardGroups(vt).join() === 'card-ledger', JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }))
+await vtPage.locator('header nav a').first().click()
+vt = await lastVT()
+check('header link cross-fades, no morph', vt?.types.join() === 'nav-fade' && cardGroups(vt).length === 0, JSON.stringify({ types: vt?.types, groups: vt?.groups }))
+await vtPage.close()
 
 check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
 await browser.close()

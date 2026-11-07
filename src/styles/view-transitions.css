@@ -1,0 +1,96 @@
+/*
+ * Route transitions (React <ViewTransition> + Link transitionTypes).
+ * Durations, easings and distances come from the motion tokens, so the tiers
+ * apply automatically: calm drops all travel (fades only, shorter), reduced
+ * sets every duration to 0 (instant swap).
+ */
+
+/* Clicks pass through to the live page while a transition runs. */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Everything outside named boundaries (header, footer) swaps instantly. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* The header is the fixed reference point: it never moves. */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Shared card morph. */
+::view-transition-group(.morph) {
+  z-index: 50;
+  animation-duration: var(--dur-slow);
+  animation-timing-function: var(--ease-standard);
+}
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  animation-duration: var(--dur-base);
+  animation-timing-function: var(--ease-standard);
+}
+
+/* Direction: content slides a short distance and fades; never a full-screen wipe. */
+::view-transition-old(.nav-forward),
+::view-transition-old(.nav-back) {
+  animation:
+    var(--dur-fast) var(--ease-in) both vt-fade-out,
+    var(--dur-slow) var(--ease-in-out) both vt-slide-out;
+}
+::view-transition-new(.nav-forward),
+::view-transition-new(.nav-back) {
+  animation:
+    var(--dur-base) var(--ease-out) var(--dur-fast) both vt-fade-in,
+    var(--dur-slow) var(--ease-in-out) both vt-slide-in;
+}
+::view-transition-old(.nav-forward) {
+  --vt-shift: calc(var(--travel-slide) * -1);
+}
+::view-transition-new(.nav-forward) {
+  --vt-shift: var(--travel-slide);
+}
+::view-transition-old(.nav-back) {
+  --vt-shift: var(--travel-slide);
+}
+::view-transition-new(.nav-back) {
+  --vt-shift: calc(var(--travel-slide) * -1);
+}
+
+/* Top-level pages: cross-fade only. */
+::view-transition-old(.nav-fade) {
+  animation: var(--dur-fast) var(--ease-in) both vt-fade-out;
+}
+::view-transition-new(.nav-fade) {
+  animation: var(--dur-base) var(--ease-out) var(--dur-instant) both vt-fade-in;
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-slide-in {
+  from {
+    translate: var(--vt-shift) 0;
+  }
+}
+@keyframes vt-slide-out {
+  to {
+    translate: var(--vt-shift) 0;
+  }
+}

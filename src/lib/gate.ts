@@ -68,7 +68,8 @@ export async function passwordMatches(input: string) {
 
 /** Only same-site paths; anything else goes home. */
 export function safeNextPath(value: unknown) {
-  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return '/'
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\'))
+    return '/'
   if (value === '/gate' || value.startsWith('/gate/') || value.startsWith('/gate?')) return '/'
   return value
 }

@@ -1,8 +1,40 @@
 [
-  { "title": "Contrast checker for print", "year": "2025", "kind": "Tool", "description": "Checks text and background pairs against print profiles, not just screens." },
-  { "title": "Variable type specimen", "year": "2025", "kind": "Experiment", "description": "A specimen page that shows a variable font across its weight axis on scroll-free controls." },
-  { "title": "Trail map tiles", "year": "2024", "kind": "Open source", "description": "A greyscale map style tuned for small screens in direct sunlight.", "href": "https://example.com/trail-tiles" },
-  { "title": "Meeting timer", "year": "2024", "kind": "Tool", "description": "A quiet countdown for workshops that changes tone, not colour, as time runs out." },
-  { "title": "Grid notebook", "year": "2023", "kind": "Experiment", "description": "Layout studies for long-form reading on narrow screens." },
-  { "title": "Form patterns", "year": "2022", "kind": "Writing", "description": "Notes on labels, errors and the order of fields in public-sector forms.", "href": "https://example.com/form-patterns" }
+  {
+    "title": "Contrast checker for print",
+    "year": "2025",
+    "kind": "Tool",
+    "description": "Checks text and background pairs against print profiles, not just screens."
+  },
+  {
+    "title": "Variable type specimen",
+    "year": "2025",
+    "kind": "Experiment",
+    "description": "A specimen page that shows a variable font across its weight axis on scroll-free controls."
+  },
+  {
+    "title": "Trail map tiles",
+    "year": "2024",
+    "kind": "Open source",
+    "description": "A greyscale map style tuned for small screens in direct sunlight.",
+    "href": "https://example.com/trail-tiles"
+  },
+  {
+    "title": "Meeting timer",
+    "year": "2024",
+    "kind": "Tool",
+    "description": "A quiet countdown for workshops that changes tone, not colour, as time runs out."
+  },
+  {
+    "title": "Grid notebook",
+    "year": "2023",
+    "kind": "Experiment",
+    "description": "Layout studies for long-form reading on narrow screens."
+  },
+  {
+    "title": "Form patterns",
+    "year": "2022",
+    "kind": "Writing",
+    "description": "Notes on labels, errors and the order of fields in public-sector forms.",
+    "href": "https://example.com/form-patterns"
+  }
 ]

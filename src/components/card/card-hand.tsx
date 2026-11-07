@@ -17,7 +17,12 @@ type Custom = { i: number; offset: number; spread: number; angle: number; step: 
  * place when the list scrolls into view.
  */
 const variants = {
-  rest: ({ i }: Custom) => ({ x: '0%', y: '0%', rotate: 0, transition: { ...spring.gentle, delay: i * stagger.cards } }),
+  rest: ({ i }: Custom) => ({
+    x: '0%',
+    y: '0%',
+    rotate: 0,
+    transition: { ...spring.gentle, delay: i * stagger.cards },
+  }),
   deck: ({ offset, spread, angle }: Custom) => ({
     x: `${-offset * spread}%`,
     y: '0%',
@@ -60,7 +65,13 @@ export function CardHand({ items, labelledBy }: { items: ReactNode[]; labelledBy
         const offset = i - (count - 1) / 2
         return (
           <li key={i} style={{ '--offset': offset, '--lift': Math.abs(offset) } as CSSProperties}>
-            <m.div className={styles.slot} custom={{ i, offset, ...layout }} variants={variants} initial={false} animate={phase}>
+            <m.div
+              className={styles.slot}
+              custom={{ i, offset, ...layout }}
+              variants={variants}
+              initial={false}
+              animate={phase}
+            >
               <div className={styles.lift}>{item}</div>
             </m.div>
           </li>

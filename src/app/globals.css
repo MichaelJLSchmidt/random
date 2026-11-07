@@ -1,5 +1,6 @@
 @import '../styles/tokens.css';
 @import '../styles/type.css';
+@import '../styles/view-transitions.css';
 
 /* Base */
 *,

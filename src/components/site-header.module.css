@@ -2,8 +2,8 @@
   position: sticky;
   top: 0;
   z-index: var(--z-header);
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
+  /* Opaque: view-transition snapshots cannot reproduce a backdrop blur. */
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
@@ -36,7 +36,9 @@
   background-size: 200% 200%;
 }
 
-.nav { display: contents; }
+.nav {
+  display: contents;
+}
 
 .list {
   display: flex;
@@ -62,7 +64,11 @@
   text-underline-offset: 0.4em;
 }
 
-.list a:hover { color: var(--text); }
+.list a:hover {
+  color: var(--text);
+}
 
 /* Locked site: the gate page shows no navigation. */
-:global(body:has([data-gate])) .nav { display: none; }
+:global(body:has([data-gate])) .nav {
+  display: none;
+}

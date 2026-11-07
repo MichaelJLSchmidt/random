@@ -8,10 +8,24 @@ const { chromium } = require('playwright')
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8')
 
 const [base = 'http://localhost:3000', ...flags] = process.argv.slice(2)
-const flag = (name) => flags.find((f) => f.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
+const flag = (name) =>
+  flags
+    .find((f) => f.startsWith(`--${name}=`))
+    ?.split('=')
+    .slice(1)
+    .join('=')
 const password = flag('password')
 const motion = flag('motion') ?? 'full'
-const paths = ['/', '/work/field-notes/', '/work/timetable/', '/work/ledger/', '/projects/', '/about/', '/contact/', '/missing-page/']
+const paths = [
+  '/',
+  '/work/field-notes/',
+  '/work/timetable/',
+  '/work/ledger/',
+  '/projects/',
+  '/about/',
+  '/contact/',
+  '/missing-page/',
+]
 
 const browser = await chromium.launch()
 const context = await browser.newContext({ reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference' })
@@ -50,7 +64,8 @@ function report(path, result) {
   console.log(`${violations.length === 0 ? 'ok  ' : 'FAIL'} ${path} (${result.passes.length} checks passed)`)
   for (const v of violations) {
     console.log(`     - ${v.id} [${v.impact}]: ${v.help}`)
-    for (const n of v.nodes.slice(0, 3)) console.log(`         ${n.target.join(' ')} :: ${n.failureSummary?.split('\n')[1]?.trim() ?? ''}`)
+    for (const n of v.nodes.slice(0, 3))
+      console.log(`         ${n.target.join(' ')} :: ${n.failureSummary?.split('\n')[1]?.trim() ?? ''}`)
   }
   return violations.length
 }

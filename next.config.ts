@@ -29,9 +29,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
-  ...(hasMotionPlus
-    ? {}
-    : { turbopack: { resolveAlias: { 'motion-plus': './src/motion/split-text-fallback.ts' } } }),
+  ...(hasMotionPlus ? {} : { turbopack: { resolveAlias: { 'motion-plus': './src/motion/split-text-fallback.ts' } } }),
   ...(staticExport
     ? {
         output: 'export',
@@ -42,9 +40,7 @@ const nextConfig: NextConfig = {
       }
     : {
         async headers() {
-          return gateOn
-            ? [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
-            : []
+          return gateOn ? [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }] : []
         },
       }),
 }

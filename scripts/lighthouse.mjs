@@ -25,13 +25,23 @@ for (const path of paths.length ? paths : ['/']) {
   const name = path.replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'home'
   const out = `${outDir}/${name}.json`
   const args = [
-    'lighthouse', url, '--quiet', '--output=json', `--output-path=${out}`,
+    'lighthouse',
+    url,
+    '--quiet',
+    '--output=json',
+    `--output-path=${out}`,
     '--only-categories=performance,accessibility,best-practices,seo',
     '--chrome-flags=--headless=new --no-sandbox',
     ...(cookie ? [`--extra-headers=${JSON.stringify({ Cookie: cookie })}`] : []),
   ]
-  const run = spawnSync('npx', args, { stdio: 'inherit', env: { ...process.env, CHROME_PATH: process.env.CHROME_PATH ?? '/opt/pw-browsers/chromium' } })
-  if (run.status !== 0) { failed = true; continue }
+  const run = spawnSync('npx', args, {
+    stdio: 'inherit',
+    env: { ...process.env, CHROME_PATH: process.env.CHROME_PATH ?? '/opt/pw-browsers/chromium' },
+  })
+  if (run.status !== 0) {
+    failed = true
+    continue
+  }
   const lhr = JSON.parse(readFileSync(out, 'utf8'))
   const a = lhr.audits
   const score = (k) => Math.round((lhr.categories[k]?.score ?? 0) * 100)

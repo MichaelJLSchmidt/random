@@ -4,8 +4,7 @@ import type { Motif as MotifName } from '@/lib/content'
 export function Motif({ name }: { name: MotifName }) {
   return (
     <svg viewBox="0 0 100 80" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-      {name === 'rings' &&
-        Array.from({ length: 11 }, (_, i) => <circle key={i} cx="72" cy="58" r={6 + i * 7} />)}
+      {name === 'rings' && Array.from({ length: 11 }, (_, i) => <circle key={i} cx="72" cy="58" r={6 + i * 7} />)}
       {name === 'grid' &&
         Array.from({ length: 9 }, (_, row) =>
           Array.from({ length: 12 }, (_, col) => (
