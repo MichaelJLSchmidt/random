@@ -2,6 +2,7 @@ import caseStudiesJson from '@content/case-studies.json'
 import contactJson from '@content/contact.json'
 import projectsJson from '@content/projects.json'
 import siteJson from '@content/site.json'
+import workshopsJson from '@content/workshops.json'
 
 export type Motif = 'rings' | 'grid' | 'waves'
 export type Theme = 'people-leadership' | 'platform' | 'service-delivery'
@@ -13,6 +14,8 @@ export type CaseStudy = {
   summary: string
   /** One large statement, filled word by word as it crosses the viewport. */
   statement: string
+  /** Printed along the card's long edge; readable when the card is tapped (turned 90°). */
+  tapLine: string
   year: string
   discipline: string
   motif: Motif
@@ -30,6 +33,7 @@ export type Project = {
 export const site = siteJson
 export const contact = contactJson
 export const projects: Project[] = projectsJson
+export const workshops: { title: string; howTo: string }[] = workshopsJson
 
 function validateCaseStudies(list: CaseStudy[]): CaseStudy[] {
   if (list.length !== 3) {

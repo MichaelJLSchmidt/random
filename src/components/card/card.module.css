@@ -121,3 +121,60 @@
 .foil {
   border-radius: inherit;
 }
+
+/* Tap egg: a line along the long edge, shown when the card is turned 90°. */
+.tapLine {
+  /* cqw, not cqi: in vertical writing the inline axis is the card's height. */
+  position: absolute;
+  top: 8cqw;
+  bottom: 8cqw;
+  left: 0.5cqw;
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: max(0.45rem, 2.5cqw);
+  line-height: 1;
+  letter-spacing: var(--tracking-mono);
+  text-align: center;
+  color: var(--text);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+:global([data-tapped]) .tapLine {
+  opacity: 1;
+}
+
+/* Rare pull: full-art foil back, and a small tag that stays on the face. */
+.rareTag {
+  display: none;
+  margin-left: 0.4em;
+}
+.rareChip {
+  display: none;
+}
+.card[data-rare] .rareTag {
+  display: inline;
+}
+.card[data-rare] .back [data-foil-layer] {
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.card[data-rare] .rareChip {
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: 6cqi;
+  translate: -50% 0;
+  padding: 1cqi 3cqi;
+  border-radius: 999px;
+  background: var(--grey-0);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: max(0.625rem, 4cqi);
+  letter-spacing: var(--tracking-mono);
+  white-space: nowrap;
+}

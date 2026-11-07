@@ -1,5 +1,6 @@
 import { glintText } from '@/motion/glint'
 import { duration } from '@/motion/tokens'
+import { buzz } from '@/eggs/haptics'
 
 /*
  * Pointer → cards and titles (loaded when the browser is idle). No React state:
@@ -67,7 +68,7 @@ export function startPointer() {
       hold.active = true
       swallowClick = true
       surface.dataset.foilActive = ''
-      navigator.vibrate?.(10)
+      buzz(10)
       if (full()) track(surface, event)
     }, duration.hold * 1000)
     hold = { surface, timer, x: event.clientX, y: event.clientY, active: false }

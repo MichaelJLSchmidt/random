@@ -2,7 +2,8 @@
 
 import { type MotionValue, useMotionValue, useTransform } from 'motion/react'
 import * as m from 'motion/react-m'
-import { type CSSProperties, type KeyboardEvent, type ReactNode, useEffect, useRef } from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { buzz } from '@/eggs/haptics'
 import { angle, fan, spring } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import styles from './layouts.module.css'
@@ -66,13 +67,45 @@ export function CardHand({
   const pan = useRef<{ start: number } | null>(null)
   const settling = useRef<{ stop: () => void } | null>(null)
   const total = items.length
+  // Mulligan: the order of the cards (indexes into `items`). Keys follow the
+  // card, so React moves the same DOM nodes (focus and styles go with them).
+  const [order, setOrder] = useState(() => items.map((_, i) => i))
+  const orderRef = useRef(order)
+  const committed = useRef<(() => void) | null>(null)
+  useLayoutEffect(() => {
+    orderRef.current = order
+    committed.current?.()
+    committed.current = null
+  }, [order])
+
+  useEffect(() => {
+    const onMulligan = () => {
+      const hand = list.current
+      const deck = document.querySelector<HTMLElement>('[data-deck]')
+      if (!hand || !deck) return
+      import('@/eggs/mulligan').then(({ mulligan }) =>
+        mulligan({
+          hand,
+          deck,
+          order: orderRef.current,
+          reorder: (next) =>
+            new Promise<void>((resolve) => {
+              committed.current = resolve
+              setOrder(next)
+            }),
+        }),
+      )
+    }
+    addEventListener('egg:mulligan', onMulligan)
+    return () => removeEventListener('egg:mulligan', onMulligan)
+  }, [])
 
   const isFan = () => matchMedia(COARSE).matches
   const step = () => (list.current?.querySelector<HTMLElement>('[data-foil-surface]')?.offsetWidth ?? 300) * fan.spread
 
   const snap = async (target: number) => {
     const to = Math.max(0, Math.min(total - 1, target))
-    if (to !== Math.round(pos.get())) navigator.vibrate?.(8)
+    if (to !== Math.round(pos.get())) buzz(8)
     settling.current?.stop()
     const tier = readTier()
     if (tier === 'reduced') return pos.set(to)
@@ -172,9 +205,9 @@ export function CardHand({
           setTimeout(() => list.current?.removeAttribute('data-panning'), 0)
         }}
       >
-        {items.map((item, i) => (
-          <FanCard key={i} pos={pos} index={i} count={total}>
-            {item}
+        {order.map((item, position) => (
+          <FanCard key={item} pos={pos} index={position} count={total}>
+            {items[item]}
           </FanCard>
         ))}
       </m.ol>

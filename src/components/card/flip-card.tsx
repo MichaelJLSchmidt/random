@@ -9,6 +9,7 @@ import type { Theme } from '@/lib/content'
 import { CardFrame } from './card'
 import { CardMorph } from './card-morph'
 import styles from './layouts.module.css'
+import { buzz } from '@/eggs/haptics'
 
 type Props = {
   slug: string
@@ -39,7 +40,7 @@ export function FlipCard({ slug, tint, front, back, noScript, labels }: Props) {
   const toggle = () => {
     const next = !flipped
     setFlipped(next)
-    navigator.vibrate?.(8)
+    buzz(8)
     announce(next ? labels.showingBack : labels.showingFront)
   }
 

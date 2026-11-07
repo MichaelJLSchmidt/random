@@ -496,6 +496,120 @@ async function transitionSuite({ device, motion, check, url, fresh }) {
   await c.close()
 }
 
+async function eggSuite({ device, motion, check, url, fresh }) {
+  const c = await fresh()
+  await c.addInitScript(() => localStorage.setItem('intro-seen', '1'))
+  const p = await c.newPage()
+  const live = () => p.evaluate(() => document.querySelector('[role=status]')?.textContent ?? '')
+  const order = () =>
+    p.$$eval('[data-hand] a[data-draw]', (a) => a.map((x) => x.dataset.draw.split('/').pop()).join(','))
+  await p.goto(url('/'), { waitUntil: 'networkidle' })
+  await p.locator('[data-hand]').scrollIntoViewIfNeeded()
+  await p.waitForTimeout(900)
+
+  if (device === 'desktop') {
+    await p.keyboard.press('d')
+    await p.waitForTimeout(1200)
+    const drawn = await p.locator('.workshop-card').count()
+    check('D draws a workshop card (announced)', drawn === 1 && /^Workshop card: /.test(await live()))
+    await p.keyboard.press('Escape')
+    await p.waitForTimeout(700)
+    check('Escape sends it back into the deck', (await p.locator('.workshop-card').count()) === 0)
+    const before = await order()
+    await p.keyboard.press('m')
+    await p.waitForTimeout(motion === 'full' ? 2200 : 900)
+    check(
+      'M deals the hand in a new order',
+      (await order()) !== before && /^Mulligan/.test(await live()),
+      `${before} → ${await order()}`,
+    )
+    await p.locator('[data-hand] a').first().focus()
+    await p.keyboard.press('t')
+    await p.waitForTimeout(700)
+    check(
+      'T taps the focused card and reads its edge line',
+      (await p.locator('[data-tapped]').count()) === 1 && /^Card tapped\. /.test(await live()),
+    )
+    await p.keyboard.press('t')
+    await p.waitForTimeout(500)
+    check('T again untaps it', (await p.locator('[data-tapped]').count()) === 0)
+    await p.keyboard.press('?')
+    await p.waitForTimeout(300)
+    check('? opens the shortcut sheet', await p.evaluate(() => document.querySelector('dialog.sheet')?.open === true))
+    await p.keyboard.press('Escape')
+    await p.keyboard.type('shuffle')
+    await p.waitForTimeout(200)
+    const riffling = await p.evaluate(
+      () => document.getAnimations().filter((a) => a.effect?.target?.matches?.('[data-foil-surface]')).length,
+    )
+    check(
+      'typing "shuffle" riffles the cards (full) and is announced',
+      (motion === 'full' ? riffling > 0 : riffling === 0) && /^Shuffled/.test(await live()),
+      `${riffling} riffling`,
+    )
+    await p.goto(url('/about/'), { waitUntil: 'networkidle' })
+    await p.waitForTimeout(500)
+    await p.locator('.portrait').hover()
+    await p.waitForTimeout(900)
+    const table = await p.evaluate(() => ({
+      open: document.querySelector('.table-scene')?.hasAttribute('data-open'),
+      inert: document.querySelector('#table-items')?.hasAttribute('inert'),
+      expanded: document.querySelector('.table-edge')?.getAttribute('aria-expanded'),
+    }))
+    check(
+      "hovering the portrait lays out what's on the table",
+      table.open && !table.inert && table.expanded === 'true',
+      JSON.stringify(table),
+    )
+  } else {
+    const deck = p.locator('[data-deck]')
+    await deck.scrollIntoViewIfNeeded()
+    await p.waitForTimeout(300)
+    const box = await deck.boundingBox()
+    const cdp = await c.newCDPSession(p)
+    const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+    // Long-press: Mulligan.
+    const before = await order()
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] })
+    await p.waitForTimeout(900)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await p.waitForTimeout(motion === 'full' ? 2300 : 900)
+    check(
+      'long-press on the deck is a Mulligan',
+      (await order()) !== before && (await p.locator('.workshop-card').count()) === 0,
+      `${before} → ${await order()}`,
+    )
+    // Swipe up: workshop card.
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [at] })
+    for (let i = 1; i <= 6; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: at.x, y: at.y - i * 12 }] })
+      await p.waitForTimeout(16)
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await p.waitForTimeout(1200)
+    check('swiping up on the deck draws a workshop card', (await p.locator('.workshop-card').count()) === 1)
+  }
+
+  await p.goto(url('/no-such-page/'), { waitUntil: 'networkidle' })
+  await p.waitForTimeout(motion === 'full' ? 2000 : 600)
+  const nf = await p.evaluate(() => ({
+    title: document.querySelector('main h1')?.textContent,
+    state: document.querySelector('.nf-flip')?.getAttribute('data-state'),
+    transform: getComputedStyle(document.querySelector('.nf-flip')).transform,
+  }))
+  const expected = { full: 'play', calm: 'fade', reduced: 'blank' }[motion]
+  check(
+    '404: the card ends on its blank face',
+    /isn.t in the deck/.test(nf.title ?? '') &&
+      nf.state === expected &&
+      /^(none|matrix\(1, 0, 0, 1, 0, 0\)|matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1\))$/.test(
+        nf.transform,
+      ),
+    JSON.stringify(nf),
+  )
+  await c.close()
+}
+
 // Later phases append their suites here.
-const suites = [typeSuite, introSuite, scrollSuite, hoverSuite, transitionSuite]
+const suites = [typeSuite, introSuite, scrollSuite, hoverSuite, transitionSuite, eggSuite]
 await main()

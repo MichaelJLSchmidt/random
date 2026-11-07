@@ -18,7 +18,7 @@ export default function HomePage() {
 
         <section className="section" aria-labelledby="work-heading">
           <SectionTitle id="work-heading">{site.home.workHeading}</SectionTitle>
-          <div className="table" data-reveal="">
+          <div className="table" data-reveal="" data-table="">
             <CardHand
               labelledBy="work-heading"
               positionLabel={site.home.positionLabel}
@@ -26,7 +26,7 @@ export default function HomePage() {
                 <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" flippable />
               ))}
             />
-            <DeckPile />
+            <DeckPile label={site.eggs.deckLabel} hint={site.eggs.deckHint} />
           </div>
           <p className="after-hand" data-reveal="">
             <Link href="/projects" className="link">

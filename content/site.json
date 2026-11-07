@@ -38,10 +38,10 @@
     "intro": "Smaller pieces of work, experiments and tools. Each line links to the project where there is something to see."
   },
   "notFound": {
-    "title": "Page not found",
+    "title": "This card isn't in the deck.",
     "body": "There is nothing at this address. It may have moved, or the link may be mistyped.",
-    "homeLink": "Go to the home page",
-    "deckLabel": "A face-down deck"
+    "homeLink": "Return to hand",
+    "randomPage": "Draw a random page"
   },
   "settings": {
     "heading": "Display",
@@ -64,7 +64,58 @@
   "homeLink": "Portfolio, home",
   "about": {
     "title": "About",
-    "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not."
+    "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not.",
+    "portraitAlt": "Portrait placeholder: a greyscale study of shapes",
+    "table": {
+      "label": "What's on the table",
+      "items": [
+        "A letterpress that prints one poster a year",
+        "A shelf of timetables from cities I have never visited",
+        "Walking boots that have done the whole coast path",
+        "A notebook of workshop formats that went wrong",
+        "Too many kinds of graph paper"
+      ]
+    }
   },
-  "introSkip": "Skip intro"
+  "introSkip": "Skip intro",
+  "eggs": {
+    "deckLabel": "Deck",
+    "deckHint": "Press D or swipe up to draw a workshop card. Long-press or press M for a mulligan.",
+    "mulliganDone": "Mulligan: the hand was shuffled and dealt in a new order.",
+    "workshopLabel": "Workshop card",
+    "workshopBack": "Back to deck",
+    "workshopBackDone": "Workshop card returned to the deck.",
+    "rareTag": "rare 1/16",
+    "tapped": "Card tapped.",
+    "untapped": "Card untapped.",
+    "shuffled": "Shuffled every card on the page.",
+    "shortcutsTitle": "Shortcuts",
+    "shortcutsClose": "Close",
+    "shortcuts": [
+      {
+        "keys": "M",
+        "what": "Mulligan: shuffle the hand and deal it again (home)"
+      },
+      {
+        "keys": "D",
+        "what": "Draw a workshop card from the deck (home)"
+      },
+      {
+        "keys": "T",
+        "what": "Tap the focused card to turn it sideways, again to untap"
+      },
+      {
+        "keys": "←  →",
+        "what": "Move between cards in the hand"
+      },
+      {
+        "keys": "?",
+        "what": "Show these shortcuts"
+      },
+      {
+        "keys": "shuffle",
+        "what": "Type it anywhere outside a field to riffle every card"
+      }
+    ]
+  }
 }

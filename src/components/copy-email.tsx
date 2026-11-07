@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { announce } from '@/components/live-region'
 import { glintText } from '@/motion/glint'
 import { GlintText } from './title-fill'
+import { buzz } from '@/eggs/haptics'
 
 type Props = { email: string; labels: { copy: string; copied: string; failed: string } }
 
@@ -15,7 +16,7 @@ export function CopyEmail({ email, labels }: Props) {
       await navigator.clipboard.writeText(email)
       const glintCopy = link.current?.querySelector<HTMLElement>('[data-glint-text]')
       if (glintCopy) glintText(glintCopy)
-      navigator.vibrate?.(12)
+      buzz(12)
       announce(labels.copied)
     } catch {
       announce(labels.failed)

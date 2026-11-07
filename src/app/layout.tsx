@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { DisplaySettings } from '@/components/display-settings'
 import { DrawHandler } from '@/components/draw-handler'
+import { Eggs } from '@/components/eggs'
 import { Interactions } from '@/components/interactions'
 import { LiveRegion } from '@/components/live-region'
 import { MotionProvider } from '@/components/motion-provider'
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PageMotion />
         <ScrollMotion />
         <DrawHandler />
+        <Eggs />
         <Interactions />
       </body>
     </html>

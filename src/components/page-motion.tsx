@@ -118,7 +118,7 @@ export function PageMotion() {
       }
       root.dataset.intro = 'playing'
       settle(duration.introTitle * time, stagger.words * time)
-      const { playIntro } = await import('@/motion/intro')
+      const { playIntro } = await import('@/motion/deal')
       if (cancelled || root.dataset.intro !== 'playing') return
       skip = playIntro({ hand, deck, onDone: endIntro }).skip
     }

@@ -1,19 +1,32 @@
 /*
  * Stand-in for the parts of motion-plus this site uses, for installs without
- * MOTION_TOKEN (next.config.ts aliases the module here). Same call shapes,
- * simpler behaviour.
+ * MOTION_TOKEN (next.config.ts aliases the module here and the type check maps
+ * it in tsconfig.fallback.json). Same call shapes, simpler behaviour.
  */
-export function splitText(element: Element, { wordClass = 'split-word' }: { wordClass?: string } = {}) {
-  const text = element.textContent ?? ''
-  element.textContent = ''
-  const words = text.split(' ').map((word, i, all) => {
-    const span = document.createElement('span')
-    span.className = wordClass
-    span.style.display = 'inline-block'
-    span.textContent = word
-    element.appendChild(span)
-    if (i < all.length - 1) element.appendChild(document.createTextNode(' '))
-    return span
+type TypewriterOptions = { speed?: 'slow' | 'normal' | 'fast' | number; cursorBlinkRepeat?: number }
+
+/** Types `text` into `target` one character at a time (no cursor). */
+export function typewriter(target: Element, text: string, options: TypewriterOptions = {}) {
+  const step =
+    typeof options.speed === 'number'
+      ? options.speed
+      : options.speed === 'fast'
+        ? 30
+        : options.speed === 'slow'
+          ? 130
+          : 75
+  let i = 0
+  let timer = 0
+  const finished = new Promise<void>((resolve) => {
+    const tick = () => {
+      target.textContent = text.slice(0, ++i)
+      if (i < text.length) timer = window.setTimeout(tick, step)
+      else resolve()
+    }
+    tick()
   })
-  return { chars: [] as HTMLSpanElement[], words, lines: [] as HTMLSpanElement[] }
+  return {
+    finished,
+    stop: () => clearTimeout(timer),
+  }
 }

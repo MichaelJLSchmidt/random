@@ -49,18 +49,15 @@ export const ease = {
   inOut: [0.65, 0, 0.35, 1],
 } as const
 
-/** Motion springs. `pointer` is for useSpring (no `type`). */
+/** Motion springs. */
 export const spring = {
   snappy: { type: 'spring', stiffness: 520, damping: 40, mass: 0.9 },
   gentle: { type: 'spring', stiffness: 220, damping: 28, mass: 1 },
   flip: { type: 'spring', stiffness: 240, damping: 24, mass: 1 },
-  pointer: { stiffness: 300, damping: 30, mass: 0.6 },
 } as const
 
 /** Seconds between siblings. */
 export const stagger = {
-  text: 0.035,
-  cards: 0.07,
   /** Word stagger of the first-visit h1 weight-in. */
   words: 0.045,
   /** Lines of a section title rising from their mask. */

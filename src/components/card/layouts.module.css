@@ -185,24 +185,22 @@
   width: fit-content;
 }
 
+.pileButton {
+  cursor: pointer;
+  touch-action: none;
+  border-radius: calc(var(--card-w) * 0.06);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.pileButton:focus-visible {
+  outline-offset: 6px;
+}
+
 .pileCard {
   grid-area: card;
   transform: translate(calc(var(--i) * -2px), calc(var(--i) * -2.5px)) rotate(calc((var(--i) - 1.5) * 1.4deg));
-}
-
-/* ---------- Deck (decorative pile of backs) ---------- */
-
-.deck {
-  --card-w: clamp(9rem, 26vw, 12rem);
-  display: grid;
-  grid-template-areas: 'card';
-  width: fit-content;
-}
-
-.deck > * {
-  grid-area: card;
-  transform: translate(calc(var(--i) * var(--deck-offset)), calc(var(--i) * var(--deck-offset) * -1))
-    rotate(calc((var(--i) - 1) * 2deg));
 }
 
 /* ---------- Flip ---------- */

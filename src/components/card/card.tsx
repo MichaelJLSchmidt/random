@@ -1,5 +1,5 @@
 import type { CaseStudy, Theme } from '@/lib/content'
-import { cardNumber } from '@/lib/content'
+import { cardNumber, site } from '@/lib/content'
 import { TitleFill } from '../title-fill'
 import styles from './card.module.css'
 import { BackPattern, Motif } from './motif'
@@ -22,7 +22,9 @@ export function CardFront({ study, index, headingLevel: Title = 'p', fill = fals
   return (
     <div className={`${styles.face} ${styles.front}`}>
       <div className={styles.topRow} aria-hidden="true">
-        <span>{cardNumber(index)}</span>
+        <span>
+          {cardNumber(index)} <span className={styles.rareTag}>{site.eggs.rareTag}</span>
+        </span>
         <span>{study.year}</span>
       </div>
       <Title className={styles.title}>{fill ? <TitleFill>{study.title}</TitleFill> : study.title}</Title>
@@ -33,6 +35,10 @@ export function CardFront({ study, index, headingLevel: Title = 'p', fill = fals
       <p className={styles.meta}>
         {study.discipline}, {study.year}
       </p>
+      {/* Printed along the long edge; readable once the card is tapped (turned 90°). */}
+      <span className={styles.tapLine} data-tap-line="" aria-hidden="true">
+        {study.tapLine}
+      </span>
     </div>
   )
 }
@@ -44,6 +50,7 @@ export function CardBack({ children }: { children?: React.ReactNode }) {
         <div className={styles.pattern} aria-hidden="true">
           <BackPattern />
           <span className={styles.foil} data-foil-layer aria-hidden="true" />
+          <span className={styles.rareChip}>{site.eggs.rareTag}</span>
         </div>
       )}
     </div>

@@ -2,6 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { buzz } from '@/eggs/haptics'
+import { trigger } from '@/eggs/registry'
 import { markDrawn } from '@/motion/draw-state'
 import { glint, stopGlint } from '@/motion/glint'
 import { draw, duration, ease } from '@/motion/tokens'
@@ -11,7 +13,8 @@ import { readTier } from '@/motion/use-tier'
  * Drawing a card (any link marked data-draw): the card lifts (y -24 px,
  * scale 1.04) and the Glint crosses it; only when the lift has finished does
  * the route morph start (router.push with the card's transition types). A
- * second click during the lift cancels it and nothing navigates.
+ * second click during the lift cancels it and nothing navigates; that double
+ * tap is the Tap easter egg (the card turns 90°).
  *   full: lift + Glint, then navigate   calm and reduced: navigate at once
  * Modified clicks (new tab, etc.) are left to the browser.
  */
@@ -42,8 +45,10 @@ export function DrawHandler() {
       event.preventDefault()
       event.stopPropagation()
       if (active) {
+        const same = active.link === link
         active.cancel()
         active = null
+        if (same) trigger('tap', link)
         return
       }
       const route = link.dataset.draw!
@@ -59,12 +64,12 @@ export function DrawHandler() {
         cancel: () => {
           cancelled = true
           stopGlint()
-          wrapper.getAnimations().forEach((a) => a.cancel())
-          wrapper.style.transform = ''
+          // Settle the lift but keep any tap rotation.
+          import('motion').then(({ animate }) => animate(wrapper, { y: 0, scale: 1 }, { duration: duration.fast }))
         },
       }
       active = entry
-      navigator.vibrate?.(10)
+      buzz(10)
       if (surface) glint(surface)
       import('motion').then(({ animate }) => {
         if (cancelled) return
@@ -85,9 +90,9 @@ export function DrawHandler() {
     }
   }, [router])
 
-  // A lifted card on a page we come back to settles again.
+  // A lifted card on a page we come back to settles again (taps are kept).
   useEffect(() => {
-    document.querySelectorAll<HTMLElement>('[data-draw-lift]').forEach((el) => {
+    document.querySelectorAll<HTMLElement>('[data-draw-lift]:not([data-tapped])').forEach((el) => {
       el.getAnimations().forEach((a) => a.cancel())
       el.style.transform = ''
     })

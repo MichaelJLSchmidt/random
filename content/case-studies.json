@@ -9,11 +9,24 @@
     "discipline": "People leadership",
     "motif": "rings",
     "facts": [
-      { "label": "Role", "value": "Head of design" },
-      { "label": "Duration", "value": "2 years" },
-      { "label": "Team", "value": "4 to 18 people" },
-      { "label": "Scope", "value": "3 product areas" }
-    ]
+      {
+        "label": "Role",
+        "value": "Head of design"
+      },
+      {
+        "label": "Duration",
+        "value": "2 years"
+      },
+      {
+        "label": "Team",
+        "value": "4 to 18 people"
+      },
+      {
+        "label": "Scope",
+        "value": "3 product areas"
+      }
+    ],
+    "tapLine": "The first critique ritual was drawn on a napkin."
   },
   {
     "slug": "shared-foundations",
@@ -25,11 +38,24 @@
     "discipline": "Platform",
     "motif": "grid",
     "facts": [
-      { "label": "Role", "value": "Design and platform lead" },
-      { "label": "Duration", "value": "14 months" },
-      { "label": "Teams", "value": "12 building on it" },
-      { "label": "Stack", "value": "React, tokens, CI" }
-    ]
+      {
+        "label": "Role",
+        "value": "Design and platform lead"
+      },
+      {
+        "label": "Duration",
+        "value": "14 months"
+      },
+      {
+        "label": "Teams",
+        "value": "12 building on it"
+      },
+      {
+        "label": "Stack",
+        "value": "React, tokens, CI"
+      }
+    ],
+    "tapLine": "The button component has 214 tests and one joke."
   },
   {
     "slug": "front-door",
@@ -41,10 +67,23 @@
     "discipline": "Service delivery",
     "motif": "waves",
     "facts": [
-      { "label": "Role", "value": "Service design lead" },
-      { "label": "Duration", "value": "9 months" },
-      { "label": "Team", "value": "7 people" },
-      { "label": "Channels", "value": "Web, phone, counter" }
-    ]
+      {
+        "label": "Role",
+        "value": "Service design lead"
+      },
+      {
+        "label": "Duration",
+        "value": "9 months"
+      },
+      {
+        "label": "Team",
+        "value": "7 people"
+      },
+      {
+        "label": "Channels",
+        "value": "Web, phone, counter"
+      }
+    ],
+    "tapLine": "The best question we removed was asked for 11 years."
   }
 ]
