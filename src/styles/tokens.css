@@ -39,22 +39,22 @@
   --focus: var(--grey-900);
 
   /* Foil (decorative layers only, never behind text) */
-  --foil-gradient: linear-gradient(
+  --foil-gradient: repeating-linear-gradient(
     115deg,
     #a3e6ff 0%,
-    #c9b8ff 16%,
-    #ffbde8 32%,
-    #ffe8ad 48%,
-    #b6ffd8 64%,
-    #a3e6ff 80%,
-    #c9b8ff 100%
+    #c9b8ff 5%,
+    #ffbde8 10%,
+    #ffe8ad 15%,
+    #b6ffd8 20%,
+    #a3e6ff 25%
   );
   --foil-sheen: repeating-linear-gradient(
     65deg,
     rgb(255 255 255 / 0) 0 6%,
-    rgb(255 255 255 / 0.35) 9%,
+    rgb(255 255 255 / 0.5) 9%,
     rgb(255 255 255 / 0) 12% 18%
   );
+  --foil-blend: multiply;
   /* Flat fallback when foil is disabled */
   --accent: #b9c3ff;
 
@@ -114,14 +114,16 @@
   --z-skip: 100;
 }
 
-/* Foil is off by user choice, in forced colours and for high-contrast requests. */
+/* Foil off (user choice or high-contrast request): one flat accent, no sheen, no motion. */
 :root[data-foil='off'] {
   --foil-gradient: linear-gradient(var(--accent), var(--accent));
   --foil-sheen: none;
+  --foil-blend: multiply;
 }
-@media (forced-colors: active), (prefers-contrast: more) {
+@media (prefers-contrast: more) {
   :root {
     --foil-gradient: linear-gradient(var(--accent), var(--accent));
     --foil-sheen: none;
+    --foil-blend: multiply;
   }
 }

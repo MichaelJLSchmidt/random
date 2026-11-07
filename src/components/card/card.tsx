@@ -47,5 +47,9 @@ export function CardBack({ children }: { children?: React.ReactNode }) {
 
 /** The physical card: ratio, surface, border and container units for its contents. */
 export function CardFrame({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`${styles.card} ${className}`}>{children}</div>
+  return (
+    <div className={`${styles.card} ${className}`} data-foil-surface>
+      {children}
+    </div>
+  )
 }

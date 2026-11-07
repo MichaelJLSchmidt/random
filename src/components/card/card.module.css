@@ -122,20 +122,18 @@
   width: 100%;
   height: 100%;
   fill: none;
-  stroke: var(--grey-300);
+  stroke: var(--grey-600);
   stroke-width: 0.5;
 }
 
 .pattern svg :global(.mark) {
-  fill: var(--grey-400);
+  fill: var(--grey-800);
   stroke: none;
 }
 
-/* Foil layer slot (styled in foil.css). */
+/* Foil layer slot: styled globally in foil.css via [data-foil-layer]. */
 .foil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  border-radius: inherit;
 }
 
 /* Hover and focus on a linked card: weight only on the title. */

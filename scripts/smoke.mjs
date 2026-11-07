@@ -19,7 +19,8 @@ const context = await browser.newContext({
   reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference',
   viewport: { width: 1280, height: 900 },
 })
-if (motion === 'calm') await context.addInitScript(() => localStorage.setItem('motion', 'calm'))
+if (motion === 'calm')
+  await context.addInitScript(() => localStorage.getItem('motion') || localStorage.setItem('motion', 'calm'))
 const page = await context.newPage()
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
@@ -143,6 +144,53 @@ check(
 )
 await short.close()
 
+// Foil: pointer writes CSS variables (full only); ambient drift runs only in full.
+await page.goto(root, { waitUntil: 'networkidle' })
+const middle = page.locator('main ol > li').nth(1).locator('[data-foil-surface]')
+await middle.scrollIntoViewIfNeeded()
+const box = await middle.boundingBox()
+await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.6)
+await page.mouse.move(box.x + box.width * 0.25, box.y + box.height * 0.65)
+await page.waitForTimeout(200)
+const foil = await middle.evaluate((el) => ({
+  x: el.style.getPropertyValue('--foil-x'),
+  play: getComputedStyle(el.querySelector('[data-foil-layer]'), '::before').animationPlayState,
+}))
+check(
+  'foil follows pointer and drifts per tier',
+  motion === 'full' ? foil.x !== '' && foil.play === 'running' : foil.x === '' && foil.play === 'paused',
+  JSON.stringify(foil),
+)
+await page.mouse.move(0, 0)
+
+// Settings: native switches, applied to <html> at once and kept after reload.
+const calmSwitch = page.getByRole('switch', { name: 'Calm motion' })
+const foilSwitch = page.getByRole('switch', { name: 'Foil effect' })
+check('settings switches exposed', (await calmSwitch.count()) === 1 && (await foilSwitch.count()) === 1)
+if (motion === 'reduced') {
+  check('calm switch locked under reduced motion', (await calmSwitch.isDisabled()) && (await calmSwitch.isChecked()))
+} else {
+  await calmSwitch.click()
+  const flipped = motion === 'full' ? 'calm' : 'full'
+  check('calm switch changes tier', (await page.getAttribute('html', 'data-motion')) === flipped)
+  await page.reload({ waitUntil: 'networkidle' })
+  check('calm choice survives reload (pre-paint)', (await page.getAttribute('html', 'data-motion')) === flipped)
+  await page.getByRole('switch', { name: 'Calm motion' }).click()
+}
+await page.getByRole('switch', { name: 'Foil effect' }).click()
+await page.waitForTimeout(150)
+const off = await page.evaluate(() => ({
+  attr: document.documentElement.dataset.foil,
+  bg: getComputedStyle(document.querySelector('[data-foil-layer]'), '::before').backgroundImage,
+  live: document.querySelector('[role=status]')?.textContent,
+}))
+check(
+  'foil off falls back to flat accent',
+  off.attr === 'off' && /^linear-gradient\(rgb\(185, 195, 255\)/.test(off.bg) && off.live === 'Foil effect off',
+  JSON.stringify(off).slice(0, 140),
+)
+await page.getByRole('switch', { name: 'Foil effect' }).click()
+
 // View transitions: record types and which pseudo-element groups animate.
 await context.addInitScript(() => {
   window.__vt = []
@@ -152,14 +200,16 @@ await context.addInitScript(() => {
     const t = original(arg)
     const entry = { types: [...(arg?.types ?? [])], groups: [], durations: [] }
     window.__vt.push(entry)
-    t.ready.then(() => {
-      for (const a of document.getAnimations()) {
-        const pe = a.effect?.pseudoElement ?? ''
-        const m = pe.match(/::view-transition-group\((.+)\)/)
-        if (m && !entry.groups.includes(m[1])) entry.groups.push(m[1])
-        if (pe) entry.durations.push(a.effect.getComputedTiming().duration)
-      }
-    }).catch(() => {})
+    t.ready
+      .then(() => {
+        for (const a of document.getAnimations()) {
+          const pe = a.effect?.pseudoElement ?? ''
+          const m = pe.match(/::view-transition-group\((.+)\)/)
+          if (m && !entry.groups.includes(m[1])) entry.groups.push(m[1])
+          if (pe.startsWith('::view-transition')) entry.durations.push(a.effect.getComputedTiming().duration)
+        }
+      })
+      .catch(() => {})
     return t
   }
 })
@@ -173,17 +223,37 @@ await vtPage.goto(root, { waitUntil: 'networkidle' })
 await vtPage.locator('a[data-return-focus$="/work/timetable"]').click()
 let vt = await lastVT()
 const maxDuration = (v) => Math.max(0, ...(v?.durations ?? []))
-check('card → case study: only that card morphs', vt?.types.join() === 'nav-forward,card-timetable' && cardGroups(vt).join() === 'card-timetable', JSON.stringify({ types: vt?.types, cards: cardGroups(vt), max: maxDuration(vt) }))
-check('transition durations follow tier', motion === 'reduced' ? maxDuration(vt) === 0 : maxDuration(vt) > 0, `max ${maxDuration(vt)}ms`)
+check(
+  'card → case study: only that card morphs',
+  vt?.types.join() === 'nav-forward,card-timetable' && cardGroups(vt).join() === 'card-timetable',
+  JSON.stringify({ types: vt?.types, cards: cardGroups(vt), max: maxDuration(vt) }),
+)
+check(
+  'transition durations follow tier',
+  motion === 'reduced' ? maxDuration(vt) === 0 : maxDuration(vt) > 0,
+  `max ${maxDuration(vt)}ms`,
+)
 await vtPage.locator('.pager a[href$="/work/ledger"], .pager a[href$="/work/ledger/"]').click()
 vt = await lastVT()
-check('pager card → next case study morphs', vt?.types.join() === 'nav-forward,card-ledger' && cardGroups(vt).join() === 'card-ledger', JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }))
+check(
+  'pager card → next case study morphs',
+  vt?.types.join() === 'nav-forward,card-ledger' && cardGroups(vt).join() === 'card-ledger',
+  JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }),
+)
 await vtPage.getByRole('link', { name: 'All case studies' }).click()
 vt = await lastVT()
-check('back link → home morphs back', vt?.types.join() === 'nav-back,card-ledger' && cardGroups(vt).join() === 'card-ledger', JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }))
+check(
+  'back link → home morphs back',
+  vt?.types.join() === 'nav-back,card-ledger' && cardGroups(vt).join() === 'card-ledger',
+  JSON.stringify({ types: vt?.types, cards: cardGroups(vt) }),
+)
 await vtPage.locator('header nav a').first().click()
 vt = await lastVT()
-check('header link cross-fades, no morph', vt?.types.join() === 'nav-fade' && cardGroups(vt).length === 0, JSON.stringify({ types: vt?.types, groups: vt?.groups }))
+check(
+  'header link cross-fades, no morph',
+  vt?.types.join() === 'nav-fade' && cardGroups(vt).length === 0,
+  JSON.stringify({ types: vt?.types, groups: vt?.groups }),
+)
 await vtPage.close()
 
 check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))

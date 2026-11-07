@@ -33,7 +33,7 @@
   aspect-ratio: var(--card-ratio);
   border-radius: 2px;
   background: var(--foil-gradient);
-  background-size: 200% 200%;
+  background-size: 300% 300%;
 }
 
 .nav {

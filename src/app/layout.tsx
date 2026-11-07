@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import { DisplaySettings } from '@/components/display-settings'
+import { FoilPointer } from '@/components/foil-pointer'
 import { LiveRegion } from '@/components/live-region'
 import { MotionProvider } from '@/components/motion-provider'
 import { RouteFocus } from '@/components/route-focus'
@@ -45,10 +47,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="main" tabIndex={-1}>
             {children}
           </main>
-          <SiteFooter />
+          <SiteFooter>
+            <DisplaySettings labels={site.settings} />
+          </SiteFooter>
         </MotionProvider>
         <LiveRegion />
         <RouteFocus />
+        <FoilPointer />
       </body>
     </html>
   )
