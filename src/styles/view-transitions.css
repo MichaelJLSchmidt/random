@@ -1,1 +1,187 @@
-/* View transitions (written in the play/return/switch phase). */
+/*
+ * View transitions for play / return / switch / nav. Classes come from the
+ * React <ViewTransition> maps in src/motion/transitions.ts; every map has a
+ * default, so browser back / forward (no transition type) gets the same
+ * morphs. Durations are tier-scaled custom properties (reduced: near-instant;
+ * calm: travel distances are 0, so exits become fades). Nothing here wipes
+ * across the page: colour changes happen in the background field.
+ */
+
+/* The root holds the live background field: no snapshot, no cross-fade. */
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* Persistent chrome stays live and still. */
+::view-transition-group(site-header),
+::view-transition-group(hand),
+::view-transition-group(hand-rail) {
+  animation: none;
+}
+::view-transition-old(site-header),
+::view-transition-old(hand),
+::view-transition-old(hand-rail) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(hand),
+::view-transition-new(hand-rail) {
+  animation: none;
+}
+::view-transition-group(site-footer) {
+  animation: none;
+}
+::view-transition-old(site-footer) {
+  animation: vt-fade-out var(--dur-exit-return) var(--ease-in) both;
+}
+::view-transition-new(site-footer) {
+  animation: vt-fade-in var(--dur-fast) var(--ease-out-soft) var(--dur-exit-return) both;
+}
+
+/* ---------- Card morphs: hand card <-> full-bleed hero ---------- */
+::view-transition-group(.card-zoom),
+::view-transition-group(.card-switch),
+::view-transition-group(.card-return),
+::view-transition-group(.title-zoom),
+::view-transition-group(.title-switch),
+::view-transition-group(.title-return) {
+  z-index: 2;
+  animation-fill-mode: both;
+}
+::view-transition-group(.title-zoom),
+::view-transition-group(.title-switch),
+::view-transition-group(.title-return) {
+  z-index: 3;
+}
+
+/* Play: 580 ms ease-zoom; old fades out over 0-60%, new fades in over 30-100%. */
+::view-transition-group(.card-zoom),
+::view-transition-group(.title-zoom) {
+  animation-duration: var(--dur-zoom);
+  animation-timing-function: var(--ease-zoom);
+}
+::view-transition-old(.card-zoom),
+::view-transition-old(.title-zoom) {
+  animation: vt-out-60 var(--dur-zoom) linear both;
+}
+::view-transition-new(.card-zoom),
+::view-transition-new(.title-zoom) {
+  animation: vt-in-30 var(--dur-zoom) linear both;
+}
+
+/* Switch: the new card follows the outgoing one by 40 ms, over 560 ms. */
+::view-transition-group(.card-switch),
+::view-transition-group(.title-switch) {
+  animation-duration: var(--dur-switch-in);
+  animation-delay: var(--dur-switch-delay);
+  animation-timing-function: var(--ease-zoom);
+}
+::view-transition-old(.card-switch),
+::view-transition-old(.title-switch) {
+  animation: vt-out-60 var(--dur-switch-in) linear var(--dur-switch-delay) both;
+}
+::view-transition-new(.card-switch),
+::view-transition-new(.title-switch) {
+  animation: vt-in-30 var(--dur-switch-in) linear var(--dur-switch-delay) both;
+}
+
+/* Return: 520 ms ease-return into the slot. */
+::view-transition-group(.card-return),
+::view-transition-group(.title-return) {
+  animation-duration: var(--dur-return);
+  animation-timing-function: var(--ease-return);
+}
+::view-transition-old(.card-return),
+::view-transition-old(.title-return) {
+  animation: vt-out-60 var(--dur-return) linear both;
+}
+::view-transition-new(.card-return),
+::view-transition-new(.title-return) {
+  animation: vt-in-30 var(--dur-return) linear both;
+}
+
+/* Card and hero differ in shape: both images fill the morphing box. */
+::view-transition-old(.card-zoom),
+::view-transition-new(.card-zoom),
+::view-transition-old(.card-switch),
+::view-transition-new(.card-switch),
+::view-transition-old(.card-return),
+::view-transition-new(.card-return) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Page content ---------- */
+/* Play: old content slides 24px down and fades (220 ms ease-in); never a plain fade. */
+::view-transition-old(.page-exit-play) {
+  --vt-dist: var(--travel-exit-play);
+  animation: vt-exit-y var(--dur-exit-play) var(--ease-in) both;
+}
+/* Return: detail content leaves 20px down (200 ms). */
+::view-transition-old(.page-exit-return) {
+  --vt-dist: var(--travel-exit-return);
+  animation: vt-exit-y var(--dur-exit-return) var(--ease-in) both;
+}
+/* Switch: the open page leaves 24px to the left (200 ms). */
+::view-transition-old(.page-exit-switch) {
+  --vt-dist: calc(var(--travel-exit-switch) * -1);
+  animation: vt-exit-x var(--dur-exit-switch) var(--ease-in) both;
+}
+/* New content arrives once the old has gone; its sections then reveal on their own. */
+::view-transition-new(.page-enter-play) {
+  animation: vt-fade-in var(--dur-exit-play) var(--ease-out-soft) var(--dur-exit-play) both;
+}
+::view-transition-new(.page-enter-return) {
+  animation: vt-fade-in var(--dur-exit-return) var(--ease-out-soft) var(--dur-exit-return) both;
+}
+/* Other links (About, Contact, More projects): a short cross-fade. */
+::view-transition-old(.page-fade) {
+  animation: vt-fade-out var(--dur-exit-return) var(--ease-in) both;
+}
+::view-transition-new(.page-fade) {
+  animation: vt-fade-in var(--dur-exit-return) var(--ease-out-soft) var(--dur-exit-return) both;
+}
+
+@keyframes vt-out-60 {
+  0% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes vt-in-30 {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes vt-exit-y {
+  to {
+    opacity: 0;
+    translate: 0 var(--vt-dist);
+  }
+}
+@keyframes vt-exit-x {
+  to {
+    opacity: 0;
+    translate: var(--vt-dist) 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}

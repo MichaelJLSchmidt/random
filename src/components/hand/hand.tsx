@@ -1,11 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { type CSSProperties, useEffect, useLayoutEffect, useRef } from 'react'
 import { cardForPath, handCards, handLabels } from '@/lib/cards'
+import { play, registerNavigate, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
+import { NAV } from '@/motion/transitions'
+import '@/motion/view-transition'
 import { CardBack, CardFace } from './card-face'
 
 /** Outer cards sit a little lower: the hand's arc (px at desktop size). */
@@ -29,6 +32,7 @@ export function Hand() {
   const path = normalise(usePathname())
   const home = path === '/'
   const active = cardForPath(path)?.id ?? null
+  const router = useRouter()
   const root = useRef<HTMLElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
   // Roving tabindex: one tab stop for the whole hand, on the open card if any.
@@ -36,6 +40,28 @@ export function Hand() {
   const lastActive = useRef(active)
   if (active && lastActive.current !== active) roving.current = active
   lastActive.current = active
+
+  // Navigation for play / return, prefetch of every card route, Escape returns.
+  useEffect(() => {
+    registerNavigate((href, types) => router.push(href, { transitionTypes: types }))
+    for (const card of handCards) router.prefetch(card.href)
+    router.prefetch('/projects')
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || !table.get().activeCard) return
+      if (document.querySelector(':popover-open, dialog[open]')) return
+      returnHome('/')
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      registerNavigate(null)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [router])
+
+  // Inside the view transition's update: the lifted card drops back as the ghost.
+  useLayoutEffect(() => {
+    settleLift()
+  }, [path])
 
   // Slots, hover intent, keyboard.
   useEffect(() => {
@@ -170,6 +196,12 @@ export function Hand() {
       e.preventDefault()
     }
 
+    let moving = 0
+    const onBeforeToggle = () => {
+      clearTimeout(moving)
+      nav.dataset.sheetMoving = ''
+      moving = window.setTimeout(() => delete nav.dataset.sheetMoving, duration.sheet * 1000 + 100)
+    }
     const onToggle = (e: Event) => {
       const open = (e as ToggleEvent).newState === 'open'
       table.setSheet(open)
@@ -190,6 +222,7 @@ export function Hand() {
     rail.addEventListener('pointerup', onUp)
     rail.addEventListener('pointercancel', onUp)
     rail.addEventListener('click', onClick)
+    pop.addEventListener('beforetoggle', onBeforeToggle)
     pop.addEventListener('toggle', onToggle)
     wide.addEventListener('change', onWide)
     return () => {
@@ -199,6 +232,8 @@ export function Hand() {
       rail.removeEventListener('pointerup', onUp)
       rail.removeEventListener('pointercancel', onUp)
       rail.removeEventListener('click', onClick)
+      clearTimeout(moving)
+      pop.removeEventListener('beforetoggle', onBeforeToggle)
       pop.removeEventListener('toggle', onToggle)
       wide.removeEventListener('change', onWide)
     }
@@ -246,6 +281,13 @@ export function Hand() {
                   data-roving={card.id}
                   tabIndex={roving.current === card.id ? 0 : -1}
                   aria-current={card.id === active ? 'page' : undefined}
+                  onNavigate={(e) => {
+                    if (card.id === active) {
+                      // The open card: back to the top of its page.
+                      e.preventDefault()
+                      scrollTo({ top: 0, behavior: table.get().tier === 'full' ? 'smooth' : 'auto' })
+                    } else if (play(card.id, card.href)) e.preventDefault()
+                  }}
                 >
                   {card.id === active ? (
                     <span className="hand-ghost">
@@ -264,6 +306,7 @@ export function Hand() {
             className="hand-deck"
             data-roving={DECK}
             tabIndex={roving.current === DECK ? 0 : -1}
+            transitionTypes={[NAV]}
             aria-current={path === '/projects' ? 'page' : undefined}
           >
             <span className="deck-stack">

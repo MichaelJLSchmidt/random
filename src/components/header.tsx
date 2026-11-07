@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cardForPath } from '@/lib/cards'
 import { site } from '@/lib/content'
+import { table } from '@/motion/table-store'
 import { NAV, RETURN } from '@/motion/transitions'
 import styles from './header.module.css'
 
@@ -19,7 +20,7 @@ export function Header() {
         className={styles.wordmark}
         aria-label={site.header.homeLabel}
         transitionTypes={[onCard ? RETURN : NAV]}
-        data-return=""
+        onNavigate={() => onCard && table.returnHome('/')}
       >
         {site.name}
       </Link>
@@ -27,7 +28,7 @@ export function Header() {
         <ul>
           {onCard && (
             <li>
-              <Link href="/" transitionTypes={[RETURN]} data-return="">
+              <Link href="/" transitionTypes={[RETURN]} onNavigate={() => table.returnHome('/')}>
                 <span className="link">{site.header.back}</span>
               </Link>
             </li>

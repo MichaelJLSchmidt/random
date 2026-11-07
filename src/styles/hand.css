@@ -37,6 +37,8 @@
   perspective: 1200px;
   perspective-origin: 50% 100%;
   pointer-events: none;
+  /* Live through navigations (see view-transitions.css). */
+  view-transition-name: hand;
 }
 .hand-row {
   position: relative;
@@ -78,7 +80,7 @@
   position: absolute;
   inset: 0;
   transform-origin: 50% 100%;
-  translate: var(--sx, 0px) calc(var(--dy) * var(--arc-k));
+  translate: calc(var(--sx, 0px) + var(--gap, 0px)) calc(var(--dy) * var(--arc-k));
   rotate: calc(var(--r) * var(--rot-k));
   transition:
     translate var(--spring-hover-dur) var(--spring-hover),
@@ -89,6 +91,15 @@
 .hand-deck:focus-visible {
   outline: 2px solid var(--id-accent);
   outline-offset: 3px;
+}
+
+/* Play: the lifted card rides above the hand while its siblings close the gap (280 ms). */
+.hand-slot[data-lifting] {
+  z-index: 10;
+}
+.hand-row[data-closing] .hand-card {
+  transition-duration: var(--dur-gap);
+  transition-timing-function: var(--ease-out-soft);
 }
 
 /* Lift on hover (fine pointers) and keyboard focus; neighbours spread ±12px. */
@@ -189,6 +200,13 @@
   letter-spacing: var(--tracking-mono);
   text-transform: uppercase;
   color: var(--id-accent);
+  /* Appears once the played card has left the slot. */
+  animation: ghost-in var(--dur-fast) var(--ease-out-soft) var(--dur-exit-play) both;
+}
+@keyframes ghost-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* ---------- Card back and the "More projects" stack ---------- */
@@ -291,6 +309,7 @@
   }
 
   .hand:not([data-home]) .hand-rail {
+    view-transition-name: hand-rail;
     position: fixed;
     inset: auto 0 0;
     display: flex;
@@ -351,10 +370,6 @@
     perspective: none;
     pointer-events: auto;
     translate: 0 100%;
-    transition:
-      translate var(--dur-sheet) var(--ease-out-soft),
-      display var(--dur-sheet) allow-discrete,
-      overlay var(--dur-sheet) allow-discrete;
     --cw: min(23vw, 112px);
     --ch: calc(var(--cw) * 184 / 132);
     --overlap: 10px;
@@ -364,6 +379,13 @@
   }
   .hand:not([data-home]) .hand-fan:not(:popover-open) {
     display: none;
+  }
+  /* Slide only while the sheet itself opens or closes, not when the layout changes on navigation. */
+  .hand[data-sheet-moving]:not([data-home]) .hand-fan {
+    transition:
+      translate var(--dur-sheet) var(--ease-out-soft),
+      display var(--dur-sheet) allow-discrete,
+      overlay var(--dur-sheet) allow-discrete;
   }
   .hand:not([data-home]) .hand-fan:popover-open {
     translate: 0 0;

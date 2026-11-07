@@ -29,3 +29,13 @@ export const pageEnter = {
   [NAV]: 'page-fade',
   default: 'page-enter-return',
 }
+
+/*
+ * Card and title morphs. React takes the class from the element that mounts,
+ * so the hero's map times play / switch and the hand card's map times every
+ * return (Back, Escape, wordmark, browser back, leaving for another page).
+ */
+export const heroShare = { [SWITCH]: 'card-switch', default: 'card-zoom' }
+export const heroTitleShare = { [SWITCH]: 'title-switch', default: 'title-zoom' }
+export const handShare = { default: 'card-return' }
+export const handTitleShare = { default: 'title-return' }
