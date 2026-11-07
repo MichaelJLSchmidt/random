@@ -295,7 +295,11 @@ export function Hand() {
                       <span className="sr-only">{card.title}</span>
                     </span>
                   ) : (
-                    <CardFace card={card} />
+                    <>
+                      <CardFace card={card} />
+                      {/* Seen only while the card flips during the first-visit draw. */}
+                      <CardBack />
+                    </>
                   )}
                 </Link>
               </li>

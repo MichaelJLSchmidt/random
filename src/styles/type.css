@@ -61,6 +61,7 @@ time,
  * fixed from first paint. Words clip their own box for the line-mask entrances.
  */
 .wt {
+  --opsz: var(--opsz-final, var(--opsz-end));
   font-weight: var(--wght-final);
   font-variation-settings: 'opsz' var(--opsz-final, var(--opsz-end));
 }

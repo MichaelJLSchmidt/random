@@ -1,5 +1,6 @@
 import { glacierLines, palette, type Identity } from '@/design/palette'
 import { cardById } from '@/lib/cards'
+import { INTRO_DONE } from '@/motion/preferences'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F } from '@/motion/tokens'
 import { CssField } from './field-css'
@@ -157,6 +158,10 @@ export class FieldEngine {
     // The route sync (a child effect) may already have set the first target.
     this.applyField({ ...table.get().field, kind: 'instant' })
     this.offs.push(table.subscribe((s, p) => this.onTable(s, p)))
+    // A skipped intro ends the fade from black at once.
+    const onIntroDone = () => this.go('fade', [1], 0, 'linear')
+    addEventListener(INTRO_DONE, onIntroDone)
+    this.offs.push(() => removeEventListener(INTRO_DONE, onIntroDone))
     const onVisibility = () => this.setPaused()
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))

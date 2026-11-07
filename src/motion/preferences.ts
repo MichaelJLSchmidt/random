@@ -16,6 +16,8 @@ export const PREFS_EVENT = 'prefs-change'
 export const MOTION_KEY = 'motion'
 /** sessionStorage: set once the home draw sequence has played in this session. */
 export const INTRO_KEY = 'table-drawn'
+/** Fired when the first-visit intro completes or is skipped (the field finishes its fade-in). */
+export const INTRO_DONE = 'table:intro-done'
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
 export const prefsScript = (fields: Record<string, string>) =>

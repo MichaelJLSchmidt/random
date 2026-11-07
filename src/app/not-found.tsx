@@ -11,7 +11,7 @@ export default function NotFound() {
   return (
     <PageTransition>
       <div className="page not-found" data-identity="ink">
-        <div className="discard" aria-hidden="true">
+        <div className="discard" aria-hidden="true" data-reveal="discard" data-order="title">
           <span className="discard-zone" />
           <span className="discard-card" data-discard="" />
         </div>

@@ -266,6 +266,12 @@ export function motionCss(): string {
     `--opsz-start:${opsz.start}`,
     `--opsz-end:${opsz.end}`,
     ...Object.entries(stagger).map(([k, v]) => `--stagger-${kebab(k)}:${ms(v)}`),
+    // Calm and reduced reveal timings, unscaled (they are the tier's own values).
+    `--reveal-calm:${ms(duration.calmReveal)}`,
+    `--reveal-reduced:${ms(duration.reducedReveal)}`,
+    `--angle-word:${angle.word}deg`,
+    `--angle-metric:${angle.metric}deg`,
+    `--angle-discard:${angle.discard}deg`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

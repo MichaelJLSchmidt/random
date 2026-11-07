@@ -5,6 +5,7 @@ import { DisplaySettings } from '@/components/display-settings'
 import { Hand } from '@/components/hand/hand'
 import { Header } from '@/components/header'
 import { LiveRegion } from '@/components/live-region'
+import { Reveals } from '@/components/reveals'
 import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { identityCss, palette } from '@/design/palette'
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Hand />
         <LiveRegion />
         <RouteFocus />
+        <Reveals />
       </body>
     </html>
   )

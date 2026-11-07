@@ -53,6 +53,8 @@ const listeners = new Set<Listener>()
 let slotCenter: (id: string) => [number, number] | null = () => null
 /** A play/return/switch already set the field for this path; route sync leaves it. */
 let pendingPath: string | null = null
+/** The intent behind the next navigation (play / switch / return), read once by the reveal system. */
+let intent: 'play' | 'switch' | 'return' | null = null
 
 function set(patch: Partial<TableState>) {
   const prev = state
@@ -85,6 +87,13 @@ export const table = {
   },
   slotOf: (id: string) => slotCenter(id),
 
+  /** Returns and clears the intent of the navigation that just happened. */
+  takeIntent() {
+    const value = intent
+    intent = null
+    return value
+  },
+
   hover(id: string | null) {
     if (state.hoverCard !== id) set({ hoverCard: id })
   },
@@ -95,6 +104,7 @@ export const table = {
     if (!card) return
     pendingPath = normalise(href)
     const switching = state.field.spread === 1
+    intent = state.activeCard ? 'switch' : 'play'
     set({ hoverCard: null, lastPlayed: id })
     field({ identity: card.identity, spread: 1, origin: center(rect), topo: 0, kind: switching ? 'switch' : 'bloom' })
   },
@@ -102,6 +112,7 @@ export const table = {
   /** Return: the field contracts into the card's slot, then goes back to ink. */
   returnHome(href = '/') {
     pendingPath = normalise(href)
+    intent = 'return'
     const from = state.activeCard
     const origin = (from && slotCenter(from)) || [0.5, 1]
     field({ identity: 'ink', spread: 0, origin, topo: 0, kind: 'unbloom' })

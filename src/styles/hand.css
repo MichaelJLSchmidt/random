@@ -209,6 +209,18 @@
   }
 }
 
+/* Two faces for the draw's flip (rotateY 180 -> 0). */
+.hand-card {
+  transform-style: preserve-3d;
+}
+.hand-card > .card-face,
+.hand-card > .card-back {
+  backface-visibility: hidden;
+}
+.hand-card > .card-back {
+  transform: rotateY(180deg);
+}
+
 /* ---------- Card back and the "More projects" stack ---------- */
 .card-back {
   background:
