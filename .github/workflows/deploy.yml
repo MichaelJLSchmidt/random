@@ -1,13 +1,16 @@
+# Deploys whatever experiment is on `main` to GitHub Pages.
+#   package.json present -> Node (current LTS), install with the package manager
+#                           matching the lockfile, run `build`, deploy dist/.
+#   no package.json      -> deploy the repository root as static files
+#                           (upload-pages-artifact always leaves out .git and .github).
+# The build gets BASE_PATH=/<repo>/, derived from GITHUB_REPOSITORY.
 name: Deploy to GitHub Pages
 
 on:
-  # Trigger the workflow every time you push to the `main` branch
   push:
     branches: [main]
-  # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
-# Allow this job to clone the repo and create a page deployment
 permissions:
   contents: read
   pages: write
@@ -22,12 +25,82 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout your repository using git
+      - name: Checkout
         uses: actions/checkout@v7
-      - name: Install, build, and upload your site
-        uses: withastro/action@v6
-        # `npm run build` regenerates the brush illustrations, grain textures
-        # and font fallbacks before `astro build`.
+
+      - name: Detect experiment type
+        id: detect
+        run: |
+          echo "BASE_PATH=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+          if [ ! -f package.json ]; then
+            echo "No package.json: deploying the repository root as static files."
+            { echo "node=false"; echo "site=."; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          cache=""
+          if   [ -f pnpm-lock.yaml ]; then pm=pnpm
+          elif [ -f yarn.lock ]; then pm=yarn
+          elif [ -f bun.lock ] || [ -f bun.lockb ]; then pm=bun
+          else
+            pm=npm
+            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then cache=npm; fi
+          fi
+          echo "package.json found: building with $pm."
+          { echo "node=true"; echo "site=dist"; echo "pm=$pm"; echo "cache=$cache"; } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node (current LTS)
+        if: steps.detect.outputs.node == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: ${{ steps.detect.outputs.cache }}
+          package-manager-cache: false
+
+      - name: Set up package manager
+        if: steps.detect.outputs.node == 'true' && steps.detect.outputs.pm != 'npm'
+        env:
+          PM: ${{ steps.detect.outputs.pm }}
+        run: |
+          if [ "$PM" = bun ]; then
+            npm install --global bun
+          else
+            # Corepack honours the `packageManager` field in package.json.
+            npm install --global corepack@latest
+            corepack enable "$PM"
+            echo "COREPACK_ENABLE_DOWNLOAD_PROMPT=0" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install dependencies
+        if: steps.detect.outputs.node == 'true'
+        env:
+          PM: ${{ steps.detect.outputs.pm }}
+        run: |
+          if [ "$PM" != npm ]; then
+            "$PM" install --frozen-lockfile
+          elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build
+        if: steps.detect.outputs.node == 'true'
+        env:
+          PM: ${{ steps.detect.outputs.pm }}
+        run: |
+          echo "BASE_PATH=$BASE_PATH"
+          "$PM" run build
+          if [ ! -d dist ]; then
+            echo "::error::The build script must write the site to dist/."
+            exit 1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ steps.detect.outputs.site }}
+          # Keep dotfiles a build emits (e.g. .well-known/), but not repo config.
+          include-hidden-files: ${{ steps.detect.outputs.node }}
 
   deploy:
     needs: build
