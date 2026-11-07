@@ -1,0 +1,5 @@
+@import '../styles/tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); color: var(--text); font-family: var(--font-sans); -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-size: var(--text-base); line-height: var(--leading-body); font-weight: var(--wght-body); }

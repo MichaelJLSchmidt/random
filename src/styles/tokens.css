@@ -1,0 +1,127 @@
+/*
+ * Design tokens. Dark mode first, greyscale only. The holographic foil is the
+ * only colour; --accent is its flat stand-in when foil is off.
+ * Motion tokens are not here: they live in src/motion/tokens.ts.
+ */
+
+@property --wght {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 400;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Greyscale ramp */
+  --grey-0: #09090b;
+  --grey-50: #101013;
+  --grey-100: #16161a;
+  --grey-150: #1d1d22;
+  --grey-200: #28282e;
+  --grey-300: #393940;
+  --grey-400: #55555d;
+  --grey-500: #8e8e98;
+  --grey-600: #a9a9b2;
+  --grey-700: #c4c4cb;
+  --grey-800: #dddde2;
+  --grey-900: #f4f4f6;
+
+  /* Semantic colour */
+  --bg: var(--grey-0);
+  --surface: var(--grey-100);
+  --surface-raised: var(--grey-150);
+  --border: var(--grey-200);
+  --border-strong: var(--grey-300);
+  --text: var(--grey-900);
+  --text-muted: var(--grey-600);
+  --text-subtle: var(--grey-500);
+  --focus: var(--grey-900);
+
+  /* Foil (decorative layers only, never behind text) */
+  --foil-gradient: linear-gradient(
+    115deg,
+    #a3e6ff 0%,
+    #c9b8ff 16%,
+    #ffbde8 32%,
+    #ffe8ad 48%,
+    #b6ffd8 64%,
+    #a3e6ff 80%,
+    #c9b8ff 100%
+  );
+  --foil-sheen: repeating-linear-gradient(
+    65deg,
+    rgb(255 255 255 / 0) 0 6%,
+    rgb(255 255 255 / 0.35) 9%,
+    rgb(255 255 255 / 0) 12% 18%
+  );
+  /* Flat fallback when foil is disabled */
+  --accent: #b9c3ff;
+
+  /* Type */
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1.06rem + 0.32vw, 1.3rem);
+  --text-xl: clamp(1.4rem, 1.22rem + 0.9vw, 1.9rem);
+  --text-2xl: clamp(1.9rem, 1.45rem + 2.2vw, 3.1rem);
+  --text-display: clamp(2.5rem, 1.55rem + 4.8vw, 5.75rem);
+  --wght-body: 400;
+  --wght-medium: 500;
+  --wght-strong: 600;
+  --wght-display: 580;
+  --wght-hover: 680;
+  --leading-tight: 1.02;
+  --leading-snug: 1.18;
+  --leading-body: 1.6;
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.015em;
+  --tracking-mono: 0.02em;
+
+  /* Space */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+
+  /* Layout */
+  --page-max: 76rem;
+  --measure: 64ch;
+  --gutter: clamp(1rem, 5vw, 3rem);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  /* Cards (63:88). Inner sizes use cqi so they scale with the card. */
+  --card-ratio: 63 / 88;
+  --card-w: clamp(13rem, 24vw, 18rem);
+  --card-radius: 5cqi;
+  --hand-angle: 7deg;
+  --hand-spread: 62%;
+  --stack-peek: 22%;
+  --deck-offset: 4px;
+
+  /* Layers */
+  --z-header: 10;
+  --z-skip: 100;
+}
+
+/* Foil is off by user choice, in forced colours and for high-contrast requests. */
+:root[data-foil='off'] {
+  --foil-gradient: linear-gradient(var(--accent), var(--accent));
+  --foil-sheen: none;
+}
+@media (forced-colors: active), (prefers-contrast: more) {
+  :root {
+    --foil-gradient: linear-gradient(var(--accent), var(--accent));
+    --foil-sheen: none;
+  }
+}

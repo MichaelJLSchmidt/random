@@ -1,0 +1,9 @@
+# Production target. Netlify detects Next.js and adds its runtime automatically.
+# Set in the Netlify UI (not here): SITE_PASSWORD (gate password) and
+# MOTION_TOKEN (Motion+ registry). Set SITE_GATE=off at launch, then redeploy.
+[build]
+  command = "npm run build:server"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

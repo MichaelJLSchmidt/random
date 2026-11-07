@@ -24,6 +24,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Optional token for private registries referenced from .npmrc (e.g. Motion+).
+      # Empty when the secret is not set; experiments must then install without it.
+      MOTION_TOKEN: ${{ secrets.MOTION_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
