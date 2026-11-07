@@ -1,11 +1,19 @@
 import type { Metadata, Viewport } from 'next'
-import { motionCss } from '@/motion/tokens'
+import { LiveRegion } from '@/components/live-region'
+import { RouteFocus } from '@/components/route-focus'
+import { SiteFooter } from '@/components/site-footer'
+import { SiteHeader } from '@/components/site-header'
+import { site } from '@/lib/content'
+import { noIndex } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
+import { motionCss } from '@/motion/tokens'
 import { mono, sans } from './fonts'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Portfolio',
+  title: { default: site.name, template: `%s · ${site.name}` },
+  description: site.description,
+  robots: noIndex ? { index: false, follow: false } : undefined,
 }
 
 export const viewport: Viewport = {
@@ -15,12 +23,30 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`} data-motion="full" data-foil="on" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${sans.variable} ${mono.variable}`}
+      data-motion="full"
+      data-foil="on"
+      suppressHydrationWarning
+    >
       <head>
+        {/* Applies the motion tier and foil preference before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
         <style dangerouslySetInnerHTML={{ __html: motionCss() }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <a className="skip-link" href="#main">
+          {site.skipLink}
+        </a>
+        <SiteHeader />
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter />
+        <LiveRegion />
+        <RouteFocus />
+      </body>
     </html>
   )
 }

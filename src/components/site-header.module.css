@@ -1,0 +1,68 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: var(--space-3) var(--gutter);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--wght-strong);
+  letter-spacing: var(--tracking-tight);
+  text-decoration: none;
+  color: var(--text);
+  min-height: 44px;
+}
+
+.mark {
+  inline-size: 0.9rem;
+  aspect-ratio: var(--card-ratio);
+  border-radius: 2px;
+  background: var(--foil-gradient);
+  background-size: 200% 200%;
+}
+
+.nav { display: contents; }
+
+.list {
+  display: flex;
+  gap: clamp(var(--space-3), 3vw, var(--space-6));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.list a {
+  display: inline-grid;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.list a[aria-current='page'] {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.4em;
+}
+
+.list a:hover { color: var(--text); }
+
+/* Locked site: the gate page shows no navigation. */
+:global(body:has([data-gate])) .nav { display: none; }

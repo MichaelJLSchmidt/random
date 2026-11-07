@@ -1,0 +1,70 @@
+{
+  "name": "Portfolio",
+  "description": "Interface design and front-end engineering: three case studies, a list of projects and a way to get in touch.",
+  "nav": [
+    {
+      "href": "/projects",
+      "label": "Projects"
+    },
+    {
+      "href": "/about",
+      "label": "About"
+    },
+    {
+      "href": "/contact",
+      "label": "Contact"
+    }
+  ],
+  "skipLink": "Skip to content",
+  "home": {
+    "headline": "Interfaces that feel as considered as they look.",
+    "intro": "Product design and front-end engineering, from the first sketch to the code that ships. Below are three recent case studies.",
+    "workHeading": "Case studies",
+    "projectsLink": "See all projects"
+  },
+  "caseStudy": {
+    "backLink": "All case studies",
+    "factsHeading": "At a glance",
+    "previous": "Previous case study",
+    "next": "Next case study",
+    "flipToBack": "Show details",
+    "flipToFront": "Show cover"
+  },
+  "projects": {
+    "title": "Projects",
+    "intro": "Smaller pieces of work, experiments and tools. Each line links to the project where there is something to see."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "There is nothing at this address. It may have moved, or the link may be mistyped.",
+    "homeLink": "Go to the home page"
+  },
+  "gate": {
+    "title": "Private preview",
+    "body": "This site is not public yet. Enter the password to continue.",
+    "label": "Password",
+    "submit": "Enter",
+    "error": "That password is not right. Try again.",
+    "notConfigured": "Access is not set up yet, so the site cannot be opened."
+  },
+  "settings": {
+    "heading": "Display",
+    "calm": "Calm motion",
+    "calmHint": "Fewer moving parts. Reduced motion in your system settings always wins.",
+    "foil": "Foil effect",
+    "tilt": "Tilt cards with device motion",
+    "tiltDenied": "Motion access was not granted. Cards stay still.",
+    "calmOn": "Calm motion on",
+    "calmOff": "Calm motion off",
+    "foilOn": "Foil effect on",
+    "foilOff": "Foil effect off"
+  },
+  "footer": {
+    "note": "Built with Next.js. Text and images are placeholders."
+  },
+  "homeLink": "Portfolio, home",
+  "about": {
+    "title": "About",
+    "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not."
+  }
+}

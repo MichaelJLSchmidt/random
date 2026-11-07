@@ -1,0 +1,12 @@
+{
+  "title": "Contact",
+  "intro": "The quickest way to reach me is by email. I read everything and reply within a few days.",
+  "email": "hello@example.com",
+  "emailLabel": "Email",
+  "linksHeading": "Elsewhere",
+  "links": [
+    { "label": "GitHub", "href": "https://github.com/" },
+    { "label": "Are.na", "href": "https://www.are.na/" },
+    { "label": "Mastodon", "href": "https://mastodon.social/" }
+  ]
+}

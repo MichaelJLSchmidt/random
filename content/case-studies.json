@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "field-notes",
+    "title": "Field Notes",
+    "summary": "An offline-first survey app that lets coastal ecology teams record observations without signal and sync when they are back in range.",
+    "year": "2025",
+    "discipline": "Mobile app",
+    "motif": "rings",
+    "facts": [
+      { "label": "Role", "value": "Product design, front-end" },
+      { "label": "Duration", "value": "5 months" },
+      { "label": "Team", "value": "4 people" },
+      { "label": "Platforms", "value": "iOS, Android" }
+    ]
+  },
+  {
+    "slug": "timetable",
+    "title": "Timetable",
+    "summary": "A regional transit timetable redesigned once for print, screen and the stop itself, so each format answers the same question first.",
+    "year": "2024",
+    "discipline": "Information design",
+    "motif": "grid",
+    "facts": [
+      { "label": "Role", "value": "Information design, prototyping" },
+      { "label": "Duration", "value": "8 months" },
+      { "label": "Team", "value": "6 people" },
+      { "label": "Formats", "value": "Print, web, displays" }
+    ]
+  },
+  {
+    "slug": "ledger",
+    "title": "Ledger",
+    "summary": "A budgeting tool and design system for small non-profits, built so volunteers can close the month without an accountant on call.",
+    "year": "2023",
+    "discipline": "Web app, design system",
+    "motif": "waves",
+    "facts": [
+      { "label": "Role", "value": "Design system, front-end lead" },
+      { "label": "Duration", "value": "11 months" },
+      { "label": "Team", "value": "5 people" },
+      { "label": "Stack", "value": "React, TypeScript" }
+    ]
+  }
+]
