@@ -482,6 +482,29 @@ button {
   }
 }
 
+/* ---------- About: static contour map (reduced motion, no WebGL, no JS) ---------- */
+.topo-static {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-field);
+  display: none;
+  pointer-events: none;
+}
+.topo-static img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+:root:is([data-motion='reduced'], :not([data-renderer='gl'])) .topo-static {
+  display: block;
+}
+.topo-credit {
+  max-width: var(--measure);
+  margin-top: var(--space-8);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* ---------- Next project mini card ---------- */
 .next-project {
   display: grid;

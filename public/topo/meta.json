@@ -1,0 +1,22 @@
+{
+  "placeholder": true,
+  "source": "Noise-generated placeholder (not real terrain)",
+  "crs": "EPSG:2056",
+  "box": [
+    2624000,
+    1152000,
+    2646000,
+    1174000
+  ],
+  "size": 512,
+  "min": 557,
+  "max": 2112,
+  "interval": 100,
+  "index": 500,
+  "lakes": [
+    558,
+    564.5
+  ],
+  "step": 0.5,
+  "encoding": "elevation = min + (R * 256 + G) * step; B: lake mask (255); row 0 = north"
+}

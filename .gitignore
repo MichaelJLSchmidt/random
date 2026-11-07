@@ -11,3 +11,7 @@ next-env.d.ts
 .DS_Store
 test-results/
 verify-output/
+
+# Topography sources (scripts/topo/README.md): never committed
+scripts/topo/raw/
+scripts/topo/work/

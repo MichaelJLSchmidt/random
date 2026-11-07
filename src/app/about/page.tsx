@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import About from '@content/about.mdx'
+import topo from '../../../public/topo/meta.json'
+import { AboutTopo } from '@/components/about-topo'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 import { site } from '@/lib/content'
@@ -17,6 +19,11 @@ export default function AboutPage() {
         <div className="prose">
           <About />
         </div>
+        <p className="topo-credit meta" data-reveal="tags">
+          {site.about.topoLabel}. {site.about.attribution}.
+          {topo.placeholder && <span className="topo-placeholder"> {site.about.placeholderNote}</span>}
+        </p>
+        <AboutTopo meta={topo} />
       </div>
     </PageTransition>
   )

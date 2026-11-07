@@ -172,7 +172,10 @@ export class FieldEngine {
     })
     ro.observe(canvas)
     this.offs.push(() => ro.disconnect())
-    if (this.mode === 'css') this.syncCss(now)
+    if (this.mode === 'css') {
+      this.syncCss(now)
+      document.documentElement.dataset.renderer = 'css'
+    }
     this.kick(true)
   }
 
@@ -184,7 +187,8 @@ export class FieldEngine {
 
   /** About's elevation arrived: contour lines ease from noise into the terrain. */
   setElevation(e: Elevation) {
-    if (!this.gl) return
+    if (!this.gl || this.hasElevation) return
+    this.hasElevation = true
     this.gl.setElevation(e)
     this.go('elev', [1], this.dur(D.topo, D.calmBloom), 'bloom')
   }
@@ -192,6 +196,8 @@ export class FieldEngine {
   get renderer() {
     return this.mode
   }
+
+  hasElevation = false
 
   // ---------------------------------------------------------------- input
 
@@ -461,6 +467,7 @@ export class FieldEngine {
     this.raf = 0
     this.syncCss(performance.now())
     this.root.dataset.mode = 'css'
+    document.documentElement.dataset.renderer = 'css'
   }
 
   private draw() {
@@ -493,6 +500,9 @@ export class FieldEngine {
     f.topoShape = t.topo.value[0] * t.elev.value[0]
     f.topoTime = (this.time / D.topoBand) % 1
     this.gl!.draw(f)
-    if (this.root.dataset.mode !== 'gl') this.root.dataset.mode = 'gl'
+    if (this.root.dataset.mode !== 'gl') {
+      this.root.dataset.mode = 'gl'
+      document.documentElement.dataset.renderer = 'gl'
+    }
   }
 }
