@@ -26,7 +26,7 @@ export function WeightText({ text, final, className = '' }: Props) {
         {words.map((word, i) => (
           <Fragment key={i}>
             {i > 0 && ' '}
-            <span className="wt-word" data-text={word}>
+            <span className="wt-word" data-text={word} style={{ '--wt-i': i } as CSSProperties}>
               <span>{word}</span>
             </span>
           </Fragment>

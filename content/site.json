@@ -64,5 +64,6 @@
   "about": {
     "title": "About",
     "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not."
-  }
+  },
+  "introSkip": "Skip intro"
 }

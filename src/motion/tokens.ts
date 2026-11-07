@@ -16,6 +16,16 @@ export const duration = {
   slower: 0.64,
   /** Idle foil drift, one loop. */
   ambient: 16,
+  /** Page h1 weight-in on a return visit or after client navigation. */
+  weightIn: 0.5,
+  /** First-visit intro: h1 weight-in (plus word stagger). */
+  introTitle: 0.7,
+  /** First-visit intro: the deck's riffle cut. */
+  riffle: 0.26,
+  /** First-visit intro: one card travelling from the deck to its slot (flip included). */
+  deal: 0.42,
+  /** The Glint: one sweep, never loops. */
+  glint: 0.7,
 } as const
 
 /** Cubic béziers. */
@@ -38,7 +48,17 @@ export const spring = {
 export const stagger = {
   text: 0.035,
   cards: 0.07,
+  /** Word stagger of the first-visit h1 weight-in. */
+  words: 0.045,
+  /** Cards dealt into the hand. */
+  deal: 0.08,
 } as const
+
+/**
+ * First-visit intro budget (seconds). riffle + 2 × deal stagger + deal + glint
+ * = 0.26 + 0.16 + 0.42 + 0.7 = 1.54, under the 1.6 s limit.
+ */
+export const introBudget = 1.6
 
 /** Pixels of travel. */
 export const distance = {
@@ -95,16 +115,17 @@ export function travel(tier: MotionTier, d: keyof typeof distance) {
 }
 
 const ms = (s: number) => `${Math.round(s * 1000)}ms`
+const kebab = (k: string) => k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)
 const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 
 function vars(tier: MotionTier): string {
   const { time, travel: tr, ambient } = tiers[tier]
   const out: string[] = []
   for (const [k, v] of Object.entries(duration)) {
-    if (k !== 'ambient') out.push(`--dur-${k}:${ms(v * time)}`)
+    if (k !== 'ambient') out.push(`--dur-${kebab(k)}:${ms(v * time)}`)
   }
   out.push(`--dur-ambient:${ms(duration.ambient)}`, `--ambient:${ambient ? 'running' : 'paused'}`)
-  for (const [k, v] of Object.entries(stagger)) out.push(`--stagger-${k}:${ms(v * time)}`)
+  for (const [k, v] of Object.entries(stagger)) out.push(`--stagger-${kebab(k)}:${ms(v * time)}`)
   for (const [k, v] of Object.entries(distance)) out.push(`--travel-${k}:${v * tr}px`)
   out.push(`--angle-tilt:${angle.tilt * tr}deg`)
   return out.join(';')
@@ -113,7 +134,7 @@ function vars(tier: MotionTier): string {
 /** CSS custom properties for every tier. */
 export function motionCss(): string {
   const easings = Object.entries(ease)
-    .map(([k, v]) => `--ease-${k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}:${bezier(v)}`)
+    .map(([k, v]) => `--ease-${kebab(k)}:${bezier(v)}`)
     .join(';')
   const weights = Object.entries(weight)
     .map(([k, v]) => `--wght-${k}:${v}`)

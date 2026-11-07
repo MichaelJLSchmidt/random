@@ -3,6 +3,7 @@ import { DisplaySettings } from '@/components/display-settings'
 import { Interactions } from '@/components/interactions'
 import { LiveRegion } from '@/components/live-region'
 import { MotionProvider } from '@/components/motion-provider'
+import { PageMotion } from '@/components/page-motion'
 import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
@@ -38,6 +39,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style dangerouslySetInnerHTML={{ __html: motionCss() }} />
       </head>
       <body>
+        {/* First focusable element; only shown while the first-visit intro runs. */}
+        <button type="button" className="intro-skip" data-intro-skip="">
+          {site.introSkip}
+        </button>
         <a className="skip-link" href="#main">
           {site.skipLink}
         </a>
@@ -52,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </MotionProvider>
         <LiveRegion />
         <RouteFocus />
+        <PageMotion />
         <Interactions />
       </body>
     </html>

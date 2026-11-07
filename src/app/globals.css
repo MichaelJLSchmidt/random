@@ -2,6 +2,7 @@
 @import '../styles/type.css';
 @import '../styles/view-transitions.css';
 @import '../styles/foil.css';
+@import '../styles/glint.css';
 
 /* Base */
 *,
@@ -115,6 +116,32 @@ a:hover {
   transform: none;
 }
 
+/* Visually hidden until focused; exists only while the first-visit intro runs. */
+.intro-skip {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-skip);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--grey-900);
+  color: var(--grey-0);
+  font-weight: var(--wght-strong);
+  clip-path: inset(50%);
+}
+.intro-skip:focus-visible {
+  clip-path: none;
+}
+:root:not([data-intro]) .intro-skip {
+  display: none;
+}
+
+/* Jump a weight-in to its end (intro skipped). */
+.wt-instant .wt-word {
+  transition: none !important;
+}
+
 .meta {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -156,7 +183,11 @@ a:hover {
 .hero {
   display: grid;
   gap: var(--space-5);
-  padding-block: var(--space-6) 0;
+  padding-block: var(--space-4) 0;
+}
+
+.hero + .section {
+  margin-top: var(--space-7);
 }
 
 .display {
@@ -278,6 +309,19 @@ a:hover {
 
 .pager-item[data-rel='next'] a > :last-child {
   text-align: start;
+}
+
+.table {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+@media (min-width: 56rem) {
+  .table {
+    grid-template-columns: 1fr auto;
+  }
 }
 
 .after-hand {

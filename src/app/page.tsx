@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CardHand } from '@/components/card/card-hand'
 import { CaseStudyCard } from '@/components/card/case-study-card'
+import { DeckPile } from '@/components/card/deck-pile'
 import { caseStudies, site } from '@/lib/content'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
@@ -18,12 +19,15 @@ export default function HomePage() {
           <h2 id="work-heading" className="section-heading">
             {site.home.workHeading}
           </h2>
-          <CardHand
-            labelledBy="work-heading"
-            items={caseStudies.map((study, index) => (
-              <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" />
-            ))}
-          />
+          <div className="table">
+            <CardHand
+              labelledBy="work-heading"
+              items={caseStudies.map((study, index) => (
+                <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" flippable />
+              ))}
+            />
+            <DeckPile />
+          </div>
           <p className="after-hand">
             <Link href="/projects">{site.home.projectsLink}</Link>
           </p>

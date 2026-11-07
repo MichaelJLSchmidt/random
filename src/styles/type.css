@@ -42,7 +42,11 @@ time {
 }
 
 .wt-word {
+  /* --wt-target is unregistered (switches at once); --wght is registered, so it
+     transitions per word with its own delay (--wt-i = word index). */
+  --wght: var(--wt-target, var(--wght-final));
   display: inline-grid;
+  transition: --wght var(--wt-dur, 0s) var(--ease-out) calc(var(--wt-i, 0) * var(--wt-stagger, 0s));
 }
 
 .wt-word > span,
@@ -59,6 +63,26 @@ time {
   font-weight: var(--wght-final);
   visibility: hidden;
   pointer-events: none;
+}
+
+/*
+ * Page titles start at weight 200 on first paint (never at opacity 0) and are
+ * settled to 760 by PageMotion: a 700 ms weight-in with a 45 ms word stagger on
+ * the first visit, 500 ms otherwise. Reduced motion and no-JS show 760 at once.
+ */
+[data-page-title] {
+  --wt-target: var(--wght-thin);
+}
+[data-page-title][data-settled] {
+  --wt-target: var(--wght-final);
+}
+:root[data-motion='reduced'] [data-page-title] {
+  --wt-target: var(--wght-final);
+}
+@media (scripting: none) {
+  [data-page-title] {
+    --wt-target: var(--wght-final);
+  }
 }
 
 /*

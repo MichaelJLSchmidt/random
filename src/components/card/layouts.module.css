@@ -41,7 +41,29 @@
 
 /* ---------- Hand and stack ---------- */
 
+/* Flippable card: front and a back face turned away. */
+.flipper {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+}
+
+.flipper > :last-child {
+  transform: rotateY(180deg);
+}
+
+/* First-visit intro: cards wait inside the deck, face down, until dealt. */
+:global(:root[data-intro='pending']) .slot {
+  visibility: hidden;
+}
+:global(:root[data-intro]) .flipper {
+  transform: rotateY(180deg);
+}
+
 .hand {
+  position: relative;
+  z-index: 2;
   --card-w: min(76vw, 19rem);
   display: grid;
   justify-items: center;
@@ -91,6 +113,22 @@
   .hand > li:focus-within .lift {
     transform: translateY(calc(var(--travel-lift) * -1.6));
   }
+}
+
+/* ---------- Draw pile beside the hand ---------- */
+
+.pile {
+  --card-w: clamp(6.5rem, 11vw, 8.5rem);
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-areas: 'card';
+  width: fit-content;
+}
+
+.pileCard {
+  grid-area: card;
+  transform: translate(calc(var(--i) * -2px), calc(var(--i) * -2.5px)) rotate(calc((var(--i) - 1.5) * 1.4deg));
 }
 
 /* ---------- Deck (decorative pile of backs) ---------- */
