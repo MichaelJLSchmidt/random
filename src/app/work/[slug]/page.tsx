@@ -6,6 +6,7 @@ import { CaseStudyCard } from '@/components/card/case-study-card'
 import cardStyles from '@/components/card/layouts.module.css'
 import { FlipCard } from '@/components/card/flip-card'
 import { PageTransition } from '@/components/page-transition'
+import { Statement } from '@/components/statement'
 import { cardNumber, caseStudies, getCaseStudy, site } from '@/lib/content'
 import { cardType, navBack, navForward } from '@/motion/transitions'
 import { PageTitle } from '@/components/page-title'
@@ -44,49 +45,55 @@ export default async function CaseStudyPage({ params }: Props) {
   return (
     <PageTransition>
       <article className="page case-study">
-        <header className="case-intro">
-          <p className="back">
-            <Link href="/" transitionTypes={[navBack, cardType(study.slug)]}>
-              {site.caseStudy.backLink}
-            </Link>
-          </p>
-          <p className="meta">
-            {cardNumber(index)} · {study.discipline} · {study.year}
-          </p>
-          <PageTitle>{study.title}</PageTitle>
-          <p className="lede">{study.summary}</p>
-        </header>
-        <div className="case-card">
-          <FlipCard
-            slug={study.slug}
-            labels={{
-              toBack: site.caseStudy.flipToBack,
-              toFront: site.caseStudy.flipToFront,
-              showingBack: site.caseStudy.showingBack,
-              showingFront: site.caseStudy.showingFront,
-            }}
-            front={<CardFront study={study} index={index} />}
-            back={
-              <CardBack>
-                <section className={cardStyles.facts} aria-labelledby="facts-heading">
-                  <h2 id="facts-heading">{site.caseStudy.factsHeading}</h2>
+        <div className="case-grid">
+          <header className="case-intro">
+            <p className="back">
+              <Link href="/" transitionTypes={[navBack, cardType(study.slug)]}>
+                {site.caseStudy.backLink}
+              </Link>
+            </p>
+            <p className="meta">
+              {cardNumber(index)} · {study.discipline} · {study.year}
+            </p>
+            <PageTitle>{study.title}</PageTitle>
+            <p className="lede">{study.summary}</p>
+          </header>
+          <div className="case-card">
+            <FlipCard
+              slug={study.slug}
+              labels={{
+                toBack: site.caseStudy.flipToBack,
+                toFront: site.caseStudy.flipToFront,
+                showingBack: site.caseStudy.showingBack,
+                showingFront: site.caseStudy.showingFront,
+              }}
+              front={<CardFront study={study} index={index} />}
+              back={
+                <CardBack>
+                  <section className={cardStyles.facts} aria-labelledby="facts-heading">
+                    <h2 id="facts-heading">{site.caseStudy.factsHeading}</h2>
+                    {facts}
+                  </section>
+                </CardBack>
+              }
+              noScript={
+                <section className="facts-fallback" aria-label={site.caseStudy.factsHeading}>
                   {facts}
                 </section>
-              </CardBack>
-            }
-            noScript={
-              <section className="facts-fallback" aria-label={site.caseStudy.factsHeading}>
-                {facts}
-              </section>
-            }
-          />
+              }
+            />
+          </div>
+
+          <div className="case-statement">
+            <Statement>{study.statement}</Statement>
+          </div>
+
+          <div className="prose">
+            <Body />
+          </div>
         </div>
 
-        <div className="prose">
-          <Body />
-        </div>
-
-        <nav className="pager" aria-label="Case studies">
+        <nav className="pager" aria-label="Case studies" data-reveal="">
           {[previous, next].map((other, i) =>
             other ? (
               <div key={other.slug} className="pager-item" data-rel={i === 0 ? 'prev' : 'next'}>

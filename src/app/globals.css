@@ -3,6 +3,7 @@
 @import '../styles/view-transitions.css';
 @import '../styles/foil.css';
 @import '../styles/glint.css';
+@import '../styles/scroll.css';
 
 /* Base */
 *,
@@ -175,8 +176,21 @@ a:hover {
   margin-top: var(--space-9);
 }
 
-.section-heading {
+.section-title {
   font-size: var(--text-xl);
+}
+
+/* The case study's one large statement. */
+.case-statement {
+  max-width: var(--measure);
+  margin-top: var(--space-8);
+}
+
+.statement {
+  font-size: var(--text-2xl);
+  line-height: 1.14;
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
 }
 
 /* Home */
@@ -212,7 +226,7 @@ a:hover {
 }
 
 /* Case study: text on the left, the card beside it (sticky) on wide screens. */
-.case-study {
+.case-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   column-gap: var(--space-8);
@@ -230,18 +244,15 @@ a:hover {
 }
 
 @media (min-width: 56rem) {
-  .case-study {
+  .case-grid {
     grid-template-columns: minmax(0, 1fr) auto;
   }
   .case-card {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1 / span 3;
     position: sticky;
     top: var(--space-9);
     margin-top: 0;
-  }
-  .pager {
-    grid-column: 1 / -1;
   }
 }
 

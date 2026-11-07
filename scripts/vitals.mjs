@@ -54,8 +54,8 @@ report(
 // Interactions: settings switch, card tap → navigation, flip.
 await page.getByRole('switch', { name: 'Foil effect' }).tap()
 await page.getByRole('switch', { name: 'Foil effect' }).tap()
-await page.locator('a[data-return-focus$="/work/ledger"]').tap()
-await page.waitForURL(/work\/ledger/)
+await page.locator('a[data-return-focus$="/work/front-door"]').tap()
+await page.waitForURL(/work\/front-door/)
 await page.waitForTimeout(1500)
 await page.getByRole('button', { name: 'Show details' }).tap()
 await page.waitForTimeout(800)

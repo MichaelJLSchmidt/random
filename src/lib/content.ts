@@ -4,11 +4,15 @@ import projectsJson from '@content/projects.json'
 import siteJson from '@content/site.json'
 
 export type Motif = 'rings' | 'grid' | 'waves'
+export type Theme = 'people-leadership' | 'platform' | 'service-delivery'
 
 export type CaseStudy = {
   slug: string
   title: string
+  theme: Theme
   summary: string
+  /** One large statement, filled word by word as it crosses the viewport. */
+  statement: string
   year: string
   discipline: string
   motif: Motif

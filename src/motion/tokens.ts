@@ -50,8 +50,21 @@ export const stagger = {
   cards: 0.07,
   /** Word stagger of the first-visit h1 weight-in. */
   words: 0.045,
+  /** Lines of a section title rising from their mask. */
+  lines: 0.06,
   /** Cards dealt into the hand. */
   deal: 0.08,
+} as const
+
+/*
+ * Scroll. Sections reveal once when 35% of them (or 35% of the viewport, for
+ * tall ones) is in view; the statement fills between these scroll offsets.
+ */
+export const scroll = {
+  revealAt: 0.35,
+  statementOffset: ['start 0.85', 'end 0.45'] as ['start 0.85', 'end 0.45'],
+  /** Smoothing of each statement word towards its scroll-linked weight. */
+  statementCatchUp: 0.16,
 } as const
 
 /**
@@ -66,6 +79,9 @@ export const distance = {
   rise: 16,
   slide: 32,
   lift: 14,
+  /** Section reveal travel on narrow and wide screens. */
+  revealSm: 24,
+  revealLg: 40,
 } as const
 
 /*
@@ -81,6 +97,8 @@ export const weight = {
   card: 640,
   h2: 680,
   h1: 760,
+  /** Case-study statement, filled from thin to this as it crosses the viewport. */
+  statement: 760,
 } as const
 
 /** Degrees. */
@@ -126,8 +144,9 @@ function vars(tier: MotionTier): string {
   }
   out.push(`--dur-ambient:${ms(duration.ambient)}`, `--ambient:${ambient ? 'running' : 'paused'}`)
   for (const [k, v] of Object.entries(stagger)) out.push(`--stagger-${kebab(k)}:${ms(v * time)}`)
-  for (const [k, v] of Object.entries(distance)) out.push(`--travel-${k}:${v * tr}px`)
+  for (const [k, v] of Object.entries(distance)) out.push(`--travel-${kebab(k)}:${v * tr}px`)
   out.push(`--angle-tilt:${angle.tilt * tr}deg`)
+  out.push(`--statement-catch-up:${ms(scroll.statementCatchUp * time)}`)
   return out.join(';')
 }
 

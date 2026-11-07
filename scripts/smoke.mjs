@@ -221,6 +221,58 @@ async function introSuite({ motion, check, url, fresh }) {
   await c.close()
 }
 
+async function scrollSuite({ page, motion, check, url }) {
+  await page.goto(url('/work/shared-foundations/'), { waitUntil: 'networkidle' })
+  await page.waitForTimeout(800)
+  const state = () =>
+    page.evaluate(() => ({
+      pending: document.querySelectorAll('[data-reveal="pending"], [data-rise="pending"]').length,
+      statement: [...document.querySelectorAll('[data-statement] .wt-word > span')].map((s) =>
+        Math.round(parseFloat(getComputedStyle(s).fontWeight)),
+      ),
+      titles: [...document.querySelectorAll('[data-section-title] .wt-word > span')].map((s) =>
+        Math.round(parseFloat(getComputedStyle(s).fontWeight)),
+      ),
+    }))
+  const before = await state()
+  if (motion === 'full') {
+    check('sections below the fold wait for scroll', before.pending > 0, `${before.pending} pending`)
+  } else {
+    check(
+      'calm/reduced: final states, statement filled',
+      before.pending === 0 && before.statement.every((w) => w === 760),
+      JSON.stringify(before).slice(0, 90),
+    )
+  }
+  for (let y = 0; y < 6000; y += 350) {
+    await page.evaluate((y) => window.scrollTo(0, y), y)
+    await page.waitForTimeout(90)
+  }
+  await page.waitForTimeout(700)
+  const after = await state()
+  check('everything revealed after scrolling', after.pending === 0, `${after.pending} pending`)
+  check(
+    'section titles settle at 680',
+    after.titles.length > 0 && after.titles.every((w) => w === 680),
+    [...new Set(after.titles)].join(','),
+  )
+  check(
+    'statement filled to 760 past the viewport',
+    after.statement.every((w) => w === 760),
+    [...new Set(after.statement)].join(','),
+  )
+  if (motion === 'full') {
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(500)
+    const back = await state()
+    check(
+      'statement weight follows scroll back up',
+      back.statement.some((w) => w < 760),
+      [...new Set(back.statement)].join(','),
+    )
+  }
+}
+
 // Later phases append their suites here.
-const suites = [typeSuite, introSuite]
+const suites = [typeSuite, introSuite, scrollSuite]
 await main()

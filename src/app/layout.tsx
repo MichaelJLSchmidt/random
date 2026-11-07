@@ -5,6 +5,7 @@ import { LiveRegion } from '@/components/live-region'
 import { MotionProvider } from '@/components/motion-provider'
 import { PageMotion } from '@/components/page-motion'
 import { RouteFocus } from '@/components/route-focus'
+import { ScrollMotion } from '@/components/scroll-motion'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { site } from '@/lib/content'
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LiveRegion />
         <RouteFocus />
         <PageMotion />
+        <ScrollMotion />
         <Interactions />
       </body>
     </html>

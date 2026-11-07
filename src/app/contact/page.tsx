@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { contact } from '@/lib/content'
 import { PageTitle } from '@/components/page-title'
+import { SectionTitle } from '@/components/section-title'
 import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = { title: contact.title }
@@ -23,10 +24,8 @@ export default function ContactPage() {
             </dd>
           </div>
         </dl>
-        <section className="section" aria-labelledby="links-heading">
-          <h2 id="links-heading" className="section-heading">
-            {contact.linksHeading}
-          </h2>
+        <section className="section" aria-labelledby="links-heading" data-reveal="">
+          <SectionTitle id="links-heading">{contact.linksHeading}</SectionTitle>
           <ul className="link-list">
             {contact.links.map((link) => (
               <li key={link.href}>

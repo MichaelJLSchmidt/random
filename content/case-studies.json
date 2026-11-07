@@ -1,44 +1,50 @@
 [
   {
-    "slug": "field-notes",
-    "title": "Field Notes",
-    "summary": "An offline-first survey app that lets coastal ecology teams record observations without signal and sync when they are back in range.",
+    "slug": "team-of-teams",
+    "title": "Team of Teams",
+    "theme": "people-leadership",
+    "summary": "Growing a four-person design group into a practice of eighteen across three product areas, without losing the habits that made it good.",
+    "statement": "A team grows well when the way it works is written down, practised in the open and owned by everyone in it.",
     "year": "2025",
-    "discipline": "Mobile app",
+    "discipline": "People leadership",
     "motif": "rings",
     "facts": [
-      { "label": "Role", "value": "Product design, front-end" },
-      { "label": "Duration", "value": "5 months" },
-      { "label": "Team", "value": "4 people" },
-      { "label": "Platforms", "value": "iOS, Android" }
+      { "label": "Role", "value": "Head of design" },
+      { "label": "Duration", "value": "2 years" },
+      { "label": "Team", "value": "4 to 18 people" },
+      { "label": "Scope", "value": "3 product areas" }
     ]
   },
   {
-    "slug": "timetable",
-    "title": "Timetable",
-    "summary": "A regional transit timetable redesigned once for print, screen and the stop itself, so each format answers the same question first.",
+    "slug": "shared-foundations",
+    "title": "Shared Foundations",
+    "theme": "platform",
+    "summary": "A design system and front-end platform that twelve product teams now build on, shipped as code first and documentation second.",
+    "statement": "The platform worked the day teams stopped asking whether to use it and started asking how to change it.",
     "year": "2024",
-    "discipline": "Information design",
+    "discipline": "Platform",
     "motif": "grid",
     "facts": [
-      { "label": "Role", "value": "Information design, prototyping" },
-      { "label": "Duration", "value": "8 months" },
-      { "label": "Team", "value": "6 people" },
-      { "label": "Formats", "value": "Print, web, displays" }
+      { "label": "Role", "value": "Design and platform lead" },
+      { "label": "Duration", "value": "14 months" },
+      { "label": "Teams", "value": "12 building on it" },
+      { "label": "Stack", "value": "React, tokens, CI" }
     ]
   },
   {
-    "slug": "ledger",
-    "title": "Ledger",
-    "summary": "A budgeting tool and design system for small non-profits, built so volunteers can close the month without an accountant on call.",
+    "slug": "front-door",
+    "title": "Front Door",
+    "theme": "service-delivery",
+    "summary": "One application journey for a public service, redesigned across web, phone and counter so every channel asks the same questions in the same order.",
+    "statement": "People do not see channels. They see one service, and it should remember what they already told it.",
     "year": "2023",
-    "discipline": "Web app, design system",
+    "discipline": "Service delivery",
     "motif": "waves",
     "facts": [
-      { "label": "Role", "value": "Design system, front-end lead" },
-      { "label": "Duration", "value": "11 months" },
-      { "label": "Team", "value": "5 people" },
-      { "label": "Stack", "value": "React, TypeScript" }
+      { "label": "Role", "value": "Service design lead" },
+      { "label": "Duration", "value": "9 months" },
+      { "label": "Team", "value": "7 people" },
+      { "label": "Channels", "value": "Web, phone, counter" }
     ]
   }
 ]

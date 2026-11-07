@@ -1,0 +1,67 @@
+/*
+ * Scroll states set by src/motion/scroll.ts (full tier only). Every rule here
+ * is undone outside the full tier, so calm, reduced and no-JS show final states.
+ */
+:root {
+  --reveal-y: var(--travel-reveal-sm);
+}
+@media (min-width: 56rem) {
+  :root {
+    --reveal-y: var(--travel-reveal-lg);
+  }
+}
+
+/* Sections: rise and fade in once. */
+[data-reveal='pending'] {
+  opacity: 0;
+  translate: 0 var(--reveal-y);
+}
+[data-reveal='in'] {
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    translate var(--dur-slow) var(--ease-out);
+}
+
+/* Section titles: lines rise from a clipping mask while weight goes 400 → 680. */
+[data-rise] .wt-word {
+  clip-path: inset(-0.2em -0.4em -0.28em -0.4em);
+  transition-delay: calc(var(--line, 0) * var(--stagger-lines));
+}
+[data-rise] .wt-word > span {
+  transition: translate var(--dur-slow) var(--ease-out) calc(var(--line, 0) * var(--stagger-lines));
+}
+[data-rise='pending'] {
+  --wt-target: var(--wght-body);
+}
+[data-rise='pending'] .wt-word > span {
+  translate: 0 115%;
+}
+[data-rise='in'] {
+  --wt-dur: var(--dur-slow);
+}
+
+/* Statement: thin from first paint, filled word by word by scroll (full tier). */
+[data-statement] {
+  --wt-target: var(--wght-thin);
+  --wt-dur: var(--statement-catch-up);
+}
+
+:root:not([data-motion='full']) [data-reveal='pending'] {
+  opacity: 1;
+  translate: none;
+}
+:root:not([data-motion='full']) [data-rise='pending'] {
+  --wt-target: var(--wght-final);
+}
+:root:not([data-motion='full']) [data-rise='pending'] .wt-word > span {
+  translate: none;
+}
+:root:not([data-motion='full']) [data-statement] .wt-word,
+:root:not([data-motion='full']) [data-statement] {
+  --wt-target: var(--wght-final) !important;
+}
+@media (scripting: none) {
+  [data-statement] {
+    --wt-target: var(--wght-final);
+  }
+}

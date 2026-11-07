@@ -4,6 +4,7 @@ import { CaseStudyCard } from '@/components/card/case-study-card'
 import { DeckPile } from '@/components/card/deck-pile'
 import { caseStudies, site } from '@/lib/content'
 import { PageTitle } from '@/components/page-title'
+import { SectionTitle } from '@/components/section-title'
 import { PageTransition } from '@/components/page-transition'
 
 export default function HomePage() {
@@ -16,10 +17,8 @@ export default function HomePage() {
         </section>
 
         <section className="section" aria-labelledby="work-heading">
-          <h2 id="work-heading" className="section-heading">
-            {site.home.workHeading}
-          </h2>
-          <div className="table">
+          <SectionTitle id="work-heading">{site.home.workHeading}</SectionTitle>
+          <div className="table" data-reveal="">
             <CardHand
               labelledBy="work-heading"
               items={caseStudies.map((study, index) => (
@@ -28,7 +27,7 @@ export default function HomePage() {
             />
             <DeckPile />
           </div>
-          <p className="after-hand">
+          <p className="after-hand" data-reveal="">
             <Link href="/projects">{site.home.projectsLink}</Link>
           </p>
         </section>

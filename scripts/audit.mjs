@@ -17,9 +17,9 @@ const flag = (name) =>
 const motion = flag('motion') ?? 'full'
 const paths = [
   '/',
-  '/work/field-notes/',
-  '/work/timetable/',
-  '/work/ledger/',
+  '/work/team-of-teams/',
+  '/work/shared-foundations/',
+  '/work/front-door/',
   '/projects/',
   '/about/',
   '/contact/',
