@@ -19,6 +19,21 @@
   border-radius: calc(var(--card-w) * 0.06);
 }
 
+/*
+ * Tilt: follows --foil-x / --foil-y (pointer or device orientation). The angle
+ * token is 0 in calm and reduced, so the card stays flat there.
+ */
+.cardLink {
+  perspective: 900px;
+}
+
+.cardLink > [data-foil-surface],
+.flip [data-foil-surface] {
+  transform: rotateX(calc((0.5 - var(--foil-y, 0.5)) * 2 * var(--angle-tilt)))
+    rotateY(calc((var(--foil-x, 0.5) - 0.5) * 2 * var(--angle-tilt)));
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
 /* Lift on hover/focus: transform only, distance from the motion tokens (0 in calm/reduced). */
 .lift {
   transition: transform var(--dur-base) var(--ease-out);

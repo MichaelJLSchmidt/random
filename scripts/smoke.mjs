@@ -161,7 +161,49 @@ check(
   motion === 'full' ? foil.x !== '' && foil.play === 'running' : foil.x === '' && foil.play === 'paused',
   JSON.stringify(foil),
 )
+const tilt = await middle.evaluate((el) => getComputedStyle(el).transform)
+const flat = (t) =>
+  t === 'none' ||
+  /^matrix\(1, 0, 0, 1, 0, 0\)$/.test(t) ||
+  /^matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1\)$/.test(t)
+check('pointer tilt only in full tier', motion === 'full' ? !flat(tilt) : flat(tilt), tilt.slice(0, 40))
 await page.mouse.move(0, 0)
+
+// Device orientation: opt-in switch on touch devices; nothing listens before the tap.
+const phone = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  hasTouch: true,
+  isMobile: true,
+  permissions: ['accelerometer', 'gyroscope', 'magnetometer'],
+  reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference',
+})
+if (motion === 'calm') await phone.addInitScript(() => localStorage.setItem('motion', 'calm'))
+await phone.addCookies(await context.cookies())
+const mobile = await phone.newPage()
+await mobile.goto(root, { waitUntil: 'networkidle' })
+const tiltSwitch = mobile.getByRole('switch', { name: 'Tilt cards with device motion' })
+const sendOrientation = () =>
+  mobile.evaluate(() => {
+    window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 80, gamma: 35 }))
+    return new Promise((r) =>
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => r(document.documentElement.style.getPropertyValue('--foil-x'))),
+      ),
+    )
+  })
+check('tilt switch shown on touch devices', (await tiltSwitch.count()) === 1)
+check('no orientation listener before opt-in', (await sendOrientation()) === '')
+if (motion === 'full') {
+  await tiltSwitch.tap()
+  await mobile.waitForTimeout(200)
+  const x = await sendOrientation()
+  check('orientation drives cards after opt-in', Number(x) > 0.5, `--foil-x ${x}`)
+  await tiltSwitch.tap()
+  check('switching off clears it', (await sendOrientation()) === '')
+} else {
+  check('tilt switch disabled outside full tier', await tiltSwitch.isDisabled())
+}
+await phone.close()
 
 // Settings: native switches, applied to <html> at once and kept after reload.
 const calmSwitch = page.getByRole('switch', { name: 'Calm motion' })

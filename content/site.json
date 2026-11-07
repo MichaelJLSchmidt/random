@@ -60,7 +60,10 @@
     "calmOn": "Calm motion on",
     "calmOff": "Calm motion off",
     "foilOn": "Foil effect on",
-    "foilOff": "Foil effect off"
+    "foilOff": "Foil effect off",
+    "tiltHint": "Asks for motion access when switched on. Only with full motion.",
+    "tiltOn": "Card tilt on",
+    "tiltOff": "Card tilt off"
   },
   "footer": {
     "note": "Built with Next.js. Text and images are placeholders."

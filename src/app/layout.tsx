@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { DisplaySettings } from '@/components/display-settings'
-import { FoilPointer } from '@/components/foil-pointer'
+import { Interactions } from '@/components/interactions'
 import { LiveRegion } from '@/components/live-region'
 import { MotionProvider } from '@/components/motion-provider'
 import { RouteFocus } from '@/components/route-focus'
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </MotionProvider>
         <LiveRegion />
         <RouteFocus />
-        <FoilPointer />
+        <Interactions />
       </body>
     </html>
   )
