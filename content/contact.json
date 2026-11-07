@@ -5,8 +5,22 @@
   "emailLabel": "Email",
   "linksHeading": "Elsewhere",
   "links": [
-    { "label": "GitHub", "href": "https://github.com/" },
-    { "label": "Are.na", "href": "https://www.are.na/" },
-    { "label": "Mastodon", "href": "https://mastodon.social/" }
-  ]
+    {
+      "label": "GitHub",
+      "href": "https://github.com/"
+    },
+    {
+      "label": "Are.na",
+      "href": "https://www.are.na/"
+    },
+    {
+      "label": "Mastodon",
+      "href": "https://mastodon.social/"
+    }
+  ],
+  "copy": {
+    "copy": "Copy email",
+    "copied": "Email address copied",
+    "failed": "Copy did not work. Select the address instead."
+  }
 }

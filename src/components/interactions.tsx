@@ -2,10 +2,9 @@
 
 import { useEffect } from 'react'
 
-/** Loads the pointer interaction when the browser is idle, on fine hovering pointers only. */
+/** Loads the pointer interaction (hover, touch-hold, title Glint) when the browser is idle. */
 export function Interactions() {
   useEffect(() => {
-    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return
     let cancelled = false
     let stop: (() => void) | undefined
     const start = () =>

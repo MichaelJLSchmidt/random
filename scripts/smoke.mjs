@@ -205,18 +205,29 @@ async function introSuite({ motion, check, url, fresh }) {
     end.intro === null && end.weight === '760' && end.slots.every(flat),
     JSON.stringify(end).slice(0, 120),
   )
-  // Return visit: no intro, 500 ms weight-in.
+  // Return visit: no intro, 500 ms weight-in (sampled every frame for 900 ms).
   await p.goto(url('/'), { waitUntil: 'commit' })
   await p.waitForSelector('main h1 .wt-word')
-  const back = await p.evaluate(() => document.documentElement.dataset.intro ?? null)
-  await p.waitForTimeout(250)
-  const mid = Number(
-    await p.evaluate(() => getComputedStyle(document.querySelector('main h1 .wt-word > span')).fontWeight),
+  const samples = await p.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const out = []
+        const start = performance.now()
+        const tick = () => {
+          out.push(
+            Math.round(parseFloat(getComputedStyle(document.querySelector('main h1 .wt-word > span')).fontWeight)),
+          )
+          if (performance.now() - start < 900) requestAnimationFrame(tick)
+          else resolve({ intro: document.documentElement.dataset.intro ?? null, out })
+        }
+        tick()
+      }),
   )
+  const between = samples.out.some((w) => w > 200 && w < 760)
   check(
     'return visit: weight-in only',
-    back === null && mid > 200 && mid < 760,
-    `intro=${back}, weight at ~250 ms ${mid}`,
+    samples.intro === null && between && samples.out.at(-1) === 760,
+    `${samples.out[0]} → ${samples.out.at(-1)}, intermediate ${between}`,
   )
   await c.close()
 }
@@ -273,6 +284,71 @@ async function scrollSuite({ page, motion, check, url }) {
   }
 }
 
+async function hoverSuite({ page, context, device, motion, check, url }) {
+  await page.goto(url('/'), { waitUntil: 'networkidle' })
+  await page.waitForTimeout(700)
+  const card = page.locator('[data-hand] li').nth(1)
+  const surface = card.locator('[data-foil-surface]')
+  await card.scrollIntoViewIfNeeded()
+  const foilOpacity = () => surface.evaluate((el) => getComputedStyle(el.querySelector('[data-foil-layer]')).opacity)
+  check('foil invisible at rest', (await foilOpacity()) === '0')
+  const tints = await page.$$eval('[data-hand] [data-foil-surface]', (els) =>
+    els.map((el) => getComputedStyle(el).getPropertyValue('--foil-gradient').slice(30, 60)),
+  )
+  check('each case study has its own foil tint', new Set(tints).size === 3)
+
+  if (device === 'desktop') {
+    const restColor = await card.locator('.tf-base').evaluate((el) => getComputedStyle(el).color)
+    const box = await surface.boundingBox()
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.55)
+    await page.waitForTimeout(150)
+    const glints = await page.evaluate(
+      () =>
+        document.getAnimations().filter((a) => a.effect?.target?.matches?.('[data-glint-text], .glint > span')).length,
+    )
+    await page.waitForTimeout(450)
+    const fill = await card.locator('.tf-fill').evaluate((el) => getComputedStyle(el).clipPath)
+    const foil = await foilOpacity()
+    const x = await surface.evaluate((el) => el.style.getPropertyValue('--foil-x'))
+    check('bold title rests in the secondary colour', restColor !== 'rgb(244, 244, 246)', restColor)
+    check('title fill sweeps in on hover', /^inset\(-[\d.]+px\)$/.test(fill), fill)
+    check('foil fades in on hover', foil === '0.92', foil)
+    check('foil tracks the pointer (full only)', motion === 'full' ? x !== '' : x === '', `--foil-x ${x || '(none)'}`)
+    check('Glint: at most one, full tier only', motion === 'full' ? glints === 1 : glints === 0, `${glints} running`)
+    const nav = page.locator('header nav a').first()
+    const u0 = await nav.locator('.link').evaluate((el) => getComputedStyle(el).getPropertyValue('--u'))
+    await nav.hover()
+    await page.waitForTimeout(250)
+    const u1 = await nav.locator('.link').evaluate((el) => getComputedStyle(el).getPropertyValue('--u'))
+    check('link underline draws in on hover', u0 === '0%' && u1 === '100%', `${u0} → ${u1}`)
+    await page.mouse.move(0, 0)
+  } else {
+    const fillShown = await card.locator('.tf-fill').evaluate((el) => getComputedStyle(el).display)
+    check('no title fill on touch screens', fillShown === 'none')
+    // Touch-hold: foil wakes up, and releasing does not open the card.
+    const box = await surface.boundingBox()
+    const cdp = await context.newCDPSession(page)
+    // Upper part of the card: in the narrow stack the next card covers its lower half.
+    const point = { x: box.x + box.width / 2, y: box.y + box.height * 0.12 }
+    const before = page.url()
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
+    await page.waitForTimeout(520)
+    const held = await surface.evaluate((el) => el.hasAttribute('data-foil-active'))
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await page.waitForTimeout(600)
+    check('touch-hold wakes the foil', held)
+    check('releasing a hold does not open the card', page.url() === before, page.url())
+  }
+
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {})
+  await page.goto(url('/contact/'), { waitUntil: 'networkidle' })
+  await page.getByRole('button', { name: 'Copy email' }).click()
+  await page.waitForTimeout(150)
+  const copied = await page.evaluate(() => document.querySelector('[role=status]')?.textContent)
+  check('copying the email is announced', copied === 'Email address copied', copied)
+}
+
 // Later phases append their suites here.
-const suites = [typeSuite, introSuite, scrollSuite]
+const suites = [typeSuite, introSuite, scrollSuite, hoverSuite]
 await main()

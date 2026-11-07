@@ -5,12 +5,14 @@ import { type ReactNode, useId, useState } from 'react'
 import { announce } from '@/components/live-region'
 import { spring, tween } from '@/motion/tokens'
 import { useMotionTier } from '@/motion/use-tier'
+import type { Theme } from '@/lib/content'
 import { CardFrame } from './card'
 import { CardMorph } from './card-morph'
 import styles from './layouts.module.css'
 
 type Props = {
   slug: string
+  tint?: Theme
   front: ReactNode
   back: ReactNode
   /** Shown instead of the flip when JavaScript is off. */
@@ -26,7 +28,7 @@ type Props = {
  * The hidden face is inert and aria-hidden. Without JavaScript the back face's
  * content is rendered in <noscript> below the card instead.
  */
-export function FlipCard({ slug, front, back, noScript, labels }: Props) {
+export function FlipCard({ slug, tint, front, back, noScript, labels }: Props) {
   const [flipped, setFlipped] = useState(false)
   const tier = useMotionTier()
   const id = useId()
@@ -44,7 +46,7 @@ export function FlipCard({ slug, front, back, noScript, labels }: Props) {
   return (
     <div className={styles.flip}>
       <CardMorph slug={slug}>
-        <CardFrame>
+        <CardFrame tint={tint}>
           <m.div
             id={id}
             className={styles.flipInner}

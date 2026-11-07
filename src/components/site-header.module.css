@@ -59,9 +59,6 @@
 
 .list a[aria-current='page'] {
   color: var(--text);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.4em;
 }
 
 .list a:hover {

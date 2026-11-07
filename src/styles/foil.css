@@ -1,11 +1,9 @@
 /*
  * Holographic foil. Lives only in text-free areas (card window, card back,
- * brand mark). An oversized band layer is blended over the grey line art and
- * moved with transforms only:
- *   translate: follows the pointer through --foil-x / --foil-y (0..1, written by
- *              FoilPointer straight to the card's style; full tier, fine pointers)
- *   transform: slow ambient drift (full tier only; paused in calm and reduced)
- * The sheen layer moves the opposite way for a little parallax.
+ * brand mark). On card faces it is invisible at rest and fades in over 240 ms
+ * on hover (fine pointers) or touch-hold, tracking the pointer inside the card
+ * through --foil-x / --foil-y (0..1, written by src/interactions/pointer.ts).
+ * Movement is translate only; there is no ambient drift.
  */
 [data-foil-layer] {
   position: absolute;
@@ -13,6 +11,16 @@
   overflow: hidden;
   pointer-events: none;
   mix-blend-mode: var(--foil-blend);
+  opacity: 0;
+  transition: opacity var(--dur-foil-fade) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-foil-surface]:hover [data-foil-layer] {
+    opacity: 0.92;
+  }
+}
+[data-foil-surface][data-foil-active] [data-foil-layer] {
   opacity: 0.92;
 }
 
@@ -27,8 +35,6 @@
 [data-foil-layer]::before {
   background: var(--foil-gradient);
   translate: calc((var(--foil-x, 0.5) - 0.5) * -24%) calc((var(--foil-y, 0.5) - 0.5) * -24%);
-  animation: foil-drift var(--dur-ambient) var(--ease-in-out) infinite alternate;
-  animation-play-state: var(--ambient);
 }
 
 [data-foil-layer]::after {
@@ -37,18 +43,13 @@
   translate: calc((var(--foil-x, 0.5) - 0.5) * 30%) calc((var(--foil-y, 0.5) - 0.5) * 30%);
 }
 
-@keyframes foil-drift {
-  from {
-    transform: translate3d(-6%, -3%, 0);
-  }
-  to {
-    transform: translate3d(6%, 3%, 0);
-  }
+:root[data-foil='off'] [data-foil-layer]::before {
+  translate: none;
 }
 
-:root[data-foil='off'] [data-foil-layer]::before {
-  animation: none;
-  translate: none;
+/* Cards that should not take a touch callout while held. */
+[data-foil-surface] {
+  -webkit-touch-callout: none;
 }
 
 /* Forced colours drop backgrounds anyway; keep the line art plain. */

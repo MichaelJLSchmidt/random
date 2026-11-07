@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { glint } from '@/motion/glint'
 import { INTRO_KEY } from '@/motion/preferences'
 import { duration, stagger, tiers } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
@@ -36,11 +37,15 @@ export function PageMotion() {
     let cancelled = false
     let skip: (() => void) | null = null
 
+    let heroTimer = 0
     const settle = (seconds: number, wordStagger: number) => {
       if (!title) return
       title.style.setProperty('--wt-dur', `${seconds}s`)
       title.style.setProperty('--wt-stagger', `${wordStagger}s`)
       title.dataset.settled = ''
+      // Case studies: one tinted Glint across the hero card once the title has settled.
+      const hero = document.querySelector<HTMLElement>('[data-hero] [data-foil-surface]')
+      if (hero && tier === 'full') heroTimer = window.setTimeout(() => glint(hero), seconds * 1000)
     }
     const endIntro = () => {
       root.removeAttribute('data-intro')
@@ -93,6 +98,7 @@ export function PageMotion() {
 
     return () => {
       cancelled = true
+      clearTimeout(heroTimer)
     }
   }, [pathname])
 

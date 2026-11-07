@@ -14,8 +14,16 @@ export const duration = {
   base: 0.28,
   slow: 0.42,
   slower: 0.64,
-  /** Idle foil drift, one loop. */
-  ambient: 16,
+  /** Bold-title fill sweep on hover (it reverses at `reverseFactor` of this). */
+  titleFill: 0.42,
+  /** Link underline drawing in from the left / out to the right. */
+  underline: 0.16,
+  /** Card foil fading in on hover or touch-hold. */
+  foilFade: 0.24,
+  /** Touch-hold before the foil wakes up on a card. */
+  hold: 0.35,
+  /** The Glint trails a title fill by this much. */
+  glintTrail: 0.08,
   /** Page h1 weight-in on a return visit or after client navigation. */
   weightIn: 0.5,
   /** First-visit intro: h1 weight-in (plus word stagger). */
@@ -27,6 +35,9 @@ export const duration = {
   /** The Glint: one sweep, never loops. */
   glint: 0.7,
 } as const
+
+/** Reverse transitions (title fill on leave) run at this share of the forward duration. */
+export const reverseFactor = 0.7
 
 /** Cubic béziers. */
 export const ease = {
@@ -113,9 +124,9 @@ export const angle = {
  *   travel: multiplier for distances and angles (0 = opacity only)
  */
 export const tiers = {
-  full: { time: 1, travel: 1, tilt: true, ambient: true, textReveal: 'words' },
-  calm: { time: 0.7, travel: 0, tilt: false, ambient: false, textReveal: 'fade' },
-  reduced: { time: 0, travel: 0, tilt: false, ambient: false, textReveal: 'none' },
+  full: { time: 1, travel: 1, tilt: true },
+  calm: { time: 0.7, travel: 0, tilt: false },
+  reduced: { time: 0, travel: 0, tilt: false },
 } as const satisfies Record<MotionTier, unknown>
 
 type DurationKey = keyof typeof duration
@@ -137,12 +148,11 @@ const kebab = (k: string) => k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)
 const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 
 function vars(tier: MotionTier): string {
-  const { time, travel: tr, ambient } = tiers[tier]
+  const { time, travel: tr } = tiers[tier]
   const out: string[] = []
   for (const [k, v] of Object.entries(duration)) {
-    if (k !== 'ambient') out.push(`--dur-${kebab(k)}:${ms(v * time)}`)
+    out.push(`--dur-${kebab(k)}:${ms(v * time)}`)
   }
-  out.push(`--dur-ambient:${ms(duration.ambient)}`, `--ambient:${ambient ? 'running' : 'paused'}`)
   for (const [k, v] of Object.entries(stagger)) out.push(`--stagger-${kebab(k)}:${ms(v * time)}`)
   for (const [k, v] of Object.entries(distance)) out.push(`--travel-${kebab(k)}:${v * tr}px`)
   out.push(`--angle-tilt:${angle.tilt * tr}deg`)
@@ -159,7 +169,7 @@ export function motionCss(): string {
     .map(([k, v]) => `--wght-${k}:${v}`)
     .join(';')
   return [
-    `:root{${easings};${weights};${vars('full')}}`,
+    `:root{${easings};${weights};--reverse:${reverseFactor};${vars('full')}}`,
     `:root[data-motion="calm"]{${vars('calm')}}`,
     `:root[data-motion="reduced"]{${vars('reduced')}}`,
     // No-JS fallback: the pre-paint script normally sets data-motion="reduced".

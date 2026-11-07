@@ -44,11 +44,11 @@ export default async function CaseStudyPage({ params }: Props) {
 
   return (
     <PageTransition>
-      <article className="page case-study">
+      <article className="page case-study" data-tint={study.theme}>
         <div className="case-grid">
           <header className="case-intro">
             <p className="back">
-              <Link href="/" transitionTypes={[navBack, cardType(study.slug)]}>
+              <Link href="/" className="link" transitionTypes={[navBack, cardType(study.slug)]}>
                 {site.caseStudy.backLink}
               </Link>
             </p>
@@ -58,7 +58,7 @@ export default async function CaseStudyPage({ params }: Props) {
             <PageTitle>{study.title}</PageTitle>
             <p className="lede">{study.summary}</p>
           </header>
-          <div className="case-card">
+          <div className="case-card" data-hero="">
             <FlipCard
               slug={study.slug}
               labels={{

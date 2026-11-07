@@ -1,0 +1,74 @@
+/*
+ * Case-study tints: the foil gradient re-weighted per theme, used on that
+ * case's card foil, its hero Glint and its section numerals. Always gradients,
+ * never flat colour blocks.
+ */
+[data-tint='people-leadership'] {
+  /* gold to orchid */
+  --foil-gradient: repeating-linear-gradient(
+    115deg,
+    #ffe49a 0%,
+    #ffd2a1 5%,
+    #f8bcd2 10%,
+    #e4a7f2 15%,
+    #f2c6e9 20%,
+    #ffe49a 25%
+  );
+}
+
+[data-tint='platform'] {
+  /* cyan to mint */
+  --foil-gradient: repeating-linear-gradient(
+    115deg,
+    #8fe8ff 0%,
+    #98f1f2 5%,
+    #a9fbdf 10%,
+    #c2ffd6 15%,
+    #a2f2ee 20%,
+    #8fe8ff 25%
+  );
+}
+
+[data-tint='service-delivery'] {
+  /* violet to cyan */
+  --foil-gradient: repeating-linear-gradient(
+    115deg,
+    #c6b2ff 0%,
+    #b6bbff 5%,
+    #a6cdff 10%,
+    #94e3ff 15%,
+    #b3c4ff 20%,
+    #c6b2ff 25%
+  );
+}
+
+/* Foil off (setting or high-contrast request) wins over every tint. */
+:root[data-foil='off'] [data-tint] {
+  --foil-gradient: linear-gradient(var(--accent), var(--accent));
+}
+@media (prefers-contrast: more) {
+  [data-tint] {
+    --foil-gradient: linear-gradient(var(--accent), var(--accent));
+  }
+}
+
+/* Case-study section numerals: tinted gradient text, static (never animated). */
+.case-study .prose {
+  counter-reset: section;
+}
+.case-study .prose [data-section-title]::before {
+  counter-increment: section;
+  content: counter(section, decimal-leading-zero);
+  content: counter(section, decimal-leading-zero) / '';
+  display: block;
+  width: fit-content;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--wght-medium);
+  letter-spacing: var(--tracking-mono);
+  color: transparent;
+  background: var(--foil-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+}

@@ -17,7 +17,9 @@ export default function NotFound() {
           <PageTitle>{site.notFound.title}</PageTitle>
           <p className="lede">{site.notFound.body}</p>
           <p>
-            <Link href="/">{site.notFound.homeLink}</Link>
+            <Link href="/" className="link">
+              {site.notFound.homeLink}
+            </Link>
           </p>
         </header>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { projects, site } from '@/lib/content'
 import { PageTitle } from '@/components/page-title'
+import { TitleFill } from '@/components/title-fill'
 import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = { title: site.projects.title }
@@ -15,8 +16,16 @@ export default function ProjectsPage() {
         </header>
         <ul className="project-list">
           {projects.map((project) => (
-            <li key={project.title}>
-              <h2>{project.href ? <a href={project.href}>{project.title}</a> : project.title}</h2>
+            <li key={project.title} data-fill-host="">
+              <h2>
+                {project.href ? (
+                  <a href={project.href}>
+                    <TitleFill>{project.title}</TitleFill>
+                  </a>
+                ) : (
+                  <TitleFill>{project.title}</TitleFill>
+                )}
+              </h2>
               <p className="meta">
                 {project.kind}, {project.year}
               </p>

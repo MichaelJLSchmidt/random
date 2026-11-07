@@ -22,7 +22,7 @@ type Props = {
  * (label, title, discipline and year); the corner number is decorative.
  */
 export function CaseStudyCard({ study, index, label, headingLevel, direction = navForward, flippable }: Props) {
-  const front = <CardFront study={study} index={index} headingLevel={headingLevel} />
+  const front = <CardFront study={study} index={index} headingLevel={headingLevel} fill />
   return (
     <Link
       href={`/work/${study.slug}`}
@@ -32,7 +32,7 @@ export function CaseStudyCard({ study, index, label, headingLevel, direction = n
     >
       {label && <span className={`meta ${styles.cardLabel}`}>{label}</span>}
       <CardMorph slug={study.slug}>
-        <CardFrame>
+        <CardFrame tint={study.theme}>
           {flippable ? (
             <div className={styles.flipper} data-flipper="">
               {front}

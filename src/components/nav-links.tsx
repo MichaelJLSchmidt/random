@@ -14,14 +14,8 @@ export function NavLinks({ items, className }: { items: Item[]; className?: stri
         const current = pathname === item.href || pathname.startsWith(`${item.href}/`)
         return (
           <li key={item.href}>
-            <Link
-              href={item.href}
-              transitionTypes={[navFade]}
-              aria-current={current ? 'page' : undefined}
-              className="weight-link"
-              data-text={item.label}
-            >
-              <span>{item.label}</span>
+            <Link href={item.href} transitionTypes={[navFade]} aria-current={current ? 'page' : undefined}>
+              <span className="link">{item.label}</span>
             </Link>
           </li>
         )

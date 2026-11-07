@@ -1,5 +1,6 @@
-import type { CaseStudy } from '@/lib/content'
+import type { CaseStudy, Theme } from '@/lib/content'
 import { cardNumber } from '@/lib/content'
+import { TitleFill } from '../title-fill'
 import styles from './card.module.css'
 import { BackPattern, Motif } from './motif'
 
@@ -9,16 +10,22 @@ import { BackPattern, Motif } from './motif'
  * Text sits on solid surfaces only; the window and back pattern carry no text.
  */
 
-type FrontProps = { study: CaseStudy; index: number; headingLevel?: 'h3' | 'p' }
+type FrontProps = {
+  study: CaseStudy
+  index: number
+  headingLevel?: 'h3' | 'p'
+  /** Hover fill on the title (cards that are links). */
+  fill?: boolean
+}
 
-export function CardFront({ study, index, headingLevel: Title = 'p' }: FrontProps) {
+export function CardFront({ study, index, headingLevel: Title = 'p', fill = false }: FrontProps) {
   return (
     <div className={`${styles.face} ${styles.front}`}>
       <div className={styles.topRow} aria-hidden="true">
         <span>{cardNumber(index)}</span>
         <span>{study.year}</span>
       </div>
-      <Title className={styles.title}>{study.title}</Title>
+      <Title className={styles.title}>{fill ? <TitleFill>{study.title}</TitleFill> : study.title}</Title>
       <div className={styles.window} data-motif={study.motif}>
         <Motif name={study.motif} />
         <span className={styles.foil} data-foil-layer aria-hidden="true" />
@@ -44,9 +51,18 @@ export function CardBack({ children }: { children?: React.ReactNode }) {
 }
 
 /** The physical card: ratio, surface, border and container units for its contents. */
-export function CardFrame({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+export function CardFrame({
+  children,
+  className = '',
+  tint,
+}: {
+  children: React.ReactNode
+  className?: string
+  /** Case-study theme: re-weights the foil gradient for this card. */
+  tint?: Theme
+}) {
   return (
-    <div className={`${styles.card} ${className}`} data-foil-surface>
+    <div className={`${styles.card} ${className}`} data-foil-surface data-tint={tint}>
       {children}
     </div>
   )

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { contact } from '@/lib/content'
+import { CopyEmail } from '@/components/copy-email'
 import { PageTitle } from '@/components/page-title'
 import { SectionTitle } from '@/components/section-title'
 import { PageTransition } from '@/components/page-transition'
@@ -18,9 +19,7 @@ export default function ContactPage() {
           <div>
             <dt className="meta">{contact.emailLabel}</dt>
             <dd>
-              <a className="contact-email" href={`mailto:${contact.email}`}>
-                {contact.email}
-              </a>
+              <CopyEmail email={contact.email} labels={contact.copy} />
             </dd>
           </div>
         </dl>
@@ -29,7 +28,9 @@ export default function ContactPage() {
           <ul className="link-list">
             {contact.links.map((link) => (
               <li key={link.href}>
-                <a href={link.href}>{link.label}</a>
+                <a className="link" href={link.href}>
+                  {link.label}
+                </a>
               </li>
             ))}
           </ul>

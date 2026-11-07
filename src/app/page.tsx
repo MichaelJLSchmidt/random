@@ -28,7 +28,9 @@ export default function HomePage() {
             <DeckPile />
           </div>
           <p className="after-hand" data-reveal="">
-            <Link href="/projects">{site.home.projectsLink}</Link>
+            <Link href="/projects" className="link">
+              {site.home.projectsLink}
+            </Link>
           </p>
         </section>
       </div>
