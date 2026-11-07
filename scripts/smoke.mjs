@@ -236,6 +236,12 @@ async function tableSuite(browser, device) {
   await page.waitForURL(/front-door/, { timeout: 4000 })
   await wait(page, 1500)
   check('browser back: page and H1 shown', await page.locator('h1').isVisible())
+  vts = await page.evaluate(() => window.__vts)
+  check(
+    'browser back: the card zooms in from its slot (view transition)',
+    vts.at(-1)?.types.includes('play') && vts.at(-1)?.ok === true,
+    JSON.stringify(vts.at(-1)),
+  )
   const back = await regionColour(page, sky)
   check('browser back: field follows the route (grove)', back[1] > back[0], `${back}`)
   await page.goBack()
@@ -247,6 +253,16 @@ async function tableSuite(browser, device) {
     back2[0] > back2[1] && back2[0] > back2[2],
     `${back2}`,
   )
+  vts = await page.evaluate(() => window.__vts)
+  check(
+    'browser back again: "switch" view transition',
+    vts.at(-1)?.types.includes('switch'),
+    JSON.stringify(vts.at(-1)),
+  )
+  await page.goForward()
+  await page.waitForURL(/front-door/, { timeout: 4000 })
+  await wait(page, 1200)
+  check('browser forward still works after the replay', await page.locator('h1').isVisible())
 
   // Mobile rail hides on scroll down and returns on scroll up.
   if (device === 'phone') {

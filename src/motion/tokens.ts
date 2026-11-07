@@ -176,12 +176,16 @@ export const reveal = { amount: 0.25, margin: '0px 0px -10% 0px' } as const
 
 /** Hand geometry. */
 export const hand = {
-  card: { w: 132, h: 184 },
-  cardSm: { w: 84, h: 118 },
+  card: { w: 176, h: 246 },
+  cardSm: { w: 100, h: 140 },
+  /** Hover / focus lifts a card until this much of it shows (pages show 45%). */
+  reveal: 0.9,
   overlap: 28,
   visibleHome: 0.72,
   visiblePage: 0.45,
   visibleHomeSm: 0.7,
+  /** Played card (detail hero) width: clamp(min, vw, max), shrunk to fit the height. */
+  hero: { min: 280, vw: 0.28, max: 400, phoneVw: 0.72, phoneMax: 320 },
   perspective: 1200,
   deckGap: 24,
   rail: 48,

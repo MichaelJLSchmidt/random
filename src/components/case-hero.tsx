@@ -2,16 +2,17 @@
 
 import { useEffect, useRef, useState, ViewTransition } from 'react'
 import type { HandCard } from '@/lib/cards'
-import { cardNumber } from '@/lib/content'
+import { cardNumber, site } from '@/lib/content'
 import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
 import { PageTitle } from './page-title'
 
 /*
- * Full-bleed hero in the card's colour (72vh); the H1 sits in its ink-on-glow
- * band. It holds the card's view-transition name (the hand card morphs into it
- * on play and back on return) until it scrolls out of view; then a 40x56 mini
- * card fixed at the top left takes the name, so a return from far down the
- * page still flies into the slot.
+ * The played card, lying on the table: the same face as the hand card at hero
+ * size, with the H1 in its band and the facts at the bottom. It shares the
+ * card's view-transition name, so playing is a same-shape zoom from the hand
+ * and returning flies it back into its slot. On wide screens it stays in view
+ * (sticky, left of the content); on narrow ones a 40x56 mini card takes the
+ * name once it has scrolled away.
  */
 export function CaseHero({ card }: { card: HandCard }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -28,19 +29,36 @@ export function CaseHero({ card }: { card: HandCard }) {
 
   return (
     <header className="hero" data-identity={card.identity}>
-      <ViewTransition name={inView ? cardName(card.id) : undefined} share={heroShare} enter={pageEnter} exit={pageExit}>
-        <div ref={ref} className="hero-card">
-          <p className="hero-index mono" aria-hidden="true">
-            {cardNumber(card.index)}
-          </p>
-          <div className="hero-band">
-            <ViewTransition name={titleName(card.id)} share={heroTitleShare} enter="none" exit="none" default="none">
-              <PageTitle className="hero-title">{card.title}</PageTitle>
-            </ViewTransition>
-            <p className="hero-type">{card.projectType}</p>
+      <div className="hero-slot">
+        <ViewTransition
+          name={inView ? cardName(card.id) : undefined}
+          share={heroShare}
+          enter={pageEnter}
+          exit={pageExit}
+        >
+          <div ref={ref} className="card-face hero-card" data-identity={card.identity}>
+            <p className="card-top" aria-hidden="true">
+              <span>{cardNumber(card.index)}</span>
+              <span className="card-year">{card.year}</span>
+            </p>
+            <div className="card-band">
+              <ViewTransition name={titleName(card.id)} share={heroTitleShare} enter="none" exit="none" default="none">
+                <PageTitle className="card-title">{card.title}</PageTitle>
+              </ViewTransition>
+              <p className="card-type">{card.projectType}</p>
+            </div>
+            <p className="card-summary">{card.inspect}</p>
+            <dl className="card-facts" aria-label={site.caseStudy.factsLabel}>
+              {card.facts.map((f) => (
+                <div key={f.label} className="card-fact">
+                  <dt className="card-fact-label">{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-        </div>
-      </ViewTransition>
+        </ViewTransition>
+      </div>
       {!inView && (
         <ViewTransition name={cardName(card.id)} share={heroShare} default="none">
           <span className="hero-mini" aria-hidden="true">

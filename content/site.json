@@ -6,26 +6,14 @@
     "about": "About",
     "contact": "Contact",
     "back": "Back",
-    "homeLabel": "Your Name, home"
+    "homeLabel": "MJLS, home",
+    "projects": "More projects"
   },
   "home": {
     "title": "Your Name",
     "role": "Design lead and front-end engineer",
     "intro": "I lead small teams that design and build careful products, from the first workshop to the code that ships. The cards below are three recent case studies and how I manage.",
-    "links": [
-      {
-        "href": "/about",
-        "label": "About"
-      },
-      {
-        "href": "/projects",
-        "label": "More projects"
-      },
-      {
-        "href": "/contact",
-        "label": "Contact"
-      }
-    ]
+    "hint": "Open a card below to read a project."
   },
   "caseStudy": {
     "factsLabel": "Facts",
@@ -163,5 +151,6 @@
     },
     "coffeeDealt": "One more card: Coffee?",
     "tableFlipped": "{name}: {line}"
-  }
+  },
+  "wordmark": "MJLS"
 }

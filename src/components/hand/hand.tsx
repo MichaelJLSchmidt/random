@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
 import { cardForPath, handCards, handLabels } from '@/lib/cards'
 import { site } from '@/lib/content'
 import { drawCards } from '@/motion/reveal'
-import { cancelPlay, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
+import { cancelPlay, interceptHistory, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
@@ -36,6 +37,8 @@ export function Hand() {
   const home = path === '/'
   const active = cardForPath(path)?.id ?? null
   const router = useRouter()
+  const pathRef = useRef(path)
+  pathRef.current = path
   const root = useRef<HTMLElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
   // Roving tabindex: one tab stop for the whole hand, on the open card if any.
@@ -49,7 +52,12 @@ export function Hand() {
 
   // Navigation for play / return, prefetch of every card route, Escape returns.
   useEffect(() => {
-    registerNavigate((href, types) => router.push(href, { transitionTypes: types }))
+    registerNavigate((href, types, replace) =>
+      replace
+        ? router.replace(href, { transitionTypes: types, scroll: false })
+        : router.push(href, { transitionTypes: types }),
+    )
+    const offHistory = interceptHistory(() => pathRef.current)
     for (const card of handCards) router.prefetch(card.href)
     router.prefetch('/projects')
     const onKey = (e: KeyboardEvent) => {
@@ -60,6 +68,7 @@ export function Hand() {
     document.addEventListener('keydown', onKey)
     return () => {
       registerNavigate(null)
+      offHistory()
       document.removeEventListener('keydown', onKey)
     }
   }, [router])
@@ -98,6 +107,14 @@ export function Hand() {
     if (table.get().tier === 'full') drawCards([card], 0)
     else card.dataset.drawn = ''
   }, [coffee])
+
+  // The scrim under the hand follows the page colour.
+  useEffect(() => {
+    const nav = root.current!
+    const paint = () => nav.style.setProperty('--page-field', palette[table.get().field.identity].field)
+    paint()
+    return table.subscribe((s, p) => s.field.seq !== p.field.seq && paint())
+  }, [])
 
   // Slots, hover intent, keyboard.
   useEffect(() => {

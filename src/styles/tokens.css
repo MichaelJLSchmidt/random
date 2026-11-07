@@ -38,6 +38,8 @@
   --text-xl: clamp(1.45rem, 1.25rem + 0.9vw, 2rem);
   --text-2xl: clamp(2rem, 1.5rem + 2.4vw, 3.4rem);
   --text-display: clamp(2.75rem, 1.6rem + 5.6vw, 6.5rem);
+  --text-hero: clamp(3.4rem, 1.2rem + 6.8vw, 8.25rem);
+  --text-page: clamp(3rem, 1.7rem + 4.2vw, 6rem);
   --leading-tight: 0.98;
   --leading-snug: 1.15;
   --leading-body: 1.6;
@@ -66,15 +68,18 @@
   --header-h: 4rem;
 
   /* Hand (geometry mirrored in src/motion/tokens.ts) */
-  --card-w: 132px;
-  --card-h: 184px;
+  --card-w: 176px;
+  --card-h: 246px;
   --card-overlap: 28px;
-  --card-w-sm: 84px;
-  --card-h-sm: 118px;
+  --card-w-sm: 100px;
+  --card-h-sm: 140px;
+  --card-ratio: 132 / 184;
+  /* Played card on detail pages (mirrors hand.hero in tokens.ts). */
+  --hero-w: min(clamp(280px, 28vw, 400px), calc((100dvh - var(--header-h) - 220px) * 132 / 184));
   --rail-h: 48px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* Space kept free under the content for the hand. */
-  --hand-reserve: calc(var(--card-h) * 0.45 + var(--space-7));
+  --hand-reserve: calc(var(--card-h) * 0.45 + var(--space-8));
 
   /* Layers */
   --z-field: -1;
@@ -93,5 +98,6 @@
 @media (max-width: 1023.98px) {
   :root {
     --hand-reserve: calc(var(--rail-h) + var(--safe-bottom) + var(--space-6));
+    --hero-w: min(72vw, 320px);
   }
 }

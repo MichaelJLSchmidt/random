@@ -1,6 +1,6 @@
 import { cardIdentity, handLabels, handOrder, managementCard, railLabel } from '@content/cards'
 import type { Identity } from '@/design/palette'
-import { caseStudies } from './content'
+import { type Fact, caseStudies, site } from './content'
 
 /** One card of the hand (navigation). */
 export type HandCard = {
@@ -14,6 +14,9 @@ export type HandCard = {
   inspect: string
   /** Printed along the long edge; readable when the card is turned sideways (Tap). */
   tapLine: string
+  /** Shown on the card face: years, then role / team / timeframe / client type. */
+  year: string
+  facts: Fact[]
   index: number
 }
 
@@ -28,6 +31,8 @@ export const handCards: HandCard[] = handOrder.map((id, index) => {
       railLabel: railLabel[id],
       inspect: managementCard.summary,
       tapLine: managementCard.tapLine,
+      year: managementCard.year,
+      facts: site.management.facts,
       index,
     }
   }
@@ -42,6 +47,8 @@ export const handCards: HandCard[] = handOrder.map((id, index) => {
     railLabel: railLabel[id],
     inspect: study.inspect,
     tapLine: study.tapLine,
+    year: study.year,
+    facts: study.facts,
     index,
   }
 })

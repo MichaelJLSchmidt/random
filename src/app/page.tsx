@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 import { site } from '@/lib/content'
-import { NAV } from '@/motion/transitions'
 
 export default function HomePage() {
   return (
@@ -15,15 +13,9 @@ export default function HomePage() {
         <p className="lede" data-reveal="paragraph" data-order="lines">
           {site.home.intro}
         </p>
-        <ul className="home-links" data-reveal="tags" data-order="chrome">
-          {site.home.links.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} transitionTypes={[NAV]}>
-                <span className="link">{link.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <p className="home-hint" data-reveal="tags" data-order="chrome">
+          {site.home.hint}
+        </p>
       </div>
     </PageTransition>
   )

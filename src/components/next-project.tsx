@@ -1,9 +1,10 @@
 import { handCards } from '@/lib/cards'
-import { cardNumber, site } from '@/lib/content'
+import { site } from '@/lib/content'
 import { SWITCH } from '@/motion/transitions'
+import { CardFace } from './hand/card-face'
 import { PlayLink } from './play-link'
 
-/** "Next project": a mini card for the next card in the hand; it plays that card from the hand (a switch). */
+/** "Next project": the next card of the hand, face up; it plays that card from the hand (a switch). */
 export function NextProject({ current }: { current: string }) {
   const i = handCards.findIndex((c) => c.id === current)
   const next = handCards[(i + 1) % handCards.length]
@@ -12,19 +13,13 @@ export function NextProject({ current }: { current: string }) {
       <p id="next-project-title" className="meta">
         {site.caseStudy.nextLabel}
       </p>
-      <PlayLink
-        id={next.id}
-        href={next.href}
-        className="next-card"
-        data-identity={next.identity}
-        transitionTypes={[SWITCH]}
-      >
+      <PlayLink id={next.id} href={next.href} className="next-card" transitionTypes={[SWITCH]}>
         <span className="next-card-face" aria-hidden="true">
-          <span className="mono">{cardNumber(next.index)}</span>
+          <CardFace card={next} named={false} />
         </span>
         <span className="next-card-text">
           <span className="next-card-title">{next.title}</span>
-          <span className="muted">{next.projectType}</span>
+          <span className="next-card-type">{next.projectType}</span>
         </span>
       </PlayLink>
     </section>

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: site.management.title, description: s
 export default function ManagementPage() {
   const card = cardById('management')!
   return (
-    <DetailPage card={card} facts={site.management.facts} summary={site.management.summary} extra={<WorkshopDraw />}>
+    <DetailPage card={card} summary={site.management.summary} extra={<WorkshopDraw />}>
       <Body />
     </DetailPage>
   )

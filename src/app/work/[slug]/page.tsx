@@ -25,7 +25,7 @@ export default async function CaseStudyPage({ params }: Props) {
   const { study } = entry
   const { default: Body } = await import(`@content/work/${slug}.mdx`)
   return (
-    <DetailPage card={card} facts={study.facts} summary={study.summary} statement={study.statement}>
+    <DetailPage card={card} summary={study.summary} statement={study.statement}>
       <Body />
     </DetailPage>
   )

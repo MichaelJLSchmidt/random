@@ -1,14 +1,15 @@
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
 import { at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
-import { PLAY, RETURN, SWITCH } from './transitions'
+import { cardForPath } from '@/lib/cards'
+import { NAV, PLAY, RETURN, SWITCH } from './transitions'
 
 /*
  * Play, return and switch: stage 1 runs here (WAAPI on the hand card), stage 2
  * is the view transition React runs for the navigation.
  *
  *   play     0 ms press (scale 0.97, 90 ms, 8 ms haptic)
- *            90 ms the card lifts to the field's centre left on the play spring
+ *            90 ms the card lifts to where it will lie on the page, on the play spring
  *            (rotation 0, tilt 0, scale 1.5), siblings close the gap (280 ms)
  *            and the field starts to bloom
  *            430 ms navigate with type "play" (switch: 400 ms, type "switch")
@@ -17,7 +18,7 @@ import { PLAY, RETURN, SWITCH } from './transitions'
  * Calm and reduced skip the lift and navigate at once; so does a card that is
  * not on screen (the mobile rail) or one tapped in the mobile sheet.
  */
-type Navigate = (href: string, types: string[]) => void
+type Navigate = (href: string, types: string[], replace?: boolean) => void
 
 let navigate: Navigate | null = null
 let lift: { card: HTMLElement; anims: Animation[]; timers: number[] } | null = null
@@ -27,6 +28,25 @@ const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 
 export function registerNavigate(fn: Navigate | null) {
   navigate = fn
+}
+
+/**
+ * Where the played card will lie on the detail page (centre and size, px).
+ * Mirrors --hero-w and the .detail layout in the stylesheets.
+ */
+export function heroTarget() {
+  const vw = innerWidth
+  const vh = innerHeight
+  const header = 64
+  const ratio = 184 / 132
+  if (vw >= H.breakpoint) {
+    const w = Math.min(Math.max(H.hero.min, vw * H.hero.vw), H.hero.max, (vh - header - 220) / ratio)
+    const gutter = Math.min(Math.max(20, vw * 0.05), 48)
+    const left = Math.max(0, (vw - 78 * 16) / 2) + gutter
+    return { cx: left + w / 2, cy: header + 24 + (w * ratio) / 2, w, h: w * ratio }
+  }
+  const w = Math.min(vw * H.hero.phoneVw, H.hero.phoneMax)
+  return { cx: vw / 2, cy: header + 12 + (w * ratio) / 2, w, h: w * ratio }
 }
 
 const onScreen = (el: Element | null) => {
@@ -71,10 +91,12 @@ export function play(id: string, href: string): boolean {
 
   timers.push(
     window.setTimeout(() => {
-      // Lift to the field's centre left. The card scales about its bottom centre.
+      // Lift onto the table where the card will lie (it then zooms to full size
+      // in place). The card scales about its bottom centre; keep it on screen.
       const s = slot.getBoundingClientRect()
-      const tx = innerWidth * 0.3
-      const ty = innerHeight * 0.46
+      const target = heroTarget()
+      const tx = target.cx
+      const ty = Math.min(target.cy, innerHeight - (card.offsetHeight * H.liftScale) / 2 - 16)
       const dx = tx - (s.left + s.width / 2)
       const dy = ty - (s.top + s.height / 2) + ((H.liftScale - 1) * card.offsetHeight) / 2
       anims.push(
@@ -155,4 +177,41 @@ export function land(card: HTMLElement) {
     duration: landSpring.duration * 1000,
     easing: landSpring.easing,
   })
+}
+
+const normalise = (path: string) => path.replace(/\/$/, '') || '/'
+
+/**
+ * Browser back / forward: React does not run view transitions for popstate
+ * updates, so the history step is taken over (before the router sees it) and
+ * replayed as a typed navigation to the same URL: the hero flies back into its
+ * slot, a card page zooms in from its slot, a switch cross-fades. Other
+ * history entries are left to the router.
+ */
+export function interceptHistory(current: () => string) {
+  const onPop = (e: PopStateEvent) => {
+    if (!navigate || !(e.state as { __NA?: boolean } | null)?.__NA) return
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+    const to = normalise(location.pathname.slice(base.length))
+    const from = current()
+    if (to === from) return
+    e.stopImmediatePropagation()
+    settleLift()
+    const fromCard = cardForPath(from)
+    const toCard = cardForPath(to)
+    let type = NAV
+    if (toCard) {
+      const [x, y] = table.slotOf(toCard.id) ?? [0.5, 1]
+      table.play(toCard.id, new DOMRect(x * innerWidth - 1, y * innerHeight - 1, 2, 2), to)
+      type = fromCard ? SWITCH : PLAY
+    } else if (fromCard) {
+      if (to === '/') table.returnHome(to)
+      type = RETURN
+    }
+    const href = to + location.search + location.hash
+    // Outside the popstate event, so React treats it as an ordinary transition.
+    window.setTimeout(() => navigate?.(href, [type], true))
+  }
+  addEventListener('popstate', onPop, true)
+  return () => removeEventListener('popstate', onPop, true)
 }

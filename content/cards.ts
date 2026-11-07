@@ -31,6 +31,7 @@ export const managementCard = {
   projectType: 'How I lead',
   summary: 'How I run teams: rituals, metrics I trust and the workshop methods I reach for.',
   tapLine: 'The best retro format is the one the team picks.',
+  year: 'Since 2016',
 }
 
 /** Labels for the hand. */

@@ -57,7 +57,11 @@
   z-index: 3;
 }
 
-/* Play: 580 ms ease-zoom; old fades out over 0-60%, new fades in over 30-100%. */
+/*
+ * Play: 580 ms ease-zoom. Card and hero have the same shape, so the images
+ * cross-fade in the first 45% (complementary, blended plus-lighter: never
+ * see-through) and the sharp new image finishes the zoom.
+ */
 ::view-transition-group(.card-zoom),
 ::view-transition-group(.title-zoom) {
   animation-duration: var(--dur-zoom);
@@ -65,11 +69,11 @@
 }
 ::view-transition-old(.card-zoom),
 ::view-transition-old(.title-zoom) {
-  animation: vt-out-60 var(--dur-zoom) linear both;
+  animation: vt-xout var(--dur-zoom) linear both;
 }
 ::view-transition-new(.card-zoom),
 ::view-transition-new(.title-zoom) {
-  animation: vt-in-30 var(--dur-zoom) linear both;
+  animation: vt-xin var(--dur-zoom) linear both;
 }
 
 /* Switch: the new card follows the outgoing one by 40 ms, over 560 ms. */
@@ -81,11 +85,11 @@
 }
 ::view-transition-old(.card-switch),
 ::view-transition-old(.title-switch) {
-  animation: vt-out-60 var(--dur-switch-in) linear var(--dur-switch-delay) both;
+  animation: vt-xout var(--dur-switch-in) linear var(--dur-switch-delay) both;
 }
 ::view-transition-new(.card-switch),
 ::view-transition-new(.title-switch) {
-  animation: vt-in-30 var(--dur-switch-in) linear var(--dur-switch-delay) both;
+  animation: vt-xin var(--dur-switch-in) linear var(--dur-switch-delay) both;
 }
 
 /* Return: 520 ms ease-return into the slot. */
@@ -96,14 +100,14 @@
 }
 ::view-transition-old(.card-return),
 ::view-transition-old(.title-return) {
-  animation: vt-out-60 var(--dur-return) linear both;
+  animation: vt-xout var(--dur-return) linear both;
 }
 ::view-transition-new(.card-return),
 ::view-transition-new(.title-return) {
-  animation: vt-in-30 var(--dur-return) linear both;
+  animation: vt-xin var(--dur-return) linear both;
 }
 
-/* Card and hero differ in shape: both images fill the morphing box. */
+/* Both images fill the morphing box (card and hero share one aspect ratio). */
 ::view-transition-old(.card-zoom),
 ::view-transition-new(.card-zoom),
 ::view-transition-old(.card-switch),
@@ -145,20 +149,20 @@
   animation: vt-fade-in var(--dur-exit-return) var(--ease-out-soft) var(--dur-exit-return) both;
 }
 
-@keyframes vt-out-60 {
+@keyframes vt-xout {
   0% {
     opacity: 1;
   }
-  60%,
+  45%,
   100% {
     opacity: 0;
   }
 }
-@keyframes vt-in-30 {
-  0%,
-  30% {
+@keyframes vt-xin {
+  0% {
     opacity: 0;
   }
+  45%,
   100% {
     opacity: 1;
   }

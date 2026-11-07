@@ -4,8 +4,7 @@
  */
 
 /* ---------- Hand: tap (turned sideways), inspect (2x), tap line, summary ---------- */
-.card-tapline,
-.card-inspect {
+.card-tapline {
   position: absolute;
   font-family: var(--font-mono);
   letter-spacing: 0;
@@ -25,13 +24,7 @@
   font-size: clamp(5px, 5.2cqi, 7px);
   line-height: 1.25;
 }
-.card-inspect {
-  left: 6cqi;
-  right: 6cqi;
-  bottom: 6cqi;
-  font-size: clamp(5px, 5.2cqi, 7px);
-  line-height: 1.35;
-}
+
 .card-band {
   transition: opacity var(--dur-fast) var(--ease-out-soft);
 }
@@ -59,8 +52,8 @@
   scale: var(--inspect-scale, 2);
   translate: 0 calc(var(--ch) * (var(--visible) - 1));
 }
-.hand-card[data-inspect] .card-inspect {
-  opacity: 1;
+.hand-card[data-inspect] :is(.card-summary, .card-facts) {
+  display: revert;
 }
 .hand-card,
 .hand-deck {

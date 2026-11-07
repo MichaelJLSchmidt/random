@@ -22,7 +22,7 @@ export function Header() {
         transitionTypes={[onCard ? RETURN : NAV]}
         onNavigate={() => onCard && table.returnHome('/')}
       >
-        {site.name}
+        {site.wordmark}
       </Link>
       <nav aria-label="Site" className={styles.nav}>
         <ul>
@@ -36,6 +36,11 @@ export function Header() {
           <li>
             <Link href="/about" transitionTypes={[NAV]} aria-current={current('/about')}>
               <span className="link">{site.header.about}</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/projects" transitionTypes={[NAV]} aria-current={current('/projects')}>
+              <span className="link">{site.header.projects}</span>
             </Link>
           </li>
           <li>
