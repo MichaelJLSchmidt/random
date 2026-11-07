@@ -33,6 +33,7 @@ body {
 
 main {
   flex: 1;
+  min-height: 100dvh;
   outline: none;
 }
 
