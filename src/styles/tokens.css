@@ -1,79 +1,47 @@
 /*
- * Design tokens. Dark mode first, greyscale only. The holographic foil is the
- * only colour; --accent is its flat stand-in when foil is off.
- * Motion tokens are not here: they live in src/motion/tokens.ts.
+ * Layout and type tokens. Colours come from src/design/palette.ts (identityCss),
+ * motion from src/motion/tokens.ts (motionCss); both are injected in the root
+ * layout. Dark mode only.
  */
-
 @property --wght {
   syntax: '<number>';
   inherits: true;
   initial-value: 400;
 }
+@property --opsz {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 96;
+}
 
 :root {
   color-scheme: dark;
 
-  /* Greyscale ramp */
-  --grey-0: #09090b;
-  --grey-50: #101013;
-  --grey-100: #16161a;
-  --grey-150: #1d1d22;
-  --grey-200: #28282e;
-  --grey-300: #393940;
-  --grey-400: #55555d;
-  --grey-500: #8e8e98;
-  --grey-600: #a9a9b2;
-  --grey-700: #c4c4cb;
-  --grey-800: #dddde2;
-  --grey-900: #f4f4f6;
-
-  /* Semantic colour */
-  --bg: var(--grey-0);
-  --surface: var(--grey-100);
-  --surface-raised: var(--grey-150);
-  --border: var(--grey-200);
-  --border-strong: var(--grey-300);
-  --text: var(--grey-900);
-  --text-muted: var(--grey-600);
-  --text-subtle: var(--grey-500);
-  --focus: var(--grey-900);
-
-  /* Foil (decorative layers only, never behind text) */
-  --foil-gradient: repeating-linear-gradient(
-    115deg,
-    #a3e6ff 0%,
-    #c9b8ff 5%,
-    #ffbde8 10%,
-    #ffe8ad 15%,
-    #b6ffd8 20%,
-    #a3e6ff 25%
-  );
-  --foil-sheen: repeating-linear-gradient(
-    65deg,
-    rgb(255 255 255 / 0) 0 6%,
-    rgb(255 255 255 / 0.5) 9%,
-    rgb(255 255 255 / 0) 12% 18%
-  );
-  --foil-blend: multiply;
-  /* Flat fallback when foil is disabled */
-  --accent: #b9c3ff;
+  /* Surfaces (home identity) and the current page identity (overridden by [data-identity]). */
+  --bg: var(--ink-field);
+  --id-field: var(--ink-field);
+  --id-mid: var(--ink-mid);
+  --id-glow: var(--ink-glow);
+  --id-accent: var(--ink-accent);
+  --id-ink: var(--ink-ink);
+  --accent: var(--id-accent);
+  --line: color-mix(in srgb, var(--text) 14%, transparent);
 
   /* Type */
-  --font-sans: var(--font-mona), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-text: var(--font-text-face), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
   --text-lg: clamp(1.125rem, 1.06rem + 0.32vw, 1.3rem);
-  --text-xl: clamp(1.4rem, 1.22rem + 0.9vw, 1.9rem);
-  --text-2xl: clamp(1.9rem, 1.45rem + 2.2vw, 3.1rem);
-  --text-display: clamp(2.5rem, 1.55rem + 4.8vw, 5.75rem);
-  /* Weights (--wght-thin … --wght-h1) come from src/motion/tokens.ts. */
-  --leading-tight: 1.02;
-  --leading-snug: 1.18;
+  --text-xl: clamp(1.45rem, 1.25rem + 0.9vw, 2rem);
+  --text-2xl: clamp(2rem, 1.5rem + 2.4vw, 3.4rem);
+  --text-display: clamp(2.75rem, 1.6rem + 5.6vw, 6.5rem);
+  --leading-tight: 0.98;
+  --leading-snug: 1.15;
   --leading-body: 1.6;
-  --tracking-display: -0.035em;
-  --tracking-tight: -0.015em;
+  --tracking-display: -0.025em;
   --tracking-mono: 0.02em;
 
   /* Space */
@@ -89,36 +57,41 @@
   --space-10: 8rem;
 
   /* Layout */
-  --page-max: 76rem;
-  --measure: 64ch;
-  --gutter: clamp(1rem, 5vw, 3rem);
+  --page-max: 72rem;
+  --measure: 62ch;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 14px;
+  --radius-lg: 12px;
+  --header-h: 4rem;
 
-  /* Cards (63:88). Inner sizes use cqi so they scale with the card. */
-  --card-ratio: 63 / 88;
-  --card-w: clamp(13rem, 24vw, 18rem);
-  --card-radius: 5cqi;
-  --hand-angle: 7deg;
-  --hand-spread: 70%;
-  --stack-overlap: 0.62;
+  /* Hand (geometry mirrored in src/motion/tokens.ts) */
+  --card-w: 132px;
+  --card-h: 184px;
+  --card-overlap: 28px;
+  --card-w-sm: 84px;
+  --card-h-sm: 118px;
+  --rail-h: 48px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Space kept free under the content for the hand. */
+  --hand-reserve: calc(var(--card-h) * 0.45 + var(--space-7));
 
   /* Layers */
-  --z-header: 10;
+  --z-field: -1;
+  --z-header: 20;
+  --z-hand: 30;
+  --z-sheet: 40;
   --z-skip: 100;
 }
 
-/* Foil off (user choice or high-contrast request): one flat accent, no sheen, no motion. */
-:root[data-foil='off'] {
-  --foil-gradient: linear-gradient(var(--accent), var(--accent));
-  --foil-sheen: none;
-  --foil-blend: multiply;
-}
-@media (prefers-contrast: more) {
+@supports (padding: env(safe-area-max-inset-bottom)) {
   :root {
-    --foil-gradient: linear-gradient(var(--accent), var(--accent));
-    --foil-sheen: none;
-    --foil-blend: multiply;
+    --safe-bottom: max(env(safe-area-inset-bottom, 0px), env(safe-area-max-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 1023.98px) {
+  :root {
+    --hand-reserve: calc(var(--rail-h) + var(--safe-bottom) + var(--space-6));
   }
 }

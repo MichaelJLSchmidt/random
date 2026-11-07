@@ -1,19 +1,16 @@
 import type { Metadata, Viewport } from 'next'
+import { BackgroundField } from '@/components/background/background-field'
 import { DisplaySettings } from '@/components/display-settings'
-import { DrawHandler } from '@/components/draw-handler'
-import { Eggs } from '@/components/eggs'
-import { Interactions } from '@/components/interactions'
+import { Hand } from '@/components/hand/hand'
+import { Header } from '@/components/header'
 import { LiveRegion } from '@/components/live-region'
-import { MotionProvider } from '@/components/motion-provider'
-import { PageMotion } from '@/components/page-motion'
 import { RouteFocus } from '@/components/route-focus'
-import { ScrollMotion } from '@/components/scroll-motion'
 import { SiteFooter } from '@/components/site-footer'
-import { SiteHeader } from '@/components/site-header'
+import { identityCss, palette } from '@/design/palette'
 import { site } from '@/lib/content'
 import { prefsScript } from '@/motion/preferences'
 import { motionCss } from '@/motion/tokens'
-import { mono, sans } from './fonts'
+import { display, mono, text } from './fonts'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -23,23 +20,23 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#09090b',
+  themeColor: palette.ink.field,
   colorScheme: 'dark',
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${mono.variable}`}
+      className={`${display.variable} ${text.variable} ${mono.variable}`}
       data-motion="full"
-      data-foil="on"
       suppressHydrationWarning
     >
       <head>
-        {/* Applies the motion tier and foil preference before first paint. */}
+        {/* Motion tier, first-visit flag and reveal arming, before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
-        <style dangerouslySetInnerHTML={{ __html: motionCss() }} />
+        <style dangerouslySetInnerHTML={{ __html: identityCss() + motionCss() }} />
       </head>
       <body>
         {/* First focusable element; only shown while the first-visit intro runs. */}
@@ -49,22 +46,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           {site.skipLink}
         </a>
-        <MotionProvider>
-          <SiteHeader />
-          <main id="main" tabIndex={-1}>
-            {children}
-          </main>
-          <SiteFooter>
-            <DisplaySettings labels={site.settings} />
-          </SiteFooter>
-        </MotionProvider>
+        {/* Persistent: never remount on navigation. */}
+        <BackgroundField />
+        <Header />
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter>
+          <DisplaySettings labels={site.settings} />
+        </SiteFooter>
+        <Hand />
         <LiveRegion />
         <RouteFocus />
-        <PageMotion />
-        <ScrollMotion />
-        <DrawHandler />
-        <Eggs />
-        <Interactions />
       </body>
     </html>
   )

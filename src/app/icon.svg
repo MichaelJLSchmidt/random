@@ -1,13 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="f" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#a3e6ff"/>
-      <stop offset=".35" stop-color="#ffbde8"/>
-      <stop offset=".65" stop-color="#ffe8ad"/>
-      <stop offset="1" stop-color="#b6ffd8"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="7" fill="#09090b"/>
-  <rect x="9.1" y="5" width="13.8" height="19.3" rx="1.8" transform="rotate(-8 16 16)" fill="#393940"/>
-  <rect x="9.1" y="7.5" width="13.8" height="19.3" rx="1.8" fill="url(#f)"/>
+  <rect width="32" height="32" rx="7" fill="#0E0F11"/>
+  <rect x="7" y="7" width="13" height="18" rx="2" transform="rotate(-9 13.5 16)" fill="#13406E"/>
+  <rect x="12" y="7" width="13" height="18" rx="2" transform="rotate(6 18.5 16)" fill="#7A1F17"/>
+  <rect x="12" y="19" width="13" height="5" transform="rotate(6 18.5 16)" fill="#E2553D"/>
 </svg>

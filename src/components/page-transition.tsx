@@ -1,10 +1,10 @@
 import { ViewTransition } from 'react'
-import { pageClasses } from '@/motion/transitions'
+import { pageEnter, pageExit } from '@/motion/transitions'
 
-/** Directional enter/exit for a page's content. Put it in each page, not a layout. */
+/** Page content enter/exit per transition type. Put it in each page, not a layout. */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   return (
-    <ViewTransition enter={pageClasses} exit={pageClasses} default="none">
+    <ViewTransition enter={pageEnter} exit={pageExit} default="none">
       {children}
     </ViewTransition>
   )

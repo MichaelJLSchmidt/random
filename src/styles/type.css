@@ -1,52 +1,74 @@
 /*
- * Type system: Mona Sans (wght axis only, width fixed at 100%) for display and
- * body, Geist Mono for metadata. Weight is the only animated font property,
- * through the registered --wght custom property (never width or size).
- *
- * Resting weights: page h1 760, h2 680, card titles 640, body 400.
+ * Type: Bricolage Grotesque for display (only wght and opsz animate; headlines
+ * at opsz 96), Hanken Grotesk for text (400/500 body, 600 labels), Martian
+ * Mono for labels, metrics and tabular figures. The width axis is never
+ * touched (the display file has none).
  */
-
-html {
-  font-stretch: 100%;
+body {
+  font-family: var(--font-text);
+  font-weight: var(--wght-body);
 }
 
-h1 {
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  font-weight: var(--wght);
+  letter-spacing: var(--tracking-display);
+}
+
+h1,
+.display {
   --wght: var(--wght-h1);
+  --opsz: var(--opsz-end);
+  font-variation-settings: 'opsz' var(--opsz);
+  line-height: var(--leading-tight);
 }
+
 h2 {
   --wght: var(--wght-h2);
+  line-height: var(--leading-snug);
 }
+
 h3 {
   --wght: var(--wght-card);
 }
-h1,
-h2,
-h3 {
-  font-weight: var(--wght);
+
+.label {
+  font-weight: var(--wght-label);
 }
 
+.mono,
 .meta,
-.facts dt,
-time {
+time,
+.metric {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-mono);
+}
+
+.meta {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 /*
- * Weight-animated text (WeightText). Each word is an inline grid holding the
- * live word and a hidden copy at the final weight in the same cell, so every
- * word box — and therefore every line break — is fixed at the final weight
- * from first paint. Spaces sit in the parent at the final weight too.
+ * Weight-animated text (WeightText, split at build time). Each word is an
+ * inline grid holding the live word and a hidden copy at the final weight and
+ * optical size in the same cell, so every word box — and every line break — is
+ * fixed from first paint. Words clip their own box for the line-mask entrances.
  */
 .wt {
   font-weight: var(--wght-final);
+  font-variation-settings: 'opsz' var(--opsz-final, var(--opsz-end));
 }
 
 .wt-word {
-  /* --wt-target is unregistered (switches at once); --wght is registered, so it
-     transitions per word with its own delay (--wt-i = word index). */
-  --wght: var(--wt-target, var(--wght-final));
   display: inline-grid;
-  transition: --wght var(--wt-dur, 0s) var(--ease-out) calc(var(--wt-i, 0) * var(--wt-stagger, 0s));
+  vertical-align: top;
+  clip-path: inset(-0.12em -0.3em -0.22em -0.3em);
 }
 
 .wt-word > span,
@@ -56,31 +78,14 @@ time {
 
 .wt-word > span {
   font-weight: var(--wght);
+  font-variation-settings: 'opsz' var(--opsz);
+  transform-origin: 50% 100%;
 }
 
 .wt-word::after {
   content: attr(data-text);
   font-weight: var(--wght-final);
+  font-variation-settings: 'opsz' var(--opsz-final, var(--opsz-end));
   visibility: hidden;
   pointer-events: none;
-}
-
-/*
- * Page titles start at weight 200 on first paint (never at opacity 0) and are
- * settled to 760 by PageMotion: a 700 ms weight-in with a 45 ms word stagger on
- * the first visit, 500 ms otherwise. Reduced motion and no-JS show 760 at once.
- */
-[data-page-title] {
-  --wt-target: var(--wght-thin);
-}
-[data-page-title][data-settled] {
-  --wt-target: var(--wght-final);
-}
-:root[data-motion='reduced'] [data-page-title] {
-  --wt-target: var(--wght-final);
-}
-@media (scripting: none) {
-  [data-page-title] {
-    --wt-target: var(--wght-final);
-  }
 }

@@ -1,39 +1,29 @@
 import Link from 'next/link'
-import { CardHand } from '@/components/card/card-hand'
-import { CaseStudyCard } from '@/components/card/case-study-card'
-import { DeckPile } from '@/components/card/deck-pile'
-import { caseStudies, site } from '@/lib/content'
 import { PageTitle } from '@/components/page-title'
-import { SectionTitle } from '@/components/section-title'
 import { PageTransition } from '@/components/page-transition'
+import { site } from '@/lib/content'
+import { NAV } from '@/motion/transitions'
 
 export default function HomePage() {
   return (
     <PageTransition>
-      <div className="page">
-        <section className="hero" aria-labelledby="page-heading">
-          <PageTitle className="display">{site.home.headline}</PageTitle>
-          <p className="lede">{site.home.intro}</p>
-        </section>
-
-        <section className="section" aria-labelledby="work-heading">
-          <SectionTitle id="work-heading">{site.home.workHeading}</SectionTitle>
-          <div className="table" data-reveal="" data-table="">
-            <CardHand
-              labelledBy="work-heading"
-              positionLabel={site.home.positionLabel}
-              items={caseStudies.map((study, index) => (
-                <CaseStudyCard key={study.slug} study={study} index={index} headingLevel="h3" flippable />
-              ))}
-            />
-            <DeckPile label={site.eggs.deckLabel} hint={site.eggs.deckHint} />
-          </div>
-          <p className="after-hand" data-reveal="">
-            <Link href="/projects" className="link">
-              {site.home.projectsLink}
-            </Link>
-          </p>
-        </section>
+      <div className="page home" data-identity="ink" data-home="">
+        <PageTitle className="home-title">{site.home.title}</PageTitle>
+        <p className="home-role" data-reveal="line" data-order="lines">
+          {site.home.role}
+        </p>
+        <p className="lede" data-reveal="paragraph" data-order="lines">
+          {site.home.intro}
+        </p>
+        <ul className="home-links" data-reveal="tags" data-order="chrome">
+          {site.home.links.map((link) => (
+            <li key={link.href}>
+              <Link href={link.href} transitionTypes={[NAV]}>
+                <span className="link">{link.label}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </PageTransition>
   )

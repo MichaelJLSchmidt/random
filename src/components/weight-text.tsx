@@ -1,18 +1,21 @@
 import { Fragment, type CSSProperties } from 'react'
-import { weight } from '@/motion/tokens'
+import { opsz as opszTokens, weight } from '@/motion/tokens'
 
 type Props = {
   text: string
   /** Weight the text settles at; every word box is reserved at this weight. */
   final: keyof typeof weight
+  /** Optical size the text settles at (reserved too). */
+  opsz?: number
   className?: string
 }
 
 /**
- * Text whose weight can animate without reflow (see .wt in type.css). Screen
- * readers get the plain string once; the word-by-word copy is aria-hidden.
+ * Build-time word splitting for headline animation (see .wt in type.css).
+ * Screen readers get the plain string once; the word-by-word copy is
+ * aria-hidden. Each word box is reserved at its final weight and optical size.
  */
-export function WeightText({ text, final, className = '' }: Props) {
+export function WeightText({ text, final, opsz = opszTokens.end, className = '' }: Props) {
   const words = text.split(/\s+/).filter(Boolean)
   return (
     <>
@@ -21,7 +24,7 @@ export function WeightText({ text, final, className = '' }: Props) {
         className={`wt ${className}`}
         aria-hidden="true"
         data-wt=""
-        style={{ '--wght-final': weight[final] } as CSSProperties}
+        style={{ '--wght-final': weight[final], '--opsz-final': opsz } as CSSProperties}
       >
         {words.map((word, i) => (
           <Fragment key={i}>

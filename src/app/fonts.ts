@@ -1,23 +1,31 @@
 import localFont from 'next/font/local'
 
-// Mona Sans: one variable sans for display and body. The file carries only the
-// weight axis (200–900), so the width is fixed at 100%; only weight animates.
-// Unmodified Latin subset from @fontsource-variable/mona-sans (OFL, RFN "Mona").
-export const sans = localFont({
-  src: '../fonts/MonaSans-wght.latin.woff2',
-  variable: '--font-mona',
-  weight: '200 900',
-  style: 'normal',
+/*
+ * Self-hosted variable fonts (unmodified Latin files from Fontsource, OFL).
+ * Display: Bricolage Grotesque, opsz 12–96 and wght 200–800 only (no width
+ * axis in this file, so width can never animate). Text: Hanken Grotesk.
+ * Mono: Martian Mono (labels, metrics, tabular figures).
+ */
+export const display = localFont({
+  src: '../fonts/BricolageGrotesque-opsz-wght.latin.woff2',
+  variable: '--font-display-face',
+  weight: '200 800',
   display: 'swap',
   adjustFontFallback: 'Arial',
-  declarations: [{ prop: 'font-stretch', value: '100%' }],
 })
 
-// Geist Mono for metadata.
-export const mono = localFont({
-  src: '../fonts/GeistMono-Variable.latin.woff2',
-  variable: '--font-geist-mono',
+export const text = localFont({
+  src: '../fonts/HankenGrotesk-wght.latin.woff2',
+  variable: '--font-text-face',
   weight: '100 900',
+  display: 'swap',
+  adjustFontFallback: 'Arial',
+})
+
+export const mono = localFont({
+  src: '../fonts/MartianMono-wght.latin.woff2',
+  variable: '--font-mono-face',
+  weight: '100 800',
   display: 'swap',
   adjustFontFallback: false,
 })

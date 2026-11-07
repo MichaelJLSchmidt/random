@@ -2,88 +2,85 @@
   {
     "slug": "team-of-teams",
     "title": "Team of Teams",
-    "theme": "people-leadership",
+    "projectType": "People leadership",
     "summary": "Growing a four-person design group into a practice of eighteen across three product areas, without losing the habits that made it good.",
+    "inspect": "Growing a design practice from four to eighteen people without losing its habits.",
     "statement": "A team grows well when the way it works is written down, practised in the open and owned by everyone in it.",
+    "tapLine": "The first critique ritual was drawn on a napkin.",
     "year": "2025",
-    "discipline": "People leadership",
-    "motif": "rings",
     "facts": [
       {
         "label": "Role",
         "value": "Head of design"
       },
       {
-        "label": "Duration",
-        "value": "2 years"
-      },
-      {
         "label": "Team",
         "value": "4 to 18 people"
       },
       {
-        "label": "Scope",
-        "value": "3 product areas"
+        "label": "Timeframe",
+        "value": "2023 – 2025"
+      },
+      {
+        "label": "Client type",
+        "value": "Product company"
       }
-    ],
-    "tapLine": "The first critique ritual was drawn on a napkin."
+    ]
   },
   {
     "slug": "shared-foundations",
     "title": "Shared Foundations",
-    "theme": "platform",
+    "projectType": "Platform",
     "summary": "A design system and front-end platform that twelve product teams now build on, shipped as code first and documentation second.",
+    "inspect": "A design system and platform that twelve teams build on.",
     "statement": "The platform worked the day teams stopped asking whether to use it and started asking how to change it.",
+    "tapLine": "The button component has 214 tests and one joke.",
     "year": "2024",
-    "discipline": "Platform",
-    "motif": "grid",
     "facts": [
       {
         "label": "Role",
         "value": "Design and platform lead"
       },
       {
-        "label": "Duration",
-        "value": "14 months"
+        "label": "Team",
+        "value": "6 people, 12 teams served"
       },
       {
-        "label": "Teams",
-        "value": "12 building on it"
+        "label": "Timeframe",
+        "value": "2023 – 2024"
       },
       {
-        "label": "Stack",
-        "value": "React, tokens, CI"
+        "label": "Client type",
+        "value": "Scale-up"
       }
-    ],
-    "tapLine": "The button component has 214 tests and one joke."
+    ]
   },
   {
     "slug": "front-door",
     "title": "Front Door",
-    "theme": "service-delivery",
+    "projectType": "Service delivery",
     "summary": "One application journey for a public service, redesigned across web, phone and counter so every channel asks the same questions in the same order.",
+    "inspect": "One application journey across web, phone and counter.",
     "statement": "People do not see channels. They see one service, and it should remember what they already told it.",
+    "tapLine": "The best question we removed was asked for 11 years.",
     "year": "2023",
-    "discipline": "Service delivery",
-    "motif": "waves",
     "facts": [
       {
         "label": "Role",
         "value": "Service design lead"
       },
       {
-        "label": "Duration",
-        "value": "9 months"
-      },
-      {
         "label": "Team",
         "value": "7 people"
       },
       {
-        "label": "Channels",
-        "value": "Web, phone, counter"
+        "label": "Timeframe",
+        "value": "2022 – 2023"
+      },
+      {
+        "label": "Client type",
+        "value": "Public sector"
       }
-    ],
-    "tapLine": "The best question we removed was asked for 11 years."
+    ]
   }
 ]

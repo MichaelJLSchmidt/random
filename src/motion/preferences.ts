@@ -1,25 +1,24 @@
 /*
- * Display preferences, applied by an inline script in <head> before first paint.
+ * Applied by an inline script in <head> before first paint:
  *   data-motion: "reduced" when prefers-reduced-motion matches (overrides calm),
  *                otherwise "calm" if the visitor chose it, otherwise "full".
- *   data-foil:   "off" if the visitor turned the foil effect off.
+ *   data-intro:  "first" on the first visit to home in this session (the full
+ *                draw sequence), "repeat" on later visits (no draw).
+ *   data-reveal: "armed" so reveal targets can start hidden from first paint.
+ *                If the reveal system has not taken over 4 s later, the
+ *                attributes are dropped and every page shows its final state.
  * The script listens for `prefs-change` (same tab), `storage` (other tabs) and
- * media query changes, so it is the single place that writes these attributes.
- *   data-intro:  "pending" on the first full-tier visit to the home page, so the
- *                hand can start inside the deck from first paint. If the intro
- *                has not started 3.5 s later, the attribute is dropped and the
- *                page shows its final state.
+ * media query changes, so it is the single place that writes data-motion.
  */
 export const PREFS_EVENT = 'prefs-change'
 export const MOTION_KEY = 'motion'
-export const FOIL_KEY = 'foil'
-/** Set once the first-visit intro has played (or was skipped). */
-export const INTRO_KEY = 'intro-seen'
+/** sessionStorage: set once the home draw sequence has played in this session. */
+export const INTRO_KEY = 'table-drawn'
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
-export const prefsScript = `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function g(k){try{return localStorage.getItem(k)}catch(e){return d.getAttribute("data-pref-"+k)}}function a(){d.dataset.motion=m.matches?"reduced":g("${MOTION_KEY}")==="calm"?"calm":"full";d.dataset.foil=g("${FOIL_KEY}")==="off"?"off":"on"}a();m.addEventListener("change",a);addEventListener("storage",a);addEventListener("${PREFS_EVENT}",a);if(d.dataset.motion==="full"&&location.pathname==="${BASE}/"&&!g("${INTRO_KEY}")){d.dataset.intro="pending";setTimeout(function(){d.dataset.intro==="pending"&&d.removeAttribute("data-intro")},3500)}})()`
+export const prefsScript = `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function g(k){try{return localStorage.getItem(k)}catch(e){return d.getAttribute("data-pref-"+k)}}function a(){d.dataset.motion=m.matches?"reduced":g("${MOTION_KEY}")==="calm"?"calm":"full"}a();m.addEventListener("change",a);addEventListener("storage",a);addEventListener("${PREFS_EVENT}",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}if(location.pathname==="${BASE}/"||location.pathname==="${BASE}"){d.dataset.intro=s?"repeat":"first"}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`
 
-export function savePreference(key: typeof MOTION_KEY | typeof FOIL_KEY, value: string) {
+export function savePreference(key: typeof MOTION_KEY, value: string) {
   try {
     localStorage.setItem(key, value)
   } catch {
@@ -27,12 +26,4 @@ export function savePreference(key: typeof MOTION_KEY | typeof FOIL_KEY, value: 
     document.documentElement.setAttribute(`data-pref-${key}`, value)
   }
   dispatchEvent(new Event(PREFS_EVENT))
-}
-
-export function readPreference(key: typeof MOTION_KEY | typeof FOIL_KEY): string | null {
-  try {
-    return localStorage.getItem(key)
-  } catch {
-    return document.documentElement.getAttribute(`data-pref-${key}`)
-  }
 }

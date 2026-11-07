@@ -1,37 +1,30 @@
 import caseStudiesJson from '@content/case-studies.json'
-import contactJson from '@content/contact.json'
 import projectsJson from '@content/projects.json'
 import siteJson from '@content/site.json'
 import workshopsJson from '@content/workshops.json'
 
-export type Motif = 'rings' | 'grid' | 'waves'
-export type Theme = 'people-leadership' | 'platform' | 'service-delivery'
+export type Fact = { label: string; value: string }
 
 export type CaseStudy = {
   slug: string
   title: string
-  theme: Theme
+  /** Short plain type shown on the card band, e.g. "Platform". */
+  projectType: string
   summary: string
-  /** One large statement, filled word by word as it crosses the viewport. */
+  /** One-line summary shown when a card is inspected. */
+  inspect: string
+  /** The case study's one large statement (full-bleed breaker). */
   statement: string
-  /** Printed along the card's long edge; readable when the card is tapped (turned 90°). */
+  /** Printed along the card's long edge; readable when the card is tapped. */
   tapLine: string
   year: string
-  discipline: string
-  motif: Motif
-  facts: { label: string; value: string }[]
+  /** Role, team, timeframe, client type. */
+  facts: Fact[]
 }
 
-export type Project = {
-  title: string
-  year: string
-  kind: string
-  description: string
-  href?: string
-}
+export type Project = { title: string; year: string; projectType: string; clientType: string }
 
 export const site = siteJson
-export const contact = contactJson
 export const projects: Project[] = projectsJson
 export const workshops: { title: string; howTo: string }[] = workshopsJson
 
@@ -52,13 +45,8 @@ export const caseStudies = validateCaseStudies(caseStudiesJson as CaseStudy[])
 export function getCaseStudy(slug: string) {
   const index = caseStudies.findIndex((c) => c.slug === slug)
   if (index === -1) return null
-  return {
-    study: caseStudies[index],
-    index,
-    previous: caseStudies[index - 1] ?? null,
-    next: caseStudies[index + 1] ?? null,
-  }
+  return { study: caseStudies[index], index }
 }
 
-/** "01", "02", "03": the card number shown in the corner. */
+/** "01" … "04": the small index on a card. */
 export const cardNumber = (index: number) => String(index + 1).padStart(2, '0')

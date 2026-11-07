@@ -1,25 +1,19 @@
 import type { Metadata } from 'next'
 import About from '@content/about.mdx'
-import { site } from '@/lib/content'
-import { OnTheTable } from '@/components/on-the-table'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
+import { site } from '@/lib/content'
 
 export const metadata: Metadata = { title: site.about.title }
 
 export default function AboutPage() {
   return (
     <PageTransition>
-      <div className="page about">
-        <header className="page-header">
-          <PageTitle morph="about">{site.about.title}</PageTitle>
-          <p className="lede">{site.about.intro}</p>
-        </header>
-        <OnTheTable
-          portraitAlt={site.about.portraitAlt}
-          label={site.about.table.label}
-          items={site.about.table.items}
-        />
+      <div className="page about" data-identity="glacier">
+        <PageTitle>{site.about.title}</PageTitle>
+        <p className="lede" data-reveal="paragraph" data-order="summary">
+          {site.about.intro}
+        </p>
         <div className="prose">
           <About />
         </div>

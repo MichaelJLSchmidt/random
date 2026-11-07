@@ -1,121 +1,118 @@
 {
-  "name": "Portfolio",
-  "description": "Interface design and front-end engineering: three case studies, a list of projects and a way to get in touch.",
-  "nav": [
-    {
-      "href": "/projects",
-      "label": "Projects"
-    },
-    {
-      "href": "/about",
-      "label": "About"
-    },
-    {
-      "href": "/contact",
-      "label": "Contact"
-    }
-  ],
-  "skipLink": "Skip to content",
+  "name": "Your Name",
+  "description": "Design lead and front-end engineer. Three case studies, how I manage, older projects and a way to get in touch.",
+  "skipLink": "Skip to main content",
+  "header": {
+    "about": "About",
+    "contact": "Contact",
+    "back": "Back",
+    "homeLabel": "Your Name, home"
+  },
   "home": {
-    "headline": "Interfaces that feel as considered as they look.",
-    "intro": "Product design and front-end engineering, from the first sketch to the code that ships. Below are three recent case studies.",
-    "workHeading": "Case studies",
-    "projectsLink": "See all projects",
-    "positionLabel": "Card position"
+    "title": "Your Name",
+    "role": "Design lead and front-end engineer",
+    "intro": "I lead small teams that design and build careful products, from the first workshop to the code that ships. The cards below are three recent case studies and how I manage.",
+    "links": [
+      {
+        "href": "/about",
+        "label": "About"
+      },
+      {
+        "href": "/projects",
+        "label": "More projects"
+      },
+      {
+        "href": "/contact",
+        "label": "Contact"
+      }
+    ]
   },
   "caseStudy": {
-    "backLink": "All case studies",
-    "factsHeading": "At a glance",
-    "flipToBack": "Show details",
-    "flipToFront": "Show cover",
-    "showingBack": "Showing details",
-    "showingFront": "Showing cover",
-    "nextLabel": "Next case study",
-    "previousLabel": "Previous case study"
+    "factsLabel": "Facts",
+    "nextLabel": "Next project",
+    "contactTitle": "Contact",
+    "contactText": "If something here is useful to you, I would like to hear about it.",
+    "contactLink": "Write to me",
+    "viewingLabel": "Viewing"
+  },
+  "management": {
+    "title": "Management",
+    "projectType": "How I lead",
+    "summary": "How I run teams day to day: the rituals I keep, the numbers I trust and the workshop methods I reach for when a room gets stuck.",
+    "facts": [
+      {
+        "label": "Role",
+        "value": "Design lead"
+      },
+      {
+        "label": "Team",
+        "value": "Up to 18 people"
+      },
+      {
+        "label": "Timeframe",
+        "value": "Since 2016"
+      },
+      {
+        "label": "Client type",
+        "value": "Product and public sector"
+      }
+    ],
+    "workshopButton": "Draw a workshop method"
   },
   "projects": {
-    "title": "Projects",
-    "intro": "Smaller pieces of work, experiments and tools. Each line links to the project where there is something to see."
+    "title": "More projects",
+    "intro": "Older and smaller work. No detail pages, just the list.",
+    "columns": {
+      "title": "Project",
+      "year": "Year",
+      "projectType": "Project type",
+      "clientType": "Client type"
+    },
+    "end": "That's the whole deck."
+  },
+  "about": {
+    "title": "About",
+    "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not.",
+    "topoLabel": "Contour map of the Lake Thun area",
+    "attribution": "Contours derived from swissALTI3D – Source: Federal Office of Topography swisstopo",
+    "placeholderNote": "Placeholder terrain generated from noise until the real data is built (see scripts/topo).",
+    "table": {
+      "label": "What's on the table",
+      "cards": [
+        {
+          "name": "Go",
+          "line": "Played slowly, mostly lost, always enjoyed."
+        },
+        {
+          "name": "Bridge",
+          "line": "Learned from grandparents, still counting trumps on fingers."
+        },
+        {
+          "name": "Chess",
+          "line": "Endgames only. Openings are homework."
+        }
+      ]
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "sentence": "If you would like to talk about a project, a workshop or anything on these pages, write to me.",
+    "email": "hello@example.com"
   },
   "notFound": {
-    "title": "This card isn't in the deck.",
-    "body": "There is nothing at this address. It may have moved, or the link may be mistyped.",
-    "homeLink": "Return to hand",
-    "randomPage": "Draw a random page"
+    "title": "This page isn't in the deck",
+    "body": "There is nothing at this address.",
+    "back": "Back to the table"
   },
   "settings": {
     "heading": "Display",
     "calm": "Calm motion",
     "calmHint": "Fewer moving parts. Reduced motion in your system settings always wins.",
-    "foil": "Foil effect",
-    "tilt": "Tilt cards with device motion",
-    "tiltDenied": "Motion access was not granted. Cards stay still.",
     "calmOn": "Calm motion on",
-    "calmOff": "Calm motion off",
-    "foilOn": "Foil effect on",
-    "foilOff": "Foil effect off",
-    "tiltHint": "Asks for motion access when switched on. Only with full motion.",
-    "tiltOn": "Card tilt on",
-    "tiltOff": "Card tilt off"
+    "calmOff": "Calm motion off"
   },
   "footer": {
-    "note": "Built with Next.js. Text and images are placeholders."
+    "note": "Built with Next.js. Text is placeholder."
   },
-  "homeLink": "Portfolio, home",
-  "about": {
-    "title": "About",
-    "intro": "I design and build interfaces for products that people rely on, usually where the details decide whether something is trusted or not.",
-    "portraitAlt": "Portrait placeholder: a greyscale study of shapes",
-    "table": {
-      "label": "What's on the table",
-      "items": [
-        "A letterpress that prints one poster a year",
-        "A shelf of timetables from cities I have never visited",
-        "Walking boots that have done the whole coast path",
-        "A notebook of workshop formats that went wrong",
-        "Too many kinds of graph paper"
-      ]
-    }
-  },
-  "introSkip": "Skip intro",
-  "eggs": {
-    "deckLabel": "Deck",
-    "deckHint": "Press D or swipe up to draw a workshop card. Long-press or press M for a mulligan.",
-    "mulliganDone": "Mulligan: the hand was shuffled and dealt in a new order.",
-    "workshopLabel": "Workshop card",
-    "workshopBack": "Back to deck",
-    "workshopBackDone": "Workshop card returned to the deck.",
-    "rareTag": "rare 1/16",
-    "tapped": "Card tapped.",
-    "untapped": "Card untapped.",
-    "shuffled": "Shuffled every card on the page.",
-    "shortcutsTitle": "Shortcuts",
-    "shortcutsClose": "Close",
-    "shortcuts": [
-      {
-        "keys": "M",
-        "what": "Mulligan: shuffle the hand and deal it again (home)"
-      },
-      {
-        "keys": "D",
-        "what": "Draw a workshop card from the deck (home)"
-      },
-      {
-        "keys": "T",
-        "what": "Tap the focused card to turn it sideways, again to untap"
-      },
-      {
-        "keys": "←  →",
-        "what": "Move between cards in the hand"
-      },
-      {
-        "keys": "?",
-        "what": "Show these shortcuts"
-      },
-      {
-        "keys": "shuffle",
-        "what": "Type it anywhere outside a field to riffle every card"
-      }
-    ]
-  }
+  "introSkip": "Skip intro"
 }

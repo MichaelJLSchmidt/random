@@ -1,6 +1,8 @@
 .footer {
-  margin-top: var(--space-10);
-  border-top: 1px solid var(--border);
+  margin-top: var(--space-9);
+  border-top: 1px solid var(--line);
+  /* Keep clear of the fixed hand. */
+  padding-bottom: var(--hand-reserve);
 }
 
 .inner {
@@ -11,7 +13,7 @@
   gap: var(--space-6);
   max-width: var(--page-max);
   margin-inline: auto;
-  padding: var(--space-6) var(--gutter) var(--space-7);
+  padding: var(--space-6) var(--gutter);
 }
 
 .note {
@@ -19,5 +21,5 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-mono);
-  color: var(--text-muted);
+  color: var(--muted);
 }
