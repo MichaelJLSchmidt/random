@@ -154,8 +154,8 @@
 }
 .field-layer[data-layer='a'] {
   --l-field: var(--fa-field);
-  --l-mid: color-mix(in oklab, var(--fa-mid), var(--fh-mid) calc(var(--fh) * 100%));
-  --l-glow: color-mix(in oklab, var(--fa-glow), var(--fh-glow) calc(var(--fh) * 100%));
+  --l-mid: color-mix(in oklab, var(--fa-mid), var(--fh-mid) calc(var(--fh) * 65%));
+  --l-glow: color-mix(in oklab, var(--fa-glow), var(--fh-glow) calc(var(--fh) * 65%));
   --l-intensity: calc(var(--fa-i) + var(--fh) * 0.2);
 }
 .field-layer[data-layer='b'] {

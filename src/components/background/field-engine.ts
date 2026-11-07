@@ -380,7 +380,8 @@ export class FieldEngine {
     a.sample(now)
     h.sample(now)
     hover.sample(now)
-    const k = hover.value[0]
+    // Hover leans A's mid/glow most of the way to the card's (a full blend reads too loud).
+    const k = hover.value[0] * 0.65
     return [
       ...a.value.slice(0, 3),
       ...mixArr(a.value.slice(3, 6), h.value.slice(0, 3), k),
@@ -475,7 +476,7 @@ export class FieldEngine {
     f.origin = this.origin
     f.maxD = this.maxD
     f.pull = t.pull.value as [number, number]
-    f.pullAmt = hover * 0.35 * motion
+    f.pullAmt = hover * 0.5 * motion
     // Breath: a 9 s sine in-out; pool scale 1.00-1.06, luminance ±4%.
     const amp = t.breath.value[0] * motion
     const b = (1 - Math.cos((2 * Math.PI * this.time) / D.breath)) / 2

@@ -1,0 +1,423 @@
+/*
+ * The hand (src/components/hand). Geometry mirrors `hand` and `angle` in
+ * src/motion/tokens.ts. Only transform properties and opacity animate; hover
+ * and focus use the hover spring (CSS linear() from springCss()).
+ */
+.hand {
+  --cw: var(--card-w);
+  --ch: var(--card-h);
+  --overlap: var(--card-overlap);
+  --visible: 0.45;
+  --rot-k: 1;
+  --arc-k: 1;
+  --card-radius: 10px;
+  position: fixed;
+  inset: auto 0 0;
+  z-index: var(--z-hand);
+  height: 0;
+}
+.hand[data-home] {
+  --visible: 0.72;
+}
+
+/* ---------- Fan (desktop, mobile home): the popover shown in place ---------- */
+.hand-fan {
+  position: fixed;
+  inset: auto 0 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  color: inherit;
+  background: none;
+  perspective: 1200px;
+  perspective-origin: 50% 100%;
+  pointer-events: none;
+}
+.hand-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  transform-origin: 50% 100%;
+  transform: rotateX(8deg);
+  translate: 0 calc(var(--ch) * (1 - var(--visible)));
+  transition: translate var(--spring-land-dur) var(--spring-land);
+}
+.hand-list {
+  display: flex;
+  align-items: flex-end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hand-slot {
+  position: relative;
+  flex: none;
+  width: var(--cw);
+  height: var(--ch);
+}
+.hand-slot + .hand-slot {
+  margin-left: calc(var(--overlap) * -1);
+}
+
+.hand-card,
+.hand-deck {
+  display: block;
+  border-radius: var(--card-radius);
+  color: var(--text);
+  text-decoration: none;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  container-type: inline-size;
+}
+.hand-card {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  translate: var(--sx, 0px) calc(var(--dy) * var(--arc-k));
+  rotate: calc(var(--r) * var(--rot-k));
+  transition:
+    translate var(--spring-hover-dur) var(--spring-hover),
+    rotate var(--spring-hover-dur) var(--spring-hover),
+    scale var(--spring-hover-dur) var(--spring-hover);
+}
+.hand-card:focus-visible,
+.hand-deck:focus-visible {
+  outline: 2px solid var(--id-accent);
+  outline-offset: 3px;
+}
+
+/* Lift on hover (fine pointers) and keyboard focus; neighbours spread ±12px. */
+.hand-slot:has(:focus-visible) {
+  z-index: 3;
+}
+.hand-slot:has(:focus-visible) .hand-card {
+  translate: 0 calc(var(--dy) * var(--arc-k) - var(--travel-hover-lift));
+  rotate: 0deg;
+  scale: 1.06;
+}
+.hand-slot:has(:focus-visible) ~ .hand-slot .hand-card {
+  --sx: var(--travel-spread);
+}
+.hand-slot:has(~ .hand-slot :focus-visible) .hand-card {
+  --sx: calc(var(--travel-spread) * -1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hand-slot:hover {
+    z-index: 3;
+  }
+  .hand-slot:hover .hand-card {
+    translate: 0 calc(var(--dy) * var(--arc-k) - var(--travel-hover-lift));
+    rotate: 0deg;
+    scale: 1.06;
+  }
+  .hand-slot:hover ~ .hand-slot .hand-card {
+    --sx: var(--travel-spread);
+  }
+  .hand-slot:has(~ .hand-slot:hover) .hand-card {
+    --sx: calc(var(--travel-spread) * -1);
+  }
+}
+
+/* ---------- Card face ---------- */
+.card-face,
+.card-back,
+.hand-ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+}
+.card-face {
+  overflow: hidden;
+  background:
+    radial-gradient(130% 85% at 0% 100%, color-mix(in oklab, var(--id-glow) 60%, transparent), transparent 70%),
+    var(--id-field);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--id-accent) 30%, transparent),
+    0 12px 28px -14px rgb(0 0 0 / 0.7);
+}
+.card-index {
+  position: absolute;
+  top: 7cqi;
+  left: 8cqi;
+  font-family: var(--font-mono);
+  font-size: clamp(8px, 7.5cqi, 10px);
+  letter-spacing: var(--tracking-mono);
+  color: var(--id-accent);
+}
+.card-band {
+  position: absolute;
+  top: 20cqi;
+  left: 6cqi;
+  right: 6cqi;
+  display: grid;
+  gap: 3cqi;
+  padding: 6cqi 6cqi 7cqi;
+  border-radius: 5px;
+  background: var(--id-glow);
+  color: var(--id-ink);
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 11.5cqi, 15.5px);
+  font-weight: var(--wght-card);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.card-type {
+  font-family: var(--font-mono);
+  font-size: clamp(7px, 6.4cqi, 8.5px);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+}
+
+/* The open card's slot: a dashed "Viewing" ghost in its accent. */
+.hand-ghost {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding-top: 12cqi;
+  border: 1px dashed var(--id-accent);
+  background: color-mix(in srgb, var(--id-field) 88%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(8px, 7.5cqi, 10px);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--id-accent);
+}
+
+/* ---------- Card back and the "More projects" stack ---------- */
+.card-back {
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
+    var(--ink-mid);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent),
+    inset 0 0 0 6px var(--ink-mid),
+    inset 0 0 0 7px color-mix(in srgb, var(--text) 9%, transparent),
+    0 12px 28px -14px rgb(0 0 0 / 0.7);
+}
+.card-back::before,
+.card-back::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20%;
+  aspect-ratio: 132 / 184;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  border-radius: 2px;
+  background: var(--ink-mid);
+}
+.card-back::before {
+  translate: -70% -50%;
+  rotate: -9deg;
+}
+.card-back::after {
+  translate: -30% -50%;
+  rotate: 6deg;
+}
+
+.hand-deck {
+  --id-accent: var(--ink-accent);
+  position: absolute;
+  left: calc(100% + 24px);
+  bottom: 0;
+  width: var(--cw);
+  height: var(--ch);
+  transition: translate var(--spring-hover-dur) var(--spring-hover);
+}
+.deck-stack {
+  position: absolute;
+  inset: 0;
+}
+.deck-stack .card-back:nth-child(1) {
+  translate: 4px -4px;
+}
+.deck-stack .card-back:nth-child(2) {
+  translate: 2px -2px;
+}
+.deck-label {
+  position: absolute;
+  top: 12cqi;
+  left: 8cqi;
+  right: 8cqi;
+  padding: 5cqi 4cqi;
+  border-radius: 4px;
+  background: var(--ink-field);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(7.5px, 7cqi, 10px);
+  letter-spacing: var(--tracking-mono);
+  text-align: center;
+  text-transform: uppercase;
+}
+.hand-deck:focus-visible {
+  translate: 0 calc(var(--travel-hover-lift) * -0.6);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hand-deck:hover {
+    translate: 0 calc(var(--travel-hover-lift) * -0.6);
+  }
+}
+
+/* ---------- Rail (mobile, not home) ---------- */
+.hand-rail {
+  display: none;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 1023.98px) {
+  .hand {
+    --cw: var(--card-w-sm);
+    --ch: var(--card-h-sm);
+    --overlap: 30px;
+    --visible: 0.7;
+    --card-radius: 8px;
+  }
+  .hand-row {
+    /* The deck joins the row so fan and deck centre together (fits 360px). */
+    gap: 10px;
+  }
+  .hand-deck {
+    position: relative;
+    left: auto;
+    flex: none;
+  }
+
+  .hand:not([data-home]) .hand-rail {
+    position: fixed;
+    inset: auto 0 0;
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: calc(var(--rail-h) + var(--safe-bottom));
+    margin: 0;
+    padding: 0 12px var(--safe-bottom);
+    border: 0;
+    background: linear-gradient(to top, var(--ink-field) 55%, transparent);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+    touch-action: none;
+    transition: translate var(--dur-rail) var(--ease-out-soft);
+  }
+  .hand[data-rail='hidden'] .hand-rail {
+    translate: 0 100%;
+  }
+  .rail-card {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 9px 6px 0;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(var(--id-glow) 0 3px, var(--id-field) 3px);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--id-accent) 30%, transparent);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rail-card[data-active] {
+    border: 1px dashed var(--id-accent);
+    border-bottom: 0;
+    background: color-mix(in srgb, var(--id-field) 40%, transparent);
+    box-shadow: none;
+    color: var(--id-accent);
+  }
+  .hand-rail:focus-visible {
+    outline: 2px solid var(--ink-accent);
+    outline-offset: -4px;
+  }
+
+  /* Off home the list is a bottom sheet over a 40% ink scrim. */
+  .hand:not([data-home]) .hand-fan {
+    inset: auto 0 0;
+    height: 40dvh;
+    min-height: fit-content;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-6) var(--space-4) calc(var(--space-5) + var(--safe-bottom));
+    border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+    background: var(--ink-field);
+    perspective: none;
+    pointer-events: auto;
+    translate: 0 100%;
+    transition:
+      translate var(--dur-sheet) var(--ease-out-soft),
+      display var(--dur-sheet) allow-discrete,
+      overlay var(--dur-sheet) allow-discrete;
+    --cw: min(23vw, 112px);
+    --ch: calc(var(--cw) * 184 / 132);
+    --overlap: 10px;
+    --visible: 1;
+    --rot-k: 0.6;
+    --arc-k: 0.6;
+  }
+  .hand:not([data-home]) .hand-fan:not(:popover-open) {
+    display: none;
+  }
+  .hand:not([data-home]) .hand-fan:popover-open {
+    translate: 0 0;
+  }
+  @starting-style {
+    .hand:not([data-home]) .hand-fan:popover-open {
+      translate: 0 100%;
+    }
+  }
+  .hand-fan::backdrop {
+    background: transparent;
+    transition:
+      background var(--dur-sheet) var(--ease-out-soft),
+      display var(--dur-sheet) allow-discrete,
+      overlay var(--dur-sheet) allow-discrete;
+  }
+  .hand-fan:popover-open::backdrop {
+    background: color-mix(in srgb, var(--ink-field) 40%, transparent);
+  }
+  @starting-style {
+    .hand-fan:popover-open::backdrop {
+      background: transparent;
+    }
+  }
+  .hand:not([data-home]) .hand-row {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+    transform: none;
+    translate: none;
+  }
+  /* In the sheet the deck is a plain row: a small stack and its label. */
+  .hand:not([data-home]) .hand-deck {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: auto;
+    height: 44px;
+    padding-left: 4px;
+    container-type: normal;
+  }
+  .hand:not([data-home]) .deck-stack {
+    position: relative;
+    width: 30px;
+    height: 42px;
+  }
+  .hand:not([data-home]) .deck-stack .card-back {
+    border-radius: 4px;
+  }
+  .hand:not([data-home]) .deck-label {
+    position: static;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    font-size: var(--text-xs);
+  }
+}

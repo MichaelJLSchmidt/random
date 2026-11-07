@@ -3,6 +3,7 @@
 @import '../styles/view-transitions.css';
 @import '../styles/reveal.css';
 @import '../styles/field.css';
+@import '../styles/hand.css';
 
 /* Base */
 *,
@@ -561,26 +562,4 @@ button {
   background: repeating-linear-gradient(135deg, var(--ink-mid) 0 6px, var(--ink-glow) 6px 7px), var(--ink-mid);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
   transform: rotate(-12deg);
-}
-
-/* ---------- Basic hand (replaced by the hand phase) ---------- */
-.hand-basic {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: var(--z-hand);
-  display: flex;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-3);
-  background: var(--ink-mid);
-}
-.hand-basic ul {
-  display: flex;
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.hand-basic a {
-  color: var(--text);
 }
