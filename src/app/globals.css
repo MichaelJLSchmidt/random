@@ -2,6 +2,7 @@
 @import '../styles/type.css';
 @import '../styles/view-transitions.css';
 @import '../styles/reveal.css';
+@import '../styles/field.css';
 
 /* Base */
 *,
@@ -560,16 +561,6 @@ button {
   background: repeating-linear-gradient(135deg, var(--ink-mid) 0 6px, var(--ink-glow) 6px 7px), var(--ink-mid);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
   transform: rotate(-12deg);
-}
-
-/* ---------- Background placeholder (replaced by the field) ---------- */
-.field-fallback {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-field);
-  background:
-    radial-gradient(70% 60% at 20% 15%, var(--ink-glow), transparent 70%),
-    radial-gradient(60% 60% at 85% 80%, var(--ink-mid), transparent 70%), var(--ink-field);
 }
 
 /* ---------- Basic hand (replaced by the hand phase) ---------- */

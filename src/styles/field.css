@@ -1,0 +1,184 @@
+/*
+ * Background field: the WebGL canvas and its CSS fallback (two layers of
+ * stacked radial gradients). The fallback paints first (and is all there is
+ * without JavaScript or WebGL2); the canvas fades in over it once it has drawn.
+ * Colour values are registered so transitions interpolate them (in OKLab: the
+ * engine writes oklab() values).
+ */
+@property --fa-field {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0e0f11;
+}
+@property --fa-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a1c20;
+}
+@property --fa-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2a2d33;
+}
+@property --fb-field {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0e0f11;
+}
+@property --fb-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a1c20;
+}
+@property --fb-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2a2d33;
+}
+@property --fh-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a1c20;
+}
+@property --fh-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2a2d33;
+}
+@property --fh {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --fa-i {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.35;
+}
+@property --fb-i {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.45;
+}
+@property --fk {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --fs {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --fade {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.field {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: var(--z-field);
+  width: 100vw;
+  /* Large viewport: mobile toolbars showing / hiding never resize the canvas. */
+  height: 100vh;
+  height: 100lvh;
+  overflow: hidden;
+  background: #000;
+  pointer-events: none;
+}
+
+.field-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+}
+.field[data-mode='gl'] .field-canvas {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur-fast) var(--ease-out-soft);
+}
+
+.field-css {
+  /* Initial colours from data-field (set before first paint from the URL). */
+  --fa-field: var(--fi-field);
+  --fa-mid: var(--fi-mid);
+  --fa-glow: var(--fi-glow);
+  --fa-i: var(--fi-i);
+  --fb-field: var(--fi-field);
+  --fb-mid: var(--fi-mid);
+  --fb-glow: var(--fi-glow);
+  position: absolute;
+  inset: 0;
+  opacity: var(--fade);
+}
+:root[data-intro='first'] .field-css {
+  --fade: 0;
+}
+/* Hidden under the canvas once it has faded in. */
+.field[data-mode='gl'] .field-css {
+  visibility: hidden;
+  transition: visibility 0s linear var(--dur-fast);
+}
+
+.field-layer {
+  --l-i: calc(var(--l-intensity) + var(--fk) * 0.1);
+  position: absolute;
+  inset: 0;
+  background: var(--l-field);
+}
+.field-layer::before {
+  content: '';
+  position: absolute;
+  inset: -6%;
+  background:
+    radial-gradient(
+      42% 48% at 18% 86%,
+      color-mix(in oklab, var(--l-glow) calc(var(--l-i) * 70%), transparent),
+      transparent
+    ),
+    radial-gradient(
+      46% 52% at 84% 16%,
+      color-mix(in oklab, var(--l-mid) calc(var(--l-i) * 100%), transparent),
+      transparent
+    ),
+    radial-gradient(
+      36% 40% at 34% 52%,
+      color-mix(in oklab, var(--l-mid) calc(var(--l-i) * 60%), transparent),
+      transparent
+    );
+}
+.field-layer[data-layer='a'] {
+  --l-field: var(--fa-field);
+  --l-mid: color-mix(in oklab, var(--fa-mid), var(--fh-mid) calc(var(--fh) * 100%));
+  --l-glow: color-mix(in oklab, var(--fa-glow), var(--fh-glow) calc(var(--fh) * 100%));
+  --l-intensity: calc(var(--fa-i) + var(--fh) * 0.2);
+}
+.field-layer[data-layer='b'] {
+  --l-field: var(--fb-field);
+  --l-mid: var(--fb-mid);
+  --l-glow: var(--fb-glow);
+  --l-intensity: var(--fb-i);
+  clip-path: circle(calc(var(--fs) * var(--fr, 150vmax)) at var(--fx, 50%) var(--fy, 100%));
+}
+/* Breathing (full tier only): pool scale 1.00-1.06 on a 9 s sine; half when bloomed. */
+@keyframes field-breath {
+  to {
+    transform: scale(1.06);
+  }
+}
+@keyframes field-breath-half {
+  to {
+    transform: scale(1.03);
+  }
+}
+:root[data-motion='full'] .field-layer::before {
+  animation: field-breath calc(var(--dur-breath) / 2) ease-in-out infinite alternate;
+}
+:root[data-motion='full'] .field-layer[data-layer='b']::before {
+  animation-name: field-breath-half;
+}

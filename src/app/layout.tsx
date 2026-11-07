@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { BackgroundField } from '@/components/background/background-field'
+import { fieldInitialCss } from '@/components/background/field-css'
 import { DisplaySettings } from '@/components/display-settings'
 import { Hand } from '@/components/hand/hand'
 import { Header } from '@/components/header'
@@ -9,6 +10,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { identityCss, palette } from '@/design/palette'
 import { site } from '@/lib/content'
 import { prefsScript } from '@/motion/preferences'
+import { pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
 import { display, mono, text } from './fonts'
 import './globals.css'
@@ -35,8 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         {/* Motion tier, first-visit flag and reveal arming, before first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
-        <style dangerouslySetInnerHTML={{ __html: identityCss() + motionCss() }} />
+        <script dangerouslySetInnerHTML={{ __html: prefsScript(pathFields()) }} />
+        <style dangerouslySetInnerHTML={{ __html: identityCss() + fieldInitialCss() + motionCss() }} />
       </head>
       <body>
         {/* First focusable element; only shown while the first-visit intro runs. */}

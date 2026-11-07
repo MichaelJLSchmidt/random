@@ -4,6 +4,8 @@
  *                otherwise "calm" if the visitor chose it, otherwise "full".
  *   data-intro:  "first" on the first visit to home in this session (the full
  *                draw sequence), "repeat" on later visits (no draw).
+ *   data-field:  the background identity of a card page or About (from the
+ *                URL), so the CSS field paints the right colour before JS.
  *   data-reveal: "armed" so reveal targets can start hidden from first paint.
  *                If the reveal system has not taken over 4 s later, the
  *                attributes are dropped and every page shows its final state.
@@ -16,7 +18,8 @@ export const MOTION_KEY = 'motion'
 export const INTRO_KEY = 'table-drawn'
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
-export const prefsScript = `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function g(k){try{return localStorage.getItem(k)}catch(e){return d.getAttribute("data-pref-"+k)}}function a(){d.dataset.motion=m.matches?"reduced":g("${MOTION_KEY}")==="calm"?"calm":"full"}a();m.addEventListener("change",a);addEventListener("storage",a);addEventListener("${PREFS_EVENT}",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}if(location.pathname==="${BASE}/"||location.pathname==="${BASE}"){d.dataset.intro=s?"repeat":"first"}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`
+export const prefsScript = (fields: Record<string, string>) =>
+  `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function g(k){try{return localStorage.getItem(k)}catch(e){return d.getAttribute("data-pref-"+k)}}function a(){d.dataset.motion=m.matches?"reduced":g("${MOTION_KEY}")==="calm"?"calm":"full"}a();m.addEventListener("change",a);addEventListener("storage",a);addEventListener("${PREFS_EVENT}",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}var p=location.pathname.slice(${JSON.stringify(BASE)}.length).replace(/\\/$/,"")||"/",f=${JSON.stringify(fields)}[p];if(f)d.dataset.field=f;if(p==="/"){d.dataset.intro=s?"repeat":"first"}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`
 
 export function savePreference(key: typeof MOTION_KEY, value: string) {
   try {
