@@ -1,22 +1,16 @@
 // LCP element/time and INP-style interaction latency in Chromium with 4x CPU
 // throttling and a slow-4G-like network (rough mid-range Android stand-in).
-// Usage: node scripts/vitals.mjs <base-url> [--password=<gate password>]
+// Usage: node scripts/vitals.mjs <base-url>
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
 const [base = 'http://localhost:3000', ...flags] = process.argv.slice(2)
-const password = flags.find((f) => f.startsWith('--password='))?.slice(11)
 const root = base.endsWith('/') ? base : `${base}/`
 
 const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true })
 const page = await context.newPage()
-if (password) {
-  await page.goto(`${root}gate`)
-  await page.fill('input[name=password]', password)
-  await Promise.all([page.waitForURL((u) => !u.pathname.includes('gate')), page.click('button[type=submit]')])
-}
 const cdp = await context.newCDPSession(page)
 await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
 await cdp.send('Network.enable')

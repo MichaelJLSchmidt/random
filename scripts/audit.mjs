@@ -1,5 +1,5 @@
 // Accessibility audit with axe-core in Chromium (Playwright must be available).
-// Usage: node scripts/audit.mjs <base-url> [--password=<gate password>] [--motion=full|calm|reduced]
+// Usage: node scripts/audit.mjs <base-url> [--motion=full|calm|reduced]
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 
@@ -14,7 +14,6 @@ const flag = (name) =>
     ?.split('=')
     .slice(1)
     .join('=')
-const password = flag('password')
 const motion = flag('motion') ?? 'full'
 const paths = [
   '/',
@@ -31,14 +30,6 @@ const browser = await chromium.launch()
 const context = await browser.newContext({ reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference' })
 if (motion === 'calm') await context.addInitScript(() => localStorage.setItem('motion', 'calm'))
 const page = await context.newPage()
-
-if (password) {
-  await page.goto(new URL('gate', base.endsWith('/') ? base : `${base}/`).href)
-  const gate = await runAxe('gate')
-  await page.fill('input[name=password]', password)
-  await Promise.all([page.waitForNavigation(), page.click('button[type=submit]')])
-  report('/gate', gate)
-}
 
 let total = 0
 for (const path of paths) {

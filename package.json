@@ -8,9 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "STATIC_EXPORT=1 next build",
-    "build:server": "next build",
-    "start": "next start",
+    "build": "next build",
+    "preview": "node scripts/serve-static.mjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"scripts/**/*.mjs\" \"content/**/*.json\" \"*.{ts,json,md}\""
   },

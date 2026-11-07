@@ -1,22 +1,13 @@
 // Lighthouse (mobile preset: mid-range Android emulation, simulated slow 4G, 4x CPU).
-// Usage: node scripts/lighthouse.mjs <base-url> [--password=<gate password>] [path ...]
+// Usage: node scripts/lighthouse.mjs <base-url> [path ...]
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync } from 'node:fs'
 
 const [base = 'http://localhost:3000', ...rest] = process.argv.slice(2)
-const password = rest.find((a) => a.startsWith('--password='))?.slice(11)
 const paths = rest.filter((a) => !a.startsWith('--'))
 const root = base.endsWith('/') ? base : `${base}/`
 const outDir = process.env.LH_OUT ?? 'verify-output/lighthouse'
 mkdirSync(outDir, { recursive: true })
-
-let cookie = ''
-if (password) {
-  const body = new URLSearchParams({ password, next: '/' })
-  const res = await fetch(new URL('gate/unlock', root), { method: 'POST', body, redirect: 'manual' })
-  cookie = (res.headers.get('set-cookie') ?? '').split(';')[0]
-  if (!cookie) throw new Error('Gate login failed')
-}
 
 const budgets = { lcp: 2000, cls: 0.05, tbt: 200 }
 let failed = false
@@ -32,7 +23,6 @@ for (const path of paths.length ? paths : ['/']) {
     `--output-path=${out}`,
     '--only-categories=performance,accessibility,best-practices,seo',
     '--chrome-flags=--headless=new --no-sandbox',
-    ...(cookie ? [`--extra-headers=${JSON.stringify({ Cookie: cookie })}`] : []),
   ]
   const run = spawnSync('npx', args, {
     stdio: 'inherit',

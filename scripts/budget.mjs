@@ -1,6 +1,6 @@
 // JS budget for a page: gzip size of scripts referenced by the HTML (initial)
 // and of every script fetched until the network is idle (incl. lazy chunks).
-// Usage: node scripts/budget.mjs <url> [--password=<gate password>] [--max=170]
+// Usage: node scripts/budget.mjs <url> [--max=170]
 import { createRequire } from 'node:module'
 import { gzipSync } from 'node:zlib'
 
@@ -17,11 +17,6 @@ const max = Number(flag('max') ?? 170)
 
 const browser = await chromium.launch()
 const page = await browser.newPage()
-if (flag('password')) {
-  await page.goto(new URL('/gate', url).href)
-  await page.fill('input[name=password]', flag('password'))
-  await Promise.all([page.waitForURL((u) => !u.pathname.includes('gate')), page.click('button[type=submit]')])
-}
 const scripts = new Map()
 page.on('response', async (res) => {
   if (res.request().resourceType() !== 'script') return

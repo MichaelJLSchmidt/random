@@ -1,7 +1,7 @@
 /*
- * Used only when the optional motion-plus package is not installed (builds
- * without MOTION_TOKEN, e.g. the static preview). Same call shape as
- * motion-plus splitText, word level only.
+ * Stand-in for the parts of motion-plus this site uses, for installs without
+ * MOTION_TOKEN (next.config.ts aliases the module here). Same call shapes,
+ * simpler behaviour.
  */
 export function splitText(element: Element, { wordClass = 'split-word' }: { wordClass?: string } = {}) {
   const text = element.textContent ?? ''

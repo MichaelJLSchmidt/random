@@ -7,7 +7,6 @@ import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { site } from '@/lib/content'
-import { noIndex } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
 import { motionCss } from '@/motion/tokens'
 import { mono, sans } from './fonts'
@@ -16,7 +15,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: { default: site.name, template: `%s · ${site.name}` },
   description: site.description,
-  robots: noIndex ? { index: false, follow: false } : undefined,
+  robots: { index: false, follow: false },
 }
 
 export const viewport: Viewport = {

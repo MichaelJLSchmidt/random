@@ -42,14 +42,6 @@
     "homeLink": "Go to the home page",
     "deckLabel": "A face-down deck"
   },
-  "gate": {
-    "title": "Private preview",
-    "body": "This site is not public yet. Enter the password to continue.",
-    "label": "Password",
-    "submit": "Enter",
-    "error": "That password is not right. Try again.",
-    "notConfigured": "Access is not set up yet, so the site cannot be opened."
-  },
   "settings": {
     "heading": "Display",
     "calm": "Calm motion",

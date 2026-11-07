@@ -67,8 +67,3 @@
 .list a:hover {
   color: var(--text);
 }
-
-/* Locked site: the gate page shows no navigation. */
-:global(body:has([data-gate])) .nav {
-  display: none;
-}

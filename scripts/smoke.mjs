@@ -1,5 +1,5 @@
 // Behaviour checks in Chromium: navigation focus, return focus, settings, cards.
-// Usage: node scripts/smoke.mjs <base-url> [--password=<gate password>] [--motion=full|calm|reduced]
+// Usage: node scripts/smoke.mjs <base-url> [--motion=full|calm|reduced]
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
@@ -38,12 +38,6 @@ const active = () =>
       ? `${el.tagName.toLowerCase()}${el.getAttribute('data-return-focus') ? `[${el.getAttribute('data-return-focus')}]` : ''}:${(el.textContent ?? '').trim().slice(0, 40)}`
       : 'none'
   })
-
-if (flag('password')) {
-  await page.goto(`${root}gate`)
-  await page.fill('input[name=password]', flag('password'))
-  await Promise.all([page.waitForURL((u) => !u.pathname.includes('gate')), page.click('button[type=submit]')])
-}
 
 await page.goto(root, { waitUntil: 'networkidle' })
 check(
@@ -178,7 +172,6 @@ const phone = await browser.newContext({
   reducedMotion: motion === 'reduced' ? 'reduce' : 'no-preference',
 })
 if (motion === 'calm') await phone.addInitScript(() => localStorage.setItem('motion', 'calm'))
-await phone.addCookies(await context.cookies())
 const mobile = await phone.newPage()
 await mobile.goto(root, { waitUntil: 'networkidle' })
 const tiltSwitch = mobile.getByRole('switch', { name: 'Tilt cards with device motion' })

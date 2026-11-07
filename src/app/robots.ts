@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next'
-import { noIndex } from '@/lib/site'
 
 export const dynamic = 'force-static'
 
+/** Experimental page: never indexed. */
 export default function robots(): MetadataRoute.Robots {
-  return { rules: noIndex ? { userAgent: '*', disallow: '/' } : { userAgent: '*', allow: '/' } }
+  return { rules: { userAgent: '*', disallow: '/' } }
 }
