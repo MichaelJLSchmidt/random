@@ -15,6 +15,7 @@ const types = {
   '.woff2': 'font/woff2',
   '.txt': 'text/plain',
   '.json': 'application/json',
+  '.png': 'image/png',
   '.ico': 'image/x-icon',
 }
 

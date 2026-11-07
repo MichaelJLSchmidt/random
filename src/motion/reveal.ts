@@ -197,6 +197,14 @@ function intro(main: HTMLElement) {
   const full = readTier() === 'full'
   const o = orders('first')
   if (full) drawCards(fanCards(), at.draw)
+  else {
+    // Calm and reduced: the hand fades in at the same moment, without the flight.
+    const dur = (readTier() === 'calm' ? D.calmReveal : D.reducedReveal) * 1000
+    for (const card of fanCards()) {
+      card.dataset.drawn = ''
+      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, delay: at.draw * 1000, fill: 'backwards' })
+    }
+  }
   const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome], .hand-deck')]
   const links = [...main.querySelectorAll<HTMLElement>('[data-order="chrome"]')]
   ;[...links, ...chrome].forEach((el, i) => mark(el, o.chrome + i * S.tags))
@@ -237,6 +245,9 @@ export function revealRoute(kind: RevealKind) {
   introCleanup = null
   root.dataset.reveal = 'live'
   sequenceEnd = now()
+  // Start states must be computed before anything is marked, or there is
+  // nothing to transition from (fast loads would skip straight to the end).
+  void main.offsetWidth
 
   const o = orders(kind)
   const stops: (() => void)[] = []

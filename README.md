@@ -1,40 +1,45 @@
 # Portfolio
 
-Portfolio prototype in the playground repository. Next.js 16 (App Router, TypeScript, React 19.3),
-Motion + Motion+, plain CSS (custom properties and CSS Modules). Built as a static export and
-deployed to GitHub Pages under `BASE_PATH`. Never indexed (robots meta and a disallow-all
-robots.txt).
+Portfolio prototype in the playground repository: a table seen from the player's seat. A calm dark
+field breathes behind everything; a hand of four cards (three case studies and Management) is the
+navigation. Playing a card lifts it onto the table, the background blooms from it into the card's
+colour, and the card zooms into its page. Next.js 16 (App Router, TypeScript, React 19.3), Motion +
+Motion+, WebGL2, plain CSS. Built as a static export and deployed to GitHub Pages under
+`BASE_PATH`. Never indexed (robots meta and a disallow-all robots.txt).
 
 All visible text lives in `/content`. Names, links, email and case studies there are placeholders.
 
 ## Structure
 
 ```
-content/                    All editable text (JSON / MDX). No components.
-  site.json                 Site name, navigation, home, case-study, about, 404, settings and egg copy
-  case-studies.json         Exactly three case studies (theme/tint, statement, tap line; checked at build)
-  work/<slug>.mdx           Case-study bodies
-  projects.json             Plain project list
-  workshops.json            Facilitation methods for the workshop-card easter egg
-  about.mdx, contact.json
+content/                    All editable text (JSON / MDX / one TS map). No components.
+  cards.ts                  Hand order, case study -> colour identity, rail labels, Management card
+  site.json                 Site name, navigation, home, case study, About, 404, settings, egg copy
+  case-studies.json         Exactly three case studies (checked at build)
+  work/<slug>.mdx           Case-study bodies; management.mdx, about.mdx
+  projects.json             Older projects (no detail pages); workshops.json (workshop draw)
+public/topo/                About contours: elevation.png, contours.svg, meta.json (placeholder for now)
+scripts/
+  topo/                     GDAL + Node pipeline for the About topography (README inside)
+  smoke.mjs                 Behaviour check, 1440x900 and 390x844, per motion tier
+  budget.mjs, audit.mjs, vitals.mjs, lighthouse.mjs, serve-static.mjs
 src/
-  app/                      Routes: / , /work/[slug], /projects, /about, /contact, 404, robots.txt
-  components/               Header, footer, settings, page/scroll motion, draw handler, eggs wiring
-    card/                   Card faces, hand (fan, stack, touch fan), draw pile, flip, morph boundary
-  eggs/                     Easter eggs: registry.ts (flags + tier behaviour), keys, one module each
-  interactions/             Lazy-loaded pointer (hover, touch-hold, title Glint) and device orientation
-  lib/                      Content loading, base path
+  app/                      Routes: / , /work/[slug], /management, /projects, /about, /contact, 404
+  design/palette.ts         Colour identities (ink, ember, tide, grove, saffron, glacier)
   motion/
-    tokens.ts               The only source of durations, easings, springs, staggers, distances, weights
-    glint.ts                The shared Glint (one band, one sweep, at most one on screen)
-    deal.ts                 Dealing from the deck (intro, Mulligan), rare pull
-    scroll.ts               Section reveals, rising section titles, scroll-linked statement
-    transitions.ts          View-transition type and class names
-    preferences.ts          Pre-paint script: motion tier, foil preference, first-visit intro flag
-    plus-fallback.ts        Motion+ stand-in for installs without MOTION_TOKEN
-  styles/                   tokens, type, view-transitions, foil, tints, title-fill, glint, scroll, eggs
-  fonts/                    Mona Sans (wght axis only) and Geist Mono, Latin subsets, OFL
-scripts/                    audit, smoke, budget, vitals, lighthouse, serve-static
+    tokens.ts               The only source of easings, springs, durations, staggers, distances
+    table-store.ts          The table: active / hover / last played card, tier, field target
+    play.ts                 Play / return / switch, stage 1 (lift); view-transition.ts watches stage 2
+    reveal.ts               Reveal system, page orders, first-visit intro
+    transitions.ts          Transition types and view-transition class maps
+    preferences.ts          Pre-paint script: tier, intro flag, reveal arming, initial field colour
+  components/
+    background/             The field: engine, WebGL2 shader, OKLab, CSS fallback
+    hand/                   The hand (fan, rail, sheet) and card faces
+    case-hero.tsx           Full-bleed hero + mini card; reveals.tsx, route-focus.tsx, ...
+  eggs/                     registry.ts (flags + tier behaviour) and one module per egg
+  styles/                   tokens, type, field, hand, reveal, view-transitions, eggs
+  fonts/                    Bricolage Grotesque (opsz + wght), Hanken Grotesk, Martian Mono; OFL
 ```
 
 ## Commands
@@ -47,15 +52,8 @@ scripts/                    audit, smoke, budget, vitals, lighthouse, serve-stat
 | `npm run typecheck` | TypeScript                                                        |
 | `npm run format`    | Prettier                                                          |
 
-Checks (need `npm run preview` running and the Playwright/Chromium this environment provides):
-
-```
-node scripts/smoke.mjs      <url> [--motion=full|calm|reduced]   # behaviour per tier
-node scripts/audit.mjs      <url> [--motion=full|calm|reduced]   # axe, WCAG 2.2 AA
-node scripts/budget.mjs     <url> [--list]                       # initial JS ≤ 170 KB gzip
-node scripts/vitals.mjs     <url>                                # LCP element, interaction latency
-node scripts/lighthouse.mjs <url> [paths…]                       # Lighthouse mobile
-```
+With `npm run preview` running: `node scripts/smoke.mjs <url> [--motion=full|calm|reduced]`
+(behaviour) and `node scripts/budget.mjs <url>` (initial JS at most 170 KB gzip).
 
 ## Environment
 
@@ -64,63 +62,64 @@ node scripts/lighthouse.mjs <url> [paths…]                       # Lighthouse 
 | `MOTION_TOKEN` | Shell, repository secret   | Motion+ registry token read by `.npmrc`. Never commit it. |
 | `BASE_PATH`    | GitHub Actions (automatic) | Sub-path of the export, e.g. `/random/`.                  |
 
-Motion+ is installed from its registry with the `MOTION_TOKEN` repository secret. Installs without
-a token skip it (it is an optional dependency): `motion-plus` then resolves to
-`src/motion/plus-fallback.ts`, and the build type-checks against `tsconfig.fallback.json`, which
-maps the module to the same file. The type check runs in every build.
+Motion+ is an optional dependency: without a token `motion-plus` resolves to
+`src/motion/plus-fallback.ts` and the type check uses `tsconfig.fallback.json`.
 
-## Motion
+## The table
 
-Tiers: **full** (default), **calm** (footer switch, saved in localStorage, applied before first
-paint), **reduced** (`prefers-reduced-motion`, overrides calm). Only transform, opacity, clip-path
-and CSS variables are animated (weight through the registered `--wght`). Pointer and sensor input
-write CSS variables or motion values, never React state. Every timing comes from
-`src/motion/tokens.ts`.
+- **Background field**: one WebGL2 canvas (hand-written shader, half resolution, DPR capped at 1,
+  30 fps, idle when nothing moves). Three soft colour pools in low-frequency noise, 2% static grain,
+  a 9 s breath. It never reads the pointer. Colours are mixed in OKLab. Without WebGL2, or after
+  slow frames (average over 24 ms in two 60-frame windows), registered `@property` colours on
+  stacked gradients take over with the same transitions. It pauses when the tab is hidden, while
+  the mobile sheet is open, and on Save-Data (no breathing).
+- **Hand**: `<nav aria-label="Work">`, four real links plus "More projects". Desktop: a fan at the
+  bottom centre (72% visible on home, 45% elsewhere). Mobile: the fan on home, elsewhere a 48px
+  peek rail that opens a bottom sheet (a native popover). One tab stop (arrows, Home/End).
+- **Play / return / switch**: stage 1 lifts the card (WAAPI, play spring) while the field blooms;
+  stage 2 is React's view transition (`card-<slug>` and `card-title-<slug>` shared between the hand
+  card and the hero / H1). Return: Back, Escape, the wordmark, or leaving a card page.
 
-| Animation                                       | Full                                                                 | Calm                         | Reduced              |
-| ----------------------------------------------- | -------------------------------------------------------------------- | ---------------------------- | -------------------- |
-| Page h1 on load / navigation                    | 200 → 760: first visit 700 ms + 45 ms word stagger, otherwise 500 ms | 350 ms weight-in             | 760 from first paint |
-| First-visit intro (home)                        | riffle cut, deal 80 ms apart with flips, Glint on top card (1.54 s)  | none (weight-in only)        | none                 |
-| Sections below the fold                         | rise 24 / 40 px + fade, 420 ms ease-out, once at 35% in view         | final state                  | final state          |
-| Section titles                                  | lines rise from a mask while weight goes 400 → 680                   | final state                  | final state          |
-| Case-study statement                            | words fill 200 → 760 in reading order, scroll-linked                 | filled                       | filled               |
-| Glint (intro, draw, hero, email, titles)        | one 18° foil band, 700 ms, never loops, one on screen                | none                         | none                 |
-| Bold title hover (fine pointers)                | primary fill sweeps in 420 ms, Glint 80 ms behind, reverses at 0.7x  | 294 ms fill, no Glint        | instant fill         |
-| Link hover / focus                              | underline draws in from the left (160 ms), leaves to the right       | 112 ms                       | instant              |
-| Card foil                                       | hidden at rest; 240 ms fade on hover / touch-hold; tracks pointer    | fades, does not track        | appears, static      |
-| Touch fan (coarse pointers)                     | swipe, spring snap with velocity, ±6° peeks, "1/3"                   | short tween snap             | jumps                |
-| Drawing a card                                  | lift -24 px, scale 1.04 + Glint, then the route morph                | navigates at once            | navigates at once    |
-| Card morph between routes                       | 420 ms shared-element morph (card-<slug> types)                      | 294 ms                       | instant              |
-| Nav label → page title (About/Projects/Contact) | label morphs into the h1 (title-<page> types), content fades         | shorter                      | instant              |
-| Page content on forward / back links            | 32 px slide + fade                                                   | fade only                    | instant              |
-| Project rows after navigation                   | dealt in, 40 ms stagger                                              | none                         | none                 |
-| Case-study card flip                            | 3D turn (spring)                                                     | cross-fade                   | instant swap         |
-| Card tilt (pointer / opt-in device)             | up to 7°                                                             | flat, device switch disabled | flat, disabled       |
+| Effect                 | Full                                                           | Calm                          | Reduced             |
+| ---------------------- | -------------------------------------------------------------- | ----------------------------- | ------------------- |
+| Field breath and drift | 9 s breath, drift 0.012/s                                      | still                         | still, 200 ms swaps |
+| Hover a card           | lift 28px on the hover spring; field blends (80 ms)            | no lift, field blends         | instant             |
+| Play                   | press, lift, bloom 800 ms, zoom 580 ms                         | navigate at once, 500 ms fade | near-instant        |
+| Return / switch        | 520 ms back to the slot / 560 ms in, OKLab crossfade           | same morph, 500 ms fade       | near-instant        |
+| Home first visit       | field from black, hand drawn and flipped, title, lines, chrome | fades, same order             | fades, same order   |
+| Headline               | deal and settle (wght 280 -> 680, opsz 24 -> 96)               | opacity + 4px, weight at once | opacity, 200 ms     |
+| Sections               | per preset (lines, lists, metrics, callouts ...)               | opacity + 4px, 300 ms         | opacity, 200 ms     |
 
-Browser back/forward carries no transition type, so it swaps without animation. Without
-JavaScript every page is complete and every text is at its final weight.
+Browser back / forward swaps the page without a view transition (React does not animate popstate
+navigations); the field still follows the route.
+
+## About topography
+
+`scripts/topo/README.md` has the exact steps for the real assets (swissALTI3D 2 m, LV95 box
+E 2624000-2646000, N 1152000-1174000). Until then a noise-generated placeholder is committed,
+labelled in `public/topo/meta.json`, in the SVG and on the page.
 
 ## Easter eggs
 
 Registered in `src/eggs/registry.ts` (an `on` flag and the full / calm / reduced behaviour of
-each); code loads the first time an egg fires. Press `?` on the site for the shortcut sheet.
+each). Press `?` on the site for the shortcut sheet.
 
-| Egg                 | Trigger                                               |
-| ------------------- | ----------------------------------------------------- |
-| Mulligan            | Long-press the deck (800 ms) or press M (home)        |
-| Workshop card       | Swipe up on / tap the deck, or press D (home)         |
-| Rare pull           | 1 in 16 per dealt card (intro, Mulligan)              |
-| Tap                 | Double-tap a card (during the draw lift) or press T   |
-| What's on the table | About: hover or tap the card edge behind the portrait |
-| Shortcut sheet      | `?`; typing "shuffle" riffles every card              |
-| 404                 | Any unknown address                                   |
-| Haptics             | ≤ 20 ms vibrations in gesture handlers                |
+| Egg                 | Trigger                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| New hand            | M on the start page, or a long press on the deck                     |
+| Workshop draw       | "Draw a workshop method" on /management                              |
+| Rare pull           | 1 in 40 loads (or `?rare`): one card gets a single holographic glint |
+| Turn sideways       | T on a focused card, or a double tap while a card lifts (mobile)     |
+| Look closer         | Hold Space on a focused card, or a long press (mobile)               |
+| Coffee?             | Type "draw" on the start page                                        |
+| Shortcut sheet      | `?`                                                                  |
+| What's on the table | About: three face-down cards                                         |
+| 404                 | Any unknown address: a card falls into the discard zone              |
 
 ## Accessibility
 
-Skip link, landmarks, one `h1` per page, `aria-current` navigation, card links named by their
-visible text, decorative layers `aria-hidden`, focus moves to the page heading after navigation
-and back to the originating card on return, polite live region for settings, flips, copies and
-eggs. Weight-animated text keeps one plain copy for screen readers and reserves every word box at
-its final weight. No text sits on animated foil. Settings use native switch inputs
-(`<input type="checkbox" switch>`).
+Skip link, landmarks, one `h1` per page, card links named by their visible text, decorative layers
+`aria-hidden`. After every navigation focus moves to the page heading (or back to the card that
+was open), and the title is announced in a polite live region; eggs announce themselves there too.
+Weight-animated text keeps one plain copy for screen readers and reserves every word box at its
+final weight. Without JavaScript every page is complete and shows its final state.
