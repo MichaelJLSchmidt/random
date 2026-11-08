@@ -1,25 +1,33 @@
 .footer {
-  margin-top: var(--space-9);
+  margin-top: var(--space-l);
   border-top: 1px solid var(--line);
   /* Keep clear of the fixed hand. */
   padding-bottom: var(--hand-reserve);
 }
 
+/* On the Spread grid: settings in the reading column, the note at the right. */
 .inner {
+  grid-column: content-start / content-end;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-6);
-  max-width: var(--page-max);
-  margin-inline: auto;
-  padding: var(--space-6) var(--gutter);
+  gap: 32px var(--grid-gutter);
+  padding: 32px 0;
 }
 
 .note {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-mono);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-leading);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
   color: var(--muted);
+}
+
+@media (min-width: 1024px) {
+  .inner {
+    grid-column: 5 / content-end;
+  }
 }

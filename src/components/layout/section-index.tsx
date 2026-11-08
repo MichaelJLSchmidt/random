@@ -10,9 +10,11 @@ type Props = {
 }
 
 /*
- * The section's index label ("01  Context"), sticky in the index column
- * (columns 1–3) from 1024 px; above the section body below that. Label type
- * token. Contract: docs/contracts.md#sectionindex.
+ * The section's index label ("01 — Context") in the label token. From 1024 px
+ * it sits in the index column (columns 1–3) and stays pinned below the header
+ * while its section reads (CSS sticky; the Section helper makes it span the
+ * section's head and body rows). Below 1024 px it is an inline label above the
+ * section's h2. Contract: docs/contracts.md#sectionindex.
  */
 export function SectionIndex({ number, label, className }: Props) {
   return (
