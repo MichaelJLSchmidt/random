@@ -123,6 +123,33 @@ constraints (correctness only). Its findings, all fixed and re-verified:
 - `scripts/budget.mjs`: 162.8 KB gzip initial JS (184.8 KB by network idle), within the advisory
   170 KB.
 
-## Known issues
+## Deploy
 
-See the final report in the session; the polish list is repeated here once the deploy is done.
+`main` pushed once at 601e08e (merge of this branch). GitHub Pages workflow run #11
+(https://github.com/MichaelJLSchmidt/random/actions/runs/42518727808): success; Configure Pages
+supplied `SITE_URL`. Live at https://michaeljlschmidt.github.io/random/: every route answers 200
+(unknown addresses 404 with the discard page), images and topography load under `/random/`,
+`og:image` is `https://michaeljlschmidt.github.io/random/images/about-og-1280.jpg`, and
+`scripts/smoke.mjs` against the live site passes (full tier, 90 checks). This section was added
+on the integration branch after the deploy; `main` was not pushed again for it.
+
+## Remaining polish (by impact)
+
+1. Home clears the fan at 1440×900 and 390×844 with room, but only by 6–7 px at 1024×768 and
+   1280×720; a longer intro would touch the fan there.
+2. Workshop cards: when a title wraps to two lines the field rows sit lower than in the
+   neighbouring cards (desktop row of four).
+3. Building the team, 06 Artefacts: "Intake one-pager" and "Career framework" have no image or
+   drawing in the content, so they render as caption tiles; `CareerMatrix` would fit the second.
+4. `about-mountain` and the re-cropped `about-tcg2` are registered, credited and shipped but not
+   placed (Content left them for breakers).
+5. Open Graph title and description are the site's on every page (child pages set only
+   `<title>`).
+6. The About timeline on phones runs about 560 px for seven stops.
+7. The colophon's photographer column cuts a long credit ("Christina @ wocintechchat.com M…")
+   at 1440.
+8. `WeekRing` places the weekly 1:1s on Tuesday and Thursday; the content says only "weekly".
+9. Literal sizes kept as documented exceptions: illustration labels (11 / 20 px by the drawing
+   spec) and the hand's card-face text (`hand.css`). `WorkshopGlyphs` (the strip) is unused.
+10. Calm keeps full-length view-transition morphs (`tiers.calm.vt = 1`), while everything else
+    in calm is × 0.6; reveals after a play now wait for the morph as it runs.
