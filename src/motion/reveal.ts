@@ -5,6 +5,7 @@ import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
 import { completeAll, revealNow, revealed, schedule } from './jobs'
 import { type Kind, isHeroImage, runKind, title } from './kinds'
 import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
+import { loadSplit } from './split'
 import { table } from './table-store'
 import { reveal as R, duration as D, stagger } from './tokens'
 import { readTier } from './use-tier'
@@ -185,6 +186,8 @@ export function revealRoute(kind: NavigationKind) {
   const tier = readTier()
   const handled = new Set<HTMLElement>()
   const all = [...main.querySelectorAll<HTMLElement>('[data-reveal]')]
+  // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
+  if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines' || kindOf(el) === 'title')) void loadSplit()
 
   // Home: the first-load sequence (the first visit also deals the hand and reveals the chrome).
   const seq = main.querySelector<HTMLElement>('[data-first-load]')
