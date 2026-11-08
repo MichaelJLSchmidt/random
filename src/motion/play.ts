@@ -1,3 +1,4 @@
+import { headerHeight } from '@/design/layout'
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
 import { at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
@@ -37,7 +38,7 @@ export function registerNavigate(fn: Navigate | null) {
 export function heroTarget() {
   const vw = innerWidth
   const vh = innerHeight
-  const header = 64
+  const header = headerHeight
   const ratio = 184 / 132
   if (vw >= H.breakpoint) {
     const w = Math.min(Math.max(H.hero.min, vw * H.hero.vw), H.hero.max, (vh - header - 220) / ratio)

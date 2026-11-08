@@ -85,8 +85,7 @@
   margin-left: calc(var(--overlap) * -1);
 }
 
-.hand-card,
-.hand-deck {
+.hand-card {
   display: block;
   border-radius: var(--card-radius);
   color: var(--text);
@@ -106,8 +105,7 @@
     rotate var(--spring-hover-dur) var(--spring-hover),
     scale var(--spring-hover-dur) var(--spring-hover);
 }
-.hand-card:focus-visible,
-.hand-deck:focus-visible {
+.hand-card:focus-visible {
   outline: 2px solid var(--id-accent);
   outline-offset: 3px;
 }
@@ -296,7 +294,7 @@
   transform: rotateY(180deg);
 }
 
-/* ---------- Card back and the "More projects" stack ---------- */
+/* ---------- Card back (seen while a card flips during a deal) ---------- */
 .card-back {
   background:
     repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
@@ -328,47 +326,35 @@
   rotate: 6deg;
 }
 
-.hand-deck {
-  --id-accent: var(--ink-accent);
-  position: absolute;
-  left: calc(100% + 24px);
-  bottom: 0;
-  width: var(--cw);
-  height: var(--ch);
-  transition: translate var(--spring-hover-dur) var(--spring-hover);
+/*
+ * ---------- Card counter (home only) ----------
+ * "01 / 04" and the hovered or focused card's title, in the label token.
+ * Desktop: bottom left, beside the fan. Mobile home: above the fan.
+ */
+.hand-counter {
+  position: fixed;
+  left: var(--grid-margin);
+  bottom: calc(24px + var(--safe-bottom));
+  display: grid;
+  gap: var(--baseline);
+  max-width: max(96px, calc(50vw - (var(--cw) * 4 - var(--overlap) * 3) / 2 - var(--grid-margin) - 40px));
+  margin: 0;
+  color: var(--muted);
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
-.deck-stack {
-  position: absolute;
-  inset: 0;
+.hand-counter-index {
+  color: var(--text);
 }
-.deck-stack .card-back:nth-child(1) {
-  translate: 4px -4px;
+.hand-counter-title {
+  text-wrap: balance;
 }
-.deck-stack .card-back:nth-child(2) {
-  translate: 2px -2px;
-}
-.deck-label {
-  position: absolute;
-  top: 12cqi;
-  left: 8cqi;
-  right: 8cqi;
-  padding: 5cqi 4cqi;
-  border-radius: 4px;
-  background: var(--ink-field);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent);
-  font-family: var(--font-mono);
-  font-size: clamp(7.5px, 7cqi, 10px);
-  letter-spacing: var(--tracking-mono);
-  text-align: center;
-  text-transform: uppercase;
-}
-.hand-deck:focus-visible {
-  translate: 0 calc(var(--travel-hover-lift) * -0.6);
-}
-@media (hover: hover) and (pointer: fine) {
-  .hand-deck:hover {
-    translate: 0 calc(var(--travel-hover-lift) * -0.6);
-  }
+
+/* Bottom-sheet links (More projects, About, Contact): only in the mobile sheet. */
+.hand-sheet-links {
+  display: none;
 }
 
 /* ---------- Rail (mobile, not home) ---------- */
@@ -388,14 +374,13 @@
     --card-radius: 8px;
   }
 
-  /* The deck sits above the right end of the fan. */
-  .hand-deck {
-    position: absolute;
-    left: auto;
-    right: 0;
-    bottom: calc(var(--ch) * var(--visible) + 30px);
-    width: calc(var(--cw) * 0.5);
-    height: calc(var(--ch) * 0.5);
+  /* The counter sits above the left end of the fan. */
+  .hand-counter {
+    bottom: calc(var(--ch) * var(--visible) + 16px + var(--safe-bottom));
+    max-width: calc(100vw - 2 * var(--grid-margin));
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--space-3);
   }
 
   .hand:not([data-home]) .hand-rail {
@@ -510,29 +495,20 @@
     transform: none;
     translate: none;
   }
-  /* In the sheet the deck is a plain row: a small stack and its label. */
-  .hand:not([data-home]) .hand-deck {
+  /* In the sheet, under the cards: plain links to the pages that are not cards. */
+  .hand:not([data-home]) .hand-sheet-links {
     display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    width: auto;
-    height: 44px;
-    padding-left: 4px;
-    container-type: normal;
-  }
-  .hand:not([data-home]) .deck-stack {
-    position: relative;
-    width: 30px;
-    height: 42px;
-  }
-  .hand:not([data-home]) .deck-stack .card-back {
-    border-radius: 4px;
-  }
-  .hand:not([data-home]) .deck-label {
-    position: static;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2) var(--space-6);
+    margin: 0;
     padding: 0;
-    background: none;
-    box-shadow: none;
-    font-size: var(--text-xs);
+    list-style: none;
+  }
+  .hand:not([data-home]) .hand-sheet-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--text);
   }
 }

@@ -1,0 +1,46 @@
+/* Other pages: More projects, About, 404 (Layout & Pages session). Skeleton styles. */
+
+/* More projects: number and glyph per row. */
+.project-number {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  letter-spacing: var(--type-label-tracking);
+  color: var(--muted);
+}
+.project-type {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.project-type-glyph {
+  width: 20px;
+  height: 20px;
+}
+
+/* About */
+.about-sections {
+  display: grid;
+  gap: var(--space-s);
+  max-width: var(--measure);
+  margin-top: var(--space-s);
+}
+.about-sections section {
+  display: grid;
+  gap: var(--space-3);
+}
+.about-portrait {
+  max-width: 16rem;
+  margin-top: var(--space-6);
+}
+.about-timeline {
+  margin-top: var(--space-s);
+}
+
+/* 404: the illustration lies in the discard zone. */
+.discard-illustration {
+  position: absolute;
+  inset: 0;
+}
+.discard-illustration[data-stub] {
+  outline: none;
+}

@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { announce } from '@/components/live-region'
-import { site } from '@/lib/content'
+import { about, fill } from '@/lib/content'
 
 /** About, "What's on the table": three face-down cards named after games; a tap turns one to a line. */
 export function OnTheTable() {
-  const { label, cards } = site.about.table
+  const { label, cards, flipped } = about.table
   const [open, setOpen] = useState<boolean[]>(() => cards.map(() => false))
   return (
     <section className="on-table" aria-labelledby="on-table-title">
@@ -23,7 +23,7 @@ export function OnTheTable() {
               data-open={open[i] ? '' : undefined}
               onClick={() => {
                 setOpen((o) => o.map((v, k) => (k === i ? !v : v)))
-                if (!open[i]) announce(site.eggs.tableFlipped.replace('{name}', card.name).replace('{line}', card.line))
+                if (!open[i]) announce(fill(flipped, { name: card.name, line: card.line }))
               }}
             >
               <span className="on-table-back">{card.name}</span>

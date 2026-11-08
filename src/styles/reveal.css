@@ -54,7 +54,6 @@
 /* Skip: a running intro jumps to its end (transitions removed for a frame). */
 :root[data-reveal-skip] main *,
 :root[data-reveal-skip] [data-chrome],
-:root[data-reveal-skip] .hand-deck,
 [data-revealed='instant'],
 [data-revealed='instant'] * {
   transition: none !important;
@@ -262,21 +261,16 @@
     rotate var(--rv-dur, var(--dur-discard)) var(--ease-draw) var(--rd, 0s);
 }
 
-/* ---------- Home, first visit: hand drawn from the deck, chrome last ---------- */
+/* ---------- Home, first visit: hand dealt from off screen, chrome (header, card counter) last ---------- */
 :root[data-intro='first'] .hand-card:not([data-drawn]),
-:root[data-intro='first'] :is([data-chrome], .hand-deck):not([data-revealed]) {
+:root[data-intro='first'] [data-chrome]:not([data-revealed]) {
   opacity: 0;
 }
-:root[data-intro='first'] :is([data-chrome], .hand-deck):not([data-revealed]) {
+:root[data-intro='first'] [data-chrome]:not([data-revealed]) {
   translate: 0 var(--rv-tag);
 }
 :root[data-intro] [data-chrome] {
   transition:
     opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s),
     translate var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s);
-}
-:root[data-intro] .hand-deck {
-  transition:
-    opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s),
-    translate var(--spring-hover-dur) var(--spring-hover) var(--rd, 0s);
 }

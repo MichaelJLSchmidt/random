@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { site } from '@/lib/content'
+import { coffeeEgg, site } from '@/lib/content'
 import { at, duration as D, stagger as S } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { eggOn } from './registry'
@@ -42,7 +42,7 @@ export function Eggs() {
         if (buffer === 'draw' && home && eggOn('coffee')) {
           buffer = ''
           dispatchEvent(new Event('egg:coffee'))
-          import('@/components/live-region').then((m) => m.announce(site.eggs.coffeeDealt))
+          import('@/components/live-region').then((m) => m.announce(coffeeEgg.dealt))
         }
       }
     }
@@ -62,22 +62,22 @@ export function Eggs() {
     const h = title.current!
     d.showModal()
     if (readTier() !== 'full') {
-      h.textContent = site.eggs.shortcutsTitle
+      h.textContent = site.shortcuts.title
       return
     }
     h.textContent = ''
     import('motion-plus')
-      .then(({ typewriter }) => typewriter(h, site.eggs.shortcutsTitle, { speed: 'fast' }))
-      .catch(() => (h.textContent = site.eggs.shortcutsTitle))
+      .then(({ typewriter }) => typewriter(h, site.shortcuts.title, { speed: 'fast' }))
+      .catch(() => (h.textContent = site.shortcuts.title))
   }
 
   return (
     <dialog ref={dialog} className="shortcuts" aria-labelledby="shortcuts-title" closedby="any">
       <h2 id="shortcuts-title" ref={title} className="shortcuts-title">
-        {site.eggs.shortcutsTitle}
+        {site.shortcuts.title}
       </h2>
       <dl className="shortcuts-list">
-        {site.eggs.shortcuts.map((row) => (
+        {site.shortcuts.items.map((row) => (
           <div key={row.keys}>
             <dt>
               <kbd>{row.keys}</kbd>
@@ -88,7 +88,7 @@ export function Eggs() {
       </dl>
       <form method="dialog">
         <button className="button" type="submit" autoFocus>
-          {site.eggs.shortcutsClose}
+          {site.shortcuts.close}
         </button>
       </form>
     </dialog>

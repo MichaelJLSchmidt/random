@@ -1,21 +1,25 @@
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
-import { site } from '@/lib/content'
+import { FirstLoadSequence } from '@/components/reveals'
+import { home } from '@/lib/content'
 
+/** Home: the hero above the hand. The card counter lives in the hand (src/components/hand). */
 export default function HomePage() {
   return (
     <PageTransition>
       <div className="page home" data-identity="ink" data-home="">
-        <PageTitle className="home-title">{site.home.title}</PageTitle>
-        <p className="home-role" data-reveal="line" data-order="lines">
-          {site.home.role}
-        </p>
-        <p className="lede" data-reveal="paragraph" data-order="lines">
-          {site.home.intro}
-        </p>
-        <p className="home-hint" data-reveal="tags" data-order="chrome">
-          {site.home.hint}
-        </p>
+        <FirstLoadSequence>
+          <PageTitle className="home-title">{home.title}</PageTitle>
+          <p className="home-role" data-reveal="line" data-order="lines">
+            {home.role}
+          </p>
+          <p className="lede" data-reveal="paragraph" data-order="lines">
+            {home.intro}
+          </p>
+          <p className="home-hint" data-reveal="tags" data-order="chrome">
+            {home.hint}
+          </p>
+        </FirstLoadSequence>
       </div>
     </PageTransition>
   )

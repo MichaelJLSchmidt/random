@@ -1,11 +1,133 @@
 /*
- * Type: Bricolage Grotesque for display (only wght and opsz animate; headlines
- * at opsz 96), Hanken Grotesk for text (400/500 body, 600 labels), Martian
- * Mono for labels, metrics and tabular figures. The width axis is never
- * touched (the display file has none).
+ * Type. Bricolage Grotesque for display (only wght and opsz animate), Hanken
+ * Grotesk for text, Martian Mono for labels, metrics and tabular figures. The
+ * width axis is never touched (the display file has none).
+ *
+ * The scale below is the contract (docs/contracts.md#type-tokens); typed
+ * mirror: src/design/type.ts. Sizes are fluid from a 390 px to a 1440 px
+ * viewport (rem-based clamp()). Use the .t-* classes, or the tokens when a
+ * component needs one property only. Foundation-owned; read-only in Wave 1.
  */
+:root {
+  /* label: Martian Mono 500, 11 -> 12 px, +0.08em, uppercase */
+  --type-label-size: clamp(0.6875rem, 0.6643rem + 0.0952vw, 0.75rem);
+  --type-label-leading: 1rem;
+  --type-label-weight: 500;
+  --type-label-tracking: 0.08em;
+
+  /* body: Hanken Grotesk 400, 17 -> 19 px / 28 px, max 62ch */
+  --type-body-size: clamp(1.0625rem, 1.0161rem + 0.1905vw, 1.1875rem);
+  --type-body-leading: 1.75rem;
+  --type-body-weight: 400;
+  --type-body-measure: 62ch;
+
+  /* lead: Hanken Grotesk 400, 21 -> 28 px / 32 px */
+  --type-lead-size: clamp(1.3125rem, 1.15rem + 0.6667vw, 1.75rem);
+  --type-lead-leading: 2rem;
+  --type-lead-weight: 400;
+
+  /* h3: Bricolage 600, opsz 24, 22 -> 32 px */
+  --type-h3-size: clamp(1.375rem, 1.1429rem + 0.9524vw, 2rem);
+  --type-h3-leading: 1.15;
+  --type-h3-weight: 600;
+  --type-h3-opsz: 24;
+  --type-h3-tracking: -0.01em;
+
+  /* h2: Bricolage 600, opsz 72, 36 -> 72 px */
+  --type-h2-size: clamp(2.25rem, 1.4143rem + 3.4286vw, 4.5rem);
+  --type-h2-leading: 1.04;
+  --type-h2-weight: 600;
+  --type-h2-opsz: 72;
+  --type-h2-tracking: -0.02em;
+
+  /* display: Bricolage 700, opsz 96, 56 -> 168 px */
+  --type-display-size: clamp(3.5rem, 0.9rem + 10.6667vw, 10.5rem);
+  --type-display-leading: 0.92;
+  --type-display-weight: 700;
+  --type-display-opsz: 96;
+  --type-display-tracking: -0.03em;
+
+  /* numeral: Bricolage 300, opsz 96, 88 -> 240 px (+ outlined variant) */
+  --type-numeral-size: clamp(5.5rem, 1.9714rem + 14.4762vw, 15rem);
+  --type-numeral-leading: 0.8;
+  --type-numeral-weight: 300;
+  --type-numeral-opsz: 96;
+  --type-numeral-tracking: -0.04em;
+  --type-numeral-stroke: 1px;
+}
+
+/* ---------- Scale classes ---------- */
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-leading);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.t-body {
+  font-family: var(--font-text);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
+  font-weight: var(--type-body-weight);
+  max-width: var(--type-body-measure);
+}
+.t-lead {
+  font-family: var(--font-text);
+  font-size: var(--type-lead-size);
+  line-height: var(--type-lead-leading);
+  font-weight: var(--type-lead-weight);
+}
+/* Display styles set --wght / --opsz too, so weight-animated text settles on the token. */
+.t-h3,
+.t-h2,
+.t-display,
+.t-numeral {
+  font-family: var(--font-display);
+  font-weight: var(--wght);
+  font-variation-settings: 'opsz' var(--opsz);
+  text-wrap: balance;
+}
+.t-h3 {
+  --wght: var(--type-h3-weight);
+  --opsz: var(--type-h3-opsz);
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-leading);
+  letter-spacing: var(--type-h3-tracking);
+}
+.t-h2 {
+  --wght: var(--type-h2-weight);
+  --opsz: var(--type-h2-opsz);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-leading);
+  letter-spacing: var(--type-h2-tracking);
+}
+.t-display {
+  --wght: var(--type-display-weight);
+  --opsz: var(--type-display-opsz);
+  font-size: var(--type-display-size);
+  line-height: var(--type-display-leading);
+  letter-spacing: var(--type-display-tracking);
+}
+.t-numeral {
+  --wght: var(--type-numeral-weight);
+  --opsz: var(--type-numeral-opsz);
+  font-size: var(--type-numeral-size);
+  line-height: var(--type-numeral-leading);
+  letter-spacing: var(--type-numeral-tracking);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* Outlined numeral: transparent fill, 1 px stroke in currentColor. */
+.t-numeral-outline {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: var(--type-numeral-stroke) currentColor;
+}
+
+/* ---------- Base elements ---------- */
 body {
   font-family: var(--font-text);
+  font-size: var(--type-body-size);
   font-weight: var(--wght-body);
 }
 

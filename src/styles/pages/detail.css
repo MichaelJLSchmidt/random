@@ -1,0 +1,17 @@
+/*
+ * Detail pages: case study and Management (Layout & Pages session).
+ * Skeleton: the legacy hero zone (.detail in globals.css) on top, then the
+ * Spread-grid sections, the statement and the contact block.
+ */
+.detail-page {
+  display: grid;
+}
+.detail-sections {
+  margin-top: var(--space-s);
+}
+.detail-statement {
+  margin-top: var(--space-m);
+}
+.detail-end {
+  margin-top: var(--space-m);
+}
