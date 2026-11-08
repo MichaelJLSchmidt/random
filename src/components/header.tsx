@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cardForPath } from '@/lib/cards'
-import { site } from '@/lib/content'
+import { cardForPath, site } from '@/lib/hand-data'
 import { table } from '@/motion/table-store'
 import { NAV, RETURN } from '@/motion/transitions'
 import { ReadingHairline } from './reading-hairline'

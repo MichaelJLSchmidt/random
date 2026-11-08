@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { cardById, handCards, handLabels } from '@/lib/cards'
-import { fill, pad2 } from '@/lib/content'
+import { fill, pad2 } from '@/lib/format'
+import { cardById, handCards, handLabels } from '@/lib/hand-data'
 import { table } from '@/motion/table-store'
 
 const total = handCards.length

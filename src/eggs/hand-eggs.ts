@@ -1,6 +1,5 @@
 import { announce } from '@/components/live-region'
-import { cardById } from '@/lib/cards'
-import { site } from '@/lib/content'
+import { cardById, site } from '@/lib/hand-data'
 import { dealOffset, drawCards, fanCards } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
 import { duration as D, ease } from '@/motion/tokens'

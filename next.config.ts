@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import createMDX from '@next/mdx'
 import type { NextConfig } from 'next'
 
 /*
@@ -26,4 +25,4 @@ const nextConfig: NextConfig = {
   ...(hasMotionPlus ? {} : { turbopack: { resolveAlias: { 'motion-plus': './src/motion/plus-fallback.ts' } } }),
 }
 
-export default createMDX({})(nextConfig)
+export default nextConfig

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { cardForPath } from '@/lib/cards'
+import { cardForPath } from '@/lib/hand-data'
 import { land } from '@/motion/play'
 import { afterTransition } from '@/motion/view-transition'
 import { announce } from './live-region'

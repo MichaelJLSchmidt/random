@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import { type Decision, type Decisions, site } from '@/lib/content'
+import type { Decision, Decisions } from '@/lib/content'
+import { site } from '@/lib/hand-data'
 import { useDealScene } from '@/motion/scenes/deal-scene'
 import { cx } from '@/lib/cx'
 

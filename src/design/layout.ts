@@ -5,8 +5,12 @@
  * Contract: docs/contracts.md#layout-tokens.
  */
 
-/** Min-width breakpoints in px. Below `sm` is the 4-column phone grid. */
-export const breakpoints = { sm: 640, md: 1024, lg: 1440 } as const
+/**
+ * Min-width breakpoints in px (CSS: --breakpoint-sm/-md/-lg/-margin-notes).
+ * Below `sm` is the 4-column phone grid. `marginNotes`: from here MarginNote
+ * sits in column 12 + the outer track; below it renders inline.
+ */
+export const breakpoints = { sm: 640, md: 1024, lg: 1440, marginNotes: 1680 } as const
 
 export type Breakpoint = 'base' | keyof typeof breakpoints
 
@@ -15,6 +19,7 @@ export const media = {
   sm: `(min-width: ${breakpoints.sm}px)`,
   md: `(min-width: ${breakpoints.md}px)`,
   lg: `(min-width: ${breakpoints.lg}px)`,
+  marginNotes: `(min-width: ${breakpoints.marginNotes}px)`,
 } as const
 
 /**
@@ -30,7 +35,7 @@ export const grid = {
     columns: 12,
     margin: 48,
     gutter: 24,
-    /** Content columns grow to 96 px; the outer tracks take the rest (margin notes). */
+    /** Content columns grow to 96 px; the outer tracks take the rest (margin notes from 1680). */
     columnMax: 96,
     index: [1, 3],
     content: [4, 11],

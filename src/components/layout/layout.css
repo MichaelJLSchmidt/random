@@ -204,13 +204,15 @@
   }
 }
 
-/* ---------- MarginNote ---------- */
+/* ---------- MarginNote: inline aside with a left rule; in the margin track from 1680 ---------- */
 .margin-note {
+  padding-left: var(--space-4);
+  border-left: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--muted);
 }
-@media (min-width: 1440px) {
+@media (min-width: 1680px) {
   .margin-note {
     padding-top: var(--space-2);
   }

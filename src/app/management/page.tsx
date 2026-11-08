@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Callout } from '@/components/blocks'
 import { DetailPage } from '@/components/detail-page'
 import { Illustration } from '@/components/illustrations'
 import { Scoreboard, Section } from '@/components/layout'
@@ -7,57 +6,105 @@ import { NextProject } from '@/components/next-project'
 import { Reveal } from '@/components/reveals'
 import { WorkshopDraw } from '@/eggs/workshop-draw'
 import { cardById } from '@/lib/cards'
-import { management, managementSectionKeys } from '@/lib/content'
+import { management, managementSectionKeys, site, workshopMethods } from '@/lib/content'
 
-export const metadata: Metadata = { title: management.title, description: management.summary }
+export const metadata: Metadata = { title: management.title, description: management.lead }
 
-/** Management (skeleton): hero zone with the facts, then the week, the numbers and the workshop draw. */
+/**
+ * Management (skeleton): hero ("How I lead" + lead, the card's facts), then
+ * 01 principles, 02 team, 03 rituals, 04 hiring, 05 growth, 06 workshops (with
+ * the workshop draw), 07 metrics, Next project. Layout & Pages owns the design.
+ */
 export default function ManagementPage() {
   const card = cardById('management')!
-  const { week, numbers, stuck } = management.sections
-  const sections = managementSectionKeys.map((key) => ({ id: key, label: management.sections[key].label }))
+  const m = management
+  const head = (key: (typeof managementSectionKeys)[number]) => ({
+    id: key,
+    number: managementSectionKeys.indexOf(key) + 1,
+    label: m[key].label,
+    title: m[key].title ?? m[key].label,
+  })
+  const sections = managementSectionKeys.map((key) => ({ id: key, label: m[key].label }))
   return (
-    <DetailPage card={card} summary={management.summary} meta={management.facts} sections={sections}>
-      <Section id="week" number={1} label={week.label} title={week.title} note={week.note}>
-        {week.body.map((p, i) => (
-          <Reveal key={i} as="p" kind="lines" className="t-body">
-            {p}
-          </Reveal>
-        ))}
-        <Reveal as="ul" kind="list" className="section-list t-body">
-          {week.rituals.map((r) => (
-            <li key={r}>{r}</li>
+    <DetailPage card={card} heading={m.title} summary={m.lead} meta={card.facts} sections={sections}>
+      <Section {...head('principles')}>
+        <Reveal as="ol" kind="list" className="item-list t-body">
+          {m.principles.items.map((p, i) => (
+            <li key={i}>
+              <strong>{p.title}</strong> {p.evidence}
+            </li>
           ))}
         </Reveal>
-        {week.callout && <Callout>{week.callout}</Callout>}
-        {week.illustration && (
-          <Reveal kind="draw" className="section-illustration">
-            <Illustration name={week.illustration} />
-          </Reveal>
-        )}
       </Section>
-      <Section id="numbers" number={2} label={numbers.label} title={numbers.title} note={numbers.note} breaker>
-        {numbers.body.map((p, i) => (
-          <Reveal key={i} as="p" kind="lines" className="t-body">
-            {p}
-          </Reveal>
-        ))}
-        <Scoreboard metrics={numbers.metrics} />
+      <Section {...head('team')}>
+        <Reveal as="ul" kind="list" className="item-list t-body">
+          {m.team.members.map((p, i) => (
+            <li key={i}>
+              <span className="t-label">{p.initials}</span> {p.role} · {p.fte} · {p.focus}
+            </li>
+          ))}
+        </Reveal>
+        <p className="t-body">{m.team.note}</p>
       </Section>
-      <Section id="stuck" number={3} label={stuck.label} title={stuck.title} note={stuck.note}>
-        {stuck.body.map((p, i) => (
-          <Reveal key={i} as="p" kind="lines" className="t-body">
-            {p}
-          </Reveal>
-        ))}
-        {stuck.illustration && (
-          <Reveal kind="draw" className="section-illustration">
-            <Illustration name={stuck.illustration} />
-          </Reveal>
-        )}
-        <WorkshopDraw />
+      <Section {...head('rituals')} breaker>
+        <Reveal as="ul" kind="list" className="item-list t-body">
+          {m.rituals.items.map((r, i) => (
+            <li key={i}>
+              <strong>{r.name}</strong> <span className="t-label">{r.cadence}</span> {r.purpose}
+            </li>
+          ))}
+        </Reveal>
+        <Reveal kind="draw" className="section-illustration">
+          <Illustration name="WeekRing" />
+        </Reveal>
       </Section>
-      <section className="page-section spread-grid" aria-label={card.title}>
+      <Section {...head('hiring')}>
+        <Reveal as="ol" kind="list" className="item-list t-body">
+          {m.hiring.steps.map((s, i) => (
+            <li key={i}>
+              <strong>{s.title}</strong> <span className="t-label">{s.duration}</span> {s.purpose}
+            </li>
+          ))}
+        </Reveal>
+        <p className="t-body">{m.hiring.note}</p>
+      </Section>
+      <Section {...head('growth')}>
+        <Reveal as="p" kind="lines" className="t-body">
+          {m.growth.body}
+        </Reveal>
+        <ul className="item-list t-body">
+          {m.growth.levels.map((l, i) => (
+            <li key={i}>{l}</li>
+          ))}
+        </ul>
+        <ul className="item-list t-body">
+          {m.growth.dimensions.map((d, i) => (
+            <li key={i}>{d}</li>
+          ))}
+        </ul>
+      </Section>
+      <Section {...head('workshops')}>
+        <Reveal as="ul" kind="list" className="item-list t-body">
+          {m.workshops.formats.map((f, i) => (
+            <li key={i}>
+              <strong>{f.name}</strong> <span className="t-label">{f.duration}</span> {f.who} · {f.outcome}
+            </li>
+          ))}
+        </Reveal>
+        <Reveal kind="draw" className="section-illustration">
+          <Illustration name="WorkshopGlyphs" />
+        </Reveal>
+        <WorkshopDraw
+          button={m.workshops.drawButton}
+          again={workshopMethods.again}
+          drawn={workshopMethods.drawn}
+          methods={workshopMethods.methods}
+        />
+      </Section>
+      <Section {...head('metrics')}>
+        <Scoreboard metrics={m.metrics.items} />
+      </Section>
+      <section className="page-section spread-grid" aria-label={site.labels.next}>
         <div className="col-content">
           <NextProject current={card.id} />
         </div>

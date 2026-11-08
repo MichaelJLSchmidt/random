@@ -2,7 +2,7 @@ import { headerHeight } from '@/design/layout'
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
 import { at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
-import { cardForPath } from '@/lib/cards'
+import { cardForPath } from '@/lib/hand-data'
 import { NAV, PLAY, RETURN, SWITCH } from './transitions'
 
 /*

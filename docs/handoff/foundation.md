@@ -117,25 +117,60 @@ module, which now carries the transcribed section text into the client chunk (se
   `data-stub` dashed frames on illustration stubs, `fill()` / `pad2()` helpers, an ownership
   table for paths the Wave 1 table does not name.
 
-## Open questions for the parallel sessions
+## Open questions (first pass), now resolved
 
-1. Desktop "hand collapsed" (`--hand-reserve` 120 px): `:root[data-hand="collapsed"]` switches
-   it, but nothing sets it. When does the hand collapse, and who sets the attribute (Motion via
-   hand.css + a request to Foundation-owned hand.tsx)?
-2. Margin notes between 1440 and ~1700 px are narrow (column 12 + outer track). Layout: confirm
-   or propose a different placement.
-3. `heroTarget()` in `src/motion/play.ts` mirrors the current hero (left, sticky, 280–400 px).
-   If Layout moves the hero, it must say where in its handoff so Motion updates the lift target.
-4. Legacy reveal presets (headline, paragraph, list, …) and the new kinds coexist. Motion decides
-   how to migrate, including the legacy calm/reduced reveal timings (300 / 200 ms) vs the scale.
-5. DealRow's mobile "1 / 4" is static. Who updates it on scroll: Layout (scroll-snap observer) or
-   Motion (deal scene state grows an `index`)? Needs a contract change either way.
-6. Content: confirm sections 02–04 (problem, role, approach), the six project types and the
-   placeholder mapping of the old project types to glyphs, and write metrics (≤ 5) per case study.
-7. Budget: about 6 KB of headroom. All content ships to the client because the hand imports
-   `src/lib/content`; splitting the hand's data out (e.g. a small `content/hand.ts`) would free
-   a few KB. Integration's call.
-8. MDX: `@next/mdx` is still configured but no route renders MDX now. Keep or drop in the
-   content pass.
-9. About, More projects, Contact and 404 still use the legacy `.page` layout inside the new
-   tokens; case studies and Management use the Spread grid. Layout decides how far to take it.
+All nine questions of the first pass are answered as decisions D1–D9 in `docs/contracts.md#decisions`
+(1 hand reserve → D1, 2 margin notes → D2, 3 hero target → D3, 4 reveals → D4, 5 DealRow
+counter → D5, 6 content → D6, 7 budget → D7, 8 MDX → D8, 9 pages → D9).
+
+## Follow-up: final content schema and contract decisions
+
+Second Foundation pass, before Wave 1 starts (branch restarted from `main` at 01ee33e).
+
+**Plan.** Revise `content/schema.ts` so the final persona content fits without workarounds; keep
+the placeholder content compiling through the adapters ("To be written." for missing copy);
+write the nine decisions into `docs/contracts.md`; implement the Foundation ones (D1, D2, D7,
+D8); update the skeleton routes; verify; merge to `main` once.
+
+**What shipped.**
+
+- Schema (`content/schema.ts`): `Home` + `label`, `onTheTableNow`; `CaseStudy` + `number`, role
+  section `owned` / `notOwned` (labels `site.labels.owned` / `notOwned`), approach section
+  `steps` (four); `Management` rebuilt (hero `title` + `lead`; `principles`, `team`, `rituals`,
+  `hiring`, `growth`, `workshops`, `metrics`, each with a `SectionHead` label); `About` rebuilt
+  (`lead`, `story`, `timeline`, `howIWork`, `tcg`, `roots`, `onTheTable` five cards,
+  `creditsTitle`, `topo`); `Contact` (`label`, `title`, `body`, `email`, `links`, `note`);
+  `CoffeeEgg` (`title`, `body`, `cta`); `MoreProjects` intro = count line, end = closing line;
+  `ImageEntry` gains `kind` and `photographer` / `photographerUrl` / `pageUrl` (required for
+  photos). Card metadata moved to `HandContent.cards` (`HandCardCopy`); `CardCopy` and the
+  pages' `card` fields are gone. Egg announcements `coffeeDealt` / `tableFlipped` are templates
+  in `site.eggs`; the workshop button label moved to `management.workshops.drawButton`.
+- Counts the contract fixes are checked at build time in `src/lib/content.ts`.
+- D1: `hand.tsx` sets `data-hand="collapsed"` off home; the pre-paint script does the same for
+  the first paint. D2: `--breakpoint-margin-notes` 1680 px / `breakpoints.marginNotes`;
+  `.col-margin` moves to column 12 + outer track from 1680, MarginNote is an inline aside with a
+  left rule below. D3: `data-hero-target` already on `.hero-slot`. D7: slim
+  `content/hand.ts`, `content/site.ts`, `src/lib/hand-data.ts`, `src/lib/format.ts`; every client
+  module repointed (the hand, counter, card face, header, case hero, DealRow, route focus, play,
+  table store, eggs); `WorkshopDraw` and `OnTheTable` take their copy as props. D8: `@next/mdx`,
+  `@mdx-js/*`, `@types/mdx` and `src/mdx-components.tsx` removed.
+- Routes: Management, About, Contact, home and the case-study role / approach sections render
+  the new fields as skeletons.
+
+**Verification.** `npm ci` (clean, from the new lockfile) and `npm run build` pass (type check
+included, 11 routes). Chromium at 1440x900 and 390x844: home, a case study, Management, About,
+Contact, More projects and a missing URL render with no console errors and no horizontal scroll;
+4 cards everywhere, the counter on home only; `data-hand="collapsed"` on every route except
+home (also after client navigation), `--hand-reserve` 176 px on home and 120 px elsewhere on
+desktop. Eggs (M, counter long press, "draw", `?`, workshop draw, About cards, 404) work.
+`scripts/smoke.mjs` (full tier) passes. `.col-margin` is inline at 1500 px and in column 12 +
+outer track at 1700 px. Page text (case sections, About, Management) no longer appears in any
+client chunk; initial JS 159.8 KB gzip (was 163.6 KB).
+
+**Still open.**
+
+- `site.json` and `case-studies.json` still ship whole in the client chunk because the slim
+  modules adapt them; that ends when Content replaces them with typed modules (D7, D8).
+- D3: playing from home has no hero mounted, so `heroTarget()` will use its fallback there;
+  only switches (detail page to detail page) can measure the target.
+- The placeholder content shows "To be written." on the live site until the content pass.

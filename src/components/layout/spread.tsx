@@ -5,7 +5,7 @@ import { cx } from '@/lib/cx'
 
 type Props = {
   image: ImageId
-  /** Caption in the margin (outer track from 1440 px, below the image otherwise). */
+  /** Caption in the margin (column 12 + outer track from 1680 px, below the image otherwise). */
   caption?: ReactNode
   /** sizes for <Picture> (default "100vw": the image is full bleed). */
   sizes?: string
