@@ -114,7 +114,12 @@ function Gallery({ items }: { items: Artefact[] }) {
   return (
     <ul className="artefacts col-wide">
       {items.map((a, k) => (
-        <li key={`${a.title}-${k}`} className="artefact" data-slot={slot(k, items.length)}>
+        <li
+          key={`${a.title}-${k}`}
+          className="artefact"
+          data-slot={slot(k, items.length)}
+          data-media={a.image ? 'image' : a.illustration ? 'illustration' : 'none'}
+        >
           <figure className="artefact-figure">
             {a.image ? (
               <Reveal kind="image" className="artefact-media" data-media="image">
@@ -150,13 +155,17 @@ export function CaseSections({ study }: { study: CaseStudy }) {
     space: space[key],
   })
 
-  // Each drawing once per page: the gallery leaves out what a section already shows.
+  // Each drawing once per page: an artefact whose drawing a section already shows keeps its tile, without the drawing.
   const shown = new Set(Object.values(fig))
-  const gallery = s.artefacts.items.filter((a) => a.image || (a.illustration && !shown.has(a.illustration)))
+  const gallery = s.artefacts.items.map((a) =>
+    a.illustration && shown.has(a.illustration) ? { ...a, illustration: undefined } : a,
+  )
 
   const spreadImage = s.context.image ?? study.heroImage
   const spreadAlt = (images as Record<string, ImageEntry>)[spreadImage]?.alt
-  const [statement, ...problemRest] = s.problem.body
+  // 02 Problem opens with the case's statement at h2 size (the first problem paragraph when there is none).
+  const statement = study.statement ?? s.problem.body[0]
+  const problemRest = study.statement ? s.problem.body : s.problem.body.slice(1)
 
   return (
     <>

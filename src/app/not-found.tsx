@@ -19,6 +19,7 @@ export default function NotFound() {
       <div className="lost spread-grid" data-identity="ink">
         <div className="lost-discard" aria-hidden="true">
           <span className="lost-zone" />
+          <span className="lost-pile" />
           <Reveal kind="draw" order={0} className="lost-card">
             <DiscardedCard titleId="discarded-card-title" />
           </Reveal>

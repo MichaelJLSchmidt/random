@@ -62,25 +62,27 @@ after the h2 starts level with it).
   once the frame scrolls away (top left on phones, bottom left from 1024 so it clears the sticky
   index). Then MetaPairs → Scoreboard, and sections with deliberately varied spacing
   (M, L, M, M, S + breaker, L, M, S, L): 01 Context (body, MarginNote, Spread), 02 Problem
-  (`problem.body[0]` set at h2 size; the h2 stays for screen readers), 03 Role (owned / not
+  (the case's `statement` set at h2 size, `problem.body[0]` when there is none, then the problem
+  paragraphs; the h2 stays for screen readers), 03 Role (owned / not
   owned columns 4–7 / 8–11), 04 Approach (steps 4–7, illustration sticky in 8–12),
   NumeralBreaker + 05 Decisions (DealRow on the twelve-column stage), 06 Artefacts (gallery
   rows 7 + 5 then 4 + 8, the right item of a 7 + 5 row dropped 96 px; a lone last item keeps its
-  row's asymmetry), 07 Outcomes, 08 Differently (2 px accent rule, lead text), 09 Next
+  row's asymmetry; every artefact keeps its tile, and one whose drawing a section already shows,
+  or that has no media, renders as a ruled caption tile), 07 Outcomes, 08 Differently (2 px accent rule, lead text), 09 Next
   (`NextProject`: the card face + h2-size title through `PlayLink`, a switch). Minimap with nine
   ticks. Illustrations from the brief's placement (case 1 IntakeBeforeAfter / TeamGrowthTimeline,
   case 2 DesignSystemLayers / ContributionLoop / AdoptionBars, case 3 JourneyEmotionCurve /
   ServiceBlueprint), each in `<Reveal as="figure" kind="draw">`; content's `section.illustration`
-  wins as soon as content sets any; the gallery leaves out drawings a section already shows.
+  wins as soon as content sets any; each drawing appears once per page.
 - **Management**: hero "How I lead" + TeamConstellation in the hero frame (or `heroImage`);
   card facts (4 up); 01 principles as numeral (outlined, columns 1–3) | h3 (4–7) | evidence
   (8–12), on phones the h3 overlaps the numeral's lower third; 02 team: the structure (one mini
   card per member, initials + FTE) sticky in columns 4–7 while the member rows scroll in 8–12;
-  03 rituals: WeekRing in columns 1–5, list in 7–12; 04 hiring: path of steps (one column per
+  03 rituals: list in columns 4–8, WeekRing in 9–12; 04 hiring: path of steps (one column per
   step from 1024, vertical below) with an SVG connector in `<Reveal kind="draw">`
   (`pathLength="1"`, `data-draw`); 05 growth: CareerMatrix framed by the dimensions (left) and
   levels (below) as HTML labels; 06 workshops: WorkshopGlyphs strip, `WorkshopRow`, the existing
-  `WorkshopDraw` egg (copy as props); 07 metrics: Scoreboard; next card; Minimap.
+  `WorkshopDraw` egg (copy as props); 07 metrics: Scoreboard in columns 4–12; next card; Minimap.
 - **More projects**: display title, count line, column heads (desktop), `ol` of rows; each row
   `li[tabindex=0]` with `<Reveal as="hr" kind="rule">`, mono `[01]` in the index columns, h3
   title (4–8), year (9), client type (10–11), ProjectTypeGlyph (12, hidden until hover / focus,
@@ -97,9 +99,10 @@ after the h2 starts level with it).
 - **Contact**: one viewport, centred above the hand: label, display title, lead, the email at h2
   size with a drawn underline (`<Reveal as="hr" kind="rule">` sized to the email), mono key /
   value rows, note. No form.
-- **404**: dashed discard zone + `DiscardedCard` in `<Reveal kind="draw" order={0}>` (columns
-  10–12 from 1024, above the title on phones), display title, lead, "Back to the table" button
-  (RETURN transition).
+- **404**: dashed discard zone, a face-down card as the discard pile, and `DiscardedCard` in
+  `<Reveal kind="draw" order={0}>` tilted by `--angle-discard` on top (columns 10–12 from 1024,
+  above the title on phones), display title, lead, "Back to the table" button (RETURN
+  transition).
 - Header padding and footer moved onto the grid (aligned with the twelve columns from 1440).
   Legacy `.page`, `.home`, `.detail`, `.hero*`, projects table and discard styles removed from
   `globals.css`.
@@ -132,8 +135,16 @@ after the h2 starts level with it).
    dimensions, evenly spread edge to edge, so the HTML axis labels line up.
 8. **404 discard egg (Motion).** D4: the page no longer renders the legacy
    `data-reveal="discard"` / `.discard-card`; the discarded card is the `DiscardedCard` drawing in
-   `<Reveal kind="draw" order={0} className="lost-card">` inside `.lost-discard`. If the fall is
-   kept, attach it there.
+   `<Reveal kind="draw" order={0} className="lost-card">` inside `.lost-discard` (the page tilts
+   it by `--angle-discard`, so Illustrations should draw it upright). If the fall is kept, attach
+   it there.
+
+Deliberate deviations: the sticky index pins through a section's head and reading rows and
+yields where a block takes all twelve columns (the DealRow / workshop stages, the artefact
+gallery, the hiring path, the About timeline and Management's principle numerals, which sit in
+the index columns themselves); sections whose blocks stay in columns 4–12 keep it pinned
+throughout. Management's workshops use `WorkshopRow` (request 4). The NumeralBreaker is placed
+from the content column to the right edge instead of `.col-full`, so the h2 overlaps it.
 
 Decided against the brief where the contract wins: margin notes and the Spread caption move to
 the margin track from **1680** (D2), not 1440 (at 1440 the outer track is 24 px wide).
@@ -146,8 +157,7 @@ value's digits in `[data-digit]`).
   margin notes or extra images yet, so the margin-note placement was verified by injecting a note
   into the DOM at 390, 1440 and 1680 (inline / inline / column 12 + outer track, level with the
   body).
-- `CaseStudy.statement` is not rendered: the brief's template has no slot for it (02 Problem sets
-  `problem.body[0]` at h2 size). The detail pages' old contact block is gone for the same reason.
+- The detail pages' old contact block is gone: the brief's template ends at 09 Next.
 - Management's pinned team structure is HTML built from `team.members` (TeamConstellation is the
   hero drawing).
 - At 1440×900 the home row clears the fan only while the intro is three lines; longer copy scrolls.
@@ -157,6 +167,11 @@ value's digits in `[data-digit]`).
   focusable, non-link rows).
 
 **Checks.** `npm run build` passes (11 routes, type check). Budget (advisory): 159.8 KB gzip
-initial JS, 166.9 KB by network idle. Playwright / Chromium screenshots of home, a case study
-(full page), Management, More projects, About, Contact and 404 at 390×844 and 1440×900, plus the
-case study at 1024×768 and 1680×1000: no horizontal scroll at any size, no console errors.
+initial JS, 166.9 KB by network idle. Playwright / Chromium full-page screenshots of all nine
+routes (home, three case studies, Management, More projects, About, Contact, 404) at 390×844,
+1024×768, 1440×900 and 1680×1000: no horizontal scroll, no console errors. Behaviour checks:
+sticky index at 88 px (1024, 1440), sticky Approach illustration, margin note inline / margin
+track (390, 1440 / 1680), DealRow counter 1 → 4 on a phone, index row shift 8 px + glyph shown on
+hover, Minimap Enter → `#decisions` current. A subagent reviewed the diff against the brief;
+its findings (statement not rendered, an empty gallery, an untilted 404 card, unpinned indexes
+where columns 1–3 were free) are fixed, the rest are listed above as deviations.

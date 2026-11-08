@@ -87,7 +87,7 @@ export default function AboutPage() {
         </Section>
 
         {/* 03 How I work: a staggered 2×2. */}
-        <Section {...head('howIWork')} pin={1}>
+        <Section {...head('howIWork')} pin={2}>
           <Reveal as="ul" kind="list" className="how-grid cols-4-12">
             {a.howIWork.items.map((h, i) => (
               <li key={i} className="how-item">

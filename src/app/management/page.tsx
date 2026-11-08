@@ -104,8 +104,8 @@ export default function ManagementPage() {
         </Reveal>
       </Section>
 
-      {/* 03 Rituals: the week as a ring on the left, the list on the right. */}
-      <Section {...head('rituals')} pin={1}>
+      {/* 03 Rituals: the list on the left, the week as a ring on the right. */}
+      <Section {...head('rituals')} pin={2}>
         <Reveal kind="draw" className="rituals-ring">
           <WeekRing titleId="rituals-week-ring-title" />
         </Reveal>
@@ -192,8 +192,8 @@ export default function ManagementPage() {
       </Section>
 
       {/* 07 Metrics */}
-      <Section {...head('metrics')} pin={1}>
-        <Scoreboard metrics={m.metrics.items} label={m.metrics.title ?? m.metrics.label} className="col-wide" />
+      <Section {...head('metrics')} pin={2}>
+        <Scoreboard metrics={m.metrics.items} label={m.metrics.title ?? m.metrics.label} className="cols-4-12" />
       </Section>
 
       {/* Next: the first case, played from here. */}
