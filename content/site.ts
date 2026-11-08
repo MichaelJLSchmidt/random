@@ -1,51 +1,64 @@
 /*
  * Site chrome copy: header, footer, settings, the "?" sheet, egg
  * announcements and shared labels. A slim module: client components load it
- * (through src/lib/hand-data.ts), so it must hold short labels only, never
- * page text. Today it adapts site.json; the Content & Images session may
- * replace the storage as long as it keeps `export const site: Site`.
+ * (through src/lib/hand-data.ts), so it holds short labels only and imports
+ * no page text (D7). Contract: docs/contracts.md#content-schema.
  */
 import type { Site } from './schema'
-import siteJson from './site.json'
 
 export const site: Site = {
-  name: siteJson.name,
-  description: siteJson.description,
-  wordmark: siteJson.wordmark,
-  skipLink: siteJson.skipLink,
-  introSkip: siteJson.introSkip,
+  name: 'Moritz Lauber',
+  description: 'UX Team Lead and Senior UX Designer in Bern, Switzerland.',
+  wordmark: 'MJLS',
+  skipLink: 'Skip to main content',
+  introSkip: 'Skip intro',
   header: {
-    homeLabel: siteJson.header.homeLabel,
-    back: siteJson.header.back,
-    about: siteJson.header.about,
-    moreProjects: siteJson.header.projects,
-    contact: siteJson.header.contact,
+    homeLabel: 'MJLS, home',
+    back: 'Back',
+    about: 'About',
+    moreProjects: 'More projects',
+    contact: 'Contact',
   },
-  footer: siteJson.footer,
-  settings: siteJson.settings,
+  footer: { note: 'Moritz Lauber · Bern, Switzerland · Last updated November 2026' },
+  settings: {
+    heading: 'Display',
+    calm: 'Calm motion',
+    calmHint: 'Fewer moving parts. Reduced motion in your system settings always wins.',
+    calmOn: 'Calm motion on',
+    calmOff: 'Calm motion off',
+  },
   shortcuts: {
-    title: siteJson.eggs.shortcutsTitle,
-    close: siteJson.eggs.shortcutsClose,
-    items: siteJson.eggs.shortcuts,
+    title: 'Keyboard shortcuts',
+    close: 'Close',
+    items: [
+      { keys: '← →', label: 'Move along the cards' },
+      { keys: 'Enter', label: 'Open the focused card' },
+      { keys: 'Hold Space', label: 'Look closer at the focused card' },
+      { keys: 'Esc', label: 'Back to the start' },
+      { keys: 'T', label: 'Turn the focused card sideways' },
+      { keys: 'M', label: 'Deal a new hand (start page)' },
+      { keys: 'draw', label: 'Type it on the start page' },
+      { keys: '?', label: 'This list' },
+    ],
   },
   eggs: {
-    dealt: siteJson.eggs.dealt,
-    turned: siteJson.eggs.turned,
-    rare: siteJson.eggs.rare,
-    coffeeDealt: 'One more card: {title}', // was "One more card: Coffee?"
-    tableFlipped: '{label}: {value}', // was "{name}: {line}"
+    dealt: 'New hand dealt.',
+    turned: 'Turned sideways: {line}',
+    rare: 'A rare card.',
+    coffeeDealt: 'One more card: {title}',
+    tableFlipped: '{label}: {value}',
   },
   labels: {
-    facts: siteJson.caseStudy.factsLabel,
-    next: siteJson.caseStudy.nextLabel,
-    viewing: siteJson.caseStudy.viewingLabel,
-    sections: 'Sections', // NEW
-    contactTitle: siteJson.caseStudy.contactTitle,
-    contactText: siteJson.caseStudy.contactText,
-    contactLink: siteJson.caseStudy.contactLink,
-    meta: { client: 'Client', timeframe: 'Timeframe', role: 'Role', team: 'Team', type: 'Type' }, // NEW
-    decision: { decision: 'Decision', chose: 'Chose', tradeOff: 'Trade-off', why: 'Why' }, // NEW
-    owned: 'What I owned', // NEW
-    notOwned: "What I didn't", // NEW
+    facts: 'Facts',
+    next: 'Next project',
+    viewing: 'Viewing',
+    sections: 'Sections',
+    contactTitle: 'Contact',
+    contactText: 'If something here is useful to you, I would like to hear about it.',
+    contactLink: 'Write to me',
+    meta: { client: 'Client', timeframe: 'Timeframe', role: 'Role', team: 'Team', type: 'Type' },
+    decision: { decision: 'Decision', chose: 'I chose', tradeOff: 'Trade-off', why: 'Why it was worth it' },
+    owned: 'What I owned',
+    notOwned: "What I didn't",
   },
 }
