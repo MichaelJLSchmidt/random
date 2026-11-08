@@ -5,8 +5,8 @@
 export const eggs = {
   mulligan: {
     on: true,
-    trigger: 'M on the start page, or a long press on the deck (800 ms, 10 ms haptic)',
-    full: 'cards fly back to the deck and are dealt again, face down then face up',
+    trigger: 'M on the start page, or a long press on the card counter (800 ms, 10 ms haptic)',
+    full: 'the four cards fly off to the dealer (bottom right) and are dealt again, face down then face up',
     calm: 'cards fade out and back in',
     reduced: 'nothing moves; announced',
   },
@@ -62,7 +62,7 @@ export const eggs = {
   coffee: {
     on: true,
     trigger: 'typing "draw" on the start page',
-    full: 'a fifth card, "Coffee?", is dealt from the deck and opens /contact',
+    full: 'a fifth card, "Coffee?", is dealt from off screen and opens /contact; it leaves the hand on navigation',
     calm: 'fades in',
     reduced: 'appears',
   },

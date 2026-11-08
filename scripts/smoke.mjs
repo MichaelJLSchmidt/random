@@ -154,6 +154,14 @@ async function tableSuite(browser, device) {
   await page.goto(url('/'), { waitUntil: 'networkidle' })
   await wait(page, 1200)
   check('hand: four card links in nav "Work"', (await page.locator('nav[aria-label="Work"] a.hand-card').count()) === 4)
+  check('hand: no face-down deck', (await page.locator('.hand-deck').count()) === 0)
+  const counter = () => page.locator('.hand-counter').textContent()
+  check(
+    'counter: "01 / 04" and the first card at rest',
+    /01\s*\/\s*04\s*Team of Teams/.test(await counter()),
+    await counter(),
+  )
+  check('counter: polite live region', (await page.locator('.hand-counter').getAttribute('aria-live')) === 'polite')
   check('hand: one tab stop', (await page.locator('nav[aria-label="Work"] [data-roving][tabindex="0"]').count()) === 1)
 
   // Hover colour blend (fine pointers).
@@ -162,6 +170,7 @@ async function tableSuite(browser, device) {
     await page.hover('.hand-card[data-play="front-door"]', { position: { x: 60, y: 30 } })
     await wait(page, 1000)
     const after = await regionColour(page, sky)
+    check('counter: follows the hovered card', /03\s*\/\s*04\s*Front Door/.test(await counter()), await counter())
     check(
       'hover: field blends toward the card colour (grove)',
       after[1] - before[1] > 2 && after[1] > after[0],
@@ -300,7 +309,7 @@ async function tableSuite(browser, device) {
   )
 
   // Pages and reveals: nothing in the first viewport stays hidden.
-  for (const p of ['/', '/work/front-door/', '/management/', '/projects/', '/contact/', '/no-such-page/']) {
+  for (const p of ['/', '/work/front-door/', '/management/', '/more-projects/', '/contact/', '/no-such-page/']) {
     await page.goto(url(p), { waitUntil: 'networkidle' })
     await wait(page, 2400)
     const hidden = await page.evaluate(() =>

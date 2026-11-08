@@ -6,9 +6,14 @@ import { cardForPath } from '@/lib/cards'
 import { site } from '@/lib/content'
 import { table } from '@/motion/table-store'
 import { NAV, RETURN } from '@/motion/transitions'
+import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
-/** Persistent header: wordmark (back to the table), Back on detail pages, About, Contact. */
+/*
+ * Persistent header: wordmark (back to the table), Back on detail pages, About,
+ * More projects, Contact, and the reading hairline on its bottom edge.
+ * Structure is Foundation-owned (read-only in Wave 1); 64 px high (--header-h).
+ */
 export function Header() {
   const pathname = usePathname()
   const onCard = Boolean(cardForPath(pathname))
@@ -39,8 +44,8 @@ export function Header() {
             </Link>
           </li>
           <li>
-            <Link href="/projects" transitionTypes={[NAV]} aria-current={current('/projects')}>
-              <span className="link">{site.header.projects}</span>
+            <Link href="/more-projects" transitionTypes={[NAV]} aria-current={current('/more-projects')}>
+              <span className="link">{site.header.moreProjects}</span>
             </Link>
           </li>
           <li>
@@ -50,6 +55,7 @@ export function Header() {
           </li>
         </ul>
       </nav>
+      <ReadingHairline />
     </header>
   )
 }

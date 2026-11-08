@@ -1,10 +1,25 @@
+/*
+ * Global stylesheet. Every session's CSS entry point is imported here once, so
+ * Wave 1 sessions edit their own files and never this list:
+ *   Foundation   tokens.css, layout.css, type.css
+ *   Motion       view-transitions.css, reveal.css, field.css, hand.css, eggs.css
+ *   Layout       components/layout/layout.css, styles/pages/*.css, this file's rules
+ *   Illustr.     components/illustrations/illustrations.css
+ *   Content      components/picture.css
+ */
 @import '../styles/tokens.css';
+@import '../styles/layout.css';
 @import '../styles/type.css';
 @import '../styles/view-transitions.css';
 @import '../styles/reveal.css';
 @import '../styles/field.css';
 @import '../styles/hand.css';
 @import '../styles/eggs.css';
+@import '../components/layout/layout.css';
+@import '../components/illustrations/illustrations.css';
+@import '../components/picture.css';
+@import '../styles/pages/detail.css';
+@import '../styles/pages/pages.css';
 
 /* Base */
 *,
@@ -374,12 +389,12 @@ button {
   border-bottom: 1px solid var(--line);
   vertical-align: baseline;
 }
-.projects-table td:first-child {
+.projects-table td.project-title {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 600;
 }
-.projects-table td:not(:first-child) {
+.projects-table td:not(.project-title) {
   color: var(--muted);
   white-space: nowrap;
 }
@@ -404,7 +419,10 @@ button {
     padding: 0;
     border: 0;
   }
-  .projects-table td:first-child {
+  .projects-table td.project-number {
+    grid-column: 1 / -1;
+  }
+  .projects-table td.project-title {
     grid-column: 1 / -1;
   }
 }

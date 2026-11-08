@@ -2,12 +2,13 @@
 
 import { useRef, useState } from 'react'
 import { announce } from '@/components/live-region'
-import { site, workshops } from '@/lib/content'
+import { fill, workshopMethods } from '@/lib/content'
 import { spring, springCss } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { buzz } from './haptics'
 
 const flip = springCss(spring.play)
+const { methods, button, again, drawn } = workshopMethods
 
 /** Management: "Draw a workshop method" turns a card over to a random method. */
 export function WorkshopDraw() {
@@ -15,9 +16,9 @@ export function WorkshopDraw() {
   const card = useRef<HTMLDivElement>(null)
 
   const draw = () => {
-    let next = Math.floor(Math.random() * workshops.length)
-    if (next === index) next = (next + 1) % workshops.length
-    const method = workshops[next]
+    let next = Math.floor(Math.random() * methods.length)
+    if (next === index) next = (next + 1) % methods.length
+    const method = methods[next]
     const tier = readTier()
     const el = card.current!
     buzz(8)
@@ -33,12 +34,12 @@ export function WorkshopDraw() {
       el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 })
     }
     setIndex(next)
-    announce(site.eggs.workshopDrawn.replace('{title}', method.title).replace('{howTo}', method.howTo))
+    announce(fill(drawn, { title: method.title, howTo: method.howTo }))
   }
 
-  const method = index === null ? null : workshops[index]
+  const method = index === null ? null : methods[index]
   return (
-    <section className="workshop" aria-label={site.management.workshopButton}>
+    <section className="workshop" aria-label={button}>
       <div ref={card} className="workshop-card" data-drawn={method ? '' : undefined}>
         <div className="workshop-face workshop-back card-back" aria-hidden="true" />
         <div className="workshop-face workshop-front" data-identity="saffron">
@@ -51,7 +52,7 @@ export function WorkshopDraw() {
         </div>
       </div>
       <button type="button" className="button" onClick={draw}>
-        {method ? site.eggs.workshopAgain : site.management.workshopButton}
+        {method ? again : button}
       </button>
     </section>
   )

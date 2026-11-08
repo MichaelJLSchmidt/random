@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, ViewTransition } from 'react'
+import { headerHeight } from '@/design/layout'
 import type { HandCard } from '@/lib/cards'
 import { cardNumber, site } from '@/lib/content'
 import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
@@ -19,9 +20,8 @@ export function CaseHero({ card }: { card: HandCard }) {
   const [inView, setInView] = useState(true)
 
   useEffect(() => {
-    const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) * 16 || 64
     const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
-      rootMargin: `-${header}px 0px 0px 0px`,
+      rootMargin: `-${headerHeight}px 0px 0px 0px`,
     })
     io.observe(ref.current!)
     return () => io.disconnect()
@@ -48,7 +48,7 @@ export function CaseHero({ card }: { card: HandCard }) {
               <p className="card-type">{card.projectType}</p>
             </div>
             <p className="card-summary">{card.inspect}</p>
-            <dl className="card-facts" aria-label={site.caseStudy.factsLabel}>
+            <dl className="card-facts" aria-label={site.labels.facts}>
               {card.facts.map((f) => (
                 <div key={f.label} className="card-fact">
                   <dt className="card-fact-label">{f.label}</dt>

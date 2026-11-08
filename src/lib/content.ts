@@ -1,46 +1,33 @@
-import caseStudiesJson from '@content/case-studies.json'
-import projectsJson from '@content/projects.json'
-import siteJson from '@content/site.json'
-import workshopsJson from '@content/workshops.json'
+/*
+ * Typed content for pages and components (content/index.ts, typed by
+ * content/schema.ts), plus small lookups. Import content from here, never from
+ * the JSON or MDX files.
+ */
+import { content } from '@content/index'
+import type { CaseStudy } from '@content/schema'
 
-export type Fact = { label: string; value: string }
+export type * from '@content/schema'
+export { caseStudySectionKeys, managementSectionKeys } from '@content/schema'
+export { images } from '@content/index'
 
-export type CaseStudy = {
-  slug: string
-  title: string
-  /** Short plain type shown on the card band, e.g. "Platform". */
-  projectType: string
-  summary: string
-  /** One-line summary shown when a card is inspected. */
-  inspect: string
-  /** The case study's one large statement (full-bleed breaker). */
-  statement: string
-  /** Printed along the card's long edge; readable when the card is tapped. */
-  tapLine: string
-  year: string
-  /** Role, team, timeframe, client type. */
-  facts: Fact[]
-}
-
-export type Project = { title: string; year: string; projectType: string; clientType: string }
-
-export const site = siteJson
-export const projects: Project[] = projectsJson
-export const workshops: { title: string; howTo: string }[] = workshopsJson
+export const { site, hand, home, management, moreProjects, about, contact, notFound, coffeeEgg, workshopMethods } =
+  content
 
 function validateCaseStudies(list: CaseStudy[]): CaseStudy[] {
   if (list.length !== 3) {
-    throw new Error(`content/case-studies.json must list exactly three case studies, found ${list.length}.`)
+    throw new Error(`Content must have exactly three case studies, found ${list.length}.`)
   }
   const slugs = new Set(list.map((c) => c.slug))
   if (slugs.size !== list.length) throw new Error('Case-study slugs must be unique.')
   for (const c of list) {
     if (!/^[a-z0-9-]+$/.test(c.slug)) throw new Error(`Invalid case-study slug "${c.slug}".`)
+    if (c.sections.decisions.items.length !== 4) throw new Error(`"${c.slug}" needs exactly four decisions.`)
+    if (c.metrics.length > 5) throw new Error(`"${c.slug}" has more than five metrics.`)
   }
   return list
 }
 
-export const caseStudies = validateCaseStudies(caseStudiesJson as CaseStudy[])
+export const caseStudies = validateCaseStudies(content.caseStudies)
 
 export function getCaseStudy(slug: string) {
   const index = caseStudies.findIndex((c) => c.slug === slug)
@@ -48,5 +35,12 @@ export function getCaseStudy(slug: string) {
   return { study: caseStudies[index], index }
 }
 
-/** "01" … "04": the small index on a card. */
-export const cardNumber = (index: number) => String(index + 1).padStart(2, '0')
+/** "01" … "09": two-digit index labels (cards, sections, counter). */
+export const pad2 = (n: number) => String(n).padStart(2, '0')
+
+/** "01" … "04": the small index on a card (0-based input). */
+export const cardNumber = (index: number) => pad2(index + 1)
+
+/** Fills {placeholders} in a content template. */
+export const fill = (template: string, values: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (_, k: string) => String(values[k] ?? `{${k}}`))

@@ -9,25 +9,31 @@ Motion+, WebGL2, plain CSS. Built as a static export and deployed to GitHub Page
 
 All visible text lives in `/content`. Names, links, email and case studies there are placeholders.
 
+The site is being redesigned by several sessions in parallel. The shared contracts (tokens,
+components, props, data attributes, content schema, ownership) are in `docs/contracts.md`; the
+brief is `docs/art-direction.md`; each session reports in `docs/handoff/`.
+
 ## Structure
 
 ```
-content/                    All editable text (JSON / MDX / one TS map). No components.
-  cards.ts                  Hand order, case study -> colour identity, rail labels, Management card
-  site.json                 Site name, navigation, home, case study, About, 404, settings, egg copy
-  case-studies.json         Exactly three case studies (checked at build)
-  work/<slug>.mdx           Case-study bodies; management.mdx, about.mdx
-  projects.json             Older projects (no detail pages); workshops.json (workshop draw)
+content/                    All editable text. No components.
+  schema.ts                 Types for every page and egg (the content contract)
+  index.ts                  The one typed entry point (read through src/lib/content.ts)
+  adapters.ts               The files below shaped into the schema until the content pass
+  images.ts                 Image registry for <Picture> (files in public/images)
+  cards.ts                  Hand order (exactly four), colour identities, rail labels, Management card
+  site.json, case-studies.json, projects.json, workshops.json, *.mdx   Existing copy
 public/topo/                About contours from swissALTI3D: elevation.png, contours.svg, meta.json
 scripts/
   topo/                     swissALTI3D fetch + build for the About topography (README inside)
   smoke.mjs                 Behaviour check, 1440x900 and 390x844, per motion tier
   budget.mjs, audit.mjs, vitals.mjs, lighthouse.mjs, serve-static.mjs
 src/
-  app/                      Routes: / , /work/[slug], /management, /projects, /about, /contact, 404
-  design/palette.ts         Colour identities (ink, ember, tide, grove, saffron, glacier)
+  app/                      Routes: / , /work/[slug], /management, /more-projects, /about, /contact, 404
+  design/                   palette.ts (colour identities), layout.ts and type.ts (typed token mirrors)
   motion/
     tokens.ts               The only source of easings, springs, durations, staggers, distances
+    scenes/                 Scroll scenes (deal-scene.ts: DealRow)
     table-store.ts          The table: active / hover / last played card, tier, field target
     play.ts                 Play / return / switch, stage 1 (lift); view-transition.ts watches stage 2
     reveal.ts               Reveal system, page orders, first-visit intro
@@ -35,10 +41,14 @@ src/
     preferences.ts          Pre-paint script: tier, intro flag, reveal arming, initial field colour
   components/
     background/             The field: engine, WebGL2 shader, OKLab, CSS fallback
-    hand/                   The hand (fan, rail, sheet) and card faces
-    case-hero.tsx           Full-bleed hero + mini card; reveals.tsx, route-focus.tsx, ...
+    hand/                   The hand (fan, rail, sheet), the card counter and card faces
+    layout/                 SectionIndex, NumeralBreaker, Spread, MetaPairs, Scoreboard, DealRow, ...
+    illustrations/          15 SVG illustrations behind one registry
+    picture.tsx             <Picture id sizes priority> from content/images.ts
+    case-hero.tsx           Played card as hero + mini card; reveals.tsx, reading-hairline.tsx, ...
   eggs/                     registry.ts (flags + tier behaviour) and one module per egg
-  styles/                   tokens, type, field, hand, reveal, view-transitions, eggs
+  styles/                   tokens, layout (Spread grid), type (scale), field, hand, reveal,
+                            view-transitions, eggs, pages/
   fonts/                    Bricolage Grotesque (opsz + wght), Hanken Grotesk, Martian Mono; OFL
 ```
 
@@ -73,11 +83,13 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   slow frames (average over 24 ms in two 60-frame windows), registered `@property` colours on
   stacked gradients take over with the same transitions. It pauses when the tab is hidden, while
   the mobile sheet is open, and on Save-Data (no breathing).
-- **Hand**: `<nav aria-label="Work">`, four real links plus "More projects". Cards show index,
-  years, title band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246
-  cards, 72% visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows.
-  Mobile: the fan on home, elsewhere a 48px peek rail that opens a bottom sheet (a native
-  popover). One tab stop (arrows, Home/End).
+- **Hand**: `<nav aria-label="Work">`, exactly four card links. Cards show index, years, title
+  band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246 cards, 72%
+  visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows. On home a card
+  counter ("01 / 04" and the hovered or focused card's title, announced politely) sits beside the
+  fan. Mobile: the fan on home, elsewhere a 48px peek rail that opens a bottom sheet (a native
+  popover) with the cards and plain links to More projects, About and Contact. One tab stop
+  (arrows, Home/End).
 - **Detail pages**: the played card lies on the table at the left (sticky, a large copy of the same
   face with the H1 in its band and the facts), the page reads on its right.
 - **Play / return / switch**: stage 1 lifts the card to where it will lie while the field blooms;
@@ -109,12 +121,12 @@ each). Press `?` on the site for the shortcut sheet.
 
 | Egg                 | Trigger                                                              |
 | ------------------- | -------------------------------------------------------------------- |
-| New hand            | M on the start page, or a long press on the deck                     |
+| New hand            | M on the start page, or a long press on the card counter             |
 | Workshop draw       | "Draw a workshop method" on /management                              |
 | Rare pull           | 1 in 40 loads (or `?rare`): one card gets a single holographic glint |
 | Turn sideways       | T on a focused card, or a double tap while a card lifts (mobile)     |
 | Look closer         | Hold Space on a focused card, or a long press (mobile)               |
-| Coffee?             | Type "draw" on the start page                                        |
+| Coffee?             | Type "draw" on the start page: a fifth card is dealt                 |
 | Shortcut sheet      | `?`                                                                  |
 | What's on the table | About: three face-down cards                                         |
 | 404                 | Any unknown address: a card falls into the discard zone              |

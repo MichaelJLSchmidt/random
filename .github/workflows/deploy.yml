@@ -6,6 +6,8 @@
 # The build gets BASE_PATH=/<repo>/, derived from GITHUB_REPOSITORY.
 name: Deploy to GitHub Pages
 
+# Only `main` deploys: pushes to any other branch (parallel sessions) never trigger
+# this workflow, and a manual run started from another branch is skipped (see `if`).
 on:
   push:
     branches: [main]
@@ -23,6 +25,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       # Optional token for private registries referenced from .npmrc (e.g. Motion+).

@@ -1,7 +1,7 @@
 import type { Identity } from '@/design/palette'
 
 /*
- * The hand: four cards, in this order, as the site's primary navigation.
+ * The hand: exactly four cards, in this order, as the site's primary navigation.
  * Edit here to change which colour identity a case study uses, the order of
  * the hand, the short labels on the mobile rail and the Management card.
  * Case-study titles and summaries come from case-studies.json.
@@ -34,9 +34,10 @@ export const managementCard = {
   year: 'Since 2016',
 }
 
-/** Labels for the hand. */
+/** Labels for the hand. `counter` is read by screen readers when the card counter on home changes. */
 export const handLabels = {
   nav: 'Work',
   viewing: 'Viewing',
   moreProjects: 'More projects',
+  counter: 'Card {n} of {total}: {title}',
 }

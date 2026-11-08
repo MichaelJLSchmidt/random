@@ -1,21 +1,21 @@
 import { announce } from '@/components/live-region'
 import { cardById } from '@/lib/cards'
 import { site } from '@/lib/content'
-import { deckOffset, drawCards, fanCards } from '@/motion/reveal'
+import { dealOffset, drawCards, fanCards } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
 import { duration as D, ease } from '@/motion/tokens'
 import { buzz } from './haptics'
 import { eggOn } from './registry'
 
 /*
- * Eggs that live on the hand: Mulligan (deal a new hand), Tap (turn a card
- * sideways to read the line on its long edge), Inspect (2x with a one-line
- * summary). See registry.ts for triggers and tier behaviour.
+ * Eggs that live on the hand: Mulligan (deal the four cards again), Tap (turn
+ * a card sideways to read the line on its long edge), Inspect (2x with a
+ * one-line summary). See registry.ts for triggers and tier behaviour.
  */
 const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 let dealing = false
 
-/** Mulligan: the cards go back to the deck and a new hand is dealt (start page only). */
+/** Mulligan: the four cards are gathered off screen and dealt again (start page only). */
 export async function mulligan() {
   if (!eggOn('mulligan') || dealing || table.get().activeCard) return
   const cards = fanCards()
@@ -26,7 +26,7 @@ export async function mulligan() {
   if (tier === 'full') {
     await Promise.all(
       cards.map((card, i) => {
-        const [dx, dy] = deckOffset(card)
+        const [dx, dy] = dealOffset(card)
         return card
           .animate(
             [{}, { translate: `${dx}px ${dy}px`, rotate: '28deg', transform: 'perspective(800px) rotateY(180deg)' }],
@@ -99,7 +99,7 @@ export function rarePull(delay: number) {
 
 /**
  * Wires hold-Space and long-press (Inspect), T and double tap (Tap) and the
- * deck's long press (Mulligan) on the hand. Returns a cleanup.
+ * card counter's long press (Mulligan) on the hand. Returns a cleanup.
  */
 export function attachHandEggs(nav: HTMLElement) {
   let spaceTimer = 0
@@ -138,29 +138,29 @@ export function attachHandEggs(nav: HTMLElement) {
     else el.click()
   }
 
-  // Long press: Inspect on a card (400 ms), Mulligan on the deck (800 ms). Double tap: Tap.
+  // Long press: Inspect on a card (400 ms), Mulligan on the counter (800 ms, home only). Double tap: Tap.
   let pressTimer = 0
   let pressed: HTMLElement | null = null
   let held = false
   let start: [number, number] = [0, 0]
   let lastTap = { card: null as HTMLElement | null, at: 0 }
   const onPointerDown = (e: PointerEvent) => {
-    const el = (e.target as Element).closest<HTMLElement>('.hand-card, .hand-deck')
+    const el = (e.target as Element).closest<HTMLElement>('.hand-card, .hand-counter')
     if (!el || e.button !== 0) return
     held = false
     pressed = el
     start = [e.clientX, e.clientY]
-    const deck = el.classList.contains('hand-deck')
-    if (deck && !nav.hasAttribute('data-home')) return
-    if (!deck && e.pointerType === 'mouse') return
+    const counter = el.classList.contains('hand-counter')
+    if (counter && !nav.hasAttribute('data-home')) return
+    if (!counter && e.pointerType === 'mouse') return
     pressTimer = window.setTimeout(
       () => {
         held = true
         buzz(10)
-        if (deck) mulligan()
+        if (counter) mulligan()
         else inspect(el, true)
       },
-      (deck ? D.longPress : D.inspectHold) * 1000,
+      (counter ? D.longPress : D.inspectHold) * 1000,
     )
   }
   const onPointerMove = (e: PointerEvent) => {
@@ -178,7 +178,7 @@ export function attachHandEggs(nav: HTMLElement) {
     }
     pressed = null
   }
-  // A long press must not also play the card (or open the deck).
+  // A long press must not also play the card.
   const onClick = (e: MouseEvent) => {
     if (!held) return
     held = false
@@ -186,7 +186,7 @@ export function attachHandEggs(nav: HTMLElement) {
     e.stopPropagation()
   }
   const onContextMenu = (e: Event) => {
-    if ((e.target as Element).closest('.hand-card, .hand-deck')) e.preventDefault()
+    if ((e.target as Element).closest('.hand-card, .hand-counter')) e.preventDefault()
   }
 
   nav.addEventListener('keydown', onKeyDown)

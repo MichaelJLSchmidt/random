@@ -1,29 +1,69 @@
+import { breakpoints } from '@/design/layout'
+import { type as typeScale } from '@/design/type'
+
 /*
  * Motion tokens: the only source of easings, springs, durations, staggers,
  * distances, angles, weights and background-field parameters. JavaScript
  * imports them directly; CSS reads the custom properties that `motionCss()`
- * generates (injected in the root layout). No bounce or elastic easing.
+ * generates (injected in the root layout). No bounce, elastic or overshoot:
+ * every bézier stays within [0, 1] and every spring is critically damped.
+ * Contract: docs/contracts.md#motion-tokens. Foundation-owned (read-only in
+ * Wave 1); the Motion session asks for changes in its handoff.
+ *
+ * The scale (use these for new work):
+ *   dur      xs 160, s 240, m 420, l 640, xl 900 ms        --dur-xs ... --dur-xl
+ *   ease     outExpo, outQuint, inOut                       --ease-out-expo, --ease-out-quint, --ease-in-out
+ *   stagger  words 70, lines 60, items 50, cards 80, svgGroups 120 ms
+ *                                                           --stagger-words ... --stagger-svg-groups
+ *   tiers    full x1, calm x0.6, reduced: 160 ms crossfades only
+ *                                                           --motion-scale, --dur-reduced
+ * Everything below the scale (duration.*, ease.outSoft, ...) is the existing
+ * vocabulary of the table, kept so the hand, play and the field keep working.
  */
 
 export type MotionTier = 'full' | 'calm' | 'reduced'
 
-/** Cubic béziers. */
+/** The duration scale, in seconds (CSS: --dur-xs ... --dur-xl, tier-scaled). */
+export const dur = { xs: 0.16, s: 0.24, m: 0.42, l: 0.64, xl: 0.9 } as const
+export type DurationStep = keyof typeof dur
+
+/** Tier multipliers for the scale. Reduced replaces every duration with one 160 ms crossfade. */
+export const motionScale = { full: 1, calm: 0.6, reduced: 0 } as const satisfies Record<MotionTier, number>
+export const reducedCrossfade = 0.16
+
+/** A scale duration (s) for a tier: full as is, calm x0.6, reduced always 160 ms. */
+export function durFor(tier: MotionTier, step: DurationStep) {
+  return tier === 'reduced' ? reducedCrossfade : dur[step] * motionScale[tier]
+}
+
+const outExpo = [0.16, 1, 0.3, 1] as const
+const outQuint = [0.22, 1, 0.36, 1] as const
+const inOut = [0.65, 0, 0.35, 1] as const
+
+/** Cubic béziers. The first three are the scale; the rest are the table's named curves. */
 export const ease = {
-  outSoft: [0.22, 1, 0.36, 1],
-  draw: [0.16, 1, 0.3, 1],
+  outExpo,
+  outQuint,
+  inOut,
+  // Table vocabulary (aliases of the scale where they are the same curve).
+  outSoft: outQuint,
+  draw: outExpo,
+  bloom: inOut,
   zoom: [0.76, 0, 0.24, 1],
   return: [0.32, 0.72, 0, 1],
-  bloom: [0.65, 0, 0.35, 1],
   settle: [0.33, 0, 0.15, 1],
-  /** Content leaving the screen (not in the spec's list: a plain ease-in). */
+  /** Content leaving the screen: a plain ease-in. */
   in: [0.4, 0, 1, 1],
 } as const
 
-/** Springs (Motion options). CSS gets them as linear() curves, see springCss(). */
+/**
+ * Springs (Motion options), critically damped (damping >= 2·sqrt(stiffness·mass)),
+ * so they never overshoot. CSS gets them as linear() curves, see springCss().
+ */
 export const spring = {
-  play: { type: 'spring', stiffness: 220, damping: 28, mass: 0.9 },
-  hover: { type: 'spring', stiffness: 400, damping: 32, mass: 1 },
-  land: { type: 'spring', stiffness: 300, damping: 26, mass: 1 },
+  play: { type: 'spring', stiffness: 220, damping: 29, mass: 0.9 },
+  hover: { type: 'spring', stiffness: 400, damping: 40, mass: 1 },
+  land: { type: 'spring', stiffness: 300, damping: 35, mass: 1 },
 } as const
 
 /** Seconds. */
@@ -85,12 +125,16 @@ export const duration = {
   fast: 0.18,
 } as const
 
-/** Seconds between siblings. */
+/** Seconds between siblings. words / lines / items / cards / svgGroups are the scale. */
 export const stagger = {
-  draw: 0.11,
   words: 0.07,
-  introLines: 0.08,
   lines: 0.06,
+  items: 0.05,
+  cards: 0.08,
+  svgGroups: 0.12,
+  // Table vocabulary.
+  draw: 0.11,
+  introLines: 0.08,
   list: 0.07,
   metric: 0.04,
   tags: 0.04,
@@ -138,19 +182,28 @@ export const angle = {
   tap: 90,
 } as const
 
-/** Font weights and optical sizes (Bricolage display, Hanken text). */
+/**
+ * Font weights and optical sizes (Bricolage display, Hanken text). Animated
+ * headlines settle on the type scale (src/design/type.ts): h1 on display, h2 on h2.
+ */
 export const weight = {
   body: 400,
   medium: 500,
   label: 600,
   card: 620,
   h1Start: 280,
-  h1: 680,
+  h1: typeScale.display.weight,
   h2Start: 360,
-  h2: 700,
+  h2: typeScale.h2.weight,
+  h3: typeScale.h3.weight,
 } as const
 
-export const opsz = { start: 24, end: 96 } as const
+export const opsz = {
+  start: 24,
+  end: typeScale.display.opsz,
+  h2: typeScale.h2.opsz,
+  h3: typeScale.h3.opsz,
+} as const
 
 /** Background field. */
 export const field = {
@@ -187,7 +240,6 @@ export const hand = {
   /** Played card (detail hero) width: clamp(min, vw, max), shrunk to fit the height. */
   hero: { min: 280, vw: 0.28, max: 400, phoneVw: 0.72, phoneMax: 320 },
   perspective: 1200,
-  deckGap: 24,
   rail: 48,
   sheet: 0.4,
   scrim: 0.4,
@@ -196,17 +248,18 @@ export const hand = {
   pressScale: 0.97,
   hoverScale: 1.06,
   inspectScale: 2,
-  breakpoint: 1024,
+  breakpoint: breakpoints.md,
 } as const
 
 /*
  * Tiers. full (default), calm (site toggle), reduced (prefers-reduced-motion,
- * overrides calm). `vt` scales view-transition timings (reduced: near-instant),
- * `ui` scales hover/fill/underline timings, `travel` scales distances.
+ * overrides calm). For the table vocabulary: `vt` scales view-transition
+ * timings (reduced: near-instant), `ui` scales hover/fill/underline timings,
+ * `travel` scales distances. The scale (dur) uses motionScale instead.
  */
 export const tiers = {
   full: { vt: 1, ui: 1, travel: 1 },
-  calm: { vt: 1, ui: 0.7, travel: 0 },
+  calm: { vt: 1, ui: motionScale.calm, travel: 0 },
   reduced: { vt: 0.1, ui: 0, travel: 0 },
 } as const satisfies Record<MotionTier, unknown>
 
@@ -236,7 +289,8 @@ export function springCss({ stiffness, damping, mass }: { stiffness: number; dam
   const points = 40
   const values = Array.from({ length: points + 1 }, (_, i) => {
     const value = trace[Math.round((i / points) * (trace.length - 1))]
-    return Number(value.toFixed(4))
+    // Critically damped springs never pass 1; clamp the integration error too.
+    return Number(Math.min(1, value).toFixed(4))
   })
   values[points] = 1
   return { easing: `linear(${values.join(',')})`, duration: t }
@@ -258,6 +312,9 @@ function vars(tier: MotionTier): string {
   }
   for (const [k, s] of Object.entries(springs)) out.push(`--spring-${k}-dur:${ms(s.duration * ui)}`)
   for (const [k, v] of Object.entries(distance)) out.push(`--travel-${kebab(k)}:${v * travel}px`)
+  // The scale: --dur-xs ... --dur-xl.
+  for (const k of Object.keys(dur) as DurationStep[]) out.push(`--dur-${k}:${ms(durFor(tier, k))}`)
+  out.push(`--motion-scale:${motionScale[tier]}`)
   return out.join(';')
 }
 
@@ -273,6 +330,7 @@ export function motionCss(): string {
     // Calm and reduced reveal timings, unscaled (they are the tier's own values).
     `--reveal-calm:${ms(duration.calmReveal)}`,
     `--reveal-reduced:${ms(duration.reducedReveal)}`,
+    `--dur-reduced:${ms(reducedCrossfade)}`,
     `--angle-word:${angle.word}deg`,
     `--angle-metric:${angle.metric}deg`,
     `--angle-discard:${angle.discard}deg`,

@@ -13,11 +13,12 @@ import { readTier } from './use-tier'
  *                (title, then facts / summary / lines, then chrome)
  *   on scroll    everything else reveals once 25% is in view (margin -10%),
  *                batched so only one sequence runs at a time
- *   intro        home, first visit: background from black, the hand drawn
- *                from the deck, title, lines, chrome; any key, click or
+ *   intro        home, first visit: background from black, the hand dealt
+ *                from off screen, title, lines, chrome; any key, click or
  *                scroll completes it
  */
-export type RevealKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
+/** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
+export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
 
 const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 const now = () => performance.now() / 1000
@@ -28,7 +29,7 @@ let batchFrame = 0
 let introCleanup: (() => void) | null = null
 
 /** Offsets (s) per [data-order] group and navigation kind. */
-function orders(kind: RevealKind): Record<string, number> {
+function orders(kind: NavigationKind): Record<string, number> {
   switch (kind) {
     case 'first':
       return { title: at.title, lines: at.lines, chrome: at.chrome }
@@ -157,8 +158,8 @@ export const fanCards = () =>
     (c) => c.getClientRects().length > 0 && !c.hasAttribute('aria-current'),
   )
 
-/** Where the deck sits: off screen, bottom right, relative to a card's slot. */
-export function deckOffset(card: HTMLElement) {
+/** Where cards are dealt from: off screen, bottom right (the dealer's side), relative to a card's slot. */
+export function dealOffset(card: HTMLElement) {
   const slot = card.parentElement!.getBoundingClientRect()
   return [
     innerWidth + slot.width - (slot.left + slot.width / 2),
@@ -166,7 +167,7 @@ export function deckOffset(card: HTMLElement) {
   ]
 }
 
-/** Cards are drawn face down from the deck and flip face up mid-flight (620 ms, 110 ms apart). */
+/** Cards are dealt face down from off screen and flip face up mid-flight (620 ms, 110 ms apart). */
 export function drawCards(cards: HTMLElement[], start: number) {
   return cards.map((card, i) => {
     const cs = getComputedStyle(card)
@@ -174,7 +175,7 @@ export function drawCards(cards: HTMLElement[], start: number) {
       translate: cs.translate === 'none' ? '0px 0px' : cs.translate,
       rotate: cs.rotate === 'none' ? '0deg' : cs.rotate,
     }
-    const [dx, dy] = deckOffset(card)
+    const [dx, dy] = dealOffset(card)
     card.dataset.drawn = ''
     return card.animate(
       [
@@ -205,7 +206,7 @@ function intro(main: HTMLElement) {
       card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, delay: at.draw * 1000, fill: 'backwards' })
     }
   }
-  const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome], .hand-deck')]
+  const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome]')]
   const links = [...main.querySelectorAll<HTMLElement>('[data-order="chrome"]')]
   ;[...links, ...chrome].forEach((el, i) => mark(el, o.chrome + i * S.tags))
   const total = o.chrome + (links.length + chrome.length) * S.tags + D.tags
@@ -237,7 +238,7 @@ function intro(main: HTMLElement) {
  * effect, so on play / switch the H1 is final before the view transition
  * captures the new page. Returns the cleanup for the next route.
  */
-export function revealRoute(kind: RevealKind) {
+export function revealRoute(kind: NavigationKind) {
   const root = document.documentElement
   const main = document.getElementById('main')
   if (!main) return () => {}

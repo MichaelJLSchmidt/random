@@ -1,0 +1,19 @@
+/*
+ * Illustration styles (owned by the Illustrations session). Imported once from
+ * src/app/globals.css. Illustrations scale with their container; strokes take
+ * currentColor, which pages set to the identity accent.
+ */
+.illustration {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--id-accent);
+  overflow: visible;
+}
+
+/* Stubs (data-stub): a faint dashed frame so the reserved box is visible. Remove with the stub. */
+.illustration[data-stub] {
+  outline: 1px dashed color-mix(in srgb, currentColor 28%, transparent);
+  outline-offset: -1px;
+  border-radius: 8px;
+}
