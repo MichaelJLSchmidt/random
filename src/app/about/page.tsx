@@ -28,9 +28,10 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
 
 /**
  * About (glacier, over the contour map): hero (title, lead, ContourPortrait),
- * 01 story (+ Spread), 02 timeline (AboutTimeline with seven HTML stops:
- * horizontal from 1024, vertical below), 03 how I work (2×2), 04 "At the
- * table", 05 roots, 06 "What's on the table" (five mini cards), then the
+ * 01 story (+ Spread), 02 timeline (AboutTimeline, line and dots, with seven
+ * HTML stops: horizontal from 1024, turned 90° below), 03 how I work (2×2),
+ * 04 "At the table" (+ Spread), 05 roots (+ Spread), 06 "What's on the
+ * table" (five mini cards), then the
  * colophon (photo credits from the image manifest, the swisstopo source). The
  * topography attribution also stays visible along the left edge from 1024.
  */
@@ -66,14 +67,15 @@ export default function AboutPage() {
               </Reveal>
             ))}
           </div>
-          {a.story.image && <Spread image={a.story.image} caption={images[a.story.image].alt || undefined} className="section-spread" />}
+          {a.story.image && <Spread image={a.story.image} caption={a.story.caption} className="section-spread" />}
         </Section>
 
         {/* 02 Timeline: seven stops; the drawing runs along them. */}
         <Section {...head('timeline')} pin={1}>
           <div className="timeline col-wide" style={{ '--stops': a.timeline.items.length } as CSSProperties}>
+            {/* Line and dots only: the years and titles are the HTML stops, in seven equal cells that line up with the dots. */}
             <Reveal kind="draw" className="timeline-track">
-              <AboutTimeline titleId="timeline-illustration-title" />
+              <AboutTimeline titleId="timeline-illustration-title" items={a.timeline.items} labels={false} />
             </Reveal>
             <Reveal as="ol" kind="list" className="timeline-stops">
               {a.timeline.items.map((t, i) => (
@@ -113,6 +115,7 @@ export default function AboutPage() {
             ))}
           </Reveal>
           <p className="tcg-stats t-label col-content">{a.tcg.stats}</p>
+          {a.tcg.image && <Spread image={a.tcg.image} caption={a.tcg.caption} className="section-spread" />}
         </Section>
 
         {/* 05 Roots: set to the right, lead size. */}
@@ -120,11 +123,16 @@ export default function AboutPage() {
           <Reveal as="p" kind="lines" className="roots-body t-lead cols-6-11">
             {a.roots.body}
           </Reveal>
+          {a.roots.image && <Spread image={a.roots.image} caption={a.roots.caption} className="section-spread" />}
         </Section>
 
         {/* 06 What's on the table: the egg brings its own h2. */}
         <div id="onTheTable" className="page-section spread-grid space-m about-table" data-section="onTheTable">
-          <SectionIndex number={aboutSectionKeys.indexOf('onTheTable') + 1} label={a.onTheTable.label} className="col-index" />
+          <SectionIndex
+            number={aboutSectionKeys.indexOf('onTheTable') + 1}
+            label={a.onTheTable.label}
+            className="col-index"
+          />
           <div className="col-content">
             <OnTheTable
               title={a.onTheTable.title}

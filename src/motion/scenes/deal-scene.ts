@@ -3,8 +3,7 @@
 import { cubicBezier, scroll } from 'motion'
 import { type RefObject, useLayoutEffect, useState } from 'react'
 import { breakpoints, headerHeight } from '@/design/layout'
-import { pending } from '../choreography'
-import { angle, distance, ease } from '../tokens'
+import { angle, deal as DEAL, distance, ease } from '../tokens'
 import { onTierChange, readTier } from '../use-tier'
 import { setPinned } from './pin'
 
@@ -87,12 +86,12 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
   if (cards.length < 2 || !list || cards.some((c) => c.parentElement !== list)) return () => {}
 
   const n = cards.length
-  const phases = pending.dealPhases
+  const phases = DEAL.phases
   const deal = phases.slice(0, n)
   const settleFrom = phases[n - 1]
   const settleTo = phases[n] ?? 1
-  const tilt = cards.map((_, i) => angle.hand[i % angle.hand.length] * pending.dealLandTilt)
-  const deckTilt = cards.map((_, i) => angle.hand[(n - 1 - i) % angle.hand.length] * pending.dealLandTilt)
+  const tilt = cards.map((_, i) => angle.hand[i % angle.hand.length] * DEAL.landTilt)
+  const deckTilt = cards.map((_, i) => angle.hand[(n - 1 - i) % angle.hand.length] * DEAL.landTilt)
 
   let on = false
   let slots: Slot[] = []
@@ -148,7 +147,7 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
   const start = () => {
     on = true
     root.dataset.sceneActive = ''
-    root.style.height = `${pending.dealStage}svh`
+    root.style.height = `${DEAL.stage}svh`
     root.style.alignContent = 'start'
     list.style.position = 'sticky'
     list.style.alignSelf = 'start'

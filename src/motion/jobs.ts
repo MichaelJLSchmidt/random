@@ -1,6 +1,5 @@
 import { breakpoints } from '@/design/layout'
-import { pending } from './choreography'
-import type { MotionTier } from './tokens'
+import { type MotionTier, reveal } from './tokens'
 import { readTier } from './use-tier'
 
 /*
@@ -12,7 +11,7 @@ import { readTier } from './use-tier'
  * style), will-change is removed and any undo (a reverted split) runs, so
  * nothing stays animated at rest.
  *
- * Below 1024 px at most `pending.mobileJobs` jobs run at once; the rest queue
+ * Below 1024 px at most `reveal.mobileJobs` jobs run at once; the rest queue
  * in start order. A job's animations count as one (an SVG with thirty strokes
  * repaints one layer).
  */
@@ -54,7 +53,7 @@ const ends = new WeakMap<Element, Promise<void>>()
 const waiters = new WeakMap<Element, () => void>()
 
 const mobile = () => typeof innerWidth === 'number' && innerWidth < breakpoints.md
-const capacity = () => (mobile() ? pending.mobileJobs : Number.POSITIVE_INFINITY)
+const capacity = () => (mobile() ? reveal.mobileJobs : Number.POSITIVE_INFINITY)
 
 /** Resolves when `el`'s reveal has finished (at once if it was never scheduled and is already revealed). */
 export function revealed(el: Element): Promise<void> {

@@ -2,7 +2,7 @@
  * Illustration styles (owned by the Illustrations session). Imported once from
  * src/app/globals.css. Conventions: src/components/illustrations/README.md.
  *
- * Colour: strokes and tints take currentColor = the page's --accent (falls back to --text).
+ * Colour: strokes and tints take currentColor = the page's --accent (it follows [data-identity]).
  * Strokes: 1.5 px on screen (1.25 px below 640 px) at any rendered size. Geometry sits in
  * nested <svg class="il-plate" viewBox> plates that scale with the drawing; their stroke width is
  * divided by that scale: --il-vbw (the plate's viewBox width) × 1000 / rendered width, where
@@ -16,10 +16,6 @@
   height: auto;
   overflow: visible;
   container-type: inline-size;
-  /* The page accent. --accent should follow [data-identity] (contracts: Colour) but tokens.css
-     declares it on :root only, so inside an identity scope it stays the ink accent. Re-declared
-     here from --id-accent until that is fixed (handoff: change request 1). */
-  --accent: var(--id-accent, var(--text));
   color: var(--accent);
   stroke-width: var(--illustration-stroke);
   stroke-opacity: 0.8;

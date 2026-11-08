@@ -3,7 +3,9 @@
 #                           matching the lockfile, run `build`, deploy dist/.
 #   no package.json      -> deploy the repository root as static files
 #                           (upload-pages-artifact always leaves out .git and .github).
-# The build gets BASE_PATH=/<repo>/, derived from GITHUB_REPOSITORY.
+# The build gets BASE_PATH=/<repo>/, derived from GITHUB_REPOSITORY, and SITE_URL
+# (the Pages base_url from actions/configure-pages) for absolute URLs such as
+# the Open Graph image.
 name: Deploy to GitHub Pages
 
 # Only `main` deploys: pushes to any other branch (parallel sessions) never trigger
@@ -90,12 +92,20 @@ jobs:
             npm install
           fi
 
+      # The site's absolute URL (origin + base path) for Open Graph: from the Pages
+      # configuration, never hard-coded.
+      - name: Configure Pages
+        id: pages
+        if: steps.detect.outputs.node == 'true'
+        uses: actions/configure-pages@v5
+
       - name: Build
         if: steps.detect.outputs.node == 'true'
         env:
           PM: ${{ steps.detect.outputs.pm }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
         run: |
-          echo "BASE_PATH=$BASE_PATH"
+          echo "BASE_PATH=$BASE_PATH SITE_URL=$SITE_URL"
           "$PM" run build
           if [ ! -d dist ]; then
             echo "::error::The build script must write the site to dist/."

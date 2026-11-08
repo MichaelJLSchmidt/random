@@ -31,7 +31,11 @@ export const glacierText = '#DCE8E6'
 
 export const identities = Object.keys(palette) as Identity[]
 
-/** CSS custom properties for every identity, plus [data-identity] scopes. */
+/**
+ * CSS custom properties for every identity, plus [data-identity] scopes. Each
+ * scope also re-declares --accent, so it follows the scope's --id-accent
+ * (declared only on :root it would resolve once, to the ink accent).
+ */
 export function identityCss(): string {
   const root = [
     `--text:${text}`,
@@ -45,7 +49,7 @@ export function identityCss(): string {
   const scopes = identities
     .map(
       (id) =>
-        `[data-identity="${id}"]{--id-field:var(--${id}-field);--id-mid:var(--${id}-mid);--id-glow:var(--${id}-glow);--id-accent:var(--${id}-accent);--id-ink:var(--${id}-ink)}`,
+        `[data-identity="${id}"]{--id-field:var(--${id}-field);--id-mid:var(--${id}-mid);--id-glow:var(--${id}-glow);--id-accent:var(--${id}-accent);--id-ink:var(--${id}-ink);--accent:var(--id-accent)}`,
     )
     .join('')
   return `:root{${root.join(';')}}${scopes}`

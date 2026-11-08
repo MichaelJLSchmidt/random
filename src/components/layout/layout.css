@@ -96,7 +96,7 @@
 }
 .section-body {
   display: grid;
-  gap: 28px;
+  gap: calc(var(--baseline) * 7);
 }
 .section-body > * {
   margin: 0;
@@ -117,14 +117,14 @@
 .section-index {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin: 0 0 16px;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
   color: var(--muted);
 }
 .section-index-number {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   color: var(--accent);
 }
 .section-index-number::after {
@@ -136,7 +136,7 @@
 @media (min-width: 1024px) {
   .page-section > .section-index {
     position: sticky;
-    top: calc(var(--header-h) + 24px);
+    top: calc(var(--header-h) + var(--space-5));
     z-index: 1;
     grid-row: span var(--index-rows, 2);
     align-self: start;
@@ -181,7 +181,7 @@
 
 /* ---------- Spread: full-bleed image, caption below (margin track from 1680) ---------- */
 .spread {
-  row-gap: 16px;
+  row-gap: var(--space-4);
   margin: 0;
 }
 .spread-media img {
@@ -202,14 +202,14 @@
 .meta-pairs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px var(--grid-gutter);
+  gap: var(--space-5) var(--grid-gutter);
   margin: 0;
 }
 .meta-pair {
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding-top: 12px;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--line);
 }
 .meta-pair-label {
@@ -233,15 +233,15 @@
 .scoreboard {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 32px var(--grid-gutter);
+  gap: var(--space-6) var(--grid-gutter);
   margin: 0;
 }
 .scoreboard-item {
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-end;
-  gap: 12px;
-  padding-top: 16px;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
   border-top: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 /* Five on a two-column phone grid: the first one leads, full width. */
@@ -263,6 +263,14 @@
   color: var(--accent);
 }
 .scoreboard-digits {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.3em;
+  row-gap: var(--space-1);
+  max-width: 100%;
+}
+.scoreboard-word {
   display: inline-flex;
   align-items: baseline;
 }
@@ -287,7 +295,7 @@
 /* ---------- DealRow: four cards; a scroll-snap row below 1024, a stage from 1024 ---------- */
 .deal-row {
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .deal-row-list {
   display: grid;
@@ -296,7 +304,7 @@
   gap: var(--grid-gutter);
   /* Full bleed: the row scrolls under the page margins; cards snap to the margin. */
   margin: 0 calc(var(--grid-margin) * -1);
-  padding: 4px var(--grid-margin) 12px;
+  padding: var(--space-1) var(--grid-margin) var(--space-3);
   list-style: none;
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -310,9 +318,9 @@
 .deal-card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   aspect-ratio: var(--card-ratio);
-  padding: 20px;
+  padding: calc(var(--baseline) * 5);
   border-radius: 16px;
   background:
     radial-gradient(120% 70% at 0% 100%, color-mix(in oklab, var(--id-glow) 24%, transparent), transparent 70%),
@@ -328,7 +336,7 @@
 .deal-card-index {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   color: var(--accent);
 }
 .deal-card-number {
@@ -336,13 +344,13 @@
 }
 .deal-card-fields {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   margin: auto 0 0;
 }
 .deal-card-fields > div {
   display: grid;
-  gap: 4px;
-  padding-top: 12px;
+  gap: var(--space-1);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--line);
 }
 .deal-card-fields dt {
@@ -350,16 +358,6 @@
 }
 .deal-card-fields dd {
   margin: 0;
-  font-size: var(--type-body-size);
-  line-height: var(--type-body-leading);
-}
-.deal-card-who {
-  color: var(--muted);
-}
-.deal-card-outcome {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
   font-size: var(--type-body-size);
   line-height: var(--type-body-leading);
 }
@@ -376,7 +374,7 @@
     overflow: visible;
   }
   .deal-card {
-    padding: 24px;
+    padding: var(--space-5);
   }
   .deal-row-position {
     display: none;
@@ -386,7 +384,7 @@
 /* ---------- MarginNote: inline aside with a left rule; margin track from 1680 (D2) ---------- */
 .margin-note {
   margin: 0;
-  padding-left: 16px;
+  padding-left: var(--space-4);
   border-left: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--muted);
 }
@@ -400,7 +398,7 @@
   /* Column 12 + the outer track runs to the viewport edge: keep a margin on the right. */
   .page-section > .margin-note,
   .spread-caption {
-    margin-right: 32px;
+    margin-right: var(--space-6);
   }
   /* Level with the block it annotates (the row it shares). */
   .page-section > .section-title + * + .margin-note {
@@ -416,7 +414,7 @@
   .minimap {
     position: fixed;
     top: 50%;
-    right: 8px;
+    right: var(--space-2);
     z-index: var(--z-header);
     display: block;
     translate: 0 -50%;
@@ -459,8 +457,8 @@
   .minimap-label {
     position: absolute;
     top: 50%;
-    right: calc(100% + 4px);
-    padding: 4px 8px;
+    right: calc(100% + var(--space-1));
+    padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--ink-field) 90%, transparent);
     white-space: nowrap;
@@ -485,7 +483,7 @@
   list-style: none;
 }
 .ruled-list > li {
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
 }
 .ruled-list > li:last-child {

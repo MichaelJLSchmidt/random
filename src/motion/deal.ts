@@ -1,5 +1,5 @@
-import { bezier, pending } from './choreography'
-import { dur, ease, stagger } from './tokens'
+import { bezier } from './choreography'
+import { deal, dur, ease, stagger } from './tokens'
 
 /*
  * Dealing hand cards from the dealer (off screen, bottom right): the
@@ -19,7 +19,7 @@ export function dealOffset(card: HTMLElement) {
   const slot = card.parentElement!.getBoundingClientRect()
   return [
     innerWidth + slot.width - (slot.left + slot.width / 2),
-    innerHeight + slot.height * pending.dealBelow - (slot.top + slot.height / 2),
+    innerHeight + slot.height * deal.below - (slot.top + slot.height / 2),
   ]
 }
 
@@ -32,11 +32,11 @@ export function drawCards(cards: HTMLElement[], start: number) {
       rotate: cs.rotate === 'none' ? '0deg' : cs.rotate,
     }
     const [dx, dy] = dealOffset(card)
-    const p = `perspective(${pending.dealFlipPerspective}px)`
+    const p = `perspective(${deal.flipPerspective}px)`
     card.dataset.drawn = ''
     return card.animate(
       [
-        { translate: `${dx}px ${dy}px`, rotate: `${pending.dealToss}deg`, transform: `${p} rotateY(180deg)`, opacity: 1 },
+        { translate: `${dx}px ${dy}px`, rotate: `${deal.toss}deg`, transform: `${p} rotateY(180deg)`, opacity: 1 },
         { ...rest, transform: `${p} rotateY(0deg)`, opacity: 1 },
       ],
       {

@@ -7,21 +7,24 @@
 
 /* ================= Home ================= */
 /*
- * Label, the name (display, two lines, columns 1–9, top at about 22vh), role
- * and intro (columns 4–10), "On the table now" under a drawn rule. The hand
- * and its counter sit below (176 px reserve on desktop; the phone fan below).
+ * Label, the name (display, two lines), role and intro, "On the table now"
+ * under a drawn rule. Everything clears the hand and its counter at rest
+ * (1440×900 and 390×844 with the real intro): from 1024 the name takes
+ * columns 1–6 with its top at about 22vh and the role and intro sit beside it
+ * in columns 7–12, level with its last line; on phones the hero starts just
+ * under the header and the intro is set on the body size.
  */
 .home {
   align-content: start;
   min-height: 100svh;
-  padding-top: calc(22svh - 40px);
+  padding-top: calc(var(--header-h) + var(--space-6));
   padding-bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 + 64px);
 }
 :where(.home > *, .home [data-first-load] > *) {
   grid-column: content-start / content-end;
 }
 .home-label {
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-4);
   color: var(--muted);
 }
 .home-title {
@@ -32,8 +35,8 @@
 }
 .home-intro {
   display: grid;
-  gap: 8px;
-  margin-top: 24px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 .home-intro > * {
   margin: 0;
@@ -44,29 +47,35 @@
 .home-lede {
   max-width: 40ch;
 }
+@media (max-width: 639.98px) {
+  .home-lede {
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-leading);
+  }
+}
 .home-now {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: var(--grid-gutter);
-  margin-top: 32px;
+  margin-top: var(--space-5);
 }
 .home-now-rule {
   grid-column: 1 / -1;
   height: 1px;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   border: 0;
   background: var(--line);
   transform-origin: 0 50%;
 }
 .home-now-label {
   grid-column: 1 / -1;
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   color: var(--muted);
 }
 .home-now-list {
   grid-column: 1 / -1;
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -75,32 +84,41 @@
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .home-now-number {
   color: var(--accent);
 }
 @media (min-width: 1024px) {
   .home {
+    padding-top: calc(22svh - calc(var(--baseline) * 10));
     padding-bottom: var(--hand-reserve);
   }
   .home-label {
-    grid-column: 2 / 11;
+    grid-column: 2 / 8;
+    grid-row: 1;
+    margin-bottom: var(--space-5);
   }
   .home-title {
-    grid-column: 2 / 11;
+    grid-column: 2 / 8;
+    grid-row: 2;
   }
+  /* Beside the name, its last line level with the name's baseline. */
   .home-intro {
-    grid-column: 5 / 12;
-    margin-top: 24px;
+    grid-column: 8 / content-end;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+    padding-bottom: calc(var(--type-display-size) * (var(--type-display-leading) - 0.72));
   }
   .home-lede {
     max-width: none;
   }
   .home-now {
     grid-column: content-start / content-end;
+    grid-row: 3;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    margin-top: 32px;
+    margin-top: var(--space-6);
   }
   .home-now-label {
     grid-column: 1 / 4;
@@ -113,14 +131,14 @@
   }
   .home-now-list li {
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
+    gap: var(--space-3);
   }
 }
 
 /* ================= More projects: a numbered typographic index ================= */
 .index-hero {
   align-content: end;
-  padding-top: calc(var(--header-h) + 96px);
+  padding-top: calc(var(--header-h) + var(--space-9));
 }
 .index-title {
   grid-column: content-start / content-end;
@@ -128,7 +146,7 @@
 }
 .index-count {
   grid-column: content-start / content-end;
-  margin: 24px 0 0;
+  margin: var(--space-5) 0 0;
   color: var(--muted);
 }
 .index-list-section {
@@ -147,7 +165,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: var(--grid-gutter);
-  padding: 0 0 20px;
+  padding: 0 0 calc(var(--baseline) * 5);
   border-radius: 0;
   cursor: default;
 }
@@ -157,7 +175,7 @@
 .index-rule {
   grid-column: 1 / -1;
   height: 1px;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
   border: 0;
   background: var(--line);
   transform-origin: 0 50%;
@@ -168,7 +186,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: var(--grid-gutter);
-  row-gap: 4px;
+  row-gap: var(--space-1);
   align-items: baseline;
   transition: translate var(--dur-s) var(--ease-out-quint);
 }
@@ -179,7 +197,7 @@
 .index-name {
   grid-column: 2 / -1;
   margin: 0;
-  padding-right: 32px;
+  padding-right: var(--space-6);
 }
 .index-year {
   grid-column: 2;
@@ -191,7 +209,7 @@
 }
 .index-type {
   position: absolute;
-  top: 20px;
+  top: calc(var(--baseline) * 5);
   right: 0;
 }
 .index-type-label {
@@ -239,7 +257,7 @@
   margin: 0;
 }
 .index-end {
-  margin: 48px 0 0;
+  margin: var(--space-7) 0 0;
   color: var(--muted);
 }
 @media (min-width: 1024px) {
@@ -251,7 +269,7 @@
   }
   .index-count {
     grid-column: 5 / 13;
-    margin-top: 32px;
+    margin-top: var(--space-6);
   }
   /* Columns: [01] 1–3 (the index column) | title 4–8 | year 9 | client 10–11 | glyph 12. */
   .index-head,
@@ -261,7 +279,7 @@
   }
   .index-head {
     display: grid;
-    padding-bottom: 12px;
+    padding-bottom: var(--space-3);
     color: var(--muted);
   }
   .index-col-number {
@@ -280,10 +298,10 @@
     display: none;
   }
   .index-row {
-    padding-bottom: 24px;
+    padding-bottom: var(--space-5);
   }
   .index-rule {
-    margin-bottom: 24px;
+    margin-bottom: var(--space-5);
   }
   .index-shift {
     grid-column: 1 / 12;
@@ -313,14 +331,14 @@
   }
   .index-end {
     grid-column: 5 / 12;
-    margin-top: 64px;
+    margin-top: var(--space-8);
   }
 }
 
 /* ================= About (glacier, over the contour map) ================= */
 .about-hero {
   align-content: start;
-  padding-top: calc(var(--header-h) + 64px);
+  padding-top: calc(var(--header-h) + var(--space-8));
 }
 .about-title {
   grid-column: content-start / content-end;
@@ -329,13 +347,13 @@
 .about-lead {
   grid-column: content-start / content-end;
   max-width: 34ch;
-  margin: 24px 0 0;
+  margin: var(--space-5) 0 0;
 }
 .about-portrait {
   grid-column: 2 / content-end;
   justify-self: end;
   width: min(100%, 15rem);
-  margin-top: 32px;
+  margin-top: var(--space-6);
 }
 @media (min-width: 1024px) {
   .about-hero {
@@ -350,7 +368,7 @@
   .about-lead {
     grid-column: 5 / 10;
     grid-row: 2;
-    margin-top: 40px;
+    margin-top: calc(var(--baseline) * 10);
   }
   .about-portrait {
     grid-column: 10 / 14;
@@ -363,19 +381,19 @@
 
 /* 02 Timeline: horizontal from 1024, vertical below; the drawing runs along the seven stops. */
 .timeline {
-  --track: clamp(88px, 26vw, 120px);
+  --track: clamp(64px, 18vw, 88px);
   display: grid;
   grid-template-columns: var(--track) minmax(0, 1fr);
-  column-gap: 16px;
+  column-gap: var(--space-4);
 }
 .timeline-track {
   position: relative;
   grid-column: 1;
   grid-row: 1;
-  height: calc(var(--track) * 4);
+  height: calc(var(--track) * 8);
   container-type: size;
 }
-/* The 960 x 240 drawing turned 90° so its left end is at the top. */
+/* The 960 x 120 drawing (line and dots) turned 90° so its left end is at the top: the track is 8 × its width. */
 .timeline-track .illustration {
   position: absolute;
   top: 50%;
@@ -390,7 +408,7 @@
   grid-row: 1;
   display: grid;
   grid-template-rows: repeat(var(--stops, 7), minmax(0, 1fr));
-  height: calc(var(--track) * 4);
+  height: calc(var(--track) * 8);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -409,9 +427,11 @@
   line-height: var(--type-label-leading);
 }
 @media (min-width: 1024px) {
+  /* Seven equal cells with no gap, so each stop's centre is (i + 0.5) / 7 of the width, like the dots. */
   .timeline {
     grid-template-columns: repeat(var(--stops, 7), minmax(0, 1fr));
-    row-gap: 24px;
+    column-gap: 0;
+    row-gap: var(--space-5);
   }
   .timeline-track {
     grid-column: 1 / -1;
@@ -434,8 +454,8 @@
   }
   .timeline-stop {
     align-content: start;
-    gap: 8px;
-    padding: 0 8px;
+    gap: var(--space-2);
+    padding: 0 var(--space-2);
     text-align: center;
   }
   .timeline-stop-title {
@@ -447,7 +467,7 @@
 /* 03 How I work: a staggered 2×2. */
 .how-grid {
   display: grid;
-  gap: 40px var(--grid-gutter);
+  gap: calc(var(--baseline) * 10) var(--grid-gutter);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -455,8 +475,8 @@
 .how-item {
   display: grid;
   align-content: start;
-  gap: 12px;
-  padding-top: 16px;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
 .how-item > * {
@@ -472,10 +492,10 @@
 }
 @media (min-width: 1024px) {
   .how-grid {
-    row-gap: 64px;
+    row-gap: var(--space-8);
   }
   .how-item:nth-child(even) {
-    margin-top: 96px;
+    margin-top: var(--space-9);
   }
 }
 
@@ -492,8 +512,8 @@
 }
 .tcg-lesson {
   display: grid;
-  gap: 8px;
-  padding: 20px 0;
+  gap: var(--space-2);
+  padding: calc(var(--baseline) * 5) 0;
   border-top: 1px solid var(--line);
 }
 .tcg-lesson > * {
@@ -501,7 +521,7 @@
 }
 .tcg-stats {
   margin: 0;
-  padding-top: 16px;
+  padding-top: var(--space-4);
   border-top: 2px solid var(--accent);
   color: var(--accent);
 }
@@ -509,7 +529,7 @@
   .tcg-lesson {
     grid-template-columns: repeat(8, minmax(0, 1fr));
     column-gap: var(--grid-gutter);
-    padding: 24px 0;
+    padding: var(--space-5) 0;
   }
   .tcg-lesson h3 {
     grid-column: 1 / 4;
@@ -544,17 +564,17 @@
   color: var(--text);
 }
 .about-table .on-table-list {
-  margin-top: 32px;
+  margin-top: var(--space-6);
 }
 
 /* Colophon: photo credits and the topography's source. */
 .colophon-title {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
   color: var(--muted);
 }
 .colophon-body {
   display: grid;
-  gap: 24px;
+  gap: var(--space-5);
 }
 .colophon-list {
   display: grid;
@@ -566,8 +586,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px 24px;
-  padding: 12px 0;
+  gap: var(--space-1) var(--space-5);
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
 }
 .colophon-by {
@@ -580,7 +600,7 @@
 }
 @media (min-width: 1024px) {
   .colophon-title {
-    margin: 4px 0 0;
+    margin: var(--space-1) 0 0;
   }
 }
 
@@ -591,8 +611,8 @@
 @media (min-width: 1024px) {
   .topo-attribution {
     position: fixed;
-    bottom: 24px;
-    left: 12px;
+    bottom: var(--space-5);
+    left: var(--space-3);
     z-index: var(--z-header);
     display: block;
     max-height: calc(100svh - var(--header-h) - 48px);
@@ -625,25 +645,25 @@
 .contact {
   align-content: center;
   min-height: 100svh;
-  padding: calc(var(--header-h) + 48px) 0 64px;
+  padding: calc(var(--header-h) + var(--space-7)) 0 var(--space-8);
 }
 .contact > * {
   grid-column: content-start / content-end;
   margin: 0;
 }
 .contact-label {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-5);
   color: var(--muted);
 }
 .contact-body {
   max-width: 32ch;
-  margin-top: 32px;
+  margin-top: var(--space-6);
 }
 .contact-email-line {
   justify-self: start;
   width: fit-content;
   max-width: 100%;
-  margin-top: 40px;
+  margin-top: calc(var(--baseline) * 10);
 }
 .contact-email {
   display: block;
@@ -657,20 +677,20 @@
 }
 .contact-underline {
   height: 2px;
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   border: 0;
   background: var(--accent);
   transform-origin: 0 50%;
 }
 .contact-pairs {
   display: grid;
-  margin-top: 48px;
+  margin-top: var(--space-7);
 }
 .contact-pair {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: var(--grid-gutter);
-  padding: 12px 0;
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
 }
 .contact-pair:last-child {
@@ -685,33 +705,41 @@
   margin: 0;
 }
 .contact-note {
-  margin-top: 32px;
+  margin-top: var(--space-6);
   color: var(--muted);
 }
 @media (min-width: 1024px) {
   .contact {
-    padding-bottom: calc(var(--hand-reserve) + 24px);
+    padding-bottom: calc(var(--hand-reserve) + var(--space-5));
   }
   .contact-label {
     grid-column: 2 / 5;
     grid-row: 1;
     margin: 0;
-    padding-top: 24px;
+    padding-top: var(--space-5);
   }
   .contact-title {
     grid-column: 2 / 12;
   }
+  /* A wider measure and tighter gaps keep the whole page above the hand at 1440×900. */
   .contact-body,
   .contact-note {
-    grid-column: 5 / 10;
+    grid-column: 5 / 12;
+  }
+  .contact-body {
+    max-width: 48ch;
+    margin-top: var(--space-5);
   }
   .contact-email-line {
     grid-column: 5 / 14;
-    margin-top: 56px;
+    margin-top: var(--space-6);
   }
   .contact-pairs {
     grid-column: 5 / 12;
-    margin-top: 64px;
+    margin-top: var(--space-6);
+  }
+  .contact-note {
+    margin-top: var(--space-5);
   }
   .contact-pair {
     grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -728,7 +756,7 @@
 .lost {
   align-content: center;
   min-height: 100svh;
-  padding: calc(var(--header-h) + 32px) 0 64px;
+  padding: calc(var(--header-h) + var(--space-6)) 0 var(--space-8);
 }
 .lost > * {
   grid-column: content-start / content-end;
@@ -739,11 +767,11 @@
   justify-self: end;
   width: clamp(112px, 30vw, 132px);
   aspect-ratio: var(--card-ratio);
-  margin-bottom: 32px;
+  margin-bottom: var(--space-6);
 }
 .lost-zone {
   position: absolute;
-  inset: -12px;
+  inset: calc(var(--space-3) * -1);
   border: 1px dashed color-mix(in srgb, var(--text) 28%, transparent);
   border-radius: 14px;
 }
@@ -771,10 +799,10 @@
 }
 .lost-body {
   max-width: 30ch;
-  margin-top: 24px;
+  margin-top: var(--space-5);
 }
 .lost-back {
-  margin-top: 40px;
+  margin-top: calc(var(--baseline) * 10);
 }
 @media (min-width: 1024px) {
   .lost {

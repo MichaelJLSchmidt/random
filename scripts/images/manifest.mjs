@@ -5,7 +5,8 @@
 // placeholder colour are measured). Alt text describes what is in the photo.
 //
 // Fields: id, base (images.unsplash.com URL without query), page (the photo's
-// Unsplash page), photographer (display name), handle (Unsplash username), alt.
+// Unsplash page), photographer (display name), handle (Unsplash username), alt,
+// crop (optional [w, h] ratio for a source that is not landscape, e.g. [3, 2]).
 
 export const photos = [
   {
@@ -15,6 +16,7 @@ export const photos = [
     photographer: 'Tommy Mason',
     handle: 'tommymmason',
     alt: 'A product design workshop: a wall covered in sticky notes being sorted',
+    crop: [3, 2],
   },
   {
     id: 'team-of-teams-process',
@@ -119,5 +121,6 @@ export const photos = [
     photographer: 'Klim Musalimov',
     handle: 'klim11',
     alt: 'A hand holding a deck of cards',
+    crop: [3, 2],
   },
 ]

@@ -1,6 +1,6 @@
-import { bezier, pending } from '../choreography'
+import { bezier } from '../choreography'
 import { drawGroups } from '../kinds'
-import { ease } from '../tokens'
+import { ease, timeline as T } from '../tokens'
 
 /*
  * About timeline (full tier): its strokes are linked to the SVG's view
@@ -24,17 +24,17 @@ export function linkTimeline(svg: SVGSVGElement): (() => void) | null {
   const timeline = new Ctor({ subject: svg, axis: 'block' })
   const options: RangedOptions = {
     timeline,
-    rangeStart: pending.timelineRange.start,
-    rangeEnd: pending.timelineRange.end,
+    rangeStart: T.start,
+    rangeEnd: T.end,
     fill: 'both',
   }
   const anims: Animation[] = []
   const undo: (() => void)[] = []
   const n = groups.length
   // Each group draws over half the range, its tints over the next quarter; starts spread evenly.
-  const span = pending.timelineGroupSpan
+  const span = T.groupSpan
   const tail = span / 2
-  groups.forEach(({ strokes, tints }, gi) => {
+  groups.forEach(({ strokes, tints, labels }, gi) => {
     const from = n > 1 ? (gi / (n - 1)) * (1 - span - tail) : 0
     const to = from + span
     for (const s of strokes) {
@@ -57,6 +57,19 @@ export function linkTimeline(svg: SVGSVGElement): (() => void) | null {
         ),
       )
     }
+    // Labels fade in over the first part of their group's span.
+    for (const l of labels)
+      anims.push(
+        l.animate(
+          [
+            { offset: 0, opacity: 0 },
+            { offset: from, opacity: 0 },
+            { offset: from + tail, opacity: 1 },
+            { offset: 1, opacity: 1 },
+          ],
+          options,
+        ),
+      )
     const tintEnd = to + tail
     for (const t of tints) {
       // Up to the tint's own opacity (an 8% tint may be set with opacity rather than fill-opacity).

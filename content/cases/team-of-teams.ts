@@ -30,6 +30,7 @@ export const teamOfTeams: CaseStudy = {
       label: 'Context',
       title: 'Two designers, fourteen teams',
       image: 'team-of-teams-process',
+      caption: 'Weekly critique, open to anyone in the company',
       body: [
         "Lindengrund builds and runs software for cantons, municipalities and federal offices: tax portals, registries, case-management tools. In 2021 it had around 380 people, 14 product teams and two UX designers who sat in different departments, had no shared tools and were booked through project managers' personal networks. Design arrived late — usually after a client had complained.",
       ],

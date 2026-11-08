@@ -1,9 +1,9 @@
-import { gapFor, msFor, pending } from './choreography'
+import { gapFor, msFor } from './choreography'
 import { drawCards, fadeCards, fanCards } from './deal'
 import { completeAll, schedule } from './jobs'
 import { type Kind, fade, isHeroImage, title } from './kinds'
 import { INTRO_DONE, INTRO_KEY } from './preferences'
-import { dur, stagger } from './tokens'
+import { at as AT, dur, stagger } from './tokens'
 import { readTier } from './use-tier'
 
 /*
@@ -61,7 +61,7 @@ export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[], sta
   }
   const tier = readTier()
   const at = (s: number) => gapFor(tier, s)
-  const F = pending.firstLoad
+  const F = AT.firstLoad
 
   const cards = fanCards()
   if (tier === 'full') drawCards(cards, 0)

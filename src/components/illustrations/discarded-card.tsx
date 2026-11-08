@@ -3,79 +3,41 @@ import { roundRect, space } from './geometry'
 import type { IllustrationProps } from './types'
 
 const S = space(132, 184)
-const W = 78
-const HGT = 108
-const R = 7
+/** Inset of the outline from the box edge, so the 1.5 px stroke is never clipped. */
+const EDGE = 2
+const R = 10
+/** The back's inner frame and its centre mark (a diamond), like a card back. */
+const FRAME = 10
+const MARK = { cx: 66, cy: 92, rx: 20, ry: 28 }
 
-type Card = { x: number; y: number; deg: number }
-
-/** The pile, bottom to top, then the discarded card on top of it (tilted −12°). */
-const pile: Card[] = [
-  { x: 75, y: 121, deg: 10 },
-  { x: 58, y: 124, deg: -7 },
-  { x: 69, y: 116, deg: 2 },
-]
-const top: Card = { x: 57, y: 74, deg: -12 }
-
-const outline = roundRect(-W / 2, -HGT / 2, W, HGT, R)
-const place = (c: Card) => `translate(${c.x} ${c.y}) rotate(${c.deg})`
+const outline = roundRect(EDGE, EDGE, S.w - EDGE * 2, S.h - EDGE * 2, R)
+const frame = roundRect(FRAME, FRAME, S.w - FRAME * 2, S.h - FRAME * 2, R - 4)
+const diamond = `M${MARK.cx} ${MARK.cy - MARK.ry}L${MARK.cx + MARK.rx} ${MARK.cy}L${MARK.cx} ${MARK.cy + MARK.ry}L${MARK.cx - MARK.rx} ${MARK.cy}Z`
 
 /**
- * 404: a card discarded face down, tilted about −12°, above a loose pile of three card outlines.
- * Hidden lines are removed with masks (each card hides what lies under it), so the pile reads as
- * stacked paper, not wireframe. 132×184, plain (no labels). Groups: 1 the pile, 2 the card.
+ * 404: one card, face down, drawn upright and filling its 132×184 box. The page
+ * lays it on its discard pile and tilts it with --angle-discard (.lost-card),
+ * so the drawing itself has no angle and no pile. Plain (no labels).
+ * Groups: 1 the card's outline and tint, 2 the back (inner frame and centre mark).
  */
 export function DiscardedCard({ className, titleId, title = 'A discarded card', description }: IllustrationProps) {
   const ids = useIllustrationIds('discarded-card', titleId)
-  const above = (i: number) => [...pile.slice(i + 1), top]
   return (
     <IllustrationFrame
       slug="discarded-card"
       viewBox={S}
       title={title}
-      desc={
-        description ??
-        'A single card lies face down on top of a loose discard pile of three cards, turned at a slight angle as if just thrown there.'
-      }
+      desc={description ?? 'A single playing card lying face down, its back showing a framed diamond.'}
       className={className}
       ids={ids}
     >
-      <defs>
-        {pile.map((_, i) => (
-          <mask key={i} id={`${ids.uid}-m${i}`} maskUnits="userSpaceOnUse" x={-20} y={-20} width={172} height={224}>
-            <rect x={-20} y={-20} width={172} height={224} fill="white" stroke="none" />
-            {above(i).map((c, j) => (
-              <path
-                key={j}
-                d={outline}
-                transform={place(c)}
-                fill="black"
-                stroke="black"
-                strokeWidth={5}
-                strokeOpacity={1}
-              />
-            ))}
-          </mask>
-        ))}
-      </defs>
       <Group n={1}>
-        {pile.map((c, i) => (
-          <g key={i} mask={`url(#${ids.uid}-m${i})`}>
-            <path d={outline} transform={place(c)} pathLength="1" data-draw="" />
-          </g>
-        ))}
+        <path d={outline} data-draw-fill="" />
+        <path d={outline} pathLength="1" data-draw="" />
       </Group>
       <Group n={2}>
-        <g transform={place(top)}>
-          <path d={outline} data-draw-fill="" />
-          <path d={outline} pathLength="1" data-draw="" />
-          <path
-            d={roundRect(-W / 2 + 7, -HGT / 2 + 7, W - 14, HGT - 14, R - 3)}
-            className="il-faint"
-            pathLength="1"
-            data-draw=""
-          />
-        </g>
+        <path d={frame} className="il-faint" pathLength="1" data-draw="" />
+        <path d={diamond} pathLength="1" data-draw="" />
       </Group>
     </IllustrationFrame>
   )

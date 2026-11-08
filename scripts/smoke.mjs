@@ -2,10 +2,16 @@
 // Usage: node scripts/smoke.mjs <base-url> [--motion=full|calm|reduced]
 // Run it once per tier: the motion suite checks what each tier must (and must not) do.
 // Needs `npm run preview` (or any server for dist/ under its BASE_PATH).
+// Card and page titles come from the content modules (loaded with Node's type
+// stripping, Node >= 22.18), so copy changes never break the checks.
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require('playwright')
+const { hand } = await import(new URL('../content/hand.ts', import.meta.url).href)
+const { notFound } = await import(new URL('../content/pages/not-found.ts', import.meta.url).href)
+const cardTitle = (id) => hand.cards[id].title
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const [base = 'http://localhost:4100/random/', ...flags] = process.argv.slice(2)
 const motion = flags.find((f) => f.startsWith('--motion='))?.slice(9) ?? 'full'
 const root = base.endsWith('/') ? base : `${base}/`
@@ -66,9 +72,18 @@ async function newContext(browser, device, { firstVisit = false } = {}) {
   return { context, page, errors }
 }
 
-/** Average colour of a screen region (decoded in the page; works for the WebGL field). */
+/**
+ * Average colour of the background field in a screen region (decoded in the
+ * page; works for the WebGL field). The page content and header are hidden
+ * for the shot, so a hero image never lands in the sample (the sampled
+ * regions stay clear of the hand).
+ */
 async function regionColour(page, clip) {
+  await page
+    .addStyleTag({ content: 'main, header, footer { visibility: hidden !important; }' })
+    .then((tag) => tag.evaluate((el) => (el.id = 'smoke-field-only')))
   const png = (await page.screenshot({ clip })).toString('base64')
+  await page.evaluate(() => document.getElementById('smoke-field-only')?.remove())
   return page.evaluate(async (data) => {
     const img = new Image()
     img.src = `data:image/png;base64,${data}`
@@ -165,7 +180,7 @@ async function tableSuite(browser, device) {
   const counter = () => page.locator('.hand-counter').textContent()
   check(
     'counter: "01 / 04" and the first card at rest',
-    /01\s*\/\s*04\s*Team of Teams/.test(await counter()),
+    new RegExp(`01\\s*/\\s*04\\s*${escape(cardTitle('team-of-teams'))}`).test(await counter()),
     await counter(),
   )
   check('counter: polite live region', (await page.locator('.hand-counter').getAttribute('aria-live')) === 'polite')
@@ -177,7 +192,11 @@ async function tableSuite(browser, device) {
     await page.hover('.hand-card[data-play="front-door"]', { position: { x: 60, y: 30 } })
     await wait(page, 1000)
     const after = await regionColour(page, sky)
-    check('counter: follows the hovered card', /03\s*\/\s*04\s*Front Door/.test(await counter()), await counter())
+    check(
+      'counter: follows the hovered card',
+      new RegExp(`03\\s*/\\s*04\\s*${escape(cardTitle('front-door'))}`).test(await counter()),
+      await counter(),
+    )
     check(
       'hover: field blends toward the card colour (grove)',
       after[1] - before[1] > 2 && after[1] > after[0],
@@ -199,7 +218,7 @@ async function tableSuite(browser, device) {
     JSON.stringify(vts.at(-1)),
   )
   check('play: H1 focused', (await focused(page)) === 'h1#page-heading')
-  check('play: title announced', (await live(page)).includes('Team of Teams'))
+  check('play: title announced', (await live(page)).includes(cardTitle('team-of-teams')))
   check(
     'play: ghost in the open slot',
     (await page.locator('.hand-card[data-play="team-of-teams"] .hand-ghost').count()) === 1,
@@ -329,7 +348,7 @@ async function tableSuite(browser, device) {
     )
     check(`reveal ${p}: first viewport revealed`, hidden.length === 0, hidden.join(','))
   }
-  check('404: "This page isn\'t in the deck"', (await page.locator('h1').textContent()).includes('in the deck'))
+  check(`404: "${notFound.title}"`, (await page.locator('h1').textContent()).includes(notFound.title))
 
   check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
   await context.close()
@@ -353,7 +372,11 @@ async function motionSuite(browser, device) {
           for (const [p, v] of Object.entries(k)) {
             if (['offset', 'easing', 'composite', 'computedOffset'].includes(p)) continue
             // A transform that goes nowhere (0px travel in calm / reduced tokens) is not movement.
-            if (/^(transform|translate|scale|rotate)$/.test(p) && /^(none|0(px)?( 0(px)?)*|1( 1)*|0deg)$/.test(String(v).trim())) continue
+            if (
+              /^(transform|translate|scale|rotate)$/.test(p) &&
+              /^(none|0(px)?( 0(px)?)*|1( 1)*|0deg)$/.test(String(v).trim())
+            )
+              continue
             window.__props.add(p)
           }
       }
@@ -370,7 +393,12 @@ async function motionSuite(browser, device) {
   if (deal) {
     if (motion === 'full' && device === 'desktop')
       check('deal scene: pinned stage (full, desktop)', deal.active && deal.ratio > 2, JSON.stringify(deal))
-    else check(`deal scene: static row, cards stack (${motion}, ${device})`, !deal.active && deal.ratio < 1.5, JSON.stringify(deal))
+    else
+      check(
+        `deal scene: static row, cards stack (${motion}, ${device})`,
+        !deal.active && deal.ratio < 1.5,
+        JSON.stringify(deal),
+      )
   }
   // Scroll the whole page like a reader.
   const height = await page.evaluate(() => document.documentElement.scrollHeight)
@@ -381,15 +409,20 @@ async function motionSuite(browser, device) {
   await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight / 2))
   await wait(page, 2600)
   const rest = await page.evaluate(() => ({
-    hidden: [...document.querySelectorAll('main [data-reveal]:not([data-reveal="breaker"])')]
+    hidden: [...document.querySelectorAll('main [data-reveal]')]
       .filter((el) => !el.hasAttribute('data-revealed') || Number(getComputedStyle(el).opacity) < 0.99)
       .map((el) => el.dataset.reveal),
     willChange: [...document.querySelectorAll('main *')].filter((el) => el.style.willChange).length,
     moving: document
       .getAnimations()
-      .filter((a) => a.playState === 'running' && a.timeline instanceof DocumentTimeline && !a.effect?.target?.closest?.('.field'))
+      .filter(
+        (a) =>
+          a.playState === 'running' && a.timeline instanceof DocumentTimeline && !a.effect?.target?.closest?.('.field'),
+      )
       .map((a) => a.effect?.target?.className || a.effect?.target?.tagName),
-    progress: Number(getComputedStyle(document.querySelector('[data-reading-hairline]')).getPropertyValue('--reading-progress')),
+    progress: Number(
+      getComputedStyle(document.querySelector('[data-reading-hairline]')).getPropertyValue('--reading-progress'),
+    ),
     bar: (() => {
       const cs = getComputedStyle(document.querySelector('[data-reading-hairline] > *'))
       return { transform: cs.transform, clip: cs.clipPath }
@@ -403,7 +436,11 @@ async function motionSuite(browser, device) {
   const moves = rest.props.filter((p) => /transform|translate|scale|rotate|clipPath/.test(p))
   if (motion === 'reduced') {
     check('reduced: no transform or clip animated (opacity only)', moves.length === 0, rest.props.join(','))
-    check('reduced: hairline drawn with a clip, no transform', rest.bar.transform === 'none' && rest.bar.clip !== 'none', JSON.stringify(rest.bar))
+    check(
+      'reduced: hairline drawn with a clip, no transform',
+      rest.bar.transform === 'none' && rest.bar.clip !== 'none',
+      JSON.stringify(rest.bar),
+    )
   } else check(`${motion}: reveals move (${moves.join(', ') || 'none'})`, moves.length > 0, rest.props.join(','))
   check('no page errors (motion)', errors.length === 0, errors.slice(0, 3).join(' | '))
   await context.close()

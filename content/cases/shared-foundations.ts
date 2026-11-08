@@ -30,6 +30,7 @@ export const sharedFoundations: CaseStudy = {
       label: 'Context',
       title: 'Eleven date pickers',
       image: 'shared-foundations-process',
+      caption: 'Monthly component review with contributors',
       body: [
         'Every product team had its own button. When we screenshotted 19 applications we found 11 date pickers, 6 table patterns and three shades of "official" red. Clients had started asking why applications from the same supplier looked and behaved differently, and accessibility requirements for public bodies were making the inconsistency expensive.',
       ],

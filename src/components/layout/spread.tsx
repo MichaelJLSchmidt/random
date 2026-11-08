@@ -19,11 +19,12 @@ type Props = {
  * .spread-grid spanning full-start / full-end, so it works inside a page grid
  * or on its own. The caption sits under the image in the reading column, and
  * from 1680 px (D2) in column 12 + the outer track, under the image's right
- * edge. Contract: docs/contracts.md#spread.
+ * edge. data-breaker: the background field lifts 10% while it is in view.
+ * Contract: docs/contracts.md#spread.
  */
 export function Spread({ image, caption, sizes = '100vw', priority, className }: Props) {
   return (
-    <figure className={cx('spread spread-grid col-full', className)} data-spread="">
+    <figure className={cx('spread spread-grid col-full', className)} data-spread="" data-breaker="">
       <Picture id={image} sizes={sizes} priority={priority} className="spread-media col-full" />
       {caption && <figcaption className="spread-caption col-margin t-label">{caption}</figcaption>}
     </figure>

@@ -9,6 +9,12 @@ export type CareerMatrixProps = IllustrationProps & {
   tracks?: readonly string[]
   /** The highlighted path: [level, track] cells in order. */
   path?: readonly (readonly [number, number])[]
+  /**
+   * false: the grid without its own labels, levels across (horizontal layout), cells spread
+   * evenly edge to edge, for a page that sets the axis labels as HTML in equal columns and rows
+   * beside the drawing (Management).
+   */
+  axes?: boolean
 }
 
 const H = space(960, 600)
@@ -17,17 +23,17 @@ const V = space(360, 540)
 type Cell = { x: number; y: number; w: number; h: number }
 type Grid = { cell: (level: number, track: number) => Cell; heads: DrawGroup['pins'] }
 
-/** Wide: levels across (left to right), tracks down; labels above and to the left. */
-function wide(s: Space, levels: readonly string[], tracks: readonly string[]): Grid {
-  const x0 = 232
-  const x1 = 932
-  const y0 = 96
-  const y1 = 576
+/** Wide: levels across (left to right), tracks down; labels above and to the left, or none (edge to edge). */
+function wide(s: Space, levels: readonly string[], tracks: readonly string[], axes = true): Grid {
+  const x0 = axes ? 232 : 0
+  const x1 = axes ? 932 : s.w
+  const y0 = axes ? 96 : 0
+  const y1 = axes ? 576 : s.h
   const cw = (x1 - x0) / levels.length
   const ch = (y1 - y0) / tracks.length
   return {
     cell: (l, t) => ({ x: x0 + l * cw + 8, y: y0 + t * ch + 8, w: cw - 16, h: ch - 16 }),
-    heads: (
+    heads: axes ? (
       <>
         {levels.map((name, l) => (
           <Label
@@ -46,7 +52,7 @@ function wide(s: Space, levels: readonly string[], tracks: readonly string[]): G
           <Label key={`t${t}`} s={s} at={[40, y0 + (t + 0.5) * ch]} valign="middle" text={name} cat wrap={14} />
         ))}
       </>
-    ),
+    ) : undefined,
   }
 }
 
@@ -89,8 +95,9 @@ function draw(
   levels: readonly string[],
   tracks: readonly string[],
   path: readonly (readonly [number, number])[],
+  axes = true,
 ): DrawGroup[] {
-  const grid = key === 'h' ? wide(s, levels, tracks) : narrow(s, levels, tracks)
+  const grid = key === 'h' ? wide(s, levels, tracks, axes) : narrow(s, levels, tracks)
   const on = new Set(path.map(([l, t]) => `${l}:${t}`))
   const cells = levels.flatMap((_, l) => tracks.map((__, t) => ({ l, t, c: grid.cell(l, t) })))
   const points = path.map(([l, t]) => centre(grid.cell(l, t)))
@@ -190,6 +197,7 @@ export function CareerMatrix({
     [2, 1],
     [3, 2],
   ],
+  axes = true,
   title = 'Career framework',
   description,
   ...props
@@ -204,7 +212,8 @@ export function CareerMatrix({
       title={title}
       desc={desc}
       {...props}
-      h={[H, (s, k) => draw(s, k, levels, tracks, path)]}
+      variant={axes ? props.variant : 'horizontal'}
+      h={[H, (s, k) => draw(s, k, levels, tracks, path, axes)]}
       v={[V, (s, k) => draw(s, k, levels, tracks, path)]}
     />
   )

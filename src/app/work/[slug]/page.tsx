@@ -46,7 +46,7 @@ export default async function CaseStudyPage({ params }: Props) {
           id={study.heroImage}
           priority
           sizes="(min-width: 1440px) 66vw, (min-width: 1024px) 62vw, 92vw"
-          className="case-hero-picture"
+          className="case-hero-picture hero-drift"
         />
       }
       meta={meta}

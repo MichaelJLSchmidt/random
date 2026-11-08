@@ -13,14 +13,14 @@
   position: relative;
   align-content: start;
   min-height: 64svh;
-  padding-top: calc(var(--header-h) + 8px);
+  padding-top: calc(var(--header-h) + var(--space-2));
 }
 .case-hero-meta {
   grid-column: content-start / content-end;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 0 0 16px;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-4);
   color: var(--muted);
 }
 .case-hero-counter {
@@ -64,7 +64,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: var(--space-5);
 }
 .case-hero-art .illustration {
   width: auto;
@@ -83,7 +83,7 @@
 }
 .case-hero-summary {
   max-width: 32ch;
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
 }
 @media (min-width: 1024px) {
   .case-hero {
@@ -94,13 +94,13 @@
   .case-hero-meta {
     grid-column: 2 / 6;
     grid-row: 1;
-    margin: 24px 0 0;
+    margin: var(--space-5) 0 0;
   }
   .case-hero-frame {
     grid-column: 7 / full-end;
     grid-row: 1 / 4;
     height: auto;
-    margin-top: 16px;
+    margin-top: var(--space-4);
     border-radius: 24px 0 0 24px;
   }
   .case-hero-frame::after {
@@ -109,33 +109,34 @@
       linear-gradient(to top, color-mix(in srgb, var(--id-field) 60%, transparent), transparent 40%);
   }
   .case-hero-art {
-    padding: 48px;
+    padding: var(--space-7);
   }
   .case-hero-text {
     grid-column: 2 / 11;
     grid-row: 3;
     margin: 0;
-    padding: 48px 0 40px;
+    padding: var(--space-7) 0 calc(var(--baseline) * 10);
   }
   .case-hero-summary {
     max-width: 30ch;
-    margin-top: 24px;
+    margin-top: var(--space-5);
   }
 }
 
 /* Mini card: holds the card's transition name once the hero has scrolled away. */
 .hero-mini {
   position: fixed;
-  top: calc(var(--header-h) + 12px);
+  top: calc(var(--header-h) + var(--space-3));
   left: var(--grid-margin);
   z-index: var(--z-header);
   display: grid;
   place-items: start;
   width: 40px;
   height: 56px;
-  padding: 5px;
-  border-radius: 5px;
-  font-size: 0.55rem;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-leading);
   color: var(--id-accent);
   background:
     radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--id-glow) 75%, transparent), transparent 65%),
@@ -150,7 +151,7 @@
   /* Desktop: on the table at the bottom left, clear of the sticky index and the hand. */
   .hero-mini {
     top: auto;
-    bottom: calc(24px + var(--safe-bottom));
+    bottom: calc(var(--space-5) + var(--safe-bottom));
   }
 }
 @keyframes mini-in {
@@ -162,12 +163,12 @@
 
 /* ---------- Facts: MetaPairs, then the Scoreboard ---------- */
 .detail-facts {
-  row-gap: 48px;
+  row-gap: var(--space-7);
   margin-top: var(--space-s);
 }
 @media (min-width: 1024px) {
   .detail-facts {
-    row-gap: 64px;
+    row-gap: var(--space-8);
   }
 }
 
@@ -179,7 +180,7 @@
 
 /* ---------- 03 Role: owned / not owned ---------- */
 .role-head {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: var(--accent);
 }
 .role-col-not .role-head,
@@ -190,15 +191,15 @@
 /* ---------- 04 Approach: steps left, the illustration pinned right ---------- */
 .approach-steps {
   display: grid;
-  gap: 40px;
+  gap: calc(var(--baseline) * 10);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .approach-step {
   display: grid;
-  gap: 12px;
-  padding-top: 16px;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
 .approach-step > * {
@@ -209,13 +210,19 @@
 }
 @media (min-width: 1024px) {
   .approach-steps {
-    gap: 64px;
-    padding-bottom: 96px;
+    gap: var(--space-8);
+    padding-bottom: var(--space-9);
   }
   .approach-figure {
     position: sticky;
-    top: calc(var(--header-h) + 48px);
+    top: calc(var(--header-h) + var(--space-7));
     align-self: start;
+  }
+  /* The vertical layout (variant="vertical") is tall: its width follows the viewport height, so
+     the whole drawing stays in view while the column is pinned. */
+  .approach-figure .illustration {
+    max-width: calc((100svh - var(--header-h) - var(--space-7) * 2) * (var(--il-ratio-v)));
+    margin-inline: auto;
   }
 }
 
@@ -229,18 +236,18 @@
 /* ---------- 06 Artefacts: rows of 7 + 5, then 4 + 8 ---------- */
 .artefacts {
   display: grid;
-  gap: 48px var(--grid-gutter);
+  gap: var(--space-7) var(--grid-gutter);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .artefact-figure {
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   margin: 0;
 }
 .artefact-media {
-  padding: clamp(16px, 6%, 48px);
+  padding: clamp(var(--space-4), 6%, var(--space-7));
   border-radius: 12px;
   background: color-mix(in srgb, var(--id-field) 80%, black);
   box-shadow: inset 0 0 0 1px var(--line);
@@ -254,11 +261,11 @@
 }
 .artefact-caption {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 /* Text-only tiles (no image, or a drawing a section already shows): a ruled caption. */
 .artefact[data-media='none'] .artefact-figure {
-  padding-top: 16px;
+  padding-top: var(--space-4);
   border-top: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .artefact-number {
@@ -270,7 +277,7 @@
 @media (min-width: 1024px) {
   .artefacts {
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    row-gap: 96px;
+    row-gap: var(--space-9);
     align-items: start;
   }
   .artefact[data-slot='a'] {
@@ -278,11 +285,11 @@
   }
   .artefact[data-slot='b'] {
     grid-column: 8 / 13;
-    margin-top: 96px;
+    margin-top: var(--space-9);
   }
   .artefact[data-slot='c'] {
     grid-column: 1 / 5;
-    margin-top: 48px;
+    margin-top: var(--space-7);
   }
   .artefact[data-slot='d'] {
     grid-column: 5 / 13;
@@ -299,8 +306,8 @@
 .outcome-list > li {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr);
-  gap: 16px;
-  padding: 16px 0;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
   border-top: 1px solid var(--line);
 }
 .outcome-number {
@@ -318,11 +325,11 @@
   transform-origin: 0 50%;
 }
 .page-section > .accent-rule + * {
-  margin-top: 32px;
+  margin-top: var(--space-6);
 }
 .differently-body {
   display: grid;
-  gap: 32px;
+  gap: var(--space-6);
 }
 .differently-body > * {
   max-width: 40ch;
@@ -334,7 +341,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: end;
-  gap: 24px;
+  gap: var(--space-5);
   width: fit-content;
   color: var(--text);
   text-decoration: none;
@@ -355,8 +362,8 @@
 }
 .next-card-text {
   display: grid;
-  gap: 12px;
-  padding-bottom: 8px;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
 }
 .next-card-meta {
   color: var(--muted);
@@ -366,7 +373,7 @@
 }
 .next-card-title {
   --u: 0%;
-  padding-bottom: 4px;
+  padding-bottom: var(--space-1);
   background: linear-gradient(var(--accent), var(--accent)) no-repeat left bottom / var(--u) 2px;
   transition: --u var(--dur-underline) var(--ease-out-soft);
 }
@@ -385,7 +392,7 @@
 }
 .principle {
   display: grid;
-  padding: 24px 0 32px;
+  padding: var(--space-5) 0 var(--space-6);
   border-top: 1px solid var(--line);
 }
 .principle > * {
@@ -400,14 +407,14 @@
   position: relative;
 }
 .principle-evidence {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 @media (min-width: 1024px) {
   .principle {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     column-gap: var(--grid-gutter);
     align-items: start;
-    padding: 32px 0;
+    padding: var(--space-6) 0;
   }
   .principle-numeral {
     grid-column: 1 / 4;
@@ -415,12 +422,12 @@
   }
   .principle-title {
     grid-column: 4 / 8;
-    padding-top: 16px;
+    padding-top: var(--space-4);
   }
   .principle-evidence {
     grid-column: 8 / 13;
     margin: 0;
-    padding-top: 20px;
+    padding-top: calc(var(--baseline) * 5);
   }
 }
 
@@ -431,7 +438,7 @@
 .team-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -440,7 +447,7 @@
   display: grid;
   align-content: space-between;
   aspect-ratio: var(--card-ratio);
-  padding: 8px;
+  padding: var(--space-2);
   border-radius: 8px;
   background:
     radial-gradient(120% 80% at 0% 100%, color-mix(in oklab, var(--id-glow) 40%, transparent), transparent 70%),
@@ -458,8 +465,8 @@
 }
 .team-row {
   display: grid;
-  gap: 8px;
-  padding: 20px 0;
+  gap: var(--space-2);
+  padding: calc(var(--baseline) * 5) 0;
   border-top: 1px solid var(--line);
 }
 .team-row:last-child {
@@ -472,19 +479,19 @@
   color: var(--muted);
 }
 .page-section > .team-note {
-  margin-top: 32px;
+  margin-top: var(--space-6);
 }
 @media (min-width: 1024px) {
   .team-figure {
     position: sticky;
-    top: calc(var(--header-h) + 48px);
+    top: calc(var(--header-h) + var(--space-7));
     align-self: start;
   }
   .team-rows {
-    padding-bottom: 48px;
+    padding-bottom: var(--space-7);
   }
   .team-row {
-    padding: 32px 0;
+    padding: var(--space-6) 0;
   }
 }
 
@@ -502,8 +509,8 @@
 }
 .ritual {
   display: grid;
-  gap: 8px;
-  padding: 20px 0;
+  gap: var(--space-2);
+  padding: calc(var(--baseline) * 5) 0;
   border-top: 1px solid var(--line);
 }
 .ritual > * {
@@ -532,7 +539,7 @@
 .hiring-steps {
   position: relative;
   display: grid;
-  gap: 40px;
+  gap: calc(var(--baseline) * 10);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -541,8 +548,8 @@
   position: relative;
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding-left: 32px;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
 }
 .hiring-step > * {
   margin: 0;
@@ -565,8 +572,8 @@
 }
 .hiring-connector {
   position: absolute;
-  top: 8px;
-  bottom: 24px;
+  top: var(--space-2);
+  bottom: var(--space-5);
   left: 6px;
   width: 1px;
   color: color-mix(in srgb, var(--accent) 60%, transparent);
@@ -586,11 +593,11 @@
     column-gap: var(--grid-gutter);
   }
   .hiring-step {
-    padding: 40px 0 0;
+    padding: calc(var(--baseline) * 10) 0 0;
   }
   /* From the first node to the last: (n - 1) column steps. */
   .hiring-connector {
-    top: 8px;
+    top: var(--space-2);
     bottom: auto;
     left: 6px;
     width: calc((100% + var(--grid-gutter)) * (var(--steps, 5) - 1) / var(--steps, 5));
@@ -604,54 +611,82 @@
   }
 }
 
-/* 05 Growth: dimensions down the side, levels along the bottom, the matrix between. */
+/*
+ * 05 Growth: dimensions down the side, levels along the bottom, the matrix
+ * between (drawn without its own labels: its rows and columns are equal, so
+ * the HTML labels line up with them at every width).
+ */
 .growth-matrix {
   display: grid;
-  gap: 16px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-4) var(--space-3);
   margin: 0;
 }
 .growth-dimensions,
 .growth-levels {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 24px;
+  gap: var(--space-2) var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
   color: var(--muted);
 }
+.growth-dimensions {
+  grid-column: 1;
+  grid-row: 1;
+  flex-direction: column;
+  justify-content: space-around;
+  text-align: right;
+}
+.growth-art {
+  grid-column: 2;
+  grid-row: 1;
+}
+.growth-levels {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--levels, 4), minmax(0, 1fr));
+  column-gap: var(--space-2);
+  text-align: center;
+}
 @media (min-width: 1024px) {
   .growth-matrix {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     column-gap: var(--grid-gutter);
-    row-gap: 16px;
   }
   .growth-dimensions {
     grid-column: 1 / 4;
-    grid-row: 1;
-    flex-direction: column;
-    justify-content: space-around;
-    text-align: right;
   }
-  .growth-art {
-    grid-column: 4 / 13;
-    grid-row: 1;
-  }
+  .growth-art,
   .growth-levels {
     grid-column: 4 / 13;
-    display: grid;
-    grid-template-columns: repeat(var(--levels, 4), minmax(0, 1fr));
-    text-align: center;
   }
 }
 
-/* 06 Workshops: glyph strip over the deal row, then the draw. */
-.workshop-glyphs {
+/* 06 Workshops: the format cards (each with its method's glyph), then the draw. */
+.deal-card-glyph {
+  display: block;
+  width: var(--space-7);
   color: var(--accent);
 }
-.page-section > .workshop-glyphs + .deal-row {
-  margin-top: 24px;
+.workshop-glyph {
+  display: block;
+}
+.deal-row-workshops .deal-card {
+  aspect-ratio: auto;
+  min-height: calc(var(--space-10) * 3);
 }
 .workshop-draw .workshop {
   margin-top: 0;
+}
+
+/* The closing contact line after Next: label in the index column, one line of text. */
+.closing-contact-label {
+  margin: 0;
+  color: var(--muted);
+}
+.closing-contact-line {
+  margin: 0;
+  max-width: var(--type-body-measure);
 }

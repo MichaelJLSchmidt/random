@@ -4,14 +4,13 @@ import { DealRow, MarginNote, Section, Spread } from '@/components/layout'
 import { NextProject } from '@/components/next-project'
 import { Picture } from '@/components/picture'
 import { Reveal } from '@/components/reveals'
+import type { IllustrationVariant } from '@/components/illustrations'
 import {
   type Artefact,
   type CaseStudy,
   type CaseStudySectionKey,
   type ContentIllustration,
-  type ImageEntry,
   caseStudySectionKeys,
-  images,
   pad2,
   site,
 } from '@/lib/content'
@@ -31,21 +30,14 @@ import { cx } from '@/lib/cx'
 
 type Placement = Partial<Record<CaseStudySectionKey, ContentIllustration>>
 
-/** Where the brief puts each case's illustrations; used while content names none. */
-const briefPlacement: Record<string, Placement> = {
-  'team-of-teams': { approach: 'IntakeBeforeAfter', outcomes: 'TeamGrowthTimeline' },
-  'shared-foundations': { approach: 'DesignSystemLayers', decisions: 'ContributionLoop', outcomes: 'AdoptionBars' },
-  'front-door': { problem: 'JourneyEmotionCurve', approach: 'ServiceBlueprint' },
-}
-
-/** Section illustrations: content's `section.illustration` when it sets any, the brief's placement otherwise. */
+/** Section illustrations, where the content puts them (any section may hold one: SectionCopy.illustration). */
 function placement(study: CaseStudy): Placement {
-  const fromContent: Placement = {}
+  const placed: Placement = {}
   for (const key of caseStudySectionKeys) {
     const section = study.sections[key]
-    if ('illustration' in section && section.illustration) fromContent[key] = section.illustration
+    if ('illustration' in section && section.illustration) placed[key] = section.illustration
   }
-  return Object.keys(fromContent).length > 0 ? fromContent : (briefPlacement[study.slug] ?? {})
+  return placed
 }
 
 /** Space above each section: chosen per section so the rhythm varies (S 96 / M 160 / L 240 desktop). */
@@ -85,10 +77,20 @@ function Body({ body, list, className }: { body: string[]; list?: string[]; clas
 const hasBody = (s: { body: string[]; list?: string[] }) => s.body.length > 0 || Boolean(s.list?.length)
 
 /** A section illustration, drawn on when it scrolls in. */
-function Figure({ name, id, className }: { name: ContentIllustration; id: string; className?: string }) {
+function Figure({
+  name,
+  id,
+  variant,
+  className,
+}: {
+  name: ContentIllustration
+  id: string
+  variant?: IllustrationVariant
+  className?: string
+}) {
   return (
     <Reveal as="figure" kind="draw" className={cx('section-figure', className)}>
-      <Illustration name={name} titleId={`${id}-illustration-title`} />
+      <Illustration name={name} titleId={`${id}-illustration-title`} variant={variant} />
     </Reveal>
   )
 }
@@ -162,7 +164,6 @@ export function CaseSections({ study }: { study: CaseStudy }) {
   )
 
   const spreadImage = s.context.image ?? study.heroImage
-  const spreadAlt = (images as Record<string, ImageEntry>)[spreadImage]?.alt
   // 02 Problem opens with the case's statement at h2 size (the first problem paragraph when there is none).
   const statement = study.statement ?? s.problem.body[0]
   const problemRest = study.statement ? s.problem.body : s.problem.body.slice(1)
@@ -174,17 +175,14 @@ export function CaseSections({ study }: { study: CaseStudy }) {
         <Body body={s.context.body} list={s.context.list} className="col-content" />
         <Note>{s.context.note}</Note>
         {fig.context && <Figure name={fig.context} id="context" className="cols-4-12" />}
-        <Spread
-          image={spreadImage}
-          caption={spreadAlt || `${study.number} · ${study.title}`}
-          className="section-spread"
-        />
+        <Spread image={spreadImage} caption={s.context.caption} className="section-spread" />
       </Section>
 
       {/* 02 Problem: the statement set at h2 size; the h2 stays for screen readers. */}
       <Section
         {...head('problem')}
         titleHidden
+        lift
         pin={1 + (problemRest.length > 0 || s.problem.list?.length ? 1 : 0) + (fig.problem ? 1 : 0)}
       >
         {statement && (
@@ -231,14 +229,19 @@ export function CaseSections({ study }: { study: CaseStudy }) {
             </li>
           ))}
         </Reveal>
-        {fig.approach && <Figure name={fig.approach} id="approach" className="approach-figure row-mate cols-8-12" />}
+        {/* The sticky column is narrow on desktop (about 370–560 px): the drawing takes its vertical layout. */}
+        {fig.approach && (
+          <Figure name={fig.approach} id="approach" variant="vertical" className="approach-figure row-mate cols-8-12" />
+        )}
         <Note>{s.approach.note}</Note>
       </Section>
 
       {/* NumeralBreaker, then 05 Decisions: the deal stage across all twelve columns. */}
       <Section {...head('decisions')} breaker pin={1 + (hasBody(s.decisions) || fig.decisions ? 1 : 0)}>
         <Body body={s.decisions.body} list={s.decisions.list} className={fig.decisions ? 'cols-4-8' : 'col-content'} />
-        {fig.decisions && <Figure name={fig.decisions} id="decisions" className="decisions-figure row-mate cols-9-12" />}
+        {fig.decisions && (
+          <Figure name={fig.decisions} id="decisions" className="decisions-figure row-mate cols-9-12" />
+        )}
         <Note>{s.decisions.note}</Note>
         <DealRow decisions={s.decisions.items} className="col-wide" />
       </Section>

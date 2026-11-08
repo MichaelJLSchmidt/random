@@ -1,14 +1,21 @@
 import type { CSSProperties } from 'react'
 import type { Metadata } from 'next'
 import { DetailPage } from '@/components/detail-page'
-import { CareerMatrix, TeamConstellation, WeekRing, WorkshopGlyphs } from '@/components/illustrations'
-import { Scoreboard, Section, SectionIndex, WorkshopRow } from '@/components/layout'
+import { CareerMatrix, TeamConstellation, WeekRing, WorkshopGlyph } from '@/components/illustrations'
+import { Scoreboard, Section, SectionIndex, Spread, WorkshopRow } from '@/components/layout'
 import { NextProject } from '@/components/next-project'
 import { Picture } from '@/components/picture'
 import { Reveal } from '@/components/reveals'
 import { WorkshopDraw } from '@/eggs/workshop-draw'
 import { cardById } from '@/lib/cards'
-import { type ManagementSectionKey, management, managementSectionKeys, pad2, site, workshopMethods } from '@/lib/content'
+import {
+  type ManagementSectionKey,
+  management,
+  managementSectionKeys,
+  pad2,
+  site,
+  workshopMethods,
+} from '@/lib/content'
 
 export const metadata: Metadata = { title: management.title, description: management.lead }
 
@@ -28,8 +35,10 @@ const space: Record<ManagementSectionKey, 's' | 'm' | 'l'> = {
  * constellation), then 01 principles (numeral | h3 | evidence), 02 team (the
  * structure pinned while the member rows scroll), 03 rituals (WeekRing),
  * 04 hiring (a path with a drawn connector), 05 growth (CareerMatrix),
- * 06 workshops (a deal row + the workshop draw), 07 metrics (Scoreboard), and
- * the next card. Minimap at the right edge.
+ * 06 workshops (a static row of format cards, each with its WorkshopGlyph,
+ * + the workshop draw), 07 metrics (Scoreboard), the next card and the
+ * closing contact line. Section images (principles, workshops) as Spreads.
+ * Minimap at the right edge.
  */
 export default function ManagementPage() {
   const card = cardById('management')!
@@ -74,6 +83,9 @@ export default function ManagementPage() {
             </li>
           ))}
         </Reveal>
+        {m.principles.image && (
+          <Spread image={m.principles.image} caption={m.principles.caption} className="section-spread" />
+        )}
       </Section>
 
       {/* 02 Team: the team's structure pinned on the left while the member rows scroll. */}
@@ -107,7 +119,16 @@ export default function ManagementPage() {
       {/* 03 Rituals: the list on the left, the week as a ring on the right. */}
       <Section {...head('rituals')} pin={2}>
         <Reveal kind="draw" className="rituals-ring">
-          <WeekRing titleId="rituals-week-ring-title" />
+          {/* The weekly rituals the content names: check-in on Monday, critique on Wednesday, 1:1s through the week. */}
+          <WeekRing
+            titleId="rituals-week-ring-title"
+            rituals={[
+              { label: 'Check-in', days: [0], at: 0.3 },
+              { label: '1:1s', days: [1, 3], at: 0.5 },
+              { label: 'Critique', days: [2], at: 0.5 },
+            ]}
+            daily=""
+          />
         </Reveal>
         <Reveal as="ul" kind="list" className="rituals-list row-mate">
           {m.rituals.items.map((r, i) => (
@@ -123,15 +144,16 @@ export default function ManagementPage() {
       {/* 04 Hiring: a path of steps joined by a drawn connector. */}
       <Section {...head('hiring')} pin={1}>
         <div className="hiring col-wide" style={{ '--steps': m.hiring.steps.length } as CSSProperties}>
+          {/* Unscaled SVGs (no viewBox, percentage coordinates): the 1 px stroke stays 1 px and pathLength draws it. */}
           <Reveal kind="draw" className="hiring-connector" aria-hidden="true">
-            <svg className="hiring-connector-x" viewBox="0 0 100 2" preserveAspectRatio="none" fill="none" stroke="currentColor">
+            <svg className="hiring-connector-x" fill="none" stroke="currentColor" strokeWidth={1}>
               <g data-draw-group="1">
-                <line x1="0" y1="1" x2="100" y2="1" pathLength={1} data-draw="" vectorEffect="non-scaling-stroke" />
+                <line x1="0" y1="50%" x2="100%" y2="50%" pathLength={1} data-draw="" />
               </g>
             </svg>
-            <svg className="hiring-connector-y" viewBox="0 0 2 100" preserveAspectRatio="none" fill="none" stroke="currentColor">
+            <svg className="hiring-connector-y" fill="none" stroke="currentColor" strokeWidth={1}>
               <g data-draw-group="1">
-                <line x1="1" y1="0" x2="1" y2="100" pathLength={1} data-draw="" vectorEffect="non-scaling-stroke" />
+                <line x1="50%" y1="0" x2="50%" y2="100%" pathLength={1} data-draw="" />
               </g>
             </svg>
           </Reveal>
@@ -165,7 +187,12 @@ export default function ManagementPage() {
             ))}
           </ul>
           <Reveal kind="draw" className="growth-art">
-            <CareerMatrix titleId="growth-career-matrix-title" />
+            <CareerMatrix
+              titleId="growth-career-matrix-title"
+              levels={m.growth.levels}
+              tracks={m.growth.dimensions}
+              axes={false}
+            />
           </Reveal>
           <ul className="growth-levels t-label" style={{ '--levels': m.growth.levels.length } as CSSProperties}>
             {m.growth.levels.map((l, i) => (
@@ -175,12 +202,17 @@ export default function ManagementPage() {
         </figure>
       </Section>
 
-      {/* 06 Workshops: the formats dealt as cards, then the workshop draw. */}
+      {/* 06 Workshops: the formats as a row of cards, each with its method's glyph, then the workshop draw. */}
       <Section {...head('workshops')} pin={1}>
-        <Reveal kind="draw" className="workshop-glyphs col-wide">
-          <WorkshopGlyphs titleId="workshops-glyphs-title" />
-        </Reveal>
-        <WorkshopRow formats={m.workshops.formats} className="col-wide" />
+        <WorkshopRow
+          formats={m.workshops.formats}
+          glyphs={m.workshops.formats.map((f, i) => (
+            <Reveal key={i} as="span" kind="draw" className="workshop-glyph">
+              <WorkshopGlyph method={f.glyph} titleId={`workshop-glyph-${i + 1}`} />
+            </Reveal>
+          ))}
+          className="col-wide"
+        />
         <div className="workshop-draw col-content">
           <WorkshopDraw
             button={m.workshops.drawButton}
@@ -189,6 +221,9 @@ export default function ManagementPage() {
             methods={workshopMethods.methods}
           />
         </div>
+        {m.workshops.image && (
+          <Spread image={m.workshops.image} caption={m.workshops.caption} className="section-spread" />
+        )}
       </Section>
 
       {/* 07 Metrics */}
@@ -197,7 +232,10 @@ export default function ManagementPage() {
       </Section>
 
       {/* Next: the first case, played from here. */}
-      <section className="page-section spread-grid space-l title-hidden index-top" aria-labelledby="management-next-title">
+      <section
+        className="page-section spread-grid space-l title-hidden index-top"
+        aria-labelledby="management-next-title"
+      >
         <SectionIndex number={managementSectionKeys.length + 1} label={site.labels.next} className="col-index" />
         <h2 id="management-next-title" className="section-title sr-only">
           {site.labels.next}

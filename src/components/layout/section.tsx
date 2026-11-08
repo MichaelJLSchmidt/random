@@ -17,6 +17,8 @@ type Props = {
   titleHidden?: boolean
   /** Open with an outlined NumeralBreaker. */
   breaker?: boolean
+  /** A full-bleed breaker (the problem statement): the background field lifts while it is in view (data-breaker). */
+  lift?: boolean
   /** Space above the section (--space-s / -m / -l); chosen per section so the rhythm varies. */
   space?: 's' | 'm' | 'l'
   /**
@@ -48,6 +50,7 @@ export function Section({
   title,
   titleHidden,
   breaker,
+  lift,
   space = 'm',
   pin = 2,
   className,
@@ -59,14 +62,22 @@ export function Section({
       id={id}
       className={cx('page-section spread-grid', `space-${space}`, titleHidden && 'title-hidden', className)}
       data-section={id}
+      data-breaker={lift ? '' : undefined}
       aria-labelledby={titleId}
       style={{ '--index-rows': pin } as CSSProperties}
     >
       {breaker && <NumeralBreaker value={number} />}
       <SectionIndex number={number} label={label} className="col-index" />
-      <Reveal as="h2" kind="lines" id={titleId} className={cx('section-title t-h2 col-content', titleHidden && 'sr-only')}>
-        {title}
-      </Reveal>
+      {titleHidden ? (
+        // For screen readers only: nothing to reveal.
+        <h2 id={titleId} className="section-title t-h2 col-content sr-only">
+          {title}
+        </h2>
+      ) : (
+        <Reveal as="h2" kind="lines" id={titleId} className="section-title t-h2 col-content">
+          {title}
+        </Reveal>
+      )}
       {children}
     </section>
   )

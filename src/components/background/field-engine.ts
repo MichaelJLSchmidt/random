@@ -1,6 +1,5 @@
 import { glacierLines, palette, type Identity } from '@/design/palette'
 import { cardById } from '@/lib/cards'
-import { pending } from '@/motion/choreography'
 import { INTRO_DONE } from '@/motion/preferences'
 import { isPinned, onPinned } from '@/motion/scenes/pin'
 import { VT_DONE } from '@/motion/view-transition'
@@ -168,7 +167,7 @@ export class FieldEngine {
     // A pinned scene (the decision deal) holds the viewport: half the field's resolution meanwhile.
     const onPin = (pinned: boolean) => {
       if (!this.gl) return
-      this.gl.detail = pinned ? pending.pinnedDetail : 1
+      this.gl.detail = pinned ? F.pinnedDetail : 1
       this.gl.resize()
       this.kick(true)
     }

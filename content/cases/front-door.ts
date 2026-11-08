@@ -30,6 +30,7 @@ export const frontDoor: CaseStudy = {
       label: 'Context',
       title: 'Five offices, one move',
       image: 'front-door-process',
+      caption: 'Blueprint workshop with registry, municipalities and tax administration',
       body: [
         'Residents who moved had to deregister in their old municipality, register in the new one, and update their address for tax, vehicle registration and, for some, social benefits. An older online form existed, but it only reached the new municipality. More than half the people who started it gave up, and counter staff re-typed the data by hand.',
       ],

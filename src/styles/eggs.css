@@ -31,7 +31,7 @@
 
 .hand-slot .hand-card[data-tapped] {
   z-index: 4;
-  rotate: 90deg;
+  rotate: var(--angle-tap);
   translate: 0 calc(var(--dy) * var(--arc-k) - var(--ch) * (1 - var(--visible)) - var(--cw) * 0.62);
 }
 .hand-slot:has([data-tapped]) {

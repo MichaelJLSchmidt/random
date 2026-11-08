@@ -103,24 +103,28 @@ export const management: Management = {
     formats: [
       {
         name: 'Kick-off canvas',
+        glyph: 'one-two-four-all',
         duration: 'Half a day',
         who: 'Product owner, team, a client representative',
         outcome: 'Shared goals, risks and a research question',
       },
       {
         name: 'Service blueprint jam',
+        glyph: 'fishbowl',
         duration: 'Full day',
         who: 'Up to 30 people from several organisations',
         outcome: 'One picture of the whole service and its pain points',
       },
       {
         name: 'Design studio',
+        glyph: 'crazy-eights',
         duration: '2 hours',
         who: '6–10 people',
         outcome: 'Three sketched directions and a decision on what to prototype',
       },
       {
         name: 'Retro with a twist',
+        glyph: 'dot-voting',
         duration: '60 min',
         who: 'The team',
         outcome: 'Two experiments for the next sprint',

@@ -1,9 +1,9 @@
 import { inView } from 'motion'
 import { discard } from '@/eggs/discard'
-import { gapFor, pending } from './choreography'
+import { gapFor } from './choreography'
 import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
 import { completeAll, revealNow, revealed, schedule } from './jobs'
-import { type Kind, isHeroImage, runKind, title } from './kinds'
+import { type Kind, isHeroImage, runKind } from './kinds'
 import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
 import { loadSplit } from './split'
 import { table } from './table-store'
@@ -31,58 +31,28 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *              starts at least 80 ms after it (spaced()), so no two
  *              neighbours share a timing
  *   notes      a margin note waits until its related paragraph has finished
+ *   titles     the page h1 (PageTitle: kind "lines", order 0) reveals on direct
+ *              loads and client navigations; after a play or switch it is
+ *              final at once, because the card → hero morph delivers it
+ *   breakers   full-bleed blocks with data-breaker lift the field while in view
+ *   discard    on 404 the .lost-card (a draw reveal) falls into the zone
  *
- * Legacy data-reveal presets and data-order groups in the current pages map
- * onto the kinds until the Layout pages replace them (D4).
+ * The Minimap's aria-current belongs to Layout (MinimapObserver), not here.
  */
 /** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
 export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
 
-type Engine = Kind | 'discard'
+const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note'])
 
-/** The kind a block reveals with (legacy presets mapped), or null (not a reveal: breaker, unknown). */
-export function kindOf(el: HTMLElement): Engine | null {
+/** The kind a block reveals with (data-reveal), or null when it is not one of the eight. */
+export function kindOf(el: HTMLElement): Kind | null {
   const k = el.dataset.reveal
-  switch (k) {
-    case 'lines':
-    case 'block':
-    case 'list':
-    case 'image':
-    case 'digits':
-    case 'rule':
-    case 'draw':
-    case 'note':
-      return k
-    // Legacy presets (removed once no page uses them, D4).
-    case 'headline':
-      return 'title'
-    case 'h2':
-    case 'paragraph':
-    case 'line':
-      return 'lines'
-    case 'tags':
-      return /^(UL|OL|DL)$/.test(el.tagName) ? 'list' : 'block'
-    case 'email':
-    case 'callout':
-    case 'metric':
-    case 'row':
-      return 'block'
-    case 'divider':
-      return 'rule'
-    case 'discard':
-      return 'discard'
-    default:
-      return null
-  }
+  return k && kinds.has(k) ? (k as Kind) : null
 }
-
-const legacyOrder: Record<string, number> = { title: 0, facts: 0, summary: 0, lines: 1, chrome: 2 }
 
 function orderOf(el: HTMLElement): number | null {
   const own = el.dataset.revealOrder
-  if (own !== undefined && own !== '') return Number(own) || 0
-  const legacy = el.dataset.order
-  return legacy ? (legacyOrder[legacy] ?? 2) : null
+  return own !== undefined && own !== '' ? Number(own) || 0 : null
 }
 
 /** data-reveal-delay (ms), scaled like every other offset. */
@@ -172,11 +142,9 @@ function start(el: HTMLElement, wanted: number, r: Route) {
       return
     }
   }
-  // The 404 egg: the discarded card falls into the zone (legacy wrapper, or the
-  // DiscardedCard illustration inside a draw reveal, whose strokes draw as it lands).
-  const falls = kind === 'draw' && el.querySelector('[data-illustration="discarded-card"]')
+  // The 404 egg: the .lost-card (a draw reveal around DiscardedCard) falls into the zone while its strokes draw.
+  const falls = kind === 'draw' && el.classList.contains('lost-card')
   schedule(el, delay, (ctx) => {
-    if (kind === 'discard') return discard(ctx, el)
     if (falls) discard(ctx, el)
     return runKind(kind, ctx, el)
   })
@@ -224,7 +192,7 @@ export function revealRoute(kind: NavigationKind) {
     planned: new Map(),
   }
   // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
-  if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines' || kindOf(el) === 'title')) void loadSplit()
+  if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines')) void loadSplit()
 
   // Home: the first-load sequence (the first visit also deals the hand and reveals the chrome).
   const seq = main.querySelector<HTMLElement>('[data-first-load]')
@@ -235,7 +203,7 @@ export function revealRoute(kind: NavigationKind) {
       if (!seq?.contains(el) || el === h1 || h1?.contains(el)) continue
       const k = kindOf(el)
       handled.add(el)
-      if (!k || k === 'title' || k === 'discard') continue
+      if (!k) continue
       blocks.push({ el, kind: k, order: orderOf(el), delay: delayOf(el) })
     }
     if (h1) handled.add(h1)
@@ -243,17 +211,16 @@ export function revealRoute(kind: NavigationKind) {
     else if (seq) revisit(seq, h1, blocks)
   }
 
-  // The page title (legacy PageTitle: data-reveal="headline") outside the home sequence.
-  const base = kind === 'play' || kind === 'switch' ? D.zoom * pending.zoomLanded : 0
-  for (const el of all) {
-    if (handled.has(el) || kindOf(el) !== 'title') continue
-    handled.add(el)
-    if (kind === 'play' || kind === 'switch') revealNow(el)
-    else {
-      const mode = kind === 'return' || kind === 'repeat' ? 'short' : 'full'
-      schedule(el, gapFor(tier, base), (ctx) => title(ctx, el, mode))
+  // The page title outside the home sequence: after a play or switch the card → hero morph
+  // delivers it, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
+  const morphed = kind === 'play' || kind === 'switch'
+  const base = morphed ? D.zoom * R.zoomLanded : 0
+  if (morphed)
+    for (const el of all) {
+      if (handled.has(el) || el.tagName !== 'H1') continue
+      handled.add(el)
+      revealNow(el)
     }
-  }
 
   // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
   const ordered = all
@@ -266,9 +233,7 @@ export function revealRoute(kind: NavigationKind) {
 
   // Everything else: once 25% is in view.
   for (const el of all) {
-    if (handled.has(el)) continue
-    if (el.dataset.reveal === 'breaker') continue
-    if (!kindOf(el)) continue
+    if (handled.has(el) || !kindOf(el)) continue
     const stop = inView(
       el,
       () => {
@@ -281,8 +246,8 @@ export function revealRoute(kind: NavigationKind) {
     r.stops.push(stop)
   }
 
-  // Full-bleed breakers (legacy statement) lift the field's intensity while in view.
-  for (const el of main.querySelectorAll<HTMLElement>('[data-reveal="breaker"]')) {
+  // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while in view.
+  for (const el of main.querySelectorAll<HTMLElement>('[data-breaker]')) {
     r.stops.push(
       inView(
         el,
@@ -295,8 +260,6 @@ export function revealRoute(kind: NavigationKind) {
     )
   }
 
-  r.stops.push(minimap(main))
-
   return () => {
     r.live = false
     for (const stop of r.stops) stop()
@@ -306,31 +269,4 @@ export function revealRoute(kind: NavigationKind) {
     for (const el of r.held) revealNow(el)
     completeAll()
   }
-}
-
-/** Minimap (docs/contracts.md#minimap): the tick of the section under the middle of the viewport gets aria-current. */
-function minimap(main: HTMLElement) {
-  const ticks = [...document.querySelectorAll<HTMLAnchorElement>('[data-minimap-tick]')]
-  if (!ticks.length) return () => {}
-  const sections = ticks
-    .map((t) => main.querySelector<HTMLElement>(`[data-section="${CSS.escape(t.dataset.minimapTick!)}"]`))
-    .filter((s): s is HTMLElement => Boolean(s))
-  const visible = new Set<Element>()
-  const mark = () => {
-    const current = sections.filter((s) => visible.has(s)).at(-1)?.dataset.section
-    for (const t of ticks) {
-      if (t.dataset.minimapTick === current) t.setAttribute('aria-current', 'location')
-      else t.removeAttribute('aria-current')
-    }
-  }
-  // A line across the middle of the viewport.
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)
-      mark()
-    },
-    { rootMargin: '-50% 0px -50% 0px' },
-  )
-  for (const s of sections) io.observe(s)
-  return () => io.disconnect()
 }

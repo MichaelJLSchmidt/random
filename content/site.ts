@@ -60,5 +60,6 @@ export const site: Site = {
     decision: { decision: 'Decision', chose: 'I chose', tradeOff: 'Trade-off', why: 'Why it was worth it' },
     owned: 'What I owned',
     notOwned: "What I didn't",
+    workshop: { duration: 'Duration', who: 'Who', outcome: 'Outcome' },
   },
 }

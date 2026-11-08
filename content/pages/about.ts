@@ -12,6 +12,7 @@ export const about: About = {
   story: {
     label: 'Story',
     image: 'about-roots',
+    caption: 'Interlaken, between Lake Thun and Lake Brienz',
     body: [
       "I was born in Interlaken in 1988, on the strip of flat land between Lake Thun and Lake Brienz. My first job was an apprenticeship as a Mediamatiker in Thun, building websites for hotels in the Oberland — which taught me that people don't read, they scan for the thing they came for.",
       "I spent five years as a front-end developer at a Bern agency before a Hyper Island programme in Stockholm changed how I think about teams. I came back more interested in how people decide together than in any single screen, and I've been designing workshops ever since.",
@@ -90,7 +91,7 @@ export const about: About = {
   },
   creditsTitle: 'Photo credits',
   topo: {
-    label: 'Contour map of the Lake Thun area',
+    label: 'Interlaken, between Lake Thun and Lake Brienz',
     attribution: 'Contours derived from swissALTI3D – Source: Federal Office of Topography swisstopo',
     placeholderNote: 'Placeholder terrain generated from noise until the real data is built (see scripts/topo).',
   },
