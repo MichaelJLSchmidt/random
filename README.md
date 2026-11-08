@@ -18,7 +18,8 @@ brief is `docs/art-direction.md`; each session reports in `docs/handoff/`.
 ```
 content/                    All editable text. No components.
   schema.ts                 Types for every page and egg (the content contract)
-  index.ts                  The one typed entry point (read through src/lib/content.ts)
+  index.ts                  The typed entry point for pages (read through src/lib/content.ts)
+  hand.ts, site.ts          Slim modules the client loads (cards, Coffee card, chrome labels)
   adapters.ts               The files below shaped into the schema until the content pass
   images.ts                 Image registry for <Picture> (files in public/images)
   cards.ts                  Hand order (exactly four), colour identities, rail labels, Management card
@@ -128,7 +129,7 @@ each). Press `?` on the site for the shortcut sheet.
 | Look closer         | Hold Space on a focused card, or a long press (mobile)               |
 | Coffee?             | Type "draw" on the start page: a fifth card is dealt                 |
 | Shortcut sheet      | `?`                                                                  |
-| What's on the table | About: three face-down cards                                         |
+| What's on the table | About: five face-down mini cards                                     |
 | 404                 | Any unknown address: a card falls into the discard zone              |
 
 ## Accessibility

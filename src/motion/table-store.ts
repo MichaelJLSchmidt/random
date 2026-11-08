@@ -1,5 +1,5 @@
 import type { Identity } from '@/design/palette'
-import { cardById, cardForPath, handCards } from '@/lib/cards'
+import { cardById, cardForPath, handCards } from '@/lib/hand-data'
 import type { MotionTier } from './tokens'
 
 /*

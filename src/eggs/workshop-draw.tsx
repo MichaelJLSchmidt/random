@@ -2,16 +2,25 @@
 
 import { useRef, useState } from 'react'
 import { announce } from '@/components/live-region'
-import { fill, workshopMethods } from '@/lib/content'
+import { fill } from '@/lib/format'
 import { spring, springCss } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { buzz } from './haptics'
 
 const flip = springCss(spring.play)
-const { methods, button, again, drawn } = workshopMethods
 
-/** Management: "Draw a workshop method" turns a card over to a random method. */
-export function WorkshopDraw() {
+type Props = {
+  /** Button label (management.workshops.drawButton). */
+  button: string
+  /** Label once a method is drawn (workshopMethods.again). */
+  again: string
+  /** Announcement template, "Workshop method: {title}. {howTo}" (workshopMethods.drawn). */
+  drawn: string
+  methods: { title: string; howTo: string }[]
+}
+
+/** Management: "Draw a workshop method" turns a card over to a random method. Copy comes in as props. */
+export function WorkshopDraw({ button, again, drawn, methods }: Props) {
   const [index, setIndex] = useState<number | null>(null)
   const card = useRef<HTMLDivElement>(null)
 

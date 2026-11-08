@@ -5,8 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
-import { cardForPath, handCards, handLabels } from '@/lib/cards'
-import { coffeeEgg, site } from '@/lib/content'
+import { cardForPath, coffeeEgg, handCards, handLabels, site } from '@/lib/hand-data'
 import { drawCards } from '@/motion/reveal'
 import { cancelPlay, interceptHistory, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
@@ -74,6 +73,15 @@ export function Hand() {
       document.removeEventListener('keydown', onKey)
     }
   }, [router])
+
+  // The hand shows 72% on home and 45% elsewhere: off home, pages keep the collapsed
+  // reserve (:root[data-hand="collapsed"] -> --hand-reserve 120px in layout.css). The
+  // pre-paint script sets the same attribute for the first paint (motion/preferences.ts).
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    if (home) delete root.dataset.hand
+    else root.dataset.hand = 'collapsed'
+  }, [home])
 
   // Inside the view transition's update: the lifted card drops back as the ghost; tapped cards untap.
   useLayoutEffect(() => {
@@ -360,8 +368,9 @@ export function Hand() {
                   <span className="card-face" data-identity="saffron">
                     <span className="card-band">
                       <span className="card-title">{coffeeEgg.title}</span>
-                      <span className="card-type">{coffeeEgg.projectType}</span>
+                      <span className="card-type">{coffeeEgg.cta}</span>
                     </span>
+                    <span className="card-summary">{coffeeEgg.body}</span>
                   </span>
                   <CardBack />
                 </Link>

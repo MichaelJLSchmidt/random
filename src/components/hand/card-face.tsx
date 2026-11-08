@@ -1,6 +1,6 @@
 import { ViewTransition } from 'react'
-import type { HandCard } from '@/lib/cards'
-import { cardNumber } from '@/lib/content'
+import { cardNumber } from '@/lib/format'
+import type { HandCard } from '@/lib/hand-data'
 import { cardName, handShare, handTitleShare, titleName } from '@/motion/transitions'
 
 /*

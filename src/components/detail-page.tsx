@@ -9,6 +9,9 @@ import { PageTransition } from './page-transition'
 
 type Props = {
   card: HandCard
+  /** Hero heading beside the card, e.g. Management's "How I lead" (the card keeps its own title). */
+  heading?: string
+  /** Case study summary, or Management's lead. */
   summary: string
   /** Five pairs on case studies, the facts on Management. */
   meta?: MetaPair[]
@@ -28,13 +31,14 @@ type Props = {
  *   sections    full-width Spread grid sections (children), the statement
  *   end         contact block; the Minimap at the right edge from 1024 px
  */
-export function DetailPage({ card, summary, meta, metrics, statement, sections, children }: Props) {
+export function DetailPage({ card, heading, summary, meta, metrics, statement, sections, children }: Props) {
   return (
     <PageTransition>
       <article className="detail-page" data-identity={card.identity} data-detail={card.id}>
         <div className="detail">
           <CaseHero card={card} />
           <div className="detail-body">
+            {heading && <p className="detail-heading t-h2">{heading}</p>}
             <p className="summary" data-reveal="paragraph" data-order="summary">
               {summary}
             </p>

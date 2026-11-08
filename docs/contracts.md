@@ -25,12 +25,77 @@ Rules for Wave 1:
   visitor scrolls or interacts, and every stub already renders its final, readable state.
 - Run `npm run build` before you push (it type-checks; output in `dist/`).
 
-Contents: [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
+Contents: [Decisions](#decisions) · [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
 [Scenes](#scenes) · [Reading hairline](#reading-hairline) · [Illustrations](#illustrations) ·
 [Picture](#picture) · [Content schema](#content-schema) · [Routes](#routes) ·
 [Data attributes](#data-attributes) · [Eggs](#eggs) · [Checks](#checks)
+
+---
+
+## Decisions
+
+Settled before Wave 1 so the four sessions do not decide them four ways. Each one is binding;
+change requests go through the handoff like any other contract change.
+
+**D1. Hand reserve.** The hand shows 72% of itself on home and 45% everywhere else, so every route
+except home uses the collapsed reserve. The hand component (`src/components/hand/hand.tsx`) sets
+`data-hand="collapsed"` on `<html>` on every route except home and removes it on home; the
+pre-paint script (`src/motion/preferences.ts`) sets the same attribute from the URL, so the first
+paint is already right. `layout.css` maps it to `--hand-reserve: 120px` from 1024 px (176 px on
+home); below 1024 px the rail reserve applies on every route. *Implemented by Foundation.*
+
+**D2. Margin notes.** From 1680 px wide (`--breakpoint-margin-notes` in `src/styles/layout.css`,
+`breakpoints.marginNotes` and `media.marginNotes` in `src/design/layout.ts`), MarginNote and every
+other `.col-margin` element sit in column 12 plus the right outer track. Below 1680 px a
+MarginNote renders inline in the content column as an aside with a 1 px left rule.
+*Implemented by Foundation.*
+
+**D3. Hero target.** The case hero's media frame carries `data-hero-target`: the element that
+frames the played card on a detail page (today `.hero-slot` in `case-hero.tsx`, already marked;
+Layout keeps the attribute on the frame of its redesigned hero). Motion changes `heroTarget()` in
+`src/motion/play.ts` to measure `[data-hero-target]` with `getBoundingClientRect()` at play time
+and to fall back to the current computed values when the element is missing (for example when
+playing from home, where no hero is mounted yet).
+
+**D4. Reveals.** After Wave 1, `<Reveal>` kinds are the only reveal system. Layout uses only
+`<Reveal>` (and `<FirstLoadSequence>` on home) in page markup, never the legacy `data-reveal`
+presets or `data-order`. Motion implements the eight kinds on the new tier scale (calm: durations
+× 0.6; reduced: 160 ms opacity crossfades) and removes the legacy kinds (`headline`, `paragraph`,
+`line`, `tags`, …), `data-order` and the 300 / 200 ms `--reveal-calm` / `--reveal-reduced`
+timings once nothing references them. Integration deletes any leftovers.
+
+**D5. DealRow mobile counter.** The "1 / 4" position label is UI state and belongs to Layout:
+DealRow tracks the snapped card with an IntersectionObserver on its `[data-deal-card]` items
+inside the scroll row and writes the label (`[data-deal-position]`). Motion's `useDealScene`
+reports no position; its return type stays `{ active: boolean }`.
+
+**D6. Content.** Case sections 02–04 are `problem`, `role` (with `owned` / `notOwned`) and
+`approach` (with four `steps`). Each More projects item carries its `projectType` (`form`, `map`,
+`dashboard`, `portal`, `calendar`, `checklist`), which selects its ProjectTypeGlyph. Each case
+study has exactly five metrics. The slugs stay `team-of-teams` (case 01, ember),
+`shared-foundations` (case 02, tide) and `front-door` (case 03, grove). The fixed counts are
+checked at build time in `src/lib/content.ts`.
+
+**D7. Bundle.** The hand imports only card metadata (ids, labels, identities, card copy), not
+the whole content module, so long page text stays out of the shared client bundle. Client
+components read content only through `src/lib/hand-data.ts`, which loads the slim modules
+`content/hand.ts` (the four cards and the Coffee card) and `content/site.ts` (chrome labels);
+pure helpers are in `src/lib/format.ts`. Page text (case-study sections, Management, About) is
+read only by server components through `src/lib/content.ts`; client egg components that need
+page copy (workshop draw, "What's on the table") receive it as props from their server page.
+`scripts/budget.mjs` stays advisory for this playground: report its number in your handoff; a
+result over 170 KB does not block a push. *Implemented by Foundation.*
+
+**D8. MDX.** The `@next/mdx` configuration, its packages and `src/mdx-components.tsx` are
+removed: no route renders MDX. The Content session deletes the obsolete `.mdx` and JSON content
+files (and `content/adapters.ts`) once its typed modules replace them. *Implemented by Foundation
+(configuration).*
+
+**D9. Pages.** Every page, including About, More projects, Contact and 404, moves to the Spread
+grid (`.spread-grid` sections with `.col-*` placement); the legacy `.page` layout goes. That is
+the Layout session's job in Wave 1.
 
 ---
 
@@ -51,9 +116,10 @@ Paths the table does not name, and how to read the short names in it:
 | `tokens.ts` = `src/motion/tokens.ts`; `table-store.ts` = `src/motion/table-store.ts` | Foundation |
 | `header.tsx structure` = the markup of `src/components/header.tsx` (links, order, the hairline mount) | Foundation |
 | `src/components/header.module.css` (header look, not markup) | Layout & Pages |
-| `src/lib/**` (`content.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
+| `src/lib/**` (`content.ts`, `hand-data.ts`, `format.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
+| `content/hand.ts`, `content/site.ts` (slim modules, D7) | Content & Images, under one rule: they import no page text |
 | `src/app/**` (all of it: `layout.tsx`, `globals.css`, `fonts.ts`, routes) | Layout & Pages |
-| `src/components/page-title.tsx`, `section-title.tsx`, `title-fill.tsx`, `page-transition.tsx`, `site-footer.*`, `display-settings.*`, `src/mdx-components.tsx` | Layout & Pages |
+| `src/components/page-title.tsx`, `section-title.tsx`, `title-fill.tsx`, `page-transition.tsx`, `site-footer.*`, `display-settings.*` | Layout & Pages |
 | `src/components/weight-text.tsx`, `play-link.tsx`, `route-focus.tsx`, `live-region.tsx`, `reading-hairline.module.css`, `src/styles/view-transitions.css`, `field.css`, `eggs.css` | Motion |
 | `src/components/picture.css`, `scripts/topo/**`, `public/topo/**` | Content & Images |
 | `docs/handoff/<agent>.md` | that agent |
@@ -61,6 +127,17 @@ Paths the table does not name, and how to read the short names in it:
 
 `src/app/globals.css` already imports every session's CSS entry point once (see its header), so no
 session other than Layout needs to touch it.
+
+Responsibilities the decisions place (no path changes owner):
+
+- D1: `hand.tsx` (Foundation) and the pre-paint line in `src/motion/preferences.ts` (Motion keeps it).
+- D3: `data-hero-target` on the hero frame: Layout; `heroTarget()`: Motion.
+- D4: Layout writes only `<Reveal>`; Motion implements and removes the legacy kinds; Integration
+  deletes leftovers.
+- D5: DealRow's position label: Layout (not Motion).
+- D7: the egg components' copy props (`WorkshopDraw`, `OnTheTable`): Motion owns the components,
+  Layout passes the props from the pages.
+- D8: deleting obsolete `.mdx` / JSON content and `adapters.ts`: Content & Images.
 
 ---
 
@@ -73,10 +150,12 @@ docs/
   handoff/README.md            how each Wave 1 session reports; <agent>.md per session
 content/
   schema.ts                    types for all content (Foundation)
-  index.ts                     the one typed entry point: export const content = {...} satisfies Content
-  adapters.ts                  existing JSON/MDX shaped into the schema (temporary)
+  index.ts                     the typed entry point (server): export const content = {...} satisfies Content
+  hand.ts                      slim: the four cards + the Coffee card (client-safe, D7)
+  site.ts                      slim: chrome labels (client-safe, D7)
+  adapters.ts                  existing JSON/MDX shaped into the page types (temporary, server only)
   images.ts                    image registry used by <Picture>
-  cards.ts, *.json, *.mdx      existing content (legacy sources, still in place)
+  cards.ts, *.json, *.mdx      existing content (legacy sources, still in place; Content deletes, D8)
 src/design/
   palette.ts                   colour identities (ink, ember, tide, grove, saffron, glacier)
   layout.ts                    typed mirror of src/styles/layout.css
@@ -103,8 +182,11 @@ src/components/
   header.tsx                   header (structure: Foundation)
   detail-page.tsx, case-hero.tsx, next-project.tsx, blocks.tsx, about-topo.tsx (Layout)
 src/lib/
-  content.ts                   typed content + helpers (pad2, cardNumber, fill, getCaseStudy)
-  cards.ts                     handCards (exactly 4), cardById, cardForPath, nextCard
+  content.ts                   server: all typed content, count checks, getCaseStudy (+ format helpers)
+  hand-data.ts                 client-safe: handCards (exactly 4), cardById, cardForPath, nextCard,
+                               handLabels, coffeeEgg, site (D7)
+  format.ts                    pad2, cardNumber, fill (no imports)
+  cards.ts                     re-export of hand-data.ts (compatibility)
   site.ts                      basePath, withBase()
   cx.ts                        class-name join
 ```
@@ -116,15 +198,18 @@ src/lib/
 Source: `src/styles/layout.css`. Typed mirror: `src/design/layout.ts` (`breakpoints`, `media`,
 `grid`, `baseline`, `sectionSpace`, `headerHeight`, `handReserve`, `gridClasses`).
 
-**Breakpoints** (min-width): `sm` 640, `md` 1024, `lg` 1440. Mobile first. The hand switches
-from rail/sheet to the desktop fan at `md` (1024).
+**Breakpoints** (min-width): `sm` 640, `md` 1024, `lg` 1440, `marginNotes` 1680 (CSS
+`--breakpoint-sm`, `--breakpoint-md`, `--breakpoint-lg`, `--breakpoint-margin-notes`; media
+queries cannot read custom properties, so the `@media` rules repeat the values). Mobile first.
+The hand switches from rail/sheet to the desktop fan at `md` (1024).
 
 | Range | Columns | Margin | Gutter | Notes |
 | --- | --- | --- | --- | --- |
 | < 640 | 4 | `clamp(20px, 5.3vw, 28px)` | 12 px | everything stacks |
 | 640–1023 | 8 | 32 px | 16 px | everything stacks |
 | 1024–1439 | 12 | 48 px | 24 px | index in columns 1–3, content in 4–11 |
-| ≥ 1440 | 12 × max 96 px | ≥ 48 px | 24 px | `[full-start] minmax(48px,1fr) [content-start] repeat(12, minmax(0,96px)) [content-end] minmax(48px,1fr) [full-end]`; margin notes in the outer track |
+| ≥ 1440 | 12 × max 96 px | ≥ 48 px | 24 px | `[full-start] minmax(48px,1fr) [content-start] repeat(12, minmax(0,96px)) [content-end] minmax(48px,1fr) [full-end]` |
+| ≥ 1680 | as ≥ 1440 | | | margin notes in column 12 + the right outer track (D2) |
 
 "Margin" is the distance from the viewport edge to the first column. CSS `column-gap` also sits
 between the outer track and column 1, so the outer tracks are `--grid-edge` = margin − gutter
@@ -142,12 +227,12 @@ between the outer track and column 1, so the outer tracks are `--grid-edge` = ma
 | `--baseline` | 4px (vertical rhythm unit) |
 | `--space-s` / `--space-m` / `--space-l` | 64 / 96 / 144 px below 1024; 96 / 160 / 240 px from 1024 |
 | `--header-h` | 64px |
-| `--hand-reserve` | from 1024: `var(--hand-reserve-desktop)` = 176px, or `var(--hand-reserve-collapsed)` = 120px under `:root[data-hand="collapsed"]`; below 1024: `calc(48px rail + env(safe-area-inset-bottom) + 16px)` |
+| `--hand-reserve` | from 1024: `var(--hand-reserve-desktop)` = 176px on home, `var(--hand-reserve-collapsed)` = 120px under `:root[data-hand="collapsed"]` (every other route, D1); below 1024: `calc(48px rail + env(safe-area-inset-bottom) + 16px)` |
+| `--breakpoint-sm` / `-md` / `-lg` / `-margin-notes` | 640px / 1024px / 1440px / 1680px |
 | `--gutter` | legacy alias of `--grid-margin` (older components pad with it) |
 
 The last block on every page (the site footer) pads `var(--hand-reserve)` at the bottom so
-nothing hides under the hand. Nothing sets `data-hand="collapsed"` yet (see open questions in
-`docs/handoff/foundation.md`).
+nothing hides under the hand. `data-hand="collapsed"` is set on every route except home (D1).
 
 **Grid utilities** (use these; do not re-declare the grid in pages):
 
@@ -158,7 +243,7 @@ nothing hides under the hand. Nothing sets `data-hand="collapsed"` yet (see open
 | `.col-wide` | `content-start / content-end` (all columns) |
 | `.col-index` | all columns below 1024; columns 1–3 (`2 / 5`) from 1024 |
 | `.col-content` | all columns below 1024; columns 4–11 (`5 / 13`) from 1024 |
-| `.col-margin` | like `.col-content` below 1440 (inline, below the text); from 1440 column 12 + the right outer track (`13 / full-end`) |
+| `.col-margin` | like `.col-content` below 1680 (inline, below the text); from 1680 column 12 + the right outer track (`13 / full-end`) (D2) |
 
 Each section is its own `.spread-grid` (full width), so nested blocks line up without subgrid.
 Below 1024 every `.col-*` stacks in source order.
@@ -257,9 +342,15 @@ Other: `--text`, `--muted`, `--line`, `--glacier-lines`, `--glacier-text`.
 
 `src/components/hand/**` (Foundation; styles in `src/styles/hand.css`, Motion).
 
-- Exactly **four cards**: the three case studies and Management, in `content/cards.ts` order
-  (`handCards` in `src/lib/cards.ts` throws otherwise). No face-down deck. "New hand" re-deals
-  these four.
+- Exactly **four cards**: the three case studies and Management, in `content/hand.ts` order
+  (`handCards` in `src/lib/hand-data.ts` throws otherwise). No face-down deck. "New hand"
+  re-deals these four.
+- **Data (D7)**: the hand, the header, the eggs, the table store, play, the case hero and DealRow
+  import content only from `src/lib/hand-data.ts` (`handCards`, `cardById`, `cardForPath`,
+  `nextCard`, `handLabels`, `coffeeEgg`, `site`, `type HandCard`) and helpers from
+  `src/lib/format.ts`; never `src/lib/content.ts`. `src/lib/cards.ts` re-exports `hand-data.ts`.
+- **Reserve (D1)**: the hand sets `data-hand="collapsed"` on `<html>` on every route except home
+  (and the pre-paint script does the same for the first paint).
 - `<nav class="hand" aria-label="Work">`, one tab stop (roving `tabindex`, arrows, Home/End).
   Card links: `a.hand-card[data-play="<id>"][data-roving="<id>"]` in `li.hand-slot[data-slot="<id>"]`.
   The open card shows `.hand-ghost` ("Viewing").
@@ -283,9 +374,9 @@ Other: `--text`, `--muted`, `--line`, `--glacier-lines`, `--glacier-text`.
 - View-transition names: `card-<id>`, `card-title-<id>` (hand card ↔ detail hero), `hand`,
   `hand-rail`, `site-header`, `site-footer`. Transition types: `play`, `return`, `switch`, `nav`
   (`src/motion/transitions.ts`).
-- Stage 1 of play lifts the card toward the hero; `heroTarget()` in `src/motion/play.ts` mirrors
-  where the hero lies (header height from `src/design/layout.ts`). If Layout moves the hero, say so
-  in its handoff so Motion/Integration update `heroTarget()`.
+- Stage 1 of play lifts the card toward the hero; `heroTarget()` in `src/motion/play.ts` will
+  measure `[data-hero-target]` (D3) and fall back to its current computed values (header height
+  from `src/design/layout.ts`).
 
 ---
 
@@ -313,7 +404,7 @@ next siblings sit above it (`z-index: 1`). Use with `.col-full`.
 `<Spread image="<ImageId>" caption? sizes="100vw" priority? className? />` →
 `figure.spread.spread-grid.col-full[data-spread]` holding `<Picture class="spread-media col-full">`
 and `figcaption.spread-caption.col-margin.t-label`. Full bleed; caption in the margin track from
-1440, below the image otherwise.
+1680 (D2), below the image otherwise.
 
 ### MetaPairs
 
@@ -339,12 +430,14 @@ from 1024, two below. Renders nothing for an empty list.
 `li.deal-card[data-deal-card="1..4"]` (`.deal-card-index.t-label`, `h3.deal-card-title.t-h3`,
 `dl.deal-card-fields`) and `p.deal-row-position.t-label[data-deal-position]` ("1 / 4",
 `aria-hidden`). Desktop: a static row of four. Mobile: horizontal scroll-snap row; the "1 / 4"
-label is static in the stub (Layout or Motion updates it on scroll).
+label is static in the stub, and Layout updates it from the snapped card with an
+IntersectionObserver (D5).
 
 ### MarginNote
 
 `<MarginNote label? className?>text</MarginNote>` → `aside.margin-note.col-margin[data-margin-note]`.
-Column 12 + outer track from 1440, inline below the text otherwise.
+Column 12 + outer track from 1680 px (`--breakpoint-margin-notes`); below that an inline aside in
+the content column with a 1 px left rule (D2).
 
 ### Minimap
 
@@ -366,6 +459,7 @@ own: Layout may change or drop it.
 ## Reveal
 
 `src/components/reveals.tsx` (Motion). Styles: `src/styles/reveal.css`. Logic: `src/motion/reveal.ts`.
+After Wave 1 the kinds below are the only reveal system (D4).
 
 ```tsx
 <Reveal as="p" kind="lines" order={0} delay={120} className="t-body">…</Reveal>
@@ -392,10 +486,10 @@ own: Layout may change or drop it.
 - `<Reveals />` (mounted once in `layout.tsx`) runs the legacy system for each route
   (`revealRoute(kind: NavigationKind)`, `NavigationKind = 'first' | 'repeat' | 'load' | 'nav' |
   'play' | 'switch' | 'return'`) and must keep working until Motion replaces it.
-- Legacy `data-reveal` values still in use (Motion may migrate them): `headline`, `h2`,
+- Legacy `data-reveal` values still in use until Motion removes them (D4): `headline`, `h2`,
   `paragraph`, `line`, `list`, `tags`, `email`, `callout`, `metric`, `divider`, `image`, `draw`
   (Next project), `row`, `discard`, `breaker`; page-order groups `data-order="title | facts |
-  summary | lines | chrome"`.
+  summary | lines | chrome"`. New page markup does not use them.
 
 ---
 
@@ -410,7 +504,8 @@ function useDealScene(ref: RefObject<HTMLElement | null>, options: DealSceneOpti
 ```
 
 Stub: returns `{ active: false }` and does nothing. The root it receives carries
-`data-scene="deal"`; cards are `[data-deal-card="1..4"]`. A scene may set `data-scene-active`
+`data-scene="deal"`; cards are `[data-deal-card="1..4"]`. The mobile "1 / 4" position is not
+scene state; DealRow (Layout) tracks it (D5). A scene may set `data-scene-active`
 on the root while it runs (DealRow already reflects `active` there). New scenes live in
 `src/motion/scenes/<name>-scene.ts` and target `[data-scene="<name>"]`.
 
@@ -451,10 +546,10 @@ function Illustration(props: IllustrationProps & { name: ContentIllustration })
 | `IntakeBeforeAfter` | `0 0 960 480` | Front Door, artefacts |
 | `ServiceBlueprint` | `0 0 1200 560` | Front Door, artefacts |
 | `JourneyEmotionCurve` | `0 0 960 360` | Front Door, artefacts |
-| `WeekRing` | `0 0 560 560` | Management, "How I run a week" |
-| `WorkshopGlyphs` | `0 0 960 120` | Management, "When a room gets stuck" |
-| `ContourPortrait` | `0 0 480 600` | About |
-| `AboutTimeline` | `0 0 960 240` | About |
+| `WeekRing` | `0 0 560 560` | Management, rituals |
+| `WorkshopGlyphs` | `0 0 960 120` | Management, workshops |
+| `ContourPortrait` | `0 0 480 600` | About, story |
+| `AboutTimeline` | `0 0 960 240` | About, timeline (seven stops) |
 | `ProjectTypeGlyph` (`type`) | `0 0 48 48` | More projects, one per row |
 | `DiscardedCard` | `0 0 132 184` | 404, inside the discard zone |
 
@@ -485,8 +580,11 @@ Markup contract (every illustration):
 <Picture id="team-of-teams-hero" sizes="100vw" priority? className? alt? />
 ```
 
-- `id: ImageId` (`keyof typeof images`). Entry (`ImageEntry` in the schema):
-  `{ alt, width, height, local?: { widths, formats: ('avif'|'webp'|'jpeg')[] }, remote?: { src (with {w}), widths }, placeholder?, credit? }`.
+- `id: ImageId` (`keyof typeof images`). Entry (`ImageEntry` in the schema): `{ kind, alt, width,
+  height, local?: { widths, formats: ('avif'|'webp'|'jpeg')[] }, remote?: { src (with {w}), widths },
+  placeholder?, photographer, photographerUrl, pageUrl }`. `kind: 'photo'` requires the three
+  credit fields (the About colophon credits and links each photo); `kind: 'generated'` (the
+  placeholders) makes them optional.
 - Local: `<picture data-image="<id>">` with `<source type="image/avif">` and/or
   `<source type="image/webp">` when listed, and an `<img>` with the JPEG `srcset`. Files:
   `public/images/<id>-<width>.<avif|webp|jpg>`, URLs through `withBase()`.
@@ -501,11 +599,13 @@ Markup contract (every illustration):
 
 ## Content schema
 
-`content/schema.ts` (Foundation). Pages read content only through `src/lib/content.ts`, which
-re-exports `content/index.ts` (`export const content = {…} satisfies Content`). The values come
-from `content/adapters.ts` for now (existing JSON/MDX shaped into the schema; `TBD` = "To be
-written." where the old content has nothing); Content & Images may replace the storage freely as
-long as `content/index.ts` keeps its exports and types.
+`content/schema.ts` (Foundation). Server components read content through `src/lib/content.ts`,
+which re-exports `content/index.ts` (`export const content = {…} satisfies Content`); client
+components read only `src/lib/hand-data.ts` (D7). Values come from `content/site.ts`,
+`content/hand.ts` (slim) and `content/adapters.ts` (existing JSON/MDX shaped into the schema;
+"To be written." where the old content has nothing, in the counts the contract fixes). Content &
+Images may replace the storage freely as long as the exports keep their names and types and the
+slim modules stay slim.
 
 ```ts
 type Content = {
@@ -515,52 +615,61 @@ type Content = {
 }
 ```
 
-Shared: `Template` (string with `{placeholders}`, filled by `fill()` from `src/lib/content.ts`),
-`Paragraph` (plain text), `Fact { label, value }`, `Metric { value, unit?, label }`,
-`CardId`, `ImageId`, `ContentIllustration`, `ProjectType`, `Identity`.
+Shared: `Template` (string with `{placeholders}`, filled by `fill()` from `src/lib/format.ts`),
+`Paragraph` (plain text), `Fact { label, value }`, `Metric { value, unit?, label }`, `CardId`,
+`ImageId`, `ContentIllustration`, `ProjectType`, `Identity`, and
+`SectionHead { label; title?; image? }`: every Management and About section carries a short
+`label` (SectionIndex, Minimap) and an optional h2 `title` (defaults to the label).
 
 | Type | Fields |
 | --- | --- |
-| `Site` | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, moreProjects, contact }, footer { note }, settings { heading, calm, calmHint, calmOn, calmOff }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned: Template, rare }, labels { facts, next, viewing, sections, contactTitle, contactText, contactLink, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string> }` |
-| `HandContent` | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, labels { nav, viewing, moreProjects, counter: Template }` (from `content/cards.ts`) |
-| `CardCopy` | `year, inspect, tapLine` |
-| `Home` | `title, role, intro, hint` |
-| `CaseStudy` | `slug, identity, label, title, summary, statement?, heroImage: ImageId, meta: CaseStudyMeta, metrics: Metric[] (≤ 5), sections: CaseStudySections, card: CardCopy` |
+| `Site` (`content/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, moreProjects, contact }, footer { note }, settings { heading, calm, calmHint, calmOn, calmOff }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, contactTitle, contactText, contactLink, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned }` |
+| `HandContent` (`content/hand.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing, moreProjects, counter: Template }` |
+| `HandCardCopy` | `title` (equals the page title; "Management" for the fourth card)`, type, year, inspect, tapLine, facts: Fact[]` (role, team, timeframe, client) |
+| `CoffeeEgg` (`content/hand.ts`) | `title, body, cta` |
+| `Home` | `label` (e.g. "Bern, Switzerland — UX Team Lead")`, title, role, intro, hint, onTheTableNow { label, items: string[] }` (3 items) |
+| `CaseStudy` | `slug, number` ("01"–"03")`, identity, label, title, summary, statement?, heroImage: ImageId, meta: CaseStudyMeta, metrics: Metric[]` (exactly 5)`, sections: CaseStudySections` |
 | `CaseStudyMeta` | `client, timeframe, role, team, type` |
 | `SectionCopy` | `label, title, body: Paragraph[], list?, note?, illustration?: ContentIllustration, image?: ImageId` |
-| `CaseStudySections` | `context, problem, role, approach: SectionCopy; decisions: SectionCopy & { items: Decisions }; artefacts: SectionCopy & { items: Artefact[] }; outcomes, differently: SectionCopy & { items?: string[] }; next: { label, title, card?: CardId }` — order `caseStudySectionKeys` = 01 context, 02 problem, 03 role, 04 approach, 05 decisions, 06 artefacts, 07 outcomes, 08 differently, 09 next |
+| `CaseStudySections` | `context, problem: SectionCopy; role: SectionCopy & { owned: string[]; notOwned: string[] }; approach: SectionCopy & { steps: { title, body }[] }` (4 steps)`; decisions: SectionCopy & { items: Decisions }; artefacts: SectionCopy & { items: Artefact[] }; outcomes, differently: SectionCopy & { items?: string[] }; next: { label, title, card?: CardId }` — order `caseStudySectionKeys` = 01 context, 02 problem, 03 role, 04 approach, 05 decisions, 06 artefacts, 07 outcomes, 08 differently, 09 next |
 | `Decision` / `Decisions` | `{ decision, chose, tradeOff, why }`, exactly four |
 | `Artefact` | `title, caption?, image?, illustration?` |
-| `Management` | `slug: 'management', identity, label, title, projectType, summary, heroImage?, facts: Fact[], sections { week: SectionCopy & { rituals, callout? }, numbers: SectionCopy & { metrics }, stuck: SectionCopy }, card: CardCopy` — order `managementSectionKeys` |
-| `MoreProjects` | `title, intro, columns { number, title, year, projectType, clientType }, projectTypeLabels: Record<ProjectType,string>, items: MoreProjectItem[], end` |
-| `MoreProjectItem` | `number (1-based), title, year, clientType, projectType: ProjectType` |
-| `About` | `title, intro, sections: AboutSection[] ({ key, label, title, body, list? }), portrait?, table { label, cards[{ name, line }], flipped: Template }, topo { label, attribution, placeholderNote }` |
-| `Contact` | `title, sentence, email` |
+| `Management` | `slug: 'management', identity, title` (hero, "How I lead")`, lead, heroImage?, principles: SectionHead & { items: { title, evidence }[] }` (5)`, team: SectionHead & { members: { initials, role, fte, focus }[]; note }, rituals: SectionHead & { items: { name, cadence, purpose }[] }, hiring: SectionHead & { steps: { title, duration, purpose }[]; note }, growth: SectionHead & { body, levels: string[], dimensions: string[] }, workshops: SectionHead & { formats: { name, duration, who, outcome }[]; drawButton }, metrics: SectionHead & { items: Metric[] }` (5) — order `managementSectionKeys`. Team members appear as initials only. The card's title, type and facts live in `hand.cards.management`. |
+| `MoreProjects` | `title, intro` (the count line, e.g. "13 projects · 2014–2025")`, columns { number, title, year, projectType, clientType }, projectTypeLabels: Record<ProjectType,string>, items: MoreProjectItem[], end` (the closing line) |
+| `MoreProjectItem` | `number (1-based), title, year, clientType, projectType: ProjectType` (selects the glyph) |
+| `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, timeline: SectionHead & { items: { years, title }[] }` (7)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards; they replace the three game cards)`, creditsTitle, topo { label, attribution, placeholderNote }` — order `aboutSectionKeys` |
+| `Contact` | `label, title, body, email, links: { label, value, href? }[]` (e.g. LinkedIn, location)`, note` |
 | `NotFound` | `title, body, back` |
-| `CoffeeEgg` | `title, projectType, dealt` |
-| `WorkshopMethods` | `button, again, drawn: Template, methods[{ title, howTo }]` |
+| `WorkshopMethods` | `again, drawn: Template, methods[{ title, howTo }]` (the button label is `management.workshops.drawButton`) |
 | `ImageEntry` | see [Picture](#picture) |
 
-Helpers in `src/lib/content.ts`: `caseStudies` (validated: exactly three, unique slugs, four
-decisions, ≤ 5 metrics), `getCaseStudy(slug)`, `pad2(n)`, `cardNumber(index)`, `fill(template,
-values)`, `caseStudySectionKeys`, `managementSectionKeys`, `images`, and every type
-(`export type * from '@content/schema'`). `src/lib/cards.ts`: `handCards`, `cardById`,
-`cardForPath`, `nextCard`, `handLabels`, `type HandCard`.
+Build-time checks (`src/lib/content.ts`; the build fails with a pointer to this section): exactly
+three case studies with unique slugs and `number` "01"–"03" in order; per case study five
+metrics, four decisions, four approach steps, a hand card with the same title and identity;
+Management five principles and five metrics; About seven timeline stops, four how-I-work items,
+five "on the table" items; home three "on the table now" items; the hand exactly four cards.
+
+Helpers: `src/lib/content.ts` (server) exports every value above, `caseStudies`,
+`getCaseStudy(slug)`, `caseStudySectionKeys`, `managementSectionKeys`, `aboutSectionKeys`,
+`images`, every type (`export type * from '@content/schema'`) and re-exports `pad2`,
+`cardNumber`, `fill`. `src/lib/hand-data.ts` (client-safe) is listed under [Hand](#hand).
 
 ---
 
 ## Routes
 
-All static, all under `BASE_PATH` (`/random/` on Pages), trailing slash.
+All static, all under `BASE_PATH` (`/random/` on Pages), trailing slash. About, More projects,
+Contact and 404 still use the legacy `.page` layout; Layout moves every page to the Spread grid
+(D9).
 
 | Route | File | Identity | Skeleton |
 | --- | --- | --- | --- |
-| `/` | `src/app/page.tsx` | ink | `FirstLoadSequence` around title, role, intro, hint; counter in the hand |
-| `/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero card + summary + MetaPairs + Scoreboard; `Spread` (hero image); sections 01–09 via `Section` (NumeralBreaker at 05 and 07, DealRow in 05, illustrations in 06, NextProject in 09); statement; contact; Minimap |
-| `/management` | `src/app/management/page.tsx` | saffron | `DetailPage` with facts; week (list, Callout, WeekRing), numbers (Scoreboard), stuck (WorkshopGlyphs, workshop draw); NextProject; Minimap |
-| `/more-projects` | `src/app/more-projects/page.tsx` | ink | table: number, title, year, glyph + type, client type |
-| `/about` | `src/app/about/page.tsx` | glacier | intro, ContourPortrait, sections with SectionIndex, AboutTimeline, "What's on the table", topography |
-| `/contact` | `src/app/contact/page.tsx` | last played card | sentence and email |
+| `/` | `src/app/page.tsx` | ink | `FirstLoadSequence` around label, title, role, intro, hint, "On the table now"; counter in the hand |
+| `/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero card (`[data-hero-target]`) + summary + MetaPairs + Scoreboard; `Spread` (hero image); sections 01–09 via `Section` (role: owned / not owned columns; approach: four steps; NumeralBreaker at 05 and 07, DealRow in 05, illustrations in 06, NextProject in 09); statement; contact; Minimap |
+| `/management` | `src/app/management/page.tsx` | saffron | `DetailPage`: card + "How I lead" + lead + card facts; 01 principles, 02 team, 03 rituals (WeekRing), 04 hiring, 05 growth, 06 workshops (WorkshopGlyphs, workshop draw), 07 metrics (Scoreboard); NextProject; Minimap |
+| `/more-projects` | `src/app/more-projects/page.tsx` | ink | count line, table: number, title, year, glyph + type, client type; closing line |
+| `/about` | `src/app/about/page.tsx` | glacier | lead; story (ContourPortrait), timeline (AboutTimeline), how I work, tcg, roots, "What's on the table" (five cards); colophon (photo credits, topography attribution) |
+| `/contact` | `src/app/contact/page.tsx` | last played card | label, title, body, email, links, note |
 | 404 | `src/app/not-found.tsx` | ink | discard zone (+ DiscardedCard), title, back link |
 
 `/projects` moved to `/more-projects`. Header links: About, More projects, Contact (+ Back on card
@@ -597,7 +706,8 @@ pages). Every page has one `h1` (`PageTitle`, `id="page-heading"`, focus target 
 | `data-motion="full|calm|reduced"` | `<html>` | motion tier (pre-paint script) |
 | `data-intro="first|repeat"`, `data-reveal="armed|live"`, `data-reveal-skip` | `<html>` | intro and reveal arming |
 | `data-field="<identity>"`, `data-renderer="gl|css"` | `<html>` | background field |
-| `data-hand="collapsed"` | `<html>` | switches `--hand-reserve` to 120 px (nobody sets it yet) |
+| `data-hand="collapsed"` | `<html>` | every route except home (hand component + pre-paint script); switches `--hand-reserve` to 120 px from 1024 (D1) |
+| `data-hero-target` | the detail hero's media frame (`.hero-slot` today) | measured by `heroTarget()` at play time (D3) |
 
 ---
 
@@ -609,14 +719,14 @@ with the four-card hand:
 | Egg | Trigger |
 | --- | --- |
 | New hand (Mulligan) | M on home, or a long press (800 ms) on the card counter; the four cards fly off to the dealer (bottom right, off screen) and are dealt again |
-| Workshop draw | "Draw a workshop method" on /management |
+| Workshop draw | "Draw a workshop method" (`management.workshops.drawButton`) on /management; `<WorkshopDraw button again drawn methods>` gets its copy as props (D7) |
 | Rare pull | 1 in 40 loads, or `?rare` |
 | Tap 90° | T on a focused card, or a double tap while a card lifts (mobile) |
 | Inspect | hold Space on a focused card, or a long press (mobile) |
 | Shortcut sheet | `?` |
-| Coffee | type "draw" on home: a fifth card dealt from off screen, opens /contact |
+| Coffee | type "draw" on home: a fifth card (`coffeeEgg`: title, body, cta) dealt from off screen, opens /contact; announced with `site.eggs.coffeeDealt` |
 | 404 discard | any unknown address |
-| What's on the table | About: three face-down cards |
+| What's on the table | About: five face-down mini cards (`about.onTheTable.items`), each flipping to its value; `<OnTheTable title items flipped>` gets its copy as props (D7) |
 
 ---
 
@@ -625,4 +735,5 @@ with the four-card hand:
 - `npm run build` (static export to `dist/`, type check included). Must pass before every push.
 - `npm run preview` then `node scripts/smoke.mjs http://localhost:4100/random/ [--motion=full|calm|reduced]`
   (behaviour at 1440×900 and 390×844) and `node scripts/budget.mjs http://localhost:4100/random/`
-  (initial JS ≤ 170 KB gzip; 163.6 KB after Foundation, so about 6 KB of headroom).
+  (initial JS, 170 KB gzip target). The budget is advisory for this playground (D7): report the
+  number in your handoff; going over does not block a push.

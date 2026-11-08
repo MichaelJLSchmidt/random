@@ -1,17 +1,21 @@
 /*
- * The one typed entry point for content. Pages and components import it via
- * src/lib/content.ts. Every export is typed by content/schema.ts; how the
- * values are stored (JSON, TS, MDX transcribed into TS) is up to the Content &
- * Images session, as long as these exports keep their names and types.
+ * The one typed entry point for content (server side). Pages and server
+ * components import it via src/lib/content.ts. Every export is typed by
+ * content/schema.ts; how the values are stored is up to the Content & Images
+ * session, as long as these exports keep their names and types.
  *
- * Today they come from content/adapters.ts (the existing files, adapted).
+ *   content/site.ts   site chrome           (slim: client components load it)
+ *   content/hand.ts   hand + Coffee card    (slim: client components load it)
+ *   adapters.ts       every page's text     (server only)
  */
 import * as adapted from './adapters'
+import { coffeeEgg, hand } from './hand'
 import type { Content } from './schema'
+import { site } from './site'
 
 export const content = {
-  site: adapted.site,
-  hand: adapted.hand,
+  site,
+  hand,
   home: adapted.home,
   caseStudies: adapted.caseStudies,
   management: adapted.management,
@@ -19,22 +23,11 @@ export const content = {
   about: adapted.about,
   contact: adapted.contact,
   notFound: adapted.notFound,
-  coffeeEgg: adapted.coffeeEgg,
+  coffeeEgg,
   workshopMethods: adapted.workshopMethods,
 } satisfies Content
 
-export const {
-  site,
-  hand,
-  home,
-  caseStudies,
-  management,
-  moreProjects,
-  about,
-  contact,
-  notFound,
-  coffeeEgg,
-  workshopMethods,
-} = content
+export const { home, caseStudies, management, moreProjects, about, contact, notFound, workshopMethods } = content
 
+export { coffeeEgg, hand, site }
 export { images } from './images'

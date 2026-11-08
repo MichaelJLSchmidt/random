@@ -7,12 +7,16 @@ import type { ImageEntry } from './schema'
  *
  * Local renditions:  local: { widths: [640, 1280], formats: ['avif', 'webp', 'jpeg'] }
  * Hotlinked source:  remote: { src: 'https://example.org/photo.jpg?w={w}', widths: [640, 1280] }
+ * Photos:            kind: 'photo' plus photographer, photographerUrl and pageUrl (required;
+ *                    the About colophon credits and links each one)
+ * Placeholders:      kind: 'generated' (credit fields optional)
  *
  * The three entries below are generated placeholders (scripts/images/placeholders.mjs):
  * soft gradients in each case study's colour identity, decorative (alt "").
  */
 export const images = {
   'team-of-teams-hero': {
+    kind: 'generated',
     alt: '',
     width: 1280,
     height: 720,
@@ -20,6 +24,7 @@ export const images = {
     placeholder: '#2A0E0C',
   },
   'shared-foundations-hero': {
+    kind: 'generated',
     alt: '',
     width: 1280,
     height: 720,
@@ -27,6 +32,7 @@ export const images = {
     placeholder: '#0A1A2B',
   },
   'front-door-hero': {
+    kind: 'generated',
     alt: '',
     width: 1280,
     height: 720,

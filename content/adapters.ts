@@ -1,90 +1,57 @@
 /*
  * Adapters: the existing content files (site.json, case-studies.json,
- * projects.json, workshops.json, cards.ts and the MDX bodies) shaped into the
- * schema (content/schema.ts). They exist so the redesign compiles against the
+ * projects.json, workshops.json and the MDX bodies) shaped into the page
+ * types of content/schema.ts. They exist so the redesign compiles against the
  * schema before the content pass; the Content & Images session replaces them
  * with schema-native content and deletes what is no longer read.
  *
+ *   - Site chrome is in content/site.ts, the hand and the Coffee card in
+ *     content/hand.ts (slim modules the client loads); this file is
+ *     server-only page text.
  *   - The MDX bodies (work/*.mdx, management.mdx, about.mdx) are transcribed
- *     into sections below; the .mdx files stay as the source until then.
- *   - Copy the old files do not have (labels for the new layout) is marked NEW.
- *   - Sections the old content has no text for say TBD.
+ *     here; the .mdx files stay as the source until the content pass.
+ *   - Labels the old files do not have are marked NEW; missing copy is TBD
+ *     ("To be written."), in the counts the contract fixes.
  */
 import caseStudiesJson from './case-studies.json'
-import { cardIdentity, handLabels, handOrder, managementCard, railLabel } from './cards'
+import { cardIdentity, railLabel } from './cards'
 import projectsJson from './projects.json'
 import type {
   About,
   CaseStudy,
   CaseStudySections,
-  CoffeeEgg,
   Contact,
   ContentIllustration,
   Decision,
-  HandContent,
   Home,
   ImageId,
   Management,
+  Metric,
   MoreProjects,
   NotFound,
   ProjectType,
-  Site,
   WorkshopMethods,
 } from './schema'
 import siteJson from './site.json'
 import workshopsJson from './workshops.json'
 
 const TBD = 'To be written.'
+/** `n` placeholder strings. */
+const tbd = (n: number) => Array.from({ length: n }, () => TBD)
+/** Five placeholder metrics (the contract fixes five per case study and on Management). */
+const metricsTbd = (keep: Metric[] = []): Metric[] => [
+  ...keep,
+  ...Array.from({ length: 5 - keep.length }, () => ({ value: '—', label: TBD })),
+]
 
 type LegacyStudy = (typeof caseStudiesJson)[number]
 const fact = (study: LegacyStudy, label: string) => study.facts.find((f) => f.label === label)?.value ?? TBD
 
-// ---------------------------------------------------------------------------
-
-export const site: Site = {
-  name: siteJson.name,
-  description: siteJson.description,
-  wordmark: siteJson.wordmark,
-  skipLink: siteJson.skipLink,
-  introSkip: siteJson.introSkip,
-  header: {
-    homeLabel: siteJson.header.homeLabel,
-    back: siteJson.header.back,
-    about: siteJson.header.about,
-    moreProjects: siteJson.header.projects,
-    contact: siteJson.header.contact,
-  },
-  footer: siteJson.footer,
-  settings: siteJson.settings,
-  shortcuts: {
-    title: siteJson.eggs.shortcutsTitle,
-    close: siteJson.eggs.shortcutsClose,
-    items: siteJson.eggs.shortcuts,
-  },
-  eggs: { dealt: siteJson.eggs.dealt, turned: siteJson.eggs.turned, rare: siteJson.eggs.rare },
-  labels: {
-    facts: siteJson.caseStudy.factsLabel,
-    next: siteJson.caseStudy.nextLabel,
-    viewing: siteJson.caseStudy.viewingLabel,
-    sections: 'Sections', // NEW
-    contactTitle: siteJson.caseStudy.contactTitle,
-    contactText: siteJson.caseStudy.contactText,
-    contactLink: siteJson.caseStudy.contactLink,
-    // NEW
-    meta: { client: 'Client', timeframe: 'Timeframe', role: 'Role', team: 'Team', type: 'Type' },
-    // NEW
-    decision: { decision: 'Decision', chose: 'Chose', tradeOff: 'Trade-off', why: 'Why' },
-  },
+export const home: Home = {
+  label: TBD,
+  ...siteJson.home,
+  onTheTableNow: { label: 'On the table now', items: tbd(3) }, // label NEW
 }
-
-export const hand: HandContent = {
-  order: handOrder,
-  identity: cardIdentity,
-  railLabel,
-  labels: handLabels,
-}
-
-export const home: Home = siteJson.home
 
 // ---------------------------------------------------------------------------
 // Case studies
@@ -181,12 +148,13 @@ const bodies: Record<
   },
 }
 
-function caseStudy(study: LegacyStudy): CaseStudy {
+function caseStudy(study: LegacyStudy, index: number): CaseStudy {
   const body = bodies[study.slug]
   if (!body) throw new Error(`content/adapters.ts has no body for "${study.slug}".`)
-  const id = study.slug as (typeof handOrder)[number]
+  const id = study.slug as keyof typeof railLabel
   return {
     slug: study.slug,
+    number: String(index + 1).padStart(2, '0'),
     identity: cardIdentity[id],
     label: railLabel[id],
     title: study.title,
@@ -200,12 +168,16 @@ function caseStudy(study: LegacyStudy): CaseStudy {
       team: fact(study, 'Team'),
       type: study.projectType,
     },
-    metrics: [],
+    metrics: metricsTbd(),
     sections: {
       context: { label: 'Context', title: 'Context', body: [study.summary] },
       problem: { label: 'Problem', title: 'The problem', body: body.problem },
-      role: { label: 'Role', title: 'Role', body: [TBD] },
-      approach: { label: 'Approach', ...body.approach },
+      role: { label: 'Role', title: 'Role', body: [], owned: tbd(3), notOwned: tbd(2) },
+      approach: {
+        label: 'Approach',
+        ...body.approach,
+        steps: Array.from({ length: 4 }, (_, k) => ({ title: `Step ${k + 1}`, body: TBD })),
+      },
       decisions: { label: 'Decisions', title: 'Decisions', body: [], items: decisionsTbd() },
       artefacts: {
         label: 'Artefacts',
@@ -217,57 +189,64 @@ function caseStudy(study: LegacyStudy): CaseStudy {
       differently: { label: 'Differently', title: "What I'd do differently", body: [TBD] },
       next: { label: 'Next', title: siteJson.caseStudy.nextLabel },
     },
-    card: { year: study.year, inspect: study.inspect, tapLine: study.tapLine },
   }
 }
 
 export const caseStudies: CaseStudy[] = caseStudiesJson.map(caseStudy)
 
 // ---------------------------------------------------------------------------
-// Management (transcribed from management.mdx)
+// Management. Of management.mdx only the rituals and the three numbers fit
+// the new sections; the rest is TBD. Section labels are NEW.
 
 export const management: Management = {
   slug: 'management',
   identity: cardIdentity.management,
-  label: railLabel.management,
-  title: siteJson.management.title,
-  projectType: siteJson.management.projectType,
-  summary: siteJson.management.summary,
-  facts: siteJson.management.facts,
-  sections: {
-    week: {
-      label: 'Week',
-      title: 'How I run a week',
-      body: ['A team runs on a few habits done well. These are the ones I keep, whatever the size of the team.'],
-      rituals: [
-        'A Monday plan of three outcomes, written where everyone can see it',
-        'Critique on Wednesday with a fixed shape: context, the question, feedback on that question only',
-        'One-to-ones every two weeks that the other person sets the agenda for',
-        'A Friday note on what shipped, what slipped and why',
-      ],
-      callout: 'Rituals only work if someone can explain what each one is for. If nobody can, it goes.',
-      illustration: 'WeekRing',
-    },
-    numbers: {
-      label: 'Numbers',
-      title: 'Numbers I trust',
-      body: ['I look at a small set of numbers, and always next to the story behind them.'],
-      metrics: [
-        { value: '92', unit: '%', label: 'Of planned outcomes shipped per quarter' },
-        { value: '11', unit: 'days', label: 'Median time from idea to first user test' },
-        { value: '4', unit: 'of 5', label: 'Team health score, asked every month' },
-      ],
-    },
-    stuck: {
-      label: 'Workshops',
-      title: 'When a room gets stuck',
-      body: [
-        'Most stuck meetings are missing structure, not ideas. I keep a small deck of workshop methods and pick one when a discussion goes in circles.',
-      ],
-      illustration: 'WorkshopGlyphs',
-    },
+  title: siteJson.management.projectType, // "How I lead"
+  lead: siteJson.management.summary,
+  principles: {
+    label: 'Principles',
+    items: Array.from({ length: 5 }, () => ({ title: TBD, evidence: TBD })),
   },
-  card: { year: managementCard.year, inspect: managementCard.summary, tapLine: managementCard.tapLine },
+  team: {
+    label: 'Team',
+    members: [{ initials: '—', role: TBD, fte: '—', focus: TBD }],
+    note: TBD,
+  },
+  rituals: {
+    label: 'Rituals',
+    title: 'How I run a week',
+    items: [
+      { name: 'Monday plan', cadence: 'Weekly', purpose: 'Three outcomes, written where everyone can see them' },
+      {
+        name: 'Critique',
+        cadence: 'Weekly, Wednesday',
+        purpose: 'A fixed shape: context, the question, feedback on that question only',
+      },
+      { name: 'One-to-ones', cadence: 'Every two weeks', purpose: 'The other person sets the agenda' },
+      { name: 'Friday note', cadence: 'Weekly', purpose: 'What shipped, what slipped and why' },
+    ],
+  },
+  hiring: {
+    label: 'Hiring',
+    steps: [{ title: TBD, duration: '—', purpose: TBD }],
+    note: TBD,
+  },
+  growth: { label: 'Growth', body: TBD, levels: tbd(1), dimensions: tbd(1) },
+  workshops: {
+    label: 'Workshops',
+    title: 'When a room gets stuck',
+    formats: [{ name: TBD, duration: '—', who: TBD, outcome: TBD }],
+    drawButton: siteJson.management.workshopButton,
+  },
+  metrics: {
+    label: 'Numbers',
+    title: 'Numbers I trust',
+    items: metricsTbd([
+      { value: '92', unit: '%', label: 'Of planned outcomes shipped per quarter' },
+      { value: '11', unit: 'days', label: 'Median time from idea to first user test' },
+      { value: '4', unit: 'of 5', label: 'Team health score, asked every month' },
+    ]),
+  },
 }
 
 // ---------------------------------------------------------------------------
@@ -287,9 +266,11 @@ const projectGlyph: Record<string, ProjectType> = {
   'Wayfinding prototype': 'map',
 }
 
+const years = projectsJson.map((p) => Number(p.year))
+
 export const moreProjects: MoreProjects = {
   title: siteJson.projects.title,
-  intro: siteJson.projects.intro,
+  intro: `${projectsJson.length} projects · ${Math.min(...years)}–${Math.max(...years)}`,
   columns: { number: 'No.', ...siteJson.projects.columns }, // number: NEW
   // NEW
   projectTypeLabels: {
@@ -311,42 +292,47 @@ export const moreProjects: MoreProjects = {
 }
 
 // ---------------------------------------------------------------------------
-// About (site.json "about" + about.mdx, transcribed)
+// About (site.json "about" + about.mdx, transcribed where it fits). Section labels are NEW.
 
 export const about: About = {
   title: siteJson.about.title,
-  intro: siteJson.about.intro,
-  sections: [
-    {
-      key: 'how-i-work',
-      label: 'Work',
-      title: 'How I work',
-      body: [
-        'I like to work close to the material. That means sketching in code early, testing with the people who will use the thing, and keeping the design and the implementation in the same conversation instead of handing one over to the other.',
-        'Most of my projects sit somewhere between product design and front-end engineering: design systems, data-heavy tools, and the small moments of motion and feedback that make an interface feel solid.',
-      ],
-    },
-    {
-      key: 'what-i-care-about',
-      label: 'Care',
-      title: 'What I care about',
-      body: [],
-      list: [
-        'Accessibility as a starting point, not a final check',
-        'Interfaces that stay usable with animation, colour or images turned off',
-        'Writing that says what a button does',
-      ],
-    },
-    {
-      key: 'outside-of-work',
-      label: 'Outside',
-      title: 'Outside of work',
-      body: [
-        'Away from the screen I print with letterpress, walk long coastal paths and keep a slowly growing collection of timetables.',
-      ],
-    },
-  ],
-  table: { ...siteJson.about.table, flipped: siteJson.eggs.tableFlipped },
+  lead: siteJson.about.intro,
+  story: {
+    label: 'Story',
+    body: [
+      'I like to work close to the material. That means sketching in code early, testing with the people who will use the thing, and keeping the design and the implementation in the same conversation instead of handing one over to the other.',
+      'Most of my projects sit somewhere between product design and front-end engineering: design systems, data-heavy tools, and the small moments of motion and feedback that make an interface feel solid.',
+    ],
+  },
+  timeline: {
+    label: 'Timeline',
+    items: Array.from({ length: 7 }, () => ({ years: '—', title: TBD })),
+  },
+  howIWork: {
+    label: 'How I work',
+    items: [
+      { title: 'Accessibility as a starting point, not a final check', body: TBD },
+      { title: 'Interfaces that stay usable with animation, colour or images turned off', body: TBD },
+      { title: 'Writing that says what a button does', body: TBD },
+      { title: TBD, body: TBD },
+    ],
+  },
+  tcg: { label: 'Cards', title: TBD, body: TBD, lessons: [{ title: TBD, body: TBD }], stats: TBD },
+  roots: {
+    label: 'Roots',
+    title: TBD,
+    body: 'Away from the screen I print with letterpress, walk long coastal paths and keep a slowly growing collection of timetables.',
+  },
+  onTheTable: {
+    label: 'On the table',
+    title: siteJson.about.table.label,
+    items: [
+      ...siteJson.about.table.cards.map((c) => ({ label: c.name, value: c.line })),
+      { label: TBD, value: TBD },
+      { label: TBD, value: TBD },
+    ],
+  },
+  creditsTitle: TBD,
   topo: {
     label: siteJson.about.topoLabel,
     attribution: siteJson.about.attribution,
@@ -354,13 +340,20 @@ export const about: About = {
   },
 }
 
-export const contact: Contact = siteJson.contact
+export const contact: Contact = {
+  label: TBD,
+  title: siteJson.contact.title,
+  body: siteJson.contact.sentence,
+  email: siteJson.contact.email,
+  links: [
+    { label: 'LinkedIn', value: TBD },
+    { label: 'Location', value: TBD },
+  ],
+  note: TBD,
+}
 export const notFound: NotFound = siteJson.notFound
 
-export const coffeeEgg: CoffeeEgg = { ...siteJson.eggs.coffee, dealt: siteJson.eggs.coffeeDealt }
-
 export const workshopMethods: WorkshopMethods = {
-  button: siteJson.management.workshopButton,
   again: siteJson.eggs.workshopAgain,
   drawn: siteJson.eggs.workshopDrawn,
   methods: workshopsJson,

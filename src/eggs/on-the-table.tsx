@@ -2,20 +2,30 @@
 
 import { useState } from 'react'
 import { announce } from '@/components/live-region'
-import { about, fill } from '@/lib/content'
+import { fill } from '@/lib/format'
 
-/** About, "What's on the table": three face-down cards named after games; a tap turns one to a line. */
-export function OnTheTable() {
-  const { label, cards, flipped } = about.table
-  const [open, setOpen] = useState<boolean[]>(() => cards.map(() => false))
+type Props = {
+  /** Section heading (about.onTheTable.title). */
+  title: string
+  /** Five mini cards: face down showing the label, flipping to the value. */
+  items: { label: string; value: string }[]
+  /** Announcement template, "{label}: {value}" (site.eggs.tableFlipped). */
+  flipped: string
+  /** id of the heading (aria-labelledby). */
+  titleId?: string
+}
+
+/** About, "What's on the table": face-down mini cards; a tap turns one to its value. Copy comes in as props. */
+export function OnTheTable({ title, items, flipped, titleId = 'on-table-title' }: Props) {
+  const [open, setOpen] = useState<boolean[]>(() => items.map(() => false))
   return (
-    <section className="on-table" aria-labelledby="on-table-title">
-      <h2 id="on-table-title" className="meta">
-        {label}
+    <section className="on-table" aria-labelledby={titleId}>
+      <h2 id={titleId} className="meta">
+        {title}
       </h2>
       <ul className="on-table-list">
-        {cards.map((card, i) => (
-          <li key={card.name}>
+        {items.map((card, i) => (
+          <li key={i}>
             <button
               type="button"
               className="on-table-card"
@@ -23,13 +33,13 @@ export function OnTheTable() {
               data-open={open[i] ? '' : undefined}
               onClick={() => {
                 setOpen((o) => o.map((v, k) => (k === i ? !v : v)))
-                if (!open[i]) announce(fill(flipped, { name: card.name, line: card.line }))
+                if (!open[i]) announce(fill(flipped, { label: card.label, value: card.value }))
               }}
             >
-              <span className="on-table-back">{card.name}</span>
+              <span className="on-table-back">{card.label}</span>
               <span className="on-table-front">
-                <span className="on-table-name">{card.name}</span>
-                <span className="on-table-line">{card.line}</span>
+                <span className="on-table-name">{card.label}</span>
+                <span className="on-table-line">{card.value}</span>
               </span>
             </button>
           </li>

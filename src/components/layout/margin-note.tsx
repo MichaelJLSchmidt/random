@@ -9,8 +9,9 @@ type Props = {
 }
 
 /*
- * A short note beside the text: in column 12 + the outer track from 1440 px
- * (.col-margin), an inline aside below the body otherwise.
+ * A short note beside the text: in column 12 + the outer track from 1680 px
+ * (.col-margin, --breakpoint-margin-notes), an inline aside with a left rule
+ * below the body otherwise.
  * Contract: docs/contracts.md#marginnote.
  */
 export function MarginNote({ children, label, className }: Props) {

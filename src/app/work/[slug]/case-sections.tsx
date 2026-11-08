@@ -2,7 +2,7 @@ import { NextProject } from '@/components/next-project'
 import { Reveal } from '@/components/reveals'
 import { DealRow, Section } from '@/components/layout'
 import { Illustration } from '@/components/illustrations'
-import { type CaseStudy, type SectionCopy, caseStudySectionKeys } from '@/lib/content'
+import { type CaseStudy, type SectionCopy, caseStudySectionKeys, site } from '@/lib/content'
 
 /** Which sections open with a NumeralBreaker (skeleton choice; Layout decides). */
 const breakers = new Set(['decisions', 'outcomes'])
@@ -33,6 +33,44 @@ export function CaseSections({ study }: { study: CaseStudy }) {
     const number = i + 1
     const common = { id: key, number, breaker: breakers.has(key) }
     switch (key) {
+      case 'role':
+        return (
+          <Section key={key} {...common} label={s.role.label} title={s.role.title} note={s.role.note}>
+            <Body section={s.role} />
+            <div className="role-columns">
+              <div>
+                <h3 className="t-label">{site.labels.owned}</h3>
+                <Reveal as="ul" kind="list" className="item-list t-body">
+                  {s.role.owned.map((item, k) => (
+                    <li key={k}>{item}</li>
+                  ))}
+                </Reveal>
+              </div>
+              <div>
+                <h3 className="t-label">{site.labels.notOwned}</h3>
+                <Reveal as="ul" kind="list" className="item-list t-body">
+                  {s.role.notOwned.map((item, k) => (
+                    <li key={k}>{item}</li>
+                  ))}
+                </Reveal>
+              </div>
+            </div>
+          </Section>
+        )
+      case 'approach':
+        return (
+          <Section key={key} {...common} label={s.approach.label} title={s.approach.title} note={s.approach.note}>
+            <Body section={s.approach} />
+            <Reveal as="ol" kind="list" className="approach-steps">
+              {s.approach.steps.map((step, k) => (
+                <li key={k}>
+                  <h3 className="t-h3">{step.title}</h3>
+                  <p className="t-body">{step.body}</p>
+                </li>
+              ))}
+            </Reveal>
+          </Section>
+        )
       case 'decisions':
         return (
           <Section key={key} {...common} label={s.decisions.label} title={s.decisions.title} note={s.decisions.note}>

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, ViewTransition } from 'react'
 import { headerHeight } from '@/design/layout'
-import type { HandCard } from '@/lib/cards'
-import { cardNumber, site } from '@/lib/content'
+import { cardNumber } from '@/lib/format'
+import { type HandCard, site } from '@/lib/hand-data'
 import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
 import { PageTitle } from './page-title'
 
@@ -29,7 +29,8 @@ export function CaseHero({ card }: { card: HandCard }) {
 
   return (
     <header className="hero" data-identity={card.identity}>
-      <div className="hero-slot">
+      {/* data-hero-target: where the played card lands; heroTarget() in motion/play.ts measures it. */}
+      <div className="hero-slot" data-hero-target="">
         <ViewTransition
           name={inView ? cardName(card.id) : undefined}
           share={heroShare}

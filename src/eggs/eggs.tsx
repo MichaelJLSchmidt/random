@@ -2,7 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { coffeeEgg, site } from '@/lib/content'
+import { fill } from '@/lib/format'
+import { coffeeEgg, site } from '@/lib/hand-data'
 import { at, duration as D, stagger as S } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { eggOn } from './registry'
@@ -42,7 +43,9 @@ export function Eggs() {
         if (buffer === 'draw' && home && eggOn('coffee')) {
           buffer = ''
           dispatchEvent(new Event('egg:coffee'))
-          import('@/components/live-region').then((m) => m.announce(coffeeEgg.dealt))
+          import('@/components/live-region').then((m) =>
+            m.announce(fill(site.eggs.coffeeDealt, { title: coffeeEgg.title })),
+          )
         }
       }
     }

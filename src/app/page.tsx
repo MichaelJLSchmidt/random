@@ -9,6 +9,7 @@ export default function HomePage() {
     <PageTransition>
       <div className="page home" data-identity="ink" data-home="">
         <FirstLoadSequence>
+          <p className="home-label t-label">{home.label}</p>
           <PageTitle className="home-title">{home.title}</PageTitle>
           <p className="home-role" data-reveal="line" data-order="lines">
             {home.role}
@@ -19,6 +20,14 @@ export default function HomePage() {
           <p className="home-hint" data-reveal="tags" data-order="chrome">
             {home.hint}
           </p>
+          <div className="home-now">
+            <p className="t-label">{home.onTheTableNow.label}</p>
+            <ul className="item-list">
+              {home.onTheTableNow.items.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
         </FirstLoadSequence>
       </div>
     </PageTransition>
