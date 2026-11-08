@@ -79,8 +79,9 @@ reveals at the base (play / switch: final at once, its title morphs in the view 
 | draw | `[data-draw]` (pathLength 1) | stroke-dashoffset 1 → 0; 8% tints opacity after their group | 1200 | inOut | 120 per group [`stagger.svgGroups`] | 500 / 72 | drawn, opacity 160 |
 | note | the element | opacity 0 → 1, after its related paragraph ends | 240 [`dur.s`] | outQuint | – | 144 | 160 |
 
-Blocks that enter view in the same frame start 50 ms apart in document order; adjacent blocks of
-the same kind with the same order are nudged by 50 ms, so no two neighbours share a timing.
+Blocks that enter view in the same frame start 50 ms apart in document order, and a block that
+reveals with the same kind as the block before it starts at least 80 ms [`stagger.cards`] after
+it, so no two neighbours share a timing.
 
 **Scroll-linked (full tier)**
 
@@ -99,11 +100,13 @@ or Foundation file was edited.
 - **Reveal engine** ([Reveal](../contracts.md#reveal)). `src/motion/reveal.ts` (orchestration:
   home sequence, `data-reveal-order` sequence, Motion `inView` with the `reveal` tokens and
   per-frame batching, margin notes after their paragraph, legacy breaker, Minimap
-  `aria-current`), `kinds.ts` (the eight kinds + the title), `jobs.ts` (one job per block:
-  start timer, `[data-revealed]`, `will-change` only while running, finished animations
-  cancelled, at most 8 jobs at once below 1024 px), `split.ts` (Motion+ `splitText` after
-  `document.fonts.ready`, words not characters so kerning and breaks hold, each line in an
-  `overflow: clip` mask pinned to the line-height so nothing below moves, reverted to the
+  `aria-current`, the neighbour rule above), `kinds.ts` (the eight kinds + the title),
+  `jobs.ts` (one job per block: start timer, `[data-revealed]`, `will-change` on each target
+  only from the end of an animation's delay to its finish, finished animations cancelled, at
+  most 8 jobs at once below 1024 px, the rest queued), `split.ts` (Motion+ `splitText`, loaded
+  on demand and prefetched at route start, run after `document.fonts.ready` with the element
+  kept hidden until both are ready; words not characters so kerning and breaks hold; each line
+  in an `overflow: clip` mask pinned to the line-height so nothing below moves; reverted to the
   original nodes afterwards), `first-load.ts`, `deal.ts` (`drawCards` / `fanCards` /
   `dealOffset`, still exported from `reveal.ts` for the hand and the eggs),
   `choreography.ts` (tier helpers `msFor` / `spanFor` / `gapFor` / `drawFor` and the `pending`
@@ -124,7 +127,9 @@ or Foundation file was edited.
   `font-variation-settings` only; the live word gets `contain: inline-size` while it moves, so
   its reserved box never widens. Revisits and client navigations to home: one 240 ms crossfade,
   the rest 60 ms later, all started in the same frame (300 ms). Any key, click, wheel or scroll
-  completes the sequence.
+  completes the sequence. First-visit blocks go through the same entry point as every other
+  reveal (eager hero image never animated, notes after their paragraph); the revisit is one job
+  for every part, so the mobile cap cannot push a part past 300 ms.
 - **Scroll-linked** ([Scenes](../contracts.md#scenes), [Reading hairline](../contracts.md#reading-hairline)):
   `ReadingHairline` animates the registered `--reading-progress` with
   `animation-timeline: scroll(root)` inside `@supports`, otherwise Motion `scroll()` (loaded
@@ -137,7 +142,9 @@ or Foundation file was edited.
   slot on a shallow arc turning face up, lands with a quarter of its hand-fan tilt, and the
   settle squares the row up (phases ease in-out: the scroll is the clock). Everything is inline
   and removed on teardown; the cards are never hidden by CSS. While pinned, the field renders
-  at half resolution (`scenes/pin.ts` → `GlField.detail`). About timeline: in full tier, an
+  at half its normal resolution (`scenes/pin.ts` → `GlField.detail`; the field already renders
+  at `field.renderScale` 0.5 of CSS pixels, so pinned it is 0.25: 720×450 → 360×225 at
+  1440×900). About timeline: in full tier, an
   SVG `[data-illustration="about-timeline"]` inside a `draw` reveal is linked to its
   `ViewTimeline` (groups drawn in order across `entry 100%` → `cover 60%`, tints after);
   otherwise the normal draw reveal.
@@ -173,8 +180,11 @@ or Foundation file was edited.
    `duration.digits: 0.7`, `duration.svgDraw: 1.2`, `duration.svgDrawCalm: 0.5`,
    `distance.block: 12` (block rise; today it borrows `distance.list`, also 12), `mask: 1.1`
    (110%), `image: { inset: 0.1, scale: 1.12 }`, `digitRoll: 5`, `zoomLanded: 0.6`,
-   `deal: { stage: 250, phases, landTilt: 0.25 }`, `jobs.mobile: 8`, the timeline range. Also
-   rename `stagger.metric` (used for the 40 ms digit offset) to `stagger.digits`.
+   `deal: { stage: 250, phases, landTilt: 0.25, flipPerspective: 800, toss: 28, below: 0.6 }`
+   (the last three are the existing deal's geometry, moved out of code), `jobs.mobile: 8`,
+   `field.pinnedDetail: 0.5`, the timeline range and group span (0.5), `discard: { drop: 5,
+   fade: 0.4 }` (the existing egg's values). Also rename `stagger.metric` (used for the 40 ms
+   digit offset) to `stagger.digits`.
 2. **Retire unused tokens** (nothing references them after this branch): `duration.draw, words,
    settle, repeatTitle, returnTitle, h2, line, list, image, imageScale, metric, tags, callout,
    divider, buttons, emailUnderline, calmReveal, reducedReveal, reducedSwap`; `stagger.draw,
@@ -194,3 +204,44 @@ or Foundation file was edited.
 6. **Breaker lift**: the field's intensity lift still keys off the legacy
    `data-reveal="breaker"`. If Layout drops it, the lift goes; to keep it, name a hook (for
    example `[data-numeral]`) and Motion will attach to it.
+
+## Known issues
+
+- **Scroll-linked count.** The spec allows one scroll-linked effect per viewport. The content
+  effects never meet (drift at the top of a case page, the deal in section 05, the timeline on
+  About), but the hairline is always there, so it runs beside the drift and beside the pinned
+  deal. It is kept as a progress indicator (in every tier); if it must count, the smallest fix
+  is to fade it out while a scene is pinned (the pin bus is already there).
+- **Revisit timing** is 300 ms from the moment the reveal system runs (measured 291–298 ms);
+  the first frame after hydration adds whatever the browser needs (≈ 90 ms in headless Chromium
+  with software WebGL).
+- **Below the fold only on view.** A block that a jump (anchor, End key) carries past the
+  viewport without ever intersecting reveals when it is scrolled back into view, not before.
+- **Not exercised on real pages yet**: `note`, `image`, `digits` with real metrics, `draw` with
+  real illustrations and the deal scene with real copy were tested on a temporary lab route
+  (deleted) and with today's stub pages; the Layout, Illustrations and Content branches will be
+  the real test. A deal row taller than the space under the header keeps the static row.
+- **Legacy aliases** in `kindOf()` stay until the Layout pages land (D4).
+- **JS budget** (`scripts/budget.mjs`, home): initial 164.4 KB gzip (main: 159.8), 184.3 KB
+  loaded by network idle (main: 164.4). The lazy splitText chunk carries part of Motion again.
+- No Lighthouse, axe or cross-browser runs (as briefed). Only Chromium was used.
+
+## Verification
+
+- `npm run build` (static export, type check): passes, also with `tsconfig.fallback.json`
+  (no Motion+ token).
+- `node scripts/smoke.mjs http://localhost:4100/random/ --motion=full|calm|reduced`
+  (1440×900 and 390×844): all passed in all three tiers. An earlier reduced run failed on the
+  field colour after a switch (the latent field bug under Field above, exposed by this branch's
+  shorter reduced swap); fixed, and `main` passes the same run.
+- Playwright on a temporary lab route (every kind, the deal, the hairline, the drift, the
+  linked timeline; deleted before the final commit) and on home, at 1440×900 and 390×844:
+  full-tier frames at 600 and 1500 ms and at rest; reduced: every first-viewport block fully
+  visible at 450 ms with no transform, translate, scale, rotate or clip animated; calm: the deal
+  stage stays static (no `data-scene-active`, natural height). Also checked: lines masks hold
+  the layout (the block below does not move through split and revert), all lab blocks end
+  revealed in every tier at both sizes, `will-change` present only while animating and 0 at
+  rest, at most 8 concurrent reveal jobs on a phone with 12 tiles entering at once, the field
+  at half resolution only while the deal is pinned, the drift 0 → 6% only while the hero
+  exits (none in calm), reduced view transitions are 160 ms opacity crossfades with no group
+  movement, eggs (M, "draw", 404 discard, workshop draw, `?`) work.
