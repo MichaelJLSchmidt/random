@@ -1,15 +1,21 @@
-import { type ImageEntry, type ImageId, images } from '@/lib/content'
+import { type ImageId, images } from '@content/images'
+import type { ImageEntry, ImageFormat } from '@content/schema'
 import { withBase } from '@/lib/site'
 
 /*
  * <Picture id sizes priority?>: one image from content/images.ts.
- *   local   <picture> with AVIF / WebP <source>s (when listed) and a JPEG <img>,
- *           files at public/images/<id>-<width>.<ext>, URLs through withBase()
+ *   local   <picture> with an AVIF and a WebP <source> (when listed) and a
+ *           JPEG <img>; srcset at every listed width (640 / 1280 / 2048 w),
+ *           files at public/images/<id>-<width>.<avif|webp|jpg>, every URL
+ *           through withBase() so it works under BASE_PATH
  *   remote  a hotlinked srcset (the source URL's {w} replaced per width)
- * priority: loading="eager" + fetchpriority="high" (the one hero image above
- * the fold); otherwise lazy. width/height come from the entry, so the box is
- * reserved before the image loads. Owned by the Content & Images session.
- * Contract: docs/contracts.md#picture.
+ * The <img> always carries width/height from the entry (the box is reserved
+ * before the image loads, no layout shift), sizes, decoding="async" and the
+ * entry's placeholder colour as its background. loading="lazy", or with
+ * priority (the one hero image above the fold) loading="eager" +
+ * fetchpriority="high". Reads the registry directly (not src/lib/content.ts)
+ * so it never pulls page text into a bundle.
+ * Owned by the Content & Images session. Contract: docs/contracts.md#picture.
  */
 type Props = {
   id: ImageId
@@ -21,14 +27,20 @@ type Props = {
   alt?: string
 }
 
-const ext = { avif: 'avif', webp: 'webp', jpeg: 'jpg' } as const
-const mime = { avif: 'image/avif', webp: 'image/webp', jpeg: 'image/jpeg' } as const
+const ext: Record<ImageFormat, string> = { avif: 'avif', webp: 'webp', jpeg: 'jpg' }
+const mime: Record<ImageFormat, string> = { avif: 'image/avif', webp: 'image/webp', jpeg: 'image/jpeg' }
+/** <source> order: the browser takes the first type it supports. */
+const sourceFormats = ['avif', 'webp'] as const
 
 export function getImage(id: ImageId): ImageEntry {
   const entry: ImageEntry | undefined = images[id]
   if (!entry) throw new Error(`content/images.ts has no image "${id}".`)
   return entry
 }
+
+/** The fallback `src` for browsers without srcset: 1280 px when listed, else the largest. */
+const fallbackWidth = (widths: number[]) =>
+  [...widths].sort((a, b) => a - b).find((w) => w >= 1280) ?? Math.max(...widths)
 
 export function Picture({ id, sizes, priority = false, className, alt }: Props) {
   const image = getImage(id)
@@ -45,15 +57,17 @@ export function Picture({ id, sizes, priority = false, className, alt }: Props) 
 
   if (image.local) {
     const { widths, formats } = image.local
-    const largest = Math.max(...widths)
-    const url = (w: number, format: keyof typeof ext) => withBase(`/images/${id}-${w}.${ext[format]}`)
-    const srcSet = (format: keyof typeof ext) => widths.map((w) => `${url(w, format)} ${w}w`).join(', ')
+    const url = (w: number, format: ImageFormat) => withBase(`/images/${id}-${w}.${ext[format]}`)
+    const srcSet = (format: ImageFormat) => widths.map((w) => `${url(w, format)} ${w}w`).join(', ')
     return (
       <picture className={className} data-image={id}>
-        {formats.includes('avif') && <source type={mime.avif} srcSet={srcSet('avif')} sizes={sizes} />}
-        {formats.includes('webp') && <source type={mime.webp} srcSet={srcSet('webp')} sizes={sizes} />}
+        {sourceFormats
+          .filter((f) => formats.includes(f))
+          .map((f) => (
+            <source key={f} type={mime[f]} srcSet={srcSet(f)} sizes={sizes} />
+          ))}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url(largest, 'jpeg')} srcSet={srcSet('jpeg')} {...imgProps} />
+        <img src={url(fallbackWidth(widths), 'jpeg')} srcSet={srcSet('jpeg')} {...imgProps} />
       </picture>
     )
   }
@@ -64,7 +78,7 @@ export function Picture({ id, sizes, priority = false, className, alt }: Props) 
     return (
       <picture className={className} data-image={id}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={at(Math.max(...widths))} srcSet={widths.map((w) => `${at(w)} ${w}w`).join(', ')} {...imgProps} />
+        <img src={at(fallbackWidth(widths))} srcSet={widths.map((w) => `${at(w)} ${w}w`).join(', ')} {...imgProps} />
       </picture>
     )
   }
