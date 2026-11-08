@@ -222,8 +222,11 @@ or Foundation file was edited.
   (deleted) and with today's stub pages; the Layout, Illustrations and Content branches will be
   the real test. A deal row taller than the space under the header keeps the static row.
 - **Legacy aliases** in `kindOf()` stay until the Layout pages land (D4).
-- **JS budget** (`scripts/budget.mjs`, home): initial 164.4 KB gzip (main: 159.8), 184.3 KB
+- **JS budget** (`scripts/budget.mjs`, home): initial 164.8 KB gzip (main: 159.8), 184.6 KB
   loaded by network idle (main: 164.4). The lazy splitText chunk carries part of Motion again.
+- **Smoke flake**: one of six full-tier desktop/phone passes failed "about: elevation texture
+  loaded" (the texture is fetched in a `requestIdleCallback` in `about-topo.tsx`, Layout's, and
+  the check waits 2 s); 8 of 8 isolated runs and the rerun passed.
 - No Lighthouse, axe or cross-browser runs (as briefed). Only Chromium was used.
 
 ## Verification
