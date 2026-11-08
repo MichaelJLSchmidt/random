@@ -3,8 +3,7 @@
  * reference must satisfy. Pages read typed content only through
  * src/lib/content.ts (which re-exports content/index.ts); client components
  * read only the slim modules through src/lib/hand-data.ts. Never import JSON
- * or MDX content directly. Foundation-owned; read-only in Wave 1 (Content &
- * Images asks for changes in its handoff). Contract: docs/contracts.md#content-schema.
+ * or MDX content directly. Foundation-owned. Contract: docs/contracts.md#content-schema.
  *
  * Shapes fit the final persona content (a fictional UX team lead). Counts
  * that the contract fixes (four decisions, five metrics, seven timeline
@@ -12,11 +11,11 @@
  * Copy rules: plain labels, no personal names (the fictional persona is
  * fine), no job-seeking language, no CV, no testimonials.
  */
-import type { ContentIllustration, ProjectType } from '@/components/illustrations/types'
+import type { ContentIllustration, ProjectType, WorkshopMethod } from '@/components/illustrations/types'
 import type { Identity } from '@/design/palette'
 import type { ImageId } from './images'
 
-export type { ContentIllustration, Identity, ImageId, ProjectType }
+export type { ContentIllustration, Identity, ImageId, ProjectType, WorkshopMethod }
 
 /** A string with {placeholders} filled at runtime, e.g. "Turned sideways: {line}". */
 export type Template = string
@@ -34,9 +33,11 @@ export type CardId = string
 
 /**
  * The head every Management and About section carries: a short label for
- * SectionIndex and the Minimap, and an optional h2 (defaults to the label).
+ * SectionIndex and the Minimap, an optional h2 (defaults to the label) and an
+ * optional image with an optional caption (Spread shows a caption only when
+ * one is set, never the alt text).
  */
-export type SectionHead = { label: string; title?: string; image?: ImageId }
+export type SectionHead = { label: string; title?: string; image?: ImageId; caption?: string }
 
 // ---------------------------------------------------------------------------
 // Images (content/images.ts)
@@ -109,6 +110,8 @@ export type Site = {
     /** Column labels of the case-study role section: "What I owned", "What I didn't". */
     owned: string
     notOwned: string
+    /** Field labels on Management's workshop cards. */
+    workshop: Record<Exclude<keyof WorkshopFormat, 'name' | 'glyph'>, string>
   }
 }
 
@@ -124,7 +127,7 @@ export type HandCardCopy = {
   inspect: string
   /** Printed along the long edge; readable when the card is turned sideways. */
   tapLine: string
-  /** Four facts on the card face: role, team, timeframe, client. */
+  /** The card's facts, each with its own label (two in the final content, e.g. "Team: 2 → 5 people"). */
   facts: Fact[]
 }
 
@@ -202,8 +205,11 @@ export type SectionCopy = {
   list?: string[]
   /** MarginNote next to the body. */
   note?: string
+  /** Any section may hold an illustration (not only the artefacts). */
   illustration?: ContentIllustration
   image?: ImageId
+  /** Caption under the section image; Spread shows it only when set (never the alt text). */
+  caption?: string
 }
 
 /** Case-study sections in reading order: 01 Context … 09 Next. */
@@ -274,7 +280,8 @@ export type Principle = { title: string; evidence: string }
 export type TeamMember = { initials: string; role: string; fte: string; focus: string }
 export type Ritual = { name: string; cadence: string; purpose: string }
 export type HiringStep = { title: string; duration: string; purpose: string }
-export type WorkshopFormat = { name: string; duration: string; who: string; outcome: string }
+/** A workshop format; `glyph` selects its WorkshopGlyph on the workshop card. */
+export type WorkshopFormat = { name: string; duration: string; who: string; outcome: string; glyph: WorkshopMethod }
 
 export type Management = {
   slug: 'management'

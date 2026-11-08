@@ -1,5 +1,6 @@
-import { site } from '@/lib/content'
+import { pad2, site } from '@/lib/content'
 import { cx } from '@/lib/cx'
+import { MinimapObserver } from './minimap-observer'
 
 export type MinimapSection = { id: string; label: string }
 
@@ -12,22 +13,27 @@ type Props = {
 }
 
 /*
- * Section ticks fixed at the right edge from 1024 px (hidden below). Each tick
- * links to its section. Motion marks the current one with
- * aria-current="location". Contract: docs/contracts.md#minimap.
+ * Section ticks fixed at the right edge from 1024 px; nothing below (the
+ * reading hairline is the mobile progress indicator). One focusable link per
+ * section; its label ("01 Context") shows beside the tick on hover and focus.
+ * The tick of the section in view gets aria-current="location"
+ * (MinimapObserver, IntersectionObserver). Contract: docs/contracts.md#minimap.
  */
 export function Minimap({ sections, label = site.labels.sections, className }: Props) {
   return (
     <nav className={cx('minimap', className)} aria-label={label} data-minimap="">
       <ol>
-        {sections.map((s) => (
+        {sections.map((s, i) => (
           <li key={s.id}>
             <a href={`#${s.id}`} className="minimap-tick" data-minimap-tick={s.id}>
-              <span className="sr-only">{s.label}</span>
+              <span className="minimap-label t-label">
+                <span className="minimap-number">{pad2(i + 1)}</span> {s.label}
+              </span>
             </a>
           </li>
         ))}
       </ol>
+      <MinimapObserver />
     </nav>
   )
 }

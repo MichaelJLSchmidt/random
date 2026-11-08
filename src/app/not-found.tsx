@@ -3,27 +3,33 @@ import Link from 'next/link'
 import { DiscardedCard } from '@/components/illustrations'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
+import { Reveal } from '@/components/reveals'
 import { notFound } from '@/lib/content'
 import { RETURN } from '@/motion/transitions'
 
 export const metadata: Metadata = { title: notFound.title }
 
-/** 404: a card falls face down into the discard zone (egg), then the way back. */
+/**
+ * 404: a card lies tilted on the discard pile (DiscardedCard, drawn on first),
+ * "This card isn't in the deck." and the way back to the table.
+ */
 export default function NotFound() {
   return (
     <PageTransition>
-      <div className="page not-found" data-identity="ink">
-        <div className="discard" aria-hidden="true" data-reveal="discard" data-order="title">
-          <span className="discard-zone" />
-          <span className="discard-card" data-discard="" />
-          <DiscardedCard className="discard-illustration" titleId="discarded-card-title" />
+      <div className="lost spread-grid" data-identity="ink">
+        <div className="lost-discard" aria-hidden="true">
+          <span className="lost-zone" />
+          <span className="lost-pile" />
+          <Reveal kind="draw" order={0} className="lost-card">
+            <DiscardedCard titleId="discarded-card-title" />
+          </Reveal>
         </div>
-        <PageTitle>{notFound.title}</PageTitle>
-        <p className="lede muted" data-reveal="paragraph" data-order="summary">
+        <PageTitle className="lost-title t-display">{notFound.title}</PageTitle>
+        <Reveal as="p" kind="lines" order={1} className="lost-body t-lead">
           {notFound.body}
-        </p>
-        <p data-reveal="tags" data-order="chrome">
-          <Link href="/" className="link" transitionTypes={[RETURN]}>
+        </Reveal>
+        <p className="lost-back">
+          <Link href="/" className="button" transitionTypes={[RETURN]}>
             {notFound.back}
           </Link>
         </p>

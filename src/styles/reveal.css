@@ -1,276 +1,81 @@
 /*
- * Reveal presets. Start states apply only while the pre-paint script has armed
- * the page (:root[data-reveal]) and an element is not yet [data-revealed]; the
- * reveal system (src/motion/reveal.ts) only marks elements and sets delays
- * (--rd, per-child --i). Without JavaScript the arming is dropped after 4 s and
- * every page shows its final state. Calm: opacity + 4px, 300 ms, no rotateX,
- * weight set at once. Reduced: opacity only, 200 ms.
+ * Reveals (Motion session; contract: docs/contracts.md#reveal). CSS only
+ * hides: while the pre-paint script has armed the page (:root[data-reveal]),
+ * a block that is not yet [data-revealed] has opacity 0. Every movement is a
+ * WAAPI animation started by src/motion/reveal.ts, which marks the block
+ * revealed and holds its start pose with a backwards fill, so:
+ *   - without JavaScript the arming is dropped after 4 s: every page is final
+ *   - reduced motion never sees a transform (its kinds are opacity crossfades)
+ *   - nothing here hides the decision cards: the deal scene is JS only
+ * Never hidden: the view-transition hero image (eager, fetchpriority high)
+ * and the digits in reduced motion (static).
  */
 :root {
-  --rv-word-y: 0.45em;
-  --rv-word-rx: var(--angle-word);
-  --rv-rise: 105%;
-  --rv-para: var(--travel-paragraph);
-  --rv-list: var(--travel-list);
-  --rv-tag: var(--travel-reveal);
-  --rv-draw: var(--travel-exit-play);
-  --rv-row: var(--travel-land-y);
-  --rv-metric-rx: var(--angle-metric);
-  --rv-h1-wght: var(--wght-h1-start);
-  --rv-h2-wght: var(--wght-h2-start);
-  --rv-opsz: var(--opsz-start);
-}
-:root[data-motion='calm'] {
-  --rv-dur: var(--reveal-calm);
-  --rv-word-y: 4px;
-  --rv-word-rx: 0deg;
-  --rv-rise: 4px;
-  --rv-para: 4px;
-  --rv-list: 4px;
-  --rv-tag: 4px;
-  --rv-draw: 4px;
-  --rv-row: 4px;
-  --rv-metric-rx: 0deg;
-  --rv-h1-wght: var(--wght-h1);
-  --rv-h2-wght: var(--wght-h2);
-  --rv-opsz: var(--opsz-end);
-}
-:root[data-motion='reduced'] {
-  --rv-dur: var(--reveal-reduced);
-  --rv-word-y: 0px;
-  --rv-word-rx: 0deg;
-  --rv-rise: 0px;
-  --rv-para: 0px;
-  --rv-list: 0px;
-  --rv-tag: 0px;
-  --rv-draw: 0px;
-  --rv-row: 0px;
-  --rv-metric-rx: 0deg;
-  --rv-h1-wght: var(--wght-h1);
-  --rv-h2-wght: var(--wght-h2);
-  --rv-opsz: var(--opsz-end);
+  /* Lines rise from a clip mask; the mask bleeds this far so descenders and accents are not cut. */
+  --rv-mask-bleed: 0.12em;
 }
 
-/* Skip: a running intro jumps to its end (transitions removed for a frame). */
-:root[data-reveal-skip] main *,
-:root[data-reveal-skip] [data-chrome],
-[data-revealed='instant'],
-[data-revealed='instant'] * {
-  transition: none !important;
-}
-
-/* ---------- Headline: deal and settle ---------- */
-:root[data-reveal] [data-reveal='headline']:not([data-revealed]) .wt-word > span {
-  opacity: 0;
-  transform: perspective(40em) translateY(var(--rv-word-y)) rotateX(var(--rv-word-rx));
-  --wght: var(--rv-h1-wght);
-  --opsz: var(--rv-opsz);
-}
-[data-reveal='headline'] .wt-word > span {
-  --rv-w: var(--rv-dur, var(--hw, var(--dur-words)));
-  --rv-s: var(--rv-dur, var(--hs, var(--dur-settle)));
-  --rv-wd: calc(var(--rd, 0s) + var(--wt-i, 0) * var(--stagger-words));
-  transition:
-    opacity var(--rv-w) var(--ease-out-soft) var(--rv-wd),
-    transform var(--rv-w) var(--ease-out-soft) var(--rv-wd),
-    --wght var(--rv-s) var(--ease-settle) var(--rd, 0s),
-    --opsz var(--rv-s) var(--ease-settle) var(--rd, 0s);
-}
-[data-reveal='headline'][data-revealed='short'] {
-  --hw: var(--dur-return-title);
-  --hs: var(--dur-return-title);
-}
-[data-reveal='headline'][data-revealed='repeat'] {
-  --hw: var(--dur-repeat-title);
-  --hs: var(--dur-repeat-title);
-}
-
-/* ---------- H2: line mask rise, weight 360 -> 700 ---------- */
-:root[data-reveal] [data-reveal='h2']:not([data-revealed]) .wt-word > span {
-  opacity: 0;
-  transform: translateY(var(--rv-rise));
-  --wght: var(--rv-h2-wght);
-}
-[data-reveal='h2'] .wt-word > span {
-  transition:
-    opacity var(--rv-dur, var(--dur-line)) var(--ease-out-soft) var(--rd, 0s),
-    transform var(--rv-dur, var(--dur-line)) var(--ease-out-soft) var(--rd, 0s),
-    --wght var(--rv-dur, var(--dur-h2)) var(--ease-settle) var(--rd, 0s);
-}
-
-/* ---------- Paragraph / line: lines rise 16px from a mask ---------- */
-:root[data-reveal] :is([data-reveal='paragraph'], [data-reveal='line']):not([data-revealed]):not([data-split]),
-:root[data-reveal] [data-split]:not([data-revealed]) .rl-in {
-  opacity: 0;
-  translate: 0 var(--rv-para);
-}
-:is([data-reveal='paragraph'], [data-reveal='line']):not([data-split]),
-.rl-in {
-  transition:
-    opacity var(--rv-dur, var(--dur-line)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--li, 0) * var(--stagger-lines)),
-    translate var(--rv-dur, var(--dur-line)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--li, 0) * var(--stagger-lines));
-}
-.rl {
-  display: block;
-  clip-path: inset(-0.25em -1em -0.3em -1em);
-}
-.rl-in {
-  display: block;
-}
-
-/* ---------- List: items from 12px left ---------- */
-:root[data-reveal] [data-reveal='list']:not([data-revealed]) > li {
-  opacity: 0;
-  translate: calc(var(--rv-list) * -1) 0;
-}
-[data-reveal='list'] > li {
-  transition:
-    opacity var(--rv-dur, var(--dur-list)) var(--ease-out-soft) calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-list)),
-    translate var(--rv-dur, var(--dur-list)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-list));
-}
-
-/* ---------- Tags / meta: opacity + 4px (lists by item) ---------- */
-:root[data-reveal] :is(ul, ol, dl)[data-reveal='tags']:not([data-revealed]) > *,
-:root[data-reveal] [data-reveal='tags']:not(ul, ol, dl, [data-revealed]),
-:root[data-reveal] [data-reveal='email']:not([data-revealed]) {
-  opacity: 0;
-  translate: 0 var(--rv-tag);
-}
-:is(ul, ol, dl)[data-reveal='tags'] > *,
-[data-reveal='tags']:not(ul, ol, dl),
-[data-reveal='email'] {
-  transition:
-    opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-tags)),
-    translate var(--rv-dur, var(--dur-tags)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-tags));
-}
-/* The email's underline draws over 600 ms once it is there. */
-:root[data-reveal] [data-reveal='email']:not([data-revealed]) .link {
-  --ue: 0%;
-}
-[data-reveal='email'] .link {
-  transition:
-    --u var(--dur-underline) var(--ease-out-soft),
-    --ue var(--rv-dur, var(--dur-email-underline)) var(--ease-draw) calc(var(--rd, 0s) + var(--dur-buttons) * 0.5);
-}
-
-/* ---------- Callout: the rule draws down, then the text ---------- */
-:root[data-reveal] [data-reveal='callout']:not([data-revealed]) .callout-rule {
-  scale: 1 0;
-}
-:root[data-reveal] [data-reveal='callout']:not([data-revealed]) p {
-  opacity: 0;
-  translate: 0 var(--rv-tag);
-}
-[data-reveal='callout'] .callout-rule {
-  transition: scale var(--rv-dur, var(--dur-callout)) var(--ease-out-soft) var(--rd, 0s);
-}
-[data-reveal='callout'] p {
-  transition:
-    opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) calc(var(--rd, 0s) + var(--dur-callout)),
-    translate var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) calc(var(--rd, 0s) + var(--dur-callout));
-}
-
-/* ---------- Metric: per-digit flip, label after ---------- */
-:root[data-reveal] [data-reveal='metric']:not([data-revealed]) .metric-digit {
-  opacity: 0;
-  transform: rotateX(var(--rv-metric-rx));
-}
-:root[data-reveal] [data-reveal='metric']:not([data-revealed]) :is(.metric-label, .metric-unit) {
+:root[data-reveal]
+  main
+  [data-reveal]:not([data-revealed], [data-reveal='digits']):not([data-reveal='image']:has(img[fetchpriority='high'])) {
   opacity: 0;
 }
-[data-reveal='metric'] .metric-digit {
-  transition:
-    opacity var(--rv-dur, var(--dur-metric)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-metric)),
-    transform var(--rv-dur, var(--dur-metric)) var(--ease-out-soft)
-      calc(var(--rd, 0s) + var(--i, 0) * var(--stagger-metric));
-}
-[data-reveal='metric'] :is(.metric-label, .metric-unit) {
-  transition: opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--label-d, var(--rd, 0s));
-}
-
-/* ---------- Divider: draws from the left ---------- */
-:root[data-reveal] [data-reveal='divider']:not([data-revealed]) {
-  scale: 0 1;
-}
-[data-reveal='divider'] {
-  transform-origin: 0 50%;
-  transition: scale var(--rv-dur, var(--dur-divider)) var(--ease-out-soft) var(--rd, 0s);
-}
-
-/* ---------- Image: wipes open from the top, inner scale settles ---------- */
-:root[data-reveal] [data-reveal='image']:not([data-revealed]) {
-  clip-path: inset(0 0 100% 0 round var(--radius-lg));
-}
-:root[data-reveal] [data-reveal='image']:not([data-revealed]) img {
-  scale: 1.08;
-}
-[data-reveal='image'] {
-  clip-path: inset(0 round var(--radius-lg));
-  transition: clip-path var(--rv-dur, var(--dur-image)) var(--ease-bloom) var(--rd, 0s);
-}
-[data-reveal='image'] img {
-  transition: scale var(--rv-dur, var(--dur-image-scale)) var(--ease-out-soft) var(--rd, 0s);
-}
-
-/* ---------- Draw: "Next project" rises like a card being drawn ---------- */
-:root[data-reveal] [data-reveal='draw']:not([data-revealed]) .next-card {
-  opacity: 0;
-  translate: 0 var(--rv-draw);
-  rotate: -3deg;
-}
-:root[data-reveal] [data-reveal='draw']:not([data-revealed]) .meta {
+:root[data-reveal]:not([data-motion='reduced']) main [data-reveal='digits']:not([data-revealed]) {
   opacity: 0;
 }
-[data-reveal='draw'] .next-card {
-  transition:
-    opacity var(--rv-dur, var(--dur-draw)) var(--ease-draw) calc(var(--rd, 0s) + var(--dur-tags) * 0.5),
-    translate var(--rv-dur, var(--dur-draw)) var(--ease-draw) calc(var(--rd, 0s) + var(--dur-tags) * 0.5),
-    rotate var(--rv-dur, var(--dur-draw)) var(--ease-draw) calc(var(--rd, 0s) + var(--dur-tags) * 0.5);
-}
-[data-reveal='draw'] .meta {
-  transition: opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s);
-}
 
-/* ---------- Rows (More projects): dealt top to bottom, 50 ms apart, capped at 12 ---------- */
-:root[data-reveal] [data-reveal='row']:not([data-revealed]) {
+/* Home: the title waits for its turn in the first-load sequence (it may carry no data-reveal). */
+:root[data-reveal] [data-first-load] h1:not([data-revealed]) {
   opacity: 0;
-  translate: 0 var(--rv-row);
-}
-[data-reveal='row'] {
-  --rv-rd: calc(var(--rd, 0s) + min(var(--row, 0), 12) * var(--stagger-rows));
-  transition:
-    opacity var(--rv-dur, var(--dur-tags)) var(--ease-draw) var(--rv-rd),
-    translate var(--rv-dur, var(--dur-tags)) var(--ease-draw) var(--rv-rd);
 }
 
-/* ---------- 404: a card falls face down into the discard zone ---------- */
-:root[data-reveal] [data-reveal='discard']:not([data-revealed]) .discard-card {
-  opacity: 0;
-  translate: 0 calc(var(--rv-draw) * -5);
-  rotate: 0deg;
-}
-[data-reveal='discard'] .discard-card {
-  transition:
-    opacity calc(var(--rv-dur, var(--dur-discard)) * 0.4) var(--ease-out-soft) var(--rd, 0s),
-    translate var(--rv-dur, var(--dur-discard)) var(--ease-draw) var(--rd, 0s),
-    rotate var(--rv-dur, var(--dur-discard)) var(--ease-draw) var(--rd, 0s);
-}
-
-/* ---------- Home, first visit: hand dealt from off screen, chrome (header, card counter) last ---------- */
+/* First visit: the hand is dealt from off screen; the chrome (header, card counter) comes last. */
 :root[data-intro='first'] .hand-card:not([data-drawn]),
 :root[data-intro='first'] [data-chrome]:not([data-revealed]) {
   opacity: 0;
 }
-:root[data-intro='first'] [data-chrome]:not([data-revealed]) {
-  translate: 0 var(--rv-tag);
+
+/* lines: each split line sits in a clip mask while it rises (src/motion/split.ts). */
+.rv-mask {
+  display: block;
+  overflow: clip;
+  overflow-clip-margin: var(--rv-mask-bleed);
 }
-:root[data-intro] [data-chrome] {
-  transition:
-    opacity var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s),
-    translate var(--rv-dur, var(--dur-tags)) var(--ease-out-soft) var(--rd, 0s);
+@supports not (overflow-clip-margin: 1px) {
+  .rv-mask {
+    overflow: visible;
+    clip-path: inset(calc(var(--rv-mask-bleed) * -1));
+  }
+}
+
+/*
+ * Case hero image drift: .hero-drift sits on the hero <picture> inside the
+ * clipping [data-hero-target] frame (overflow: clip): translateY
+ * 0 → 6% while the image leaves the viewport at the top (view() range "exit",
+ * so the gap it opens at its top edge is always above the fold). Full tier
+ * only; no fallback where view() is unsupported.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root[data-motion='full'] .hero-drift {
+      animation-name: hero-drift;
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: exit;
+    }
+  }
+}
+/* A <picture> is inline by default and an inline box cannot be translated. */
+picture.hero-drift {
+  display: block;
+}
+@keyframes hero-drift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 var(--hero-drift);
+  }
 }

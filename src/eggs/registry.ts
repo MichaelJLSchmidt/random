@@ -12,7 +12,7 @@ export const eggs = {
   },
   workshop: {
     on: true,
-    trigger: '"Draw a workshop method" on /management',
+    trigger: '"Draw a method" (management.workshops.drawButton) on /management',
     full: 'a card turns over (3D flip) to a random method',
     calm: 'cross-fade',
     reduced: 'instant swap',
@@ -47,8 +47,8 @@ export const eggs = {
   },
   onTheTable: {
     on: true,
-    trigger: 'About: three face-down cards with the names of three games',
-    full: 'a tap flips a card to one line',
+    trigger: 'About: five face-down mini cards (about.onTheTable.items)',
+    full: 'a tap flips a card to its value',
     calm: 'cross-fade',
     reduced: 'instant swap',
   },

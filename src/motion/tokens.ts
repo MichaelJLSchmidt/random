@@ -7,8 +7,9 @@ import { type as typeScale } from '@/design/type'
  * imports them directly; CSS reads the custom properties that `motionCss()`
  * generates (injected in the root layout). No bounce, elastic or overshoot:
  * every bézier stays within [0, 1] and every spring is critically damped.
- * Contract: docs/contracts.md#motion-tokens. Foundation-owned (read-only in
- * Wave 1); the Motion session asks for changes in its handoff.
+ * Contract: docs/contracts.md#motion-tokens. Foundation-owned; the reveal,
+ * deal, timeline and discard values below were moved in from the Motion
+ * session's choreography at integration.
  *
  * The scale (use these for new work):
  *   dur      xs 160, s 240, m 420, l 640, xl 900 ms        --dur-xs ... --dur-xl
@@ -17,8 +18,9 @@ import { type as typeScale } from '@/design/type'
  *                                                           --stagger-words ... --stagger-svg-groups
  *   tiers    full x1, calm x0.6, reduced: 160 ms crossfades only
  *                                                           --motion-scale, --dur-reduced
- * Everything below the scale (duration.*, ease.outSoft, ...) is the existing
- * vocabulary of the table, kept so the hand, play and the field keep working.
+ * Everything below the scale (duration.*, ease.outSoft, ...) is the table's
+ * vocabulary (hand, play, field, eggs) plus the reveal choreography's fixed
+ * values (reveal, deal, timeline, discard). Nothing here is unreferenced.
  */
 
 export type MotionTier = 'full' | 'calm' | 'reduced'
@@ -51,7 +53,6 @@ export const ease = {
   bloom: inOut,
   zoom: [0.76, 0, 0.24, 1],
   return: [0.32, 0.72, 0, 1],
-  settle: [0.33, 0, 0.15, 1],
   /** Content leaving the screen: a plain ease-in. */
   in: [0.4, 0, 1, 1],
 } as const
@@ -70,13 +71,11 @@ export const spring = {
 export const duration = {
   // Play / return / switch
   press: 0.09,
-  lift: 0.34,
   gap: 0.28,
   zoom: 0.58,
   return: 0.52,
   switchIn: 0.56,
   switchDelay: 0.04,
-  switchLift: 0.31,
   exitPlay: 0.22,
   exitReturn: 0.2,
   exitSwitch: 0.2,
@@ -93,29 +92,18 @@ export const duration = {
   topo: 1.6,
   topoBand: 40,
   calmBloom: 0.5,
-  reducedSwap: 0.2,
-  // Reveals
-  draw: 0.62,
-  words: 0.7,
-  settle: 1.6,
-  repeatTitle: 0.6,
-  returnTitle: 0.5,
-  h2: 1.1,
-  line: 0.7,
-  list: 0.52,
-  image: 0.9,
-  imageScale: 1.2,
-  metric: 0.42,
-  tags: 0.4,
-  callout: 0.3,
-  divider: 0.8,
-  buttons: 0.4,
-  calmReveal: 0.3,
-  reducedReveal: 0.2,
+  // Reveals (the rest use the scale, dur.*)
+  /** Digits: one value's strips, from the first strip's start to the last strip's end. */
+  digits: 0.7,
+  /** SVG strokes (draw kind): full, and calm's own value (not × 0.6). */
+  svgDraw: 1.2,
+  svgDrawCalm: 0.5,
+  /** New hand: each card flies off to the dealer. */
+  gather: 0.44,
+  /** Play: a lift whose route never changed (offline, error) settles back after this. */
+  liftTimeout: 4,
   // UI
-  fill: 0.45,
   underline: 0.16,
-  emailUnderline: 0.6,
   rail: 0.2,
   sheet: 0.32,
   discard: 0.7,
@@ -132,28 +120,16 @@ export const stagger = {
   items: 0.05,
   cards: 0.08,
   svgGroups: 0.12,
-  // Table vocabulary.
-  draw: 0.11,
-  introLines: 0.08,
-  list: 0.07,
-  metric: 0.04,
-  tags: 0.04,
-  rows: 0.05,
+  /** New hand: between cards flying off to the dealer. */
+  gather: 0.06,
+  /** Digits: between the strips of one Scoreboard value. */
+  digits: 0.04,
 } as const
 
 /** Seconds from the start of a sequence. */
 export const at = {
-  // Home, first visit
-  draw: 0.2,
-  title: 0.95,
-  lines: 1.5,
-  chrome: 1.9,
-  // Case study / Management after the H1
-  facts: 0.1,
-  summary: 0.25,
-  // Metric label after its digits; buttons after their parent
-  label: 0.15,
-  buttons: 0.4,
+  /** Home, first visit (<FirstLoadSequence>): when each part starts (the hand is dealt at 0). */
+  firstLoad: { title: 0.52, role: 0.9, intro: 1.0, rest: 1.3 },
   // Play: when the route change starts (press + lift)
   navigate: 0.43,
   switchNavigate: 0.4,
@@ -165,7 +141,9 @@ export const distance = {
   exitReturn: 20,
   exitSwitch: 24,
   reveal: 4,
-  paragraph: 16,
+  /** block reveal: rise. */
+  block: 12,
+  /** list reveal: items dealt in from the left. */
   list: 12,
   hoverLift: 28,
   spread: 12,
@@ -175,9 +153,11 @@ export const distance = {
 /** Degrees. */
 export const angle = {
   hand: [-9, -3, 3, 9],
-  handTilt: 8,
+  /** Home title words turn up from this angle (rotateX). */
   word: -35,
-  metric: -90,
+  /** Play: a lifted card tips back this far (rotateX). */
+  lift: -8,
+  /** 404: the discarded card's resting tilt (--angle-discard). */
   discard: -12,
   tap: 90,
 } as const
@@ -188,7 +168,6 @@ export const angle = {
  */
 export const weight = {
   body: 400,
-  medium: 500,
   label: 600,
   card: 620,
   h1Start: 280,
@@ -209,7 +188,6 @@ export const opsz = {
 export const field = {
   breathScale: 0.06,
   breathLum: 0.04,
-  drift: 0.012,
   intensityRest: 0.35,
   intensityHover: 0.55,
   intensityPage: 0.45,
@@ -222,10 +200,53 @@ export const field = {
   switchDip: 0.06,
   topoLine: 0.22,
   topoIndex: 0.38,
+  /** Resolution factor while a pinned scene holds the viewport (half of renderScale). */
+  pinnedDetail: 0.5,
 } as const
 
-/** Reveal trigger (Motion inView). */
-export const reveal = { amount: 0.25, margin: '0px 0px -10% 0px' } as const
+/** Reveals: trigger (Motion inView) and the kinds' fixed geometry. */
+export const reveal = {
+  amount: 0.25,
+  margin: '0px 0px -10% 0px',
+  /** lines and title words rise from this share of their own height below the mask (110%). */
+  mask: 1.1,
+  /** image: clip inset at the start (share of the box) and the inner image's start scale. */
+  image: { inset: 0.1, scale: 1.12 },
+  /** digits: cells a strip rolls through before it lands (blank first). */
+  digitRoll: 5,
+  /** After a play or switch the page starts revealing once this share of the card zoom has run. */
+  zoomLanded: 0.6,
+  /** Below 1024 px: reveal jobs that may run at once (the rest queue). */
+  mobileJobs: 8,
+  /** Case hero image drift (full tier, CSS --hero-drift): translateY of its own height while it exits. */
+  heroDrift: 0.06,
+} as const
+
+/** The deal: the pinned decisions scene (stage, phases, tilt) and dealing hand cards from off screen. */
+export const deal = {
+  /** Pinned stage height (svh). */
+  stage: 250,
+  /** Scroll progress where each phase ends: four cards, then the settle. */
+  phases: [0.2, 0.4, 0.6, 0.8, 1],
+  /** A dealt card lands with this share of its hand-fan angle (removed in the settle). */
+  landTilt: 0.25,
+  /** Card flip perspective (px; every card that turns over, incl. the workshop draw), toss angle (deg)
+   *  and how far below the screen the dealer sits (card heights). */
+  flipPerspective: 800,
+  toss: 28,
+  below: 0.6,
+} as const
+
+/** About timeline (full tier): strokes linked to the drawing's view progress. */
+export const timeline = {
+  start: 'entry 100%',
+  end: 'cover 60%',
+  /** Each group draws over this share of the range. */
+  groupSpan: 0.5,
+} as const
+
+/** 404 discard: drop height (× distance.exitPlay) and the share of the fall in which the card fades in. */
+export const discard = { drop: 5, fade: 0.4 } as const
 
 /** Hand geometry. */
 export const hand = {
@@ -327,13 +348,10 @@ export function motionCss(): string {
     `--opsz-start:${opsz.start}`,
     `--opsz-end:${opsz.end}`,
     ...Object.entries(stagger).map(([k, v]) => `--stagger-${kebab(k)}:${ms(v)}`),
-    // Calm and reduced reveal timings, unscaled (they are the tier's own values).
-    `--reveal-calm:${ms(duration.calmReveal)}`,
-    `--reveal-reduced:${ms(duration.reducedReveal)}`,
     `--dur-reduced:${ms(reducedCrossfade)}`,
-    `--angle-word:${angle.word}deg`,
-    `--angle-metric:${angle.metric}deg`,
     `--angle-discard:${angle.discard}deg`,
+    `--angle-tap:${angle.tap}deg`,
+    `--hero-drift:${reveal.heroDrift * 100}%`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

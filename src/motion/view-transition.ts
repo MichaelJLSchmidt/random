@@ -1,8 +1,11 @@
 /*
  * Watches the view transitions React starts (it calls
  * document.startViewTransition for every navigation inside a transition), so
- * focus and announcements can wait for the morph to finish.
+ * focus and announcements can wait for the morph to finish, and the
+ * background field can redraw once it has (VT_DONE on window).
  */
+export const VT_DONE = 'table:vt-done'
+
 let current: ViewTransition | null = null
 
 if (typeof document !== 'undefined' && 'startViewTransition' in document) {
@@ -12,6 +15,7 @@ if (typeof document !== 'undefined' && 'startViewTransition' in document) {
     current = transition
     transition.finished.finally(() => {
       if (current === transition) current = null
+      dispatchEvent(new Event(VT_DONE))
     })
     return transition
   }) as typeof document.startViewTransition

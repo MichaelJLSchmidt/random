@@ -1,70 +1,64 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { type Metric, site } from '@/lib/content'
 import type { HandCard } from '@/lib/cards'
-import { NAV } from '@/motion/transitions'
 import { CaseHero } from './case-hero'
+import { ClosingContact } from './closing-contact'
 import { type MetaPair, MetaPairs, Minimap, type MinimapSection, Scoreboard } from './layout'
 import { PageTransition } from './page-transition'
 
 type Props = {
   card: HandCard
-  /** Hero heading beside the card, e.g. Management's "How I lead" (the card keeps its own title). */
-  heading?: string
+  /** The h1 (default: the card's title). Management: "How I lead". */
+  title?: string
+  /** Mono label beside the hero counter. */
+  label: string
   /** Case study summary, or Management's lead. */
   summary: string
-  /** Five pairs on case studies, the facts on Management. */
+  /** The hero frame's content: <Picture priority> or an illustration. */
+  media: ReactNode
+  mediaKind?: 'image' | 'illustration'
+  /** Five pairs on case studies (client, timeframe, role, team, type); the card facts on Management. */
   meta?: MetaPair[]
+  /** The Scoreboard under the pairs (case studies). */
   metrics?: Metric[]
-  statement?: string
   /** Sections for the Minimap (ids of the [data-section] blocks in children). */
   sections?: MinimapSection[]
-  /** The numbered sections (Spread grid). */
+  /** The numbered sections, each its own .spread-grid. */
   children: ReactNode
 }
 
 /*
- * Case study and Management (skeleton; Layout & Pages owns it in Wave 1).
- *   hero zone   the played card lies on the table at the left (sticky, shares
- *               the hand card's view-transition name), summary, MetaPairs and
- *               Scoreboard on its right; narrow screens stack
- *   sections    full-width Spread grid sections (children), the statement
- *   end         contact block; the Minimap at the right edge from 1024 px
+ * Case study and Management.
+ *   hero      the played card, continued (CaseHero, 72vh / 64vh)
+ *   facts     MetaPairs, then the Scoreboard, across all twelve columns
+ *   sections  numbered Spread-grid sections (children), ending with Next
+ *   contact   one closing line with the email link (ClosingContact)
+ *   Minimap   fixed at the right edge from 1024 px
  */
-export function DetailPage({ card, heading, summary, meta, metrics, statement, sections, children }: Props) {
+export function DetailPage({
+  card,
+  title,
+  label,
+  summary,
+  media,
+  mediaKind,
+  meta,
+  metrics,
+  sections,
+  children,
+}: Props) {
   return (
     <PageTransition>
       <article className="detail-page" data-identity={card.identity} data-detail={card.id}>
-        <div className="detail">
-          <CaseHero card={card} />
-          <div className="detail-body">
-            {heading && <p className="detail-heading t-h2">{heading}</p>}
-            <p className="summary" data-reveal="paragraph" data-order="summary">
-              {summary}
-            </p>
-            {meta && <MetaPairs items={meta} label={site.labels.facts} />}
-            {metrics && <Scoreboard metrics={metrics} />}
+        <CaseHero card={card} title={title} label={label} summary={summary} media={media} mediaKind={mediaKind} />
+        {(meta || (metrics && metrics.length > 0)) && (
+          <div className="detail-facts spread-grid">
+            {meta && <MetaPairs items={meta} label={site.labels.facts} className="col-wide" />}
+            {metrics && <Scoreboard metrics={metrics} className="col-wide" />}
           </div>
-        </div>
-        <div className="detail-sections">{children}</div>
-        {statement && (
-          <section className="spread-grid detail-statement" aria-label={card.title}>
-            <div className="breaker col-content" data-reveal="breaker">
-              <p data-reveal="paragraph">{statement}</p>
-            </div>
-          </section>
         )}
-        <div className="spread-grid detail-end">
-          <section className="contact-block col-content" aria-labelledby="contact-block-title" data-reveal="tags">
-            <h2 id="contact-block-title">{site.labels.contactTitle}</h2>
-            <p>{site.labels.contactText}</p>
-            <p>
-              <Link href="/contact" className="button" transitionTypes={[NAV]}>
-                {site.labels.contactLink}
-              </Link>
-            </p>
-          </section>
-        </div>
+        {children}
+        <ClosingContact />
         {sections && sections.length > 0 && <Minimap sections={sections} />}
       </article>
     </PageTransition>

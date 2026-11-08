@@ -189,3 +189,44 @@
     opacity: 0;
   }
 }
+
+/*
+ * Reduced motion: every view transition is a plain crossfade. The card and
+ * title morphs keep their names (focus and announcements still follow them)
+ * but do not move or resize: the group jumps to the new geometry and the old
+ * and new images crossfade over 160 ms; page content crossfades too. The live
+ * field and the persistent chrome stay as above.
+ */
+:root[data-motion='reduced']::view-transition-group(.card-zoom),
+:root[data-motion='reduced']::view-transition-group(.card-switch),
+:root[data-motion='reduced']::view-transition-group(.card-return),
+:root[data-motion='reduced']::view-transition-group(.title-zoom),
+:root[data-motion='reduced']::view-transition-group(.title-switch),
+:root[data-motion='reduced']::view-transition-group(.title-return) {
+  animation: none;
+}
+:root[data-motion='reduced']::view-transition-old(.card-zoom),
+:root[data-motion='reduced']::view-transition-old(.card-switch),
+:root[data-motion='reduced']::view-transition-old(.card-return),
+:root[data-motion='reduced']::view-transition-old(.title-zoom),
+:root[data-motion='reduced']::view-transition-old(.title-switch),
+:root[data-motion='reduced']::view-transition-old(.title-return),
+:root[data-motion='reduced']::view-transition-old(.page-exit-play),
+:root[data-motion='reduced']::view-transition-old(.page-exit-return),
+:root[data-motion='reduced']::view-transition-old(.page-exit-switch),
+:root[data-motion='reduced']::view-transition-old(.page-fade),
+:root[data-motion='reduced']::view-transition-old(site-footer) {
+  animation: vt-fade-out var(--dur-reduced) linear both;
+}
+:root[data-motion='reduced']::view-transition-new(.card-zoom),
+:root[data-motion='reduced']::view-transition-new(.card-switch),
+:root[data-motion='reduced']::view-transition-new(.card-return),
+:root[data-motion='reduced']::view-transition-new(.title-zoom),
+:root[data-motion='reduced']::view-transition-new(.title-switch),
+:root[data-motion='reduced']::view-transition-new(.title-return),
+:root[data-motion='reduced']::view-transition-new(.page-enter-play),
+:root[data-motion='reduced']::view-transition-new(.page-enter-return),
+:root[data-motion='reduced']::view-transition-new(.page-fade),
+:root[data-motion='reduced']::view-transition-new(site-footer) {
+  animation: vt-fade-in var(--dur-reduced) linear both;
+}

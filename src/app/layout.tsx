@@ -10,17 +10,35 @@ import { RouteFocus } from '@/components/route-focus'
 import { SiteFooter } from '@/components/site-footer'
 import { identityCss, palette } from '@/design/palette'
 import { Eggs } from '@/eggs/eggs'
-import { site } from '@/lib/content'
+import { images, site } from '@/lib/content'
+import { absoluteUrl } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
 import { pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
 import { display, mono, text } from './fonts'
 import './globals.css'
 
+/** Default Open Graph image (about-og, 1280 px JPEG), only when the deploy passes SITE_URL. */
+const og = images['about-og']
+const ogUrl = absoluteUrl('/images/about-og-1280.jpg')
+const homeUrl = absoluteUrl('/')
+
 export const metadata: Metadata = {
   title: { default: site.name, template: `%s · ${site.name}` },
   description: site.description,
   robots: { index: false, follow: false },
+  ...(homeUrl && ogUrl
+    ? {
+        metadataBase: new URL(homeUrl),
+        openGraph: {
+          type: 'website',
+          siteName: site.name,
+          title: site.name,
+          description: site.description,
+          images: [{ url: ogUrl, width: 1280, height: Math.round((1280 * og.height) / og.width), alt: og.alt }],
+        },
+      }
+    : {}),
 }
 
 export const viewport: Viewport = {

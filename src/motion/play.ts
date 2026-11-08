@@ -1,7 +1,7 @@
 import { headerHeight } from '@/design/layout'
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
-import { at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
+import { angle, at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
 import { cardForPath } from '@/lib/hand-data'
 import { NAV, PLAY, RETURN, SWITCH } from './transitions'
 
@@ -32,10 +32,21 @@ export function registerNavigate(fn: Navigate | null) {
 }
 
 /**
- * Where the played card will lie on the detail page (centre and size, px).
- * Mirrors --hero-w and the .detail layout in the stylesheets.
+ * Where the played card will lie on the detail page (centre and size, px):
+ * the frame marked [data-hero-target] (D3), measured at play time when it is
+ * on screen (a switch from a detail page; the next page shares its layout).
+ * Otherwise (playing from home, no hero mounted) the computed fallback, which
+ * mirrors --hero-w and the .detail layout in the stylesheets.
  */
 export function heroTarget() {
+  const frame = document.querySelector('main [data-hero-target]')
+  const r = frame?.getBoundingClientRect()
+  if (r && r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight)
+    return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height }
+  return fallbackTarget()
+}
+
+function fallbackTarget() {
   const vw = innerWidth
   const vh = innerHeight
   const header = headerHeight
@@ -104,7 +115,12 @@ export function play(id: string, href: string): boolean {
         card.animate(
           [
             pressed,
-            { translate: `${dx}px ${dy}px`, rotate: '0deg', scale: String(H.liftScale), transform: 'rotateX(-8deg)' },
+            {
+              translate: `${dx}px ${dy}px`,
+              rotate: '0deg',
+              scale: String(H.liftScale),
+              transform: `rotateX(${angle.lift}deg)`,
+            },
           ],
           { duration: playSpring.duration * 1000, easing: playSpring.easing, fill: 'forwards' },
         ),
@@ -127,7 +143,7 @@ export function play(id: string, href: string): boolean {
     }, D.press * 1000),
     window.setTimeout(() => navigate?.(href, [type]), (type === SWITCH ? at.switchNavigate : at.navigate) * 1000),
     // The route never changed (offline, error): put the card back.
-    window.setTimeout(settleLift, 4000),
+    window.setTimeout(settleLift, D.liftTimeout * 1000),
   )
   return true
 }

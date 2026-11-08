@@ -1,135 +1,181 @@
 import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
+import type { CSSProperties } from 'react'
 import topo from '../../../public/topo/meta.json'
 import { AboutTopo } from '@/components/about-topo'
 import { AboutTimeline, ContourPortrait } from '@/components/illustrations'
-import { SectionIndex } from '@/components/layout'
+import { Section, SectionIndex, Spread } from '@/components/layout'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 import { Reveal } from '@/components/reveals'
 import { OnTheTable } from '@/eggs/on-the-table'
-import { type AboutSectionKey, type ImageEntry, about, aboutSectionKeys, images, site } from '@/lib/content'
+import { type AboutSectionKey, type ImageEntry, about, aboutSectionKeys, images, pad2, site } from '@/lib/content'
 
 export const metadata: Metadata = { title: about.title }
 
-/** One About section: index label, h2 (title or label), body. */
-function Block({ id, children, heading = true }: { id: AboutSectionKey; children: ReactNode; heading?: boolean }) {
-  const s = about[id]
-  return (
-    <section id={id} data-section={id} aria-labelledby={heading ? `${id}-title` : undefined}>
-      <SectionIndex number={aboutSectionKeys.indexOf(id) + 1} label={s.label} />
-      {heading && (
-        <h2 id={`${id}-title`} className="t-h3">
-          {s.title ?? s.label}
-        </h2>
-      )}
-      {children}
-    </section>
-  )
-}
-
-/** Photos to credit in the colophon (ImageEntry kind "photo"). */
+/** Photos to credit in the colophon (ImageEntry kind "photo"), straight from the image manifest. */
 const photos = Object.entries(images as Record<string, ImageEntry>).filter(
   (e): e is [string, Extract<ImageEntry, { kind: 'photo' }>] => e[1].kind === 'photo',
 )
 
+const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
+  story: 'm',
+  timeline: 'l',
+  howIWork: 'm',
+  tcg: 'l',
+  roots: 's',
+  onTheTable: 'm',
+}
+
 /**
- * About (skeleton): lead, story, timeline, how I work, cards (tcg), roots,
- * "What's on the table" (egg), colophon with photo credits and the topography.
- * Still on the legacy .page layout; Layout & Pages moves it to the Spread grid.
+ * About (glacier, over the contour map): hero (title, lead, ContourPortrait),
+ * 01 story (+ Spread), 02 timeline (AboutTimeline, line and dots, with seven
+ * HTML stops: horizontal from 1024, turned 90° below), 03 how I work (2×2),
+ * 04 "At the table" (+ Spread), 05 roots (+ Spread), 06 "What's on the
+ * table" (five mini cards), then the
+ * colophon (photo credits from the image manifest, the swisstopo source). The
+ * topography attribution also stays visible along the left edge from 1024.
  */
 export default function AboutPage() {
   const a = about
+  const head = (key: AboutSectionKey) => ({
+    id: key,
+    number: aboutSectionKeys.indexOf(key) + 1,
+    label: a[key].label,
+    title: a[key].title ?? a[key].label,
+    space: space[key],
+  })
+  const attribution = `${a.topo.label}. ${a.topo.attribution}.`
   return (
     <PageTransition>
-      <div className="page about" data-identity="glacier">
-        <PageTitle>{a.title}</PageTitle>
-        <p className="lede" data-reveal="paragraph" data-order="summary">
-          {a.lead}
-        </p>
-        <div className="about-sections">
-          <Block id="story">
-            <Reveal kind="draw" className="about-portrait">
-              <ContourPortrait />
-            </Reveal>
+      <div className="about-page" data-identity="glacier">
+        <header className="about-hero spread-grid">
+          <PageTitle className="about-title t-display">{a.title}</PageTitle>
+          <Reveal as="p" kind="lines" order={1} className="about-lead t-lead">
+            {a.lead}
+          </Reveal>
+          <Reveal kind="draw" order={1} className="about-portrait">
+            <ContourPortrait titleId="about-portrait-title" />
+          </Reveal>
+        </header>
+
+        {/* 01 Story */}
+        <Section {...head('story')} pin={2}>
+          <div className="section-body col-content">
             {a.story.body.map((p, i) => (
               <Reveal key={i} as="p" kind="lines" className="t-body">
                 {p}
               </Reveal>
             ))}
-          </Block>
-          <Block id="timeline">
-            <Reveal as="ol" kind="list" className="item-list t-body">
+          </div>
+          {a.story.image && <Spread image={a.story.image} caption={a.story.caption} className="section-spread" />}
+        </Section>
+
+        {/* 02 Timeline: seven stops; the drawing runs along them. */}
+        <Section {...head('timeline')} pin={1}>
+          <div className="timeline col-wide" style={{ '--stops': a.timeline.items.length } as CSSProperties}>
+            {/* Line and dots only: the years and titles are the HTML stops, in seven equal cells that line up with the dots. */}
+            <Reveal kind="draw" className="timeline-track">
+              <AboutTimeline titleId="timeline-illustration-title" items={a.timeline.items} labels={false} />
+            </Reveal>
+            <Reveal as="ol" kind="list" className="timeline-stops">
               {a.timeline.items.map((t, i) => (
-                <li key={i}>
-                  <span className="t-label">{t.years}</span> {t.title}
+                <li key={i} className="timeline-stop">
+                  <span className="timeline-years t-label">{t.years}</span>
+                  <span className="timeline-stop-title">{t.title}</span>
                 </li>
               ))}
             </Reveal>
-            <Reveal kind="draw" className="about-timeline">
-              <AboutTimeline />
-            </Reveal>
-          </Block>
-          <Block id="howIWork">
-            <Reveal as="ul" kind="list" className="item-list t-body">
-              {a.howIWork.items.map((h, i) => (
-                <li key={i}>
-                  <strong>{h.title}</strong> {h.body}
-                </li>
-              ))}
-            </Reveal>
-          </Block>
-          <Block id="tcg">
-            <Reveal as="p" kind="lines" className="t-body">
-              {a.tcg.body}
-            </Reveal>
-            <ul className="item-list t-body">
-              {a.tcg.lessons.map((l, i) => (
-                <li key={i}>
-                  <strong>{l.title}</strong> {l.body}
-                </li>
-              ))}
-            </ul>
-            <p className="t-label">{a.tcg.stats}</p>
-          </Block>
-          <Block id="roots">
-            <Reveal as="p" kind="lines" className="t-body">
-              {a.roots.body}
-            </Reveal>
-          </Block>
-          <Block id="onTheTable" heading={false}>
+          </div>
+        </Section>
+
+        {/* 03 How I work: a staggered 2×2. */}
+        <Section {...head('howIWork')} pin={2}>
+          <Reveal as="ul" kind="list" className="how-grid cols-4-12">
+            {a.howIWork.items.map((h, i) => (
+              <li key={i} className="how-item">
+                <span className="how-number t-label">{pad2(i + 1)}</span>
+                <h3 className="t-h3">{h.title}</h3>
+                <p className="t-body">{h.body}</p>
+              </li>
+            ))}
+          </Reveal>
+        </Section>
+
+        {/* 04 At the table */}
+        <Section {...head('tcg')} pin={3}>
+          <Reveal as="p" kind="lines" className="tcg-body t-lead cols-4-10">
+            {a.tcg.body}
+          </Reveal>
+          <Reveal as="ul" kind="list" className="tcg-lessons col-content">
+            {a.tcg.lessons.map((l, i) => (
+              <li key={i} className="tcg-lesson">
+                <h3 className="t-h3">{l.title}</h3>
+                <p className="t-body">{l.body}</p>
+              </li>
+            ))}
+          </Reveal>
+          <p className="tcg-stats t-label col-content">{a.tcg.stats}</p>
+          {a.tcg.image && <Spread image={a.tcg.image} caption={a.tcg.caption} className="section-spread" />}
+        </Section>
+
+        {/* 05 Roots: set to the right, lead size. */}
+        <Section {...head('roots')} pin={2}>
+          <Reveal as="p" kind="lines" className="roots-body t-lead cols-6-11">
+            {a.roots.body}
+          </Reveal>
+          {a.roots.image && <Spread image={a.roots.image} caption={a.roots.caption} className="section-spread" />}
+        </Section>
+
+        {/* 06 What's on the table: the egg brings its own h2. */}
+        <div id="onTheTable" className="page-section spread-grid space-m about-table" data-section="onTheTable">
+          <SectionIndex
+            number={aboutSectionKeys.indexOf('onTheTable') + 1}
+            label={a.onTheTable.label}
+            className="col-index"
+          />
+          <div className="col-content">
             <OnTheTable
               title={a.onTheTable.title}
               items={a.onTheTable.items}
               flipped={site.eggs.tableFlipped}
               titleId="onTheTable-title"
             />
-          </Block>
+          </div>
         </div>
-        <section className="about-credits" aria-labelledby="credits-title">
-          <h2 id="credits-title" className="t-label">
+
+        {/* Colophon: every photo from the manifest, credited and linked; the topography's source. */}
+        <section className="colophon page-section spread-grid space-l" aria-labelledby="credits-title">
+          <h2 id="credits-title" className="colophon-title t-label col-index">
             {a.creditsTitle}
           </h2>
-          {photos.length > 0 && (
-            <ul className="item-list">
-              {photos.map(([id, p]) => (
-                <li key={id}>
-                  <a className="link" href={p.pageUrl}>
-                    {p.alt || id}
-                  </a>{' '}
-                  ·{' '}
-                  <a className="link" href={p.photographerUrl}>
-                    {p.photographer}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="topo-credit meta">
-            {a.topo.label}. {a.topo.attribution}.
-            {topo.placeholder && <span className="topo-placeholder"> {a.topo.placeholderNote}</span>}
-          </p>
+          <div className="colophon-body col-content">
+            {photos.length > 0 && (
+              <ul className="colophon-list">
+                {photos.map(([id, p]) => (
+                  <li key={id}>
+                    <a className="link" href={p.pageUrl}>
+                      {p.alt || id}
+                    </a>
+                    <span className="colophon-by t-label">
+                      <a className="link" href={p.photographerUrl}>
+                        {p.photographer}
+                      </a>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="topo-credit t-label">
+              {attribution}
+              {topo.placeholder && <span className="topo-placeholder"> {a.topo.placeholderNote}</span>}
+            </p>
+          </div>
         </section>
+
+        {/* The contour map's source, visible along the left edge while the map is behind the page. */}
+        <p className="topo-attribution t-label" aria-hidden="true">
+          {a.topo.attribution}
+        </p>
         <AboutTopo meta={topo} />
       </div>
     </PageTransition>

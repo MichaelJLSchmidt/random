@@ -9,14 +9,15 @@ import { table } from '@/motion/table-store'
  * Reveals. Owned by the Motion session; contract: docs/contracts.md#reveal.
  *
  *   <Reveals />            mounted once in the root layout: runs the reveal
- *                          system for each route (legacy data-reveal presets)
+ *                          system for each route (src/motion/reveal.ts)
  *   <Reveal kind ...>      marks one block for a reveal of `kind`
- *   <FirstLoadSequence>    wraps the home hero for the first-visit sequence
+ *   <FirstLoadSequence>    wraps the home hero for the first-load sequence
  *
- * <Reveal> and <FirstLoadSequence> are static stubs: they render their
- * children in the final, visible state. <Reveal> writes data-revealed="" up
- * front, so neither the legacy CSS start states nor the legacy reveal system
- * touch it. The Motion session implements both without changing the props.
+ * Both render plain markup: data-reveal / data-reveal-order /
+ * data-reveal-delay on the block, data-first-load on the wrapper. The reveal
+ * system finds them after each route change. Before it takes over, blocks are
+ * hidden only while the pre-paint script has armed the page (reveal.css); the
+ * arming is dropped after 4 s, so without JavaScript every page is final.
  */
 
 const normalise = (path: string) => path.replace(/\/$/, '') || '/'
@@ -57,6 +58,7 @@ export type RevealTag =
   | 'figure'
   | 'p'
   | 'span'
+  | 'h1'
   | 'h2'
   | 'h3'
   | 'ul'
@@ -80,14 +82,13 @@ export type RevealProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
   children?: ReactNode
 }
 
-/** Marks a block for a reveal. Stub: renders it final (see the file comment). */
+/** Marks a block for a reveal of `kind` (see the file comment). */
 export function Reveal({ as = 'div', kind, order, delay, children, ...rest }: RevealProps) {
   return createElement(
     as,
     {
       ...rest,
       'data-reveal': kind,
-      'data-revealed': '',
       'data-reveal-order': order,
       'data-reveal-delay': delay,
     },
@@ -95,7 +96,10 @@ export function Reveal({ as = 'div', kind, order, delay, children, ...rest }: Re
   )
 }
 
-/** Wraps the home hero for the first-visit sequence (field, hand, title, lines, chrome). Stub: pass-through. */
+/**
+ * Wraps the home hero for the first-load sequence (hand, title, role, intro,
+ * divider, the rest, chrome; src/motion/first-load.ts). No layout of its own.
+ */
 export function FirstLoadSequence({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={className} data-first-load="" style={contents}>

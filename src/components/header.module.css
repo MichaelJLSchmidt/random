@@ -7,7 +7,8 @@
   justify-content: space-between;
   gap: var(--space-4);
   height: var(--header-h);
-  padding: 0 var(--gutter);
+  /* Aligned with the Spread grid: the margin, or the centred 12 x 96 px columns from 1440. */
+  padding: 0 max(var(--grid-margin), calc((100% - 1416px) / 2));
   background: linear-gradient(to bottom, color-mix(in srgb, var(--ink-field) 70%, transparent), transparent);
 }
 

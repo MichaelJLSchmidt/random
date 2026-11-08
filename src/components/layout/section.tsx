@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { cx } from '@/lib/cx'
-import { MarginNote } from './margin-note'
+import { Reveal } from '../reveals'
 import { NumeralBreaker } from './numeral-breaker'
 import { SectionIndex } from './section-index'
 
@@ -13,33 +13,72 @@ type Props = {
   label: string
   /** The h2. */
   title: string
-  /** Show a NumeralBreaker before the section. */
+  /** Keep the h2 for screen readers only (the section opens with a statement set at h2 size). */
+  titleHidden?: boolean
+  /** Open with an outlined NumeralBreaker. */
   breaker?: boolean
-  /** MarginNote text. */
-  note?: ReactNode
+  /** A full-bleed breaker (the problem statement): the background field lifts while it is in view (data-breaker). */
+  lift?: boolean
+  /** Space above the section (--space-s / -m / -l); chosen per section so the rhythm varies. */
+  space?: 's' | 'm' | 'l'
+  /**
+   * From 1024 px: how many grid rows the sticky index spans, counting the h2's
+   * row (default 2: the h2 and the first block). Keep it below any row that
+   * holds a .col-wide / .col-full block, which needs columns 1–3.
+   */
+  pin?: number
   className?: string
+  /** Direct grid items, each placed with a .col-* / .cols-* class. */
   children?: ReactNode
 }
 
 /*
- * One numbered section on the Spread grid: optional NumeralBreaker (full
- * bleed), SectionIndex in the index column, the h2 and body in the content
- * column, an optional MarginNote. A composition of the stubs, not a contract
- * of its own; the Layout session may change or drop it.
+ * One numbered section on the Spread grid. Every child is a direct grid item,
+ * so a section can mix reading-column text, a margin note (column 12 + outer
+ * track from 1680), two-column rows and full-bleed blocks:
+ *
+ *   [NumeralBreaker]                 content column to the right edge
+ *   SectionIndex (sticky)  h2        columns 1–3 | 4–11
+ *   ...                    children
+ *
+ * A composition of the contract components, not a contract of its own.
  */
-export function Section({ id, number, label, title, breaker, note, className, children }: Props) {
+export function Section({
+  id,
+  number,
+  label,
+  title,
+  titleHidden,
+  breaker,
+  lift,
+  space = 'm',
+  pin = 2,
+  className,
+  children,
+}: Props) {
   const titleId = `${id}-title`
   return (
-    <section id={id} className={cx('page-section spread-grid', className)} data-section={id} aria-labelledby={titleId}>
-      {breaker && <NumeralBreaker value={number} className="col-full" />}
+    <section
+      id={id}
+      className={cx('page-section spread-grid', `space-${space}`, titleHidden && 'title-hidden', className)}
+      data-section={id}
+      data-breaker={lift ? '' : undefined}
+      aria-labelledby={titleId}
+      style={{ '--index-rows': pin } as CSSProperties}
+    >
+      {breaker && <NumeralBreaker value={number} />}
       <SectionIndex number={number} label={label} className="col-index" />
-      <div className="section-body col-content">
-        <h2 id={titleId} className="section-title t-h2">
+      {titleHidden ? (
+        // For screen readers only: nothing to reveal.
+        <h2 id={titleId} className="section-title t-h2 col-content sr-only">
           {title}
         </h2>
-        {children}
-      </div>
-      {note && <MarginNote>{note}</MarginNote>}
+      ) : (
+        <Reveal as="h2" kind="lines" id={titleId} className="section-title t-h2 col-content">
+          {title}
+        </Reveal>
+      )}
+      {children}
     </section>
   )
 }

@@ -1,236 +1,169 @@
 import { inView } from 'motion'
-import { INTRO_DONE, INTRO_KEY } from './preferences'
+import { discard } from '@/eggs/discard'
+import { gapFor } from './choreography'
+import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
+import { completeAll, revealNow, revealed, schedule } from './jobs'
+import { type Kind, isHeroImage, runKind } from './kinds'
+import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
+import { loadSplit } from './split'
 import { table } from './table-store'
-import { at, duration as D, ease, reveal as R, stagger as S } from './tokens'
+import { reveal as R, duration as D, stagger, tiers } from './tokens'
 import { readTier } from './use-tier'
 
+export { dealOffset, drawCards, fanCards } from './deal'
+
 /*
- * The reveal system. CSS (src/styles/reveal.css) holds every preset's start
- * state and transition; this module only decides when: it marks elements
- * [data-revealed] with a delay (--rd) and per-child indexes.
+ * The reveal system (docs/contracts.md#reveal). Every <Reveal> renders
+ * data-reveal="<kind>" (+ data-reveal-order / data-reveal-delay); CSS
+ * (src/styles/reveal.css) only hides armed, unrevealed blocks with opacity 0.
+ * This module decides when each block reveals and starts its kind
+ * (kinds.ts) as a job (jobs.ts).
  *
- *   page order   the first viewport follows a sequence per navigation kind
- *                (title, then facts / summary / lines, then chrome)
- *   on scroll    everything else reveals once 25% is in view (margin -10%),
- *                batched so only one sequence runs at a time
- *   intro        home, first visit: background from black, the hand dealt
- *                from off screen, title, lines, chrome; any key, click or
- *                scroll completes it
+ *   home       <FirstLoadSequence>: the first-visit sequence, or a 300 ms
+ *              crossfade on revisits and client navigations (first-load.ts)
+ *   order      blocks with data-reveal-order in the first viewport play in
+ *              sequence: base + 80 ms × (order + 1) + delay, where base is 0,
+ *              or the moment the card morph has mostly landed after a play
+ *   on scroll  everything else reveals once 25% is in view (Motion inView,
+ *              once); blocks entering in the same frame start 50 ms apart in
+ *              document order
+ *   neighbours a block revealing with the same kind as the block before it
+ *              starts at least 80 ms after it (spaced()), so no two
+ *              neighbours share a timing
+ *   notes      a margin note waits until its related paragraph has finished
+ *   titles     the page h1 (PageTitle: kind "lines", order 0) reveals on direct
+ *              loads and client navigations; after a play or switch it is
+ *              final at once, because the card → hero morph delivers it
+ *   breakers   full-bleed blocks with data-breaker lift the field while in view
+ *   discard    on 404 the .lost-card (a draw reveal) falls into the zone
+ *
+ * The Minimap's aria-current belongs to Layout (MinimapObserver), not here.
  */
 /** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
 export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
 
-const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
-const now = () => performance.now() / 1000
+const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note'])
 
-let sequenceEnd = 0
-let batch: HTMLElement[] = []
-let batchFrame = 0
-let introCleanup: (() => void) | null = null
+/** The kind a block reveals with (data-reveal), or null when it is not one of the eight. */
+export function kindOf(el: HTMLElement): Kind | null {
+  const k = el.dataset.reveal
+  return k && kinds.has(k) ? (k as Kind) : null
+}
 
-/** Offsets (s) per [data-order] group and navigation kind. */
-function orders(kind: NavigationKind): Record<string, number> {
-  switch (kind) {
-    case 'first':
-      return { title: at.title, lines: at.lines, chrome: at.chrome }
-    case 'repeat':
-      return { title: 0, lines: 0.25, chrome: 0.45 }
-    case 'return':
-      return { title: 0, lines: 0.2, chrome: 0.35 }
-    case 'play':
-    case 'switch': {
-      // After the zoom has mostly landed.
-      const base = D.zoom * 0.6
-      return {
-        title: base,
-        facts: base + at.facts,
-        summary: base + at.summary,
-        lines: base + at.summary,
-        chrome: base + at.buttons,
+function orderOf(el: HTMLElement): number | null {
+  const own = el.dataset.revealOrder
+  return own !== undefined && own !== '' ? Number(own) || 0 : null
+}
+
+/** data-reveal-delay (ms), scaled like every other offset. */
+const delayOf = (el: HTMLElement) => gapFor(readTier(), (Number(el.dataset.revealDelay) || 0) / 1000)
+
+const inFirstViewport = (el: Element) => {
+  const r = el.getBoundingClientRect()
+  return r.bottom > 0 && r.top < innerHeight && (r.width > 0 || r.height > 0)
+}
+
+/** b follows a in the document (Node is read at call time: this module is also evaluated on the server). */
+const follows = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+const byDocument = (a: Element, b: Element) => (follows(a, b) ? -1 : 1)
+
+/** The paragraph a margin note belongs to: the last block or lines reveal before it in its section. */
+function relatedOf(note: HTMLElement): HTMLElement | null {
+  const scope = note.closest('[data-section], section, article') ?? note.parentElement
+  if (!scope) return null
+  const before = [...scope.querySelectorAll<HTMLElement>('[data-reveal]')].filter(
+    (el) => el !== note && !el.contains(note) && follows(el, note) && kindOf(el) !== 'note',
+  )
+  const text = before.filter((el) => ['block', 'lines'].includes(kindOf(el) ?? ''))
+  return text.at(-1) ?? before.at(-1) ?? null
+}
+
+type Route = {
+  stops: (() => void)[]
+  held: Set<HTMLElement>
+  batch: HTMLElement[]
+  frame: number
+  live: boolean
+  /** The route's reveal blocks in document order (for the adjacency rule). */
+  all: HTMLElement[]
+  index: Map<HTMLElement, number>
+  /** Planned start (performance.now(), ms) of each block's reveal. */
+  planned: Map<HTMLElement, number>
+}
+
+/**
+ * Neighbours never share a timing: a block whose previous block (document
+ * order) reveals with the same kind starts at least one deal step (80 ms)
+ * after it, whenever both were triggered close together (same frame, the next
+ * frame, or the same order). Notes keep their own rule (after their paragraph).
+ */
+function spaced(el: HTMLElement, kind: string, delay: number, r: Route) {
+  const i = r.index.get(el)
+  const prev = i ? r.all[i - 1] : undefined
+  if (kind === 'note' || !prev || kindOf(prev) !== kind) return delay
+  const prevAt = r.planned.get(prev)
+  if (prevAt === undefined) return delay
+  const now = performance.now()
+  const earliest = prevAt + gapFor(readTier(), stagger.cards)
+  return now + delay < earliest ? earliest - now : delay
+}
+
+let introSkip: (() => void) | null = null
+
+/** Starts the reveal of one block in `delay` ms (resolving its special cases). */
+function start(el: HTMLElement, wanted: number, r: Route) {
+  const kind = kindOf(el)
+  if (!kind || el.hasAttribute('data-revealed')) return
+  const tier = readTier()
+  const delay = spaced(el, kind, wanted, r)
+  r.planned.set(el, performance.now() + delay)
+  if (kind === 'image' && isHeroImage(el.querySelector('img'))) return revealNow(el)
+  if (kind === 'digits' && tier === 'reduced') return revealNow(el, '')
+  if (kind === 'draw' && tier === 'full') {
+    const svg = el.querySelector('svg')
+    if (isLinkedTimeline(svg)) {
+      const unlink = linkTimeline(svg)
+      if (unlink) {
+        r.stops.push(unlink)
+        return revealNow(el, '')
       }
     }
-    default:
-      return { title: 0, facts: at.facts, summary: at.summary, lines: at.summary, chrome: at.buttons }
   }
-}
-
-/** Splits a plain-text paragraph into masked lines (full tier); restored once revealed. */
-function splitLines(el: HTMLElement) {
-  if (el.dataset.split !== undefined || el.children.length > 0) return 0
-  const text = el.textContent ?? ''
-  const words = text.split(/(\s+)/)
-  el.textContent = ''
-  const spans: HTMLSpanElement[] = []
-  for (const w of words) {
-    if (/^\s+$/.test(w) || !w) {
-      el.append(w)
-      continue
+  if (kind === 'note') {
+    const related = relatedOf(el)
+    // A related paragraph that is not rendered (hidden at this width) never reveals: do not wait for it.
+    if (related && related.getClientRects().length > 0) {
+      r.held.add(el)
+      revealed(related).then(() => {
+        if (!r.live || !r.held.delete(el)) return
+        r.planned.set(el, performance.now() + delay)
+        schedule(el, delay, (ctx) => runKind('note', ctx, el))
+      })
+      return
     }
-    const s = document.createElement('span')
-    s.textContent = w
-    el.append(s)
-    spans.push(s)
   }
-  const lines: string[][] = []
-  let top = Number.NaN
-  for (const s of spans) {
-    if (s.offsetTop !== top) {
-      lines.push([])
-      top = s.offsetTop
-    }
-    lines[lines.length - 1].push(s.textContent!)
-  }
-  el.textContent = ''
-  lines.forEach((words, i) => {
-    const line = document.createElement('span')
-    line.className = 'rl'
-    const inner = document.createElement('span')
-    inner.className = 'rl-in'
-    inner.style.setProperty('--li', String(Math.min(i, 5)))
-    inner.textContent = words.join(' ')
-    line.append(inner)
-    el.append(line)
+  // The 404 egg: the .lost-card (a draw reveal around DiscardedCard) falls into the zone while its strokes draw.
+  const falls = kind === 'draw' && el.classList.contains('lost-card')
+  schedule(el, delay, (ctx) => {
+    if (falls) discard(ctx, el)
+    return runKind(kind, ctx, el)
   })
-  el.dataset.split = ''
-  void el.offsetWidth
-  // Back to plain text once the last line is in, so it reflows on resize.
-  const done =
-    (Number.parseFloat(el.style.getPropertyValue('--rd')) || 0) + D.line + Math.min(lines.length, 6) * 0.08 + 0.2
-  window.setTimeout(() => {
-    if (!el.isConnected) return
-    el.textContent = text
-    delete el.dataset.split
-  }, done * 1000)
-  return lines.length
 }
 
-/** Marks one element revealed after `delay` seconds (variant: '', 'instant', 'short', 'repeat'). */
-function mark(el: HTMLElement, delay: number, variant = '') {
-  if (el.hasAttribute('data-revealed')) return
-  const preset = el.dataset.reveal
-  el.style.setProperty('--rd', `${Math.max(0, delay).toFixed(3)}s`)
-  if (preset === 'list' || (preset === 'tags' && /^(UL|OL|DL)$/.test(el.tagName))) {
-    ;[...el.children].forEach((c, i) => (c as HTMLElement).style.setProperty('--i', String(i)))
-  }
-  if (preset === 'metric') {
-    const digits = el.querySelectorAll<HTMLElement>('.metric-digit')
-    digits.forEach((d, i) => d.style.setProperty('--i', String(i)))
-    el.style.setProperty('--label-d', `${delay + digits.length * S.metric + at.label}s`)
-  }
-  if ((preset === 'paragraph' || preset === 'line') && readTier() === 'full' && variant !== 'instant') splitLines(el)
-  el.setAttribute('data-revealed', variant)
+function flush(r: Route) {
+  r.frame = 0
+  const items = r.batch.sort(byDocument)
+  r.batch = []
+  const gap = gapFor(readTier(), stagger.items)
+  items.forEach((el, i) => start(el, i * gap + delayOf(el), r))
 }
 
-function flush() {
-  batchFrame = 0
-  const items = batch.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
-  batch = []
-  const t = now()
-  const base = Math.max(0, sequenceEnd - t)
-  let j = 0
-  for (const el of items) {
-    mark(el, base + j * S.introLines)
-    if (el.dataset.reveal !== 'row') j++
-  }
-  sequenceEnd = t + base + j * S.introLines
-}
-
-function queue(el: HTMLElement) {
-  batch.push(el)
-  if (!batchFrame) batchFrame = requestAnimationFrame(flush)
-}
-
-/** Ends running reveal transitions at once (CSS drops them for a frame). */
+/** Ends running reveal animations at once (the intro skip). */
 export function completeReveals() {
-  const root = document.documentElement
-  root.dataset.revealSkip = ''
+  completeAll()
   for (const card of document.querySelectorAll<HTMLElement>('.hand-card')) {
     for (const a of card.getAnimations()) a.finish()
   }
-  void root.offsetWidth
-  requestAnimationFrame(() => requestAnimationFrame(() => delete root.dataset.revealSkip))
-  sequenceEnd = now()
-}
-
-/** Hand cards currently laid out in the fan (not the ghost of an open card). */
-export const fanCards = () =>
-  [...document.querySelectorAll<HTMLElement>('.hand-fan .hand-card')].filter(
-    (c) => c.getClientRects().length > 0 && !c.hasAttribute('aria-current'),
-  )
-
-/** Where cards are dealt from: off screen, bottom right (the dealer's side), relative to a card's slot. */
-export function dealOffset(card: HTMLElement) {
-  const slot = card.parentElement!.getBoundingClientRect()
-  return [
-    innerWidth + slot.width - (slot.left + slot.width / 2),
-    innerHeight + slot.height * 0.6 - (slot.top + slot.height / 2),
-  ]
-}
-
-/** Cards are dealt face down from off screen and flip face up mid-flight (620 ms, 110 ms apart). */
-export function drawCards(cards: HTMLElement[], start: number) {
-  return cards.map((card, i) => {
-    const cs = getComputedStyle(card)
-    const rest = {
-      translate: cs.translate === 'none' ? '0px 0px' : cs.translate,
-      rotate: cs.rotate === 'none' ? '0deg' : cs.rotate,
-    }
-    const [dx, dy] = dealOffset(card)
-    card.dataset.drawn = ''
-    return card.animate(
-      [
-        { translate: `${dx}px ${dy}px`, rotate: '28deg', transform: 'perspective(800px) rotateY(180deg)', opacity: 1 },
-        { ...rest, transform: 'perspective(800px) rotateY(0deg)', opacity: 1 },
-      ],
-      { duration: D.draw * 1000, delay: (start + i * S.draw) * 1000, easing: bezier(ease.draw), fill: 'backwards' },
-    )
-  })
-}
-
-/** The first-visit sequence on home. Returns a cleanup that completes it. */
-function intro(main: HTMLElement) {
-  const root = document.documentElement
-  try {
-    sessionStorage.setItem(INTRO_KEY, '1')
-  } catch {
-    // Storage blocked: the intro may play again on the next home visit.
-  }
-  const full = readTier() === 'full'
-  const o = orders('first')
-  if (full) drawCards(fanCards(), at.draw)
-  else {
-    // Calm and reduced: the hand fades in at the same moment, without the flight.
-    const dur = (readTier() === 'calm' ? D.calmReveal : D.reducedReveal) * 1000
-    for (const card of fanCards()) {
-      card.dataset.drawn = ''
-      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, delay: at.draw * 1000, fill: 'backwards' })
-    }
-  }
-  const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome]')]
-  const links = [...main.querySelectorAll<HTMLElement>('[data-order="chrome"]')]
-  ;[...links, ...chrome].forEach((el, i) => mark(el, o.chrome + i * S.tags))
-  const total = o.chrome + (links.length + chrome.length) * S.tags + D.tags
-
-  let finished = false
-  const finish = () => {
-    if (finished) return
-    finished = true
-    window.clearTimeout(timer)
-    for (const type of ['keydown', 'pointerdown', 'wheel', 'touchmove'] as const) removeEventListener(type, skip, true)
-    removeEventListener('scroll', skip, true)
-    delete root.dataset.intro
-    dispatchEvent(new Event(INTRO_DONE))
-  }
-  const skip = () => {
-    completeReveals()
-    finish()
-  }
-  const timer = window.setTimeout(finish, (total + 0.2) * 1000)
-  for (const type of ['keydown', 'pointerdown', 'wheel', 'touchmove'] as const)
-    addEventListener(type, skip, { capture: true, passive: true })
-  addEventListener('scroll', skip, { capture: true, passive: true })
-  document.querySelector<HTMLButtonElement>('[data-intro-skip]')?.addEventListener('click', skip, { once: true })
-  return skip
 }
 
 /**
@@ -242,66 +175,96 @@ export function revealRoute(kind: NavigationKind) {
   const root = document.documentElement
   const main = document.getElementById('main')
   if (!main) return () => {}
-  introCleanup?.()
-  introCleanup = null
+  introSkip?.()
+  introSkip = null
   root.dataset.reveal = 'live'
-  sequenceEnd = now()
-  // Start states must be computed before anything is marked, or there is
-  // nothing to transition from (fast loads would skip straight to the end).
-  void main.offsetWidth
+  const tier = readTier()
+  const handled = new Set<HTMLElement>()
+  const all = [...main.querySelectorAll<HTMLElement>('[data-reveal]')]
+  const r: Route = {
+    stops: [],
+    held: new Set(),
+    batch: [],
+    frame: 0,
+    live: true,
+    all,
+    index: new Map(all.map((el, i) => [el, i])),
+    planned: new Map(),
+  }
+  // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
+  if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines')) void loadSplit()
 
-  const o = orders(kind)
-  const stops: (() => void)[] = []
-  const h1 = main.querySelector<HTMLElement>('[data-reveal="headline"]')
-  if (h1) {
-    const variant =
-      kind === 'play' || kind === 'switch' ? 'instant' : kind === 'return' ? 'short' : kind === 'repeat' ? 'repeat' : ''
-    mark(h1, variant === 'instant' ? 0 : o.title, variant)
+  // Home: the first-load sequence (the first visit also deals the hand and reveals the chrome).
+  const seq = main.querySelector<HTMLElement>('[data-first-load]')
+  if (seq || kind === 'first') {
+    const h1 = seq?.querySelector<HTMLElement>('h1') ?? null
+    const blocks: FirstLoadBlock[] = []
+    for (const el of all) {
+      if (!seq?.contains(el) || el === h1 || h1?.contains(el)) continue
+      const k = kindOf(el)
+      handled.add(el)
+      if (!k) continue
+      blocks.push({ el, kind: k, order: orderOf(el), delay: delayOf(el) })
+    }
+    if (h1) handled.add(h1)
+    if (kind === 'first') introSkip = firstVisit(h1, blocks, (el, delay) => start(el, delay, r))
+    else if (seq) revisit(seq, h1, blocks)
   }
 
-  // Page order: grouped elements in the first viewport follow the sequence.
-  const groups = new Map<string, HTMLElement[]>()
-  for (const el of main.querySelectorAll<HTMLElement>('[data-reveal][data-order]')) {
-    const g = el.dataset.order!
-    if (kind === 'first' && g === 'chrome') continue
-    groups.set(g, [...(groups.get(g) ?? []), el])
-  }
-  let last = 0
-  for (const [g, els] of groups) {
-    const start = o[g] ?? o.chrome ?? 0
-    els.forEach((el, i) => {
-      if (g === 'lines' && kind === 'first') el.style.setProperty('--stagger-lines', `${S.introLines}s`)
-      const step = g === 'lines' ? S.introLines : S.tags
-      mark(el, start + i * step)
-      last = Math.max(last, start + i * step)
-    })
-  }
-  sequenceEnd = now() + last + 0.1
+  // The page title outside the home sequence: after a play or switch the card → hero morph
+  // delivers it, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
+  const morphed = kind === 'play' || kind === 'switch'
+  // The page starts revealing once the morph has mostly landed: zoomLanded of the view
+  // transition as this tier runs it (calm keeps the full-length morph; reduced has no offsets).
+  const morph = kind === 'switch' ? D.switchDelay + D.switchIn : D.zoom
+  const base = morphed && tier !== 'reduced' ? morph * tiers[tier].vt * R.zoomLanded * 1000 : 0
+  if (morphed)
+    for (const el of all) {
+      if (handled.has(el) || el.tagName !== 'H1') continue
+      handled.add(el)
+      revealNow(el)
+    }
 
-  if (kind === 'first') introCleanup = intro(main)
+  // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
+  const ordered = all
+    .filter((el) => !handled.has(el) && kindOf(el) && orderOf(el) !== null && inFirstViewport(el))
+    .sort((a, b) => orderOf(a)! - orderOf(b)! || byDocument(a, b))
+  for (const el of ordered) {
+    handled.add(el)
+    start(el, base + gapFor(tier, (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
+  }
 
-  // Everything else: once 25% is in view.
-  for (const el of main.querySelectorAll<HTMLElement>('[data-reveal]:not([data-revealed])')) {
-    if (el.dataset.reveal === 'breaker') continue
+  // Everything else: once 25% is in view (a block taller than the viewport: once it covers 25% of the
+  // viewport's height, so no block is ever too tall to reveal).
+  for (const el of all) {
+    if (handled.has(el) || !kindOf(el)) continue
+    const amount = Math.min(R.amount, (innerHeight * R.amount) / Math.max(1, el.getBoundingClientRect().height))
     const stop = inView(
       el,
       () => {
-        queue(el)
         stop()
+        r.batch.push(el)
+        if (!r.frame) r.frame = requestAnimationFrame(() => flush(r))
       },
-      { amount: R.amount, margin: R.margin as `${number}px ${number}px ${number}% ${number}px` },
+      { amount, margin: R.margin as `${number}px ${number}px ${number}% ${number}px` },
     )
-    stops.push(stop)
+    r.stops.push(stop)
   }
 
-  // Full-bleed breakers lift the field's intensity while in view.
-  for (const el of main.querySelectorAll<HTMLElement>('[data-reveal="breaker"]')) {
-    stops.push(
+  // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while any of them
+  // is in view: counted, because adjacent breakers overlap (one leaves while the next is in view).
+  const lifting = new Set<HTMLElement>()
+  for (const el of main.querySelectorAll<HTMLElement>('[data-breaker]')) {
+    r.stops.push(
       inView(
         el,
         () => {
+          lifting.add(el)
           table.setBreaker(true)
-          return () => table.setBreaker(false)
+          return () => {
+            lifting.delete(el)
+            table.setBreaker(lifting.size > 0)
+          }
         },
         { amount: R.amount },
       ),
@@ -309,10 +272,12 @@ export function revealRoute(kind: NavigationKind) {
   }
 
   return () => {
-    for (const stop of stops) stop()
+    r.live = false
+    for (const stop of r.stops) stop()
     table.setBreaker(false)
-    cancelAnimationFrame(batchFrame)
-    batchFrame = 0
-    batch = []
+    cancelAnimationFrame(r.frame)
+    for (const el of r.batch) revealNow(el)
+    for (const el of r.held) revealNow(el)
+    completeAll()
   }
 }

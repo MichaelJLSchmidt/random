@@ -31,7 +31,7 @@
 
 .hand-slot .hand-card[data-tapped] {
   z-index: 4;
-  rotate: 90deg;
+  rotate: var(--angle-tap);
   translate: 0 calc(var(--dy) * var(--arc-k) - var(--ch) * (1 - var(--visible)) - var(--cw) * 0.62);
 }
 .hand-slot:has([data-tapped]) {
@@ -104,8 +104,9 @@
 :root:not([data-intro]) .hand-coffee:not([data-drawn]) {
   opacity: 0;
 }
-.hand-coffee[data-drawn] {
-  animation: vt-fade-in var(--rv-dur, 0s) both;
+/* Full tier: dealt from off screen (drawCards); calm fades in, reduced appears in one crossfade. */
+:root:not([data-motion='full']) .hand-coffee[data-drawn] {
+  animation: vt-fade-in var(--dur-m) var(--ease-out-soft) both;
 }
 
 /* ---------- Shortcut sheet ---------- */
@@ -273,7 +274,7 @@
 :root:not([data-motion='full']) .on-table-front {
   backface-visibility: visible;
   transform: none;
-  transition: opacity var(--reveal-calm) var(--ease-out-soft);
+  transition: opacity var(--dur-m) var(--ease-out-soft);
 }
 :root[data-motion='reduced'] :is(.on-table-back, .on-table-front) {
   transition: none;
