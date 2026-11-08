@@ -17,7 +17,9 @@ type Props = {
 /*
  * A full-bleed image with a margin caption. The figure is its own
  * .spread-grid spanning full-start / full-end, so it works inside a page grid
- * or on its own. Contract: docs/contracts.md#spread.
+ * or on its own. The caption sits under the image in the reading column, and
+ * from 1680 px (D2) in column 12 + the outer track, under the image's right
+ * edge. Contract: docs/contracts.md#spread.
  */
 export function Spread({ image, caption, sizes = '100vw', priority, className }: Props) {
   return (

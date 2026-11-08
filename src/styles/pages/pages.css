@@ -1,131 +1,805 @@
-/* Other pages: More projects, About, 404 (Layout & Pages session). Skeleton styles. */
+/*
+ * Pages other than the detail pages: home, More projects, About, Contact and
+ * 404 (Layout & Pages session). Every page is a set of .spread-grid blocks;
+ * placement uses the grid lines (column n starts at line n + 1) and the
+ * helpers in src/components/layout/layout.css. Mobile first.
+ */
 
-/* More projects: number and glyph per row. */
-.project-number {
-  font-family: var(--font-mono);
-  font-size: var(--type-label-size);
-  letter-spacing: var(--type-label-tracking);
-  color: var(--muted);
+/* ================= Home ================= */
+/*
+ * Label, the name (display, two lines, columns 1–9, top at about 22vh), role
+ * and intro (columns 4–10), "On the table now" under a drawn rule. The hand
+ * and its counter sit below (176 px reserve on desktop; the phone fan below).
+ */
+.home {
+  align-content: start;
+  min-height: 100svh;
+  padding-top: calc(22svh - 40px);
+  padding-bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 + 64px);
 }
-.project-type {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
+:where(.home > *, .home [data-first-load] > *) {
+  grid-column: content-start / content-end;
 }
-.project-type-glyph {
-  width: 20px;
-  height: 20px;
-}
-
-/* About */
-.about-sections {
-  display: grid;
-  gap: var(--space-s);
-  max-width: var(--measure);
-  margin-top: var(--space-s);
-}
-.about-sections section {
-  display: grid;
-  gap: var(--space-3);
-}
-.about-portrait {
-  max-width: 16rem;
-  margin-top: var(--space-6);
-}
-.about-timeline {
-  margin-top: var(--space-s);
-}
-
-/* 404: the illustration lies in the discard zone. */
-.discard-illustration {
-  position: absolute;
-  inset: 0;
-}
-.discard-illustration[data-stub] {
-  outline: none;
-}
-
-/* Skeleton pieces for the revised schema (Layout & Pages restyles them). */
-.item-list {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding-left: 1.2em;
-}
-.item-list li::marker {
-  color: var(--accent);
-}
-.item-list .t-label {
-  color: var(--accent);
-}
-
-/* Home: label above the title, "On the table now" under the hint. */
 .home-label {
+  margin: 0 0 24px;
   color: var(--muted);
+}
+.home-title {
+  /* One word per line: the name sits on two lines at any width. */
+  width: min-content;
+  max-width: 100%;
+  margin: 0;
+}
+.home-intro {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+.home-intro > * {
+  margin: 0;
+}
+.home-role {
+  color: var(--accent);
+}
+.home-lede {
+  max-width: 40ch;
 }
 .home-now {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
+  margin-top: 32px;
+}
+.home-now-rule {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 0 0 12px;
+  border: 0;
+  background: var(--line);
+  transform-origin: 0 50%;
+}
+.home-now-label {
+  grid-column: 1 / -1;
+  margin: 0 0 8px;
   color: var(--muted);
 }
-
-/* Detail hero heading (Management: "How I lead"). */
-.detail-heading {
-  max-width: 14ch;
-}
-
-/* Case study: role columns, approach steps. */
-.role-columns {
+.home-now-list {
+  grid-column: 1 / -1;
   display: grid;
-  gap: var(--space-5) var(--grid-gutter);
-}
-.role-columns h3 {
-  margin: 0 0 var(--space-2);
-  color: var(--muted);
-}
-@media (min-width: 640px) {
-  .role-columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.approach-steps {
-  display: grid;
-  gap: var(--space-5);
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: step;
 }
-.approach-steps li {
+.home-now-list li {
   display: grid;
-  gap: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+}
+.home-now-number {
+  color: var(--accent);
+}
+@media (min-width: 1024px) {
+  .home {
+    padding-bottom: var(--hand-reserve);
+  }
+  .home-label {
+    grid-column: 2 / 11;
+  }
+  .home-title {
+    grid-column: 2 / 11;
+  }
+  .home-intro {
+    grid-column: 5 / 12;
+    margin-top: 24px;
+  }
+  .home-lede {
+    max-width: none;
+  }
+  .home-now {
+    grid-column: content-start / content-end;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    margin-top: 32px;
+  }
+  .home-now-label {
+    grid-column: 1 / 4;
+    margin: 0;
+  }
+  .home-now-list {
+    grid-column: 4 / 13;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--grid-gutter);
+  }
+  .home-now-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+  }
 }
 
-/* About colophon, Contact links. */
-.about-credits {
-  display: grid;
-  gap: var(--space-3);
-  max-width: var(--measure);
-  margin-top: var(--space-s);
+/* ================= More projects: a numbered typographic index ================= */
+.index-hero {
+  align-content: end;
+  padding-top: calc(var(--header-h) + 96px);
 }
-.about-credits .topo-credit {
-  margin-top: 0;
+.index-title {
+  grid-column: content-start / content-end;
+  margin: 0;
 }
-.contact-label {
-  margin-bottom: var(--space-3);
+.index-count {
+  grid-column: content-start / content-end;
+  margin: 24px 0 0;
   color: var(--muted);
 }
-.contact-links {
-  display: grid;
-  gap: var(--space-3);
-  margin: var(--space-6) 0 0;
+.index-list-section {
+  margin-top: var(--space-s);
 }
-.contact-links dd {
-  margin: var(--space-1) 0 0;
+.index-head {
+  display: none;
+}
+.index-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.index-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
+  padding: 0 0 20px;
+  border-radius: 0;
+  cursor: default;
+}
+.index-row:focus-visible {
+  outline-offset: 4px;
+}
+.index-rule {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 0 0 16px;
+  border: 0;
+  background: var(--line);
+  transform-origin: 0 50%;
+}
+/* Phones: two lines. [01] + title, then year and client type. */
+.index-shift {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
+  row-gap: 4px;
+  align-items: baseline;
+  transition: translate var(--dur-s) var(--ease-out-quint);
+}
+.index-number {
+  grid-column: 1;
+  color: var(--muted);
+}
+.index-name {
+  grid-column: 2 / -1;
+  margin: 0;
+  padding-right: 32px;
+}
+.index-year {
+  grid-column: 2;
+  color: var(--muted);
+}
+.index-client {
+  grid-column: 3 / -1;
+  color: var(--muted);
+}
+.index-type {
+  position: absolute;
+  top: 20px;
+  right: 0;
+}
+.index-type-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.index-glyph {
+  display: block;
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-s) var(--ease-out-quint);
+}
+.index-glyph [data-draw] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset var(--dur-l) var(--ease-out-expo);
+}
+.index-row:is(:hover, :focus-visible, :focus-within) .index-shift {
+  translate: 8px 0;
+}
+.index-row:is(:hover, :focus-visible, :focus-within) .index-number {
+  color: var(--accent);
+}
+.index-row:is(:hover, :focus-visible, :focus-within) .index-glyph {
+  opacity: 1;
+}
+.index-row:is(:hover, :focus-visible, :focus-within) .index-glyph [data-draw] {
+  stroke-dashoffset: 0;
+}
+/* Reduced motion: no travel; the glyph simply fades in, already drawn. */
+:root[data-motion='reduced'] .index-row .index-shift {
+  translate: none;
+}
+:root[data-motion='reduced'] .index-glyph [data-draw] {
+  stroke-dashoffset: 0;
+}
+.index-rule-end {
+  grid-column: content-start / content-end;
+  margin: 0;
+}
+.index-end {
+  margin: 48px 0 0;
+  color: var(--muted);
+}
+@media (min-width: 1024px) {
+  .index-hero {
+    padding-top: calc(var(--header-h) + 18svh);
+  }
+  .index-title {
+    grid-column: 2 / 12;
+  }
+  .index-count {
+    grid-column: 5 / 13;
+    margin-top: 32px;
+  }
+  /* Columns: [01] 1–3 (the index column) | title 4–8 | year 9 | client 10–11 | glyph 12. */
+  .index-head,
+  .index-row {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--grid-gutter);
+  }
+  .index-head {
+    display: grid;
+    padding-bottom: 12px;
+    color: var(--muted);
+  }
+  .index-col-number {
+    grid-column: 1 / 4;
+  }
+  .index-col-title {
+    grid-column: 4 / 9;
+  }
+  .index-col-year {
+    grid-column: 9;
+  }
+  .index-col-client {
+    grid-column: 10 / 12;
+  }
+  .index-col-type {
+    display: none;
+  }
+  .index-row {
+    padding-bottom: 24px;
+  }
+  .index-rule {
+    margin-bottom: 24px;
+  }
+  .index-shift {
+    grid-column: 1 / 12;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+  .index-number {
+    grid-column: 1 / 4;
+  }
+  .index-name {
+    grid-column: 4 / 9;
+    padding-right: 0;
+  }
+  .index-year {
+    grid-column: 9;
+  }
+  .index-client {
+    grid-column: 10 / 12;
+  }
+  .index-type {
+    position: static;
+    grid-column: 12;
+    align-self: center;
+  }
+  .index-glyph {
+    width: 32px;
+    height: 32px;
+  }
+  .index-end {
+    grid-column: 5 / 12;
+    margin-top: 64px;
+  }
+}
+
+/* ================= About (glacier, over the contour map) ================= */
+.about-hero {
+  align-content: start;
+  padding-top: calc(var(--header-h) + 64px);
+}
+.about-title {
+  grid-column: content-start / content-end;
+  margin: 0;
+}
+.about-lead {
+  grid-column: content-start / content-end;
+  max-width: 34ch;
+  margin: 24px 0 0;
+}
+.about-portrait {
+  grid-column: 2 / content-end;
+  justify-self: end;
+  width: min(100%, 15rem);
+  margin-top: 32px;
+}
+@media (min-width: 1024px) {
+  .about-hero {
+    grid-template-rows: auto auto 1fr;
+    min-height: 72svh;
+    padding-top: calc(var(--header-h) + 18svh);
+  }
+  .about-title {
+    grid-column: 2 / 10;
+    grid-row: 1;
+  }
+  .about-lead {
+    grid-column: 5 / 10;
+    grid-row: 2;
+    margin-top: 40px;
+  }
+  .about-portrait {
+    grid-column: 10 / 14;
+    grid-row: 1 / 4;
+    justify-self: stretch;
+    width: auto;
+    margin: 0;
+  }
+}
+
+/* 02 Timeline: horizontal from 1024, vertical below; the drawing runs along the seven stops. */
+.timeline {
+  --track: clamp(88px, 26vw, 120px);
+  display: grid;
+  grid-template-columns: var(--track) minmax(0, 1fr);
+  column-gap: 16px;
+}
+.timeline-track {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  height: calc(var(--track) * 4);
+  container-type: size;
+}
+/* The 960 x 240 drawing turned 90° so its left end is at the top. */
+.timeline-track .illustration {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  height: 100cqw;
+  translate: -50% -50%;
+  rotate: 90deg;
+}
+.timeline-stops {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: repeat(var(--stops, 7), minmax(0, 1fr));
+  height: calc(var(--track) * 4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.timeline-stop {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+}
+.timeline-years {
+  color: var(--accent);
+}
+.timeline-stop-title {
+  font-family: var(--font-text);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-leading);
+}
+@media (min-width: 1024px) {
+  .timeline {
+    grid-template-columns: repeat(var(--stops, 7), minmax(0, 1fr));
+    row-gap: 24px;
+  }
+  .timeline-track {
+    grid-column: 1 / -1;
+    height: auto;
+    container-type: normal;
+  }
+  .timeline-track .illustration {
+    position: static;
+    width: 100%;
+    height: auto;
+    translate: none;
+    rotate: none;
+  }
+  .timeline-stops {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-rows: none;
+    grid-template-columns: subgrid;
+    height: auto;
+  }
+  .timeline-stop {
+    align-content: start;
+    gap: 8px;
+    padding: 0 8px;
+    text-align: center;
+  }
+  .timeline-stop-title {
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-leading);
+  }
+}
+
+/* 03 How I work: a staggered 2×2. */
+.how-grid {
+  display: grid;
+  gap: 40px var(--grid-gutter);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.how-item {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.how-item > * {
+  margin: 0;
+}
+.how-number {
+  color: var(--accent);
+}
+@media (min-width: 640px) {
+  .how-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .how-grid {
+    row-gap: 64px;
+  }
+  .how-item:nth-child(even) {
+    margin-top: 96px;
+  }
+}
+
+/* 04 At the table */
+.tcg-body {
+  max-width: 36ch;
+  margin: 0;
+}
+.tcg-lessons {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tcg-lesson {
+  display: grid;
+  gap: 8px;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.tcg-lesson > * {
+  margin: 0;
+}
+.tcg-stats {
+  margin: 0;
+  padding-top: 16px;
+  border-top: 2px solid var(--accent);
+  color: var(--accent);
+}
+@media (min-width: 1024px) {
+  .tcg-lesson {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: var(--grid-gutter);
+    padding: 24px 0;
+  }
+  .tcg-lesson h3 {
+    grid-column: 1 / 4;
+  }
+  .tcg-lesson p {
+    grid-column: 4 / 9;
+  }
+}
+
+/* 05 Roots: lead size, set to the right. */
+.roots-body {
+  max-width: 36ch;
+  margin: 0;
+}
+
+/* 06 What's on the table: the egg brings its own h2 (set on the h2 token here). */
+.page-section.about-table > .col-content {
+  margin-top: 0;
+}
+.about-table .on-table {
+  margin-top: 0;
+}
+.about-table .on-table h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-h2-size);
+  font-weight: var(--type-h2-weight);
+  font-variation-settings: 'opsz' var(--type-h2-opsz);
+  line-height: var(--type-h2-leading);
+  letter-spacing: var(--type-h2-tracking);
+  text-transform: none;
+  color: var(--text);
+}
+.about-table .on-table-list {
+  margin-top: 32px;
+}
+
+/* Colophon: photo credits and the topography's source. */
+.colophon-title {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+.colophon-body {
+  display: grid;
+  gap: 24px;
+}
+.colophon-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.colophon-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.colophon-by {
+  color: var(--muted);
+}
+.topo-credit {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+}
+@media (min-width: 1024px) {
+  .colophon-title {
+    margin: 4px 0 0;
+  }
+}
+
+/* The contour map's attribution: along the left edge while the map shows (from 1024). */
+.topo-attribution {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .topo-attribution {
+    position: fixed;
+    bottom: 24px;
+    left: 12px;
+    z-index: var(--z-header);
+    display: block;
+    max-height: calc(100svh - var(--header-h) - 48px);
+    margin: 0;
+    writing-mode: vertical-rl;
+    rotate: 180deg;
+    color: color-mix(in srgb, var(--glacier-text) 60%, transparent);
+    pointer-events: none;
+  }
+}
+
+/* About: static contour map (reduced motion, no WebGL, no JS). */
+.topo-static {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-field);
+  display: none;
+  pointer-events: none;
+}
+.topo-static img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+:root:is([data-motion='reduced'], :not([data-renderer='gl'])) .topo-static {
+  display: block;
+}
+
+/* ================= Contact: the end point ================= */
+.contact {
+  align-content: center;
+  min-height: 100svh;
+  padding: calc(var(--header-h) + 48px) 0 64px;
+}
+.contact > * {
+  grid-column: content-start / content-end;
+  margin: 0;
+}
+.contact-label {
+  margin-bottom: 24px;
+  color: var(--muted);
+}
+.contact-body {
+  max-width: 32ch;
+  margin-top: 32px;
+}
+.contact-email-line {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 40px;
+}
+.contact-email {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-s) var(--ease-out-quint);
+}
+.contact-email:is(:hover, :focus-visible) {
+  color: var(--accent);
+}
+.contact-underline {
+  height: 2px;
+  margin: 8px 0 0;
+  border: 0;
+  background: var(--accent);
+  transform-origin: 0 50%;
+}
+.contact-pairs {
+  display: grid;
+  margin-top: 48px;
+}
+.contact-pair {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.contact-pair:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.contact-pair dt {
+  grid-column: 1;
+  color: var(--muted);
+}
+.contact-pair dd {
+  grid-column: 2 / -1;
+  margin: 0;
 }
 .contact-note {
-  margin-top: var(--space-5);
-  max-width: var(--measure);
+  margin-top: 32px;
+  color: var(--muted);
+}
+@media (min-width: 1024px) {
+  .contact {
+    padding-bottom: calc(var(--hand-reserve) + 24px);
+  }
+  .contact-label {
+    grid-column: 2 / 5;
+    grid-row: 1;
+    margin: 0;
+    padding-top: 24px;
+  }
+  .contact-title {
+    grid-column: 2 / 12;
+  }
+  .contact-body,
+  .contact-note {
+    grid-column: 5 / 10;
+  }
+  .contact-email-line {
+    grid-column: 5 / 14;
+    margin-top: 56px;
+  }
+  .contact-pairs {
+    grid-column: 5 / 12;
+    margin-top: 64px;
+  }
+  .contact-pair {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .contact-pair dt {
+    grid-column: 1 / 3;
+  }
+  .contact-pair dd {
+    grid-column: 3 / -1;
+  }
+}
+
+/* ================= 404: a card on the discard pile ================= */
+.lost {
+  align-content: center;
+  min-height: 100svh;
+  padding: calc(var(--header-h) + 32px) 0 64px;
+}
+.lost > * {
+  grid-column: content-start / content-end;
+  margin: 0;
+}
+.lost-discard {
+  position: relative;
+  justify-self: end;
+  width: clamp(112px, 30vw, 132px);
+  aspect-ratio: var(--card-ratio);
+  margin-bottom: 32px;
+}
+.lost-zone {
+  position: absolute;
+  inset: -12px;
+  border: 1px dashed color-mix(in srgb, var(--text) 28%, transparent);
+  border-radius: 14px;
+}
+/* The discard pile: one face-down card squared on the zone. */
+.lost-pile {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
+    var(--ink-mid);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent);
+  rotate: 3deg;
+}
+/* The discarded card lies tilted on top (the drawing is upright; the page tilts it). */
+.lost-card {
+  position: absolute;
+  inset: 0;
+  color: var(--accent);
+  rotate: var(--angle-discard, -12deg);
+  translate: -8% 4%;
+}
+.lost-card .illustration[data-stub] {
+  outline: none;
+}
+.lost-body {
+  max-width: 30ch;
+  margin-top: 24px;
+}
+.lost-back {
+  margin-top: 40px;
+}
+@media (min-width: 1024px) {
+  .lost {
+    grid-template-rows: auto auto auto;
+    align-content: center;
+  }
+  .lost-title {
+    grid-column: 2 / 9;
+    grid-row: 1;
+  }
+  .lost-body {
+    grid-column: 5 / 9;
+    grid-row: 2;
+  }
+  .lost-back {
+    grid-column: 5 / 9;
+    grid-row: 3;
+  }
+  .lost-discard {
+    grid-column: 10 / 13;
+    grid-row: 1 / 4;
+    align-self: center;
+    justify-self: center;
+    width: 100%;
+    max-width: 240px;
+    margin: 0;
+  }
 }

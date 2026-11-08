@@ -8,10 +8,12 @@ type Props = {
 }
 
 /*
- * A large outlined numeral (numeral token, outline variant) before a section.
- * It overlaps the next block by a third of its height; the next block sits
- * above it. Decorative: the SectionIndex carries the number for screen
- * readers. Contract: docs/contracts.md#numeralbreaker.
+ * A large outlined numeral (numeral token, outline variant) that opens a
+ * section. Its bottom margin is minus a third of its line box, so the next
+ * block (the section's h2) overlaps its lower third and sits above it. From
+ * 1024 px it starts at the content column (column 4), so the overlap is
+ * visible. Decorative: the SectionIndex carries the number for screen readers.
+ * Contract: docs/contracts.md#numeralbreaker.
  */
 export function NumeralBreaker({ value, className }: Props) {
   return (

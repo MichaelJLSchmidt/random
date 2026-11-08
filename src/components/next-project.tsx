@@ -1,29 +1,32 @@
-import { cardById, nextCard } from '@/lib/cards'
-import { site } from '@/lib/content'
+import { cardById, handCards, nextCard } from '@/lib/cards'
+import { cardNumber, pad2 } from '@/lib/content'
+import { cx } from '@/lib/cx'
 import { SWITCH } from '@/motion/transitions'
 import { CardFace } from './hand/card-face'
 import { PlayLink } from './play-link'
+import { Reveal } from './reveals'
 
 /**
- * "Next project": the next card of the hand (or `next`), face up; it plays
- * that card from the hand (a switch).
+ * "Next": the next card of the hand (or `next`), lying face up on the table,
+ * with its title set large beside it. It plays that card (a switch: the same
+ * lift and morph as the hand). Place it as a grid item (.col-content).
  */
-export function NextProject({ current, next: nextId }: { current: string; next?: string }) {
+export function NextProject({ current, next: nextId, className }: { current: string; next?: string; className?: string }) {
   const next = cardById(nextId) ?? nextCard(current)
   return (
-    <section className="next-project" aria-labelledby="next-project-title" data-reveal="draw">
-      <p id="next-project-title" className="meta">
-        {site.labels.next}
-      </p>
+    <Reveal kind="block" className={cx('next-project', className)}>
       <PlayLink id={next.id} href={next.href} className="next-card" transitionTypes={[SWITCH]}>
         <span className="next-card-face" aria-hidden="true">
           <CardFace card={next} named={false} />
         </span>
         <span className="next-card-text">
-          <span className="next-card-title">{next.title}</span>
-          <span className="next-card-type">{next.projectType}</span>
+          <span className="next-card-meta t-label">
+            <span className="next-card-index">{cardNumber(next.index)}</span> / {pad2(handCards.length)} ·{' '}
+            {next.projectType}
+          </span>
+          <span className="next-card-title t-h2">{next.title}</span>
         </span>
       </PlayLink>
-    </section>
+    </Reveal>
   )
 }
