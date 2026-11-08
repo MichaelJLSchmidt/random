@@ -38,8 +38,18 @@ export const pending = {
   dealPhases: [0.2, 0.4, 0.6, 0.8, 1],
   /** Pinned deal: a dealt card lands with this fraction of its hand-fan angle, removed in the settle phase. */
   dealLandTilt: 0.25,
-  /** About timeline (view progress): where group drawing starts and ends. */
+  /** About timeline (view progress): where group drawing starts and ends; each group draws over this share of it. */
   timelineRange: { start: 'entry 100%', end: 'cover 60%' },
+  timelineGroupSpan: 0.5,
+  /** Background field: resolution factor while a pinned scene holds the viewport (half of its normal render scale). */
+  pinnedDetail: 0.5,
+  /** Hand deal from the dealer: card-flip perspective (px), toss angle (deg), how far below the screen (card heights). */
+  dealFlipPerspective: 800,
+  dealToss: 28,
+  dealBelow: 0.6,
+  /** 404 discard: drop height (× distance.exitPlay) and the share of the fall in which it fades in. */
+  discardDrop: 5,
+  discardFade: 0.4,
 } as const
 
 /** A scale step for a tier, in ms (full; calm × 0.6; reduced 160). */

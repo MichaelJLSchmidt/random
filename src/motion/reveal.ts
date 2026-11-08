@@ -26,7 +26,10 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *              or the moment the card zoom has mostly landed after a play
  *   on scroll  everything else reveals once 25% is in view (Motion inView,
  *              once); blocks entering in the same frame start 50 ms apart in
- *              document order, so neighbours never share a timing
+ *              document order
+ *   neighbours a block revealing with the same kind as the block before it
+ *              starts at least 80 ms after it (spaced()), so no two
+ *              neighbours share a timing
  *   notes      a margin note waits until its related paragraph has finished
  *
  * Legacy data-reveal presets and data-order groups in the current pages map
@@ -111,15 +114,39 @@ type Route = {
   batch: HTMLElement[]
   frame: number
   live: boolean
+  /** The route's reveal blocks in document order (for the adjacency rule). */
+  all: HTMLElement[]
+  index: Map<HTMLElement, number>
+  /** Planned start (performance.now(), ms) of each block's reveal. */
+  planned: Map<HTMLElement, number>
+}
+
+/**
+ * Neighbours never share a timing: a block whose previous block (document
+ * order) reveals with the same kind starts at least one deal step (80 ms)
+ * after it, whenever both were triggered close together (same frame, the next
+ * frame, or the same order). Notes keep their own rule (after their paragraph).
+ */
+function spaced(el: HTMLElement, kind: string, delay: number, r: Route) {
+  const i = r.index.get(el)
+  const prev = i ? r.all[i - 1] : undefined
+  if (kind === 'note' || !prev || kindOf(prev) !== kind) return delay
+  const prevAt = r.planned.get(prev)
+  if (prevAt === undefined) return delay
+  const now = performance.now()
+  const earliest = prevAt + gapFor(readTier(), stagger.cards)
+  return now + delay < earliest ? earliest - now : delay
 }
 
 let introSkip: (() => void) | null = null
 
 /** Starts the reveal of one block in `delay` ms (resolving its special cases). */
-function start(el: HTMLElement, delay: number, r: Route) {
+function start(el: HTMLElement, wanted: number, r: Route) {
   const kind = kindOf(el)
   if (!kind || el.hasAttribute('data-revealed')) return
   const tier = readTier()
+  const delay = spaced(el, kind, wanted, r)
+  r.planned.set(el, performance.now() + delay)
   if (kind === 'image' && isHeroImage(el.querySelector('img'))) return revealNow(el)
   if (kind === 'digits' && tier === 'reduced') return revealNow(el, '')
   if (kind === 'draw' && tier === 'full') {
@@ -139,6 +166,7 @@ function start(el: HTMLElement, delay: number, r: Route) {
       r.held.add(el)
       revealed(related).then(() => {
         if (!r.live || !r.held.delete(el)) return
+        r.planned.set(el, performance.now() + delay)
         schedule(el, delay, (ctx) => runKind('note', ctx, el))
       })
       return
@@ -182,10 +210,19 @@ export function revealRoute(kind: NavigationKind) {
   introSkip?.()
   introSkip = null
   root.dataset.reveal = 'live'
-  const r: Route = { stops: [], held: new Set(), batch: [], frame: 0, live: true }
   const tier = readTier()
   const handled = new Set<HTMLElement>()
   const all = [...main.querySelectorAll<HTMLElement>('[data-reveal]')]
+  const r: Route = {
+    stops: [],
+    held: new Set(),
+    batch: [],
+    frame: 0,
+    live: true,
+    all,
+    index: new Map(all.map((el, i) => [el, i])),
+    planned: new Map(),
+  }
   // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
   if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines' || kindOf(el) === 'title')) void loadSplit()
 
@@ -202,8 +239,8 @@ export function revealRoute(kind: NavigationKind) {
       blocks.push({ el, kind: k, order: orderOf(el), delay: delayOf(el) })
     }
     if (h1) handled.add(h1)
-    if (kind === 'first') introSkip = firstVisit(h1, blocks)
-    else revisit(h1, blocks)
+    if (kind === 'first') introSkip = firstVisit(h1, blocks, (el, delay) => start(el, delay, r))
+    else if (seq) revisit(seq, h1, blocks)
   }
 
   // The page title (legacy PageTitle: data-reveal="headline") outside the home sequence.
@@ -218,19 +255,13 @@ export function revealRoute(kind: NavigationKind) {
     }
   }
 
-  // Ordered blocks in the first viewport: in sequence. Adjacent ones of the same kind and order are nudged apart.
+  // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
   const ordered = all
     .filter((el) => !handled.has(el) && kindOf(el) && orderOf(el) !== null && inFirstViewport(el))
     .sort((a, b) => orderOf(a)! - orderOf(b)! || byDocument(a, b))
-  let prev: HTMLElement | null = null
-  let nudge = 0
   for (const el of ordered) {
     handled.add(el)
-    const order = orderOf(el)!
-    nudge = prev && orderOf(prev) === order && kindOf(prev) === kindOf(el) ? nudge + 1 : 0
-    prev = el
-    const at = base + (order + 1) * stagger.cards + nudge * stagger.items
-    start(el, gapFor(tier, at) + delayOf(el), r)
+    start(el, gapFor(tier, base + (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
   }
 
   // Everything else: once 25% is in view.

@@ -1,4 +1,4 @@
-import { bezier, spanFor } from '@/motion/choreography'
+import { bezier, pending, spanFor } from '@/motion/choreography'
 import type { JobContext } from '@/motion/jobs'
 import { fade } from '@/motion/kinds'
 import { duration as D, angle, distance, ease } from '@/motion/tokens'
@@ -34,8 +34,8 @@ export function discard(ctx: JobContext, el: HTMLElement) {
   ctx.animate(
     card,
     [
-      { opacity: 0, translate: `0 ${-distance.exitPlay * 5}px`, rotate: from },
-      { opacity: 1, offset: 0.4 },
+      { opacity: 0, translate: `0 ${-distance.exitPlay * pending.discardDrop}px`, rotate: from },
+      { opacity: 1, offset: pending.discardFade },
       { opacity: 1, translate: '0 0', rotate: rest },
     ],
     { duration, easing: bezier(ease.draw), fill: 'backwards' },

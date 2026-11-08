@@ -32,7 +32,7 @@ export function linkTimeline(svg: SVGSVGElement): (() => void) | null {
   const undo: (() => void)[] = []
   const n = groups.length
   // Each group draws over half the range, its tints over the next quarter; starts spread evenly.
-  const span = 1 / 2
+  const span = pending.timelineGroupSpan
   const tail = span / 2
   groups.forEach(({ strokes, tints }, gi) => {
     const from = n > 1 ? (gi / (n - 1)) * (1 - span - tail) : 0
@@ -58,18 +58,21 @@ export function linkTimeline(svg: SVGSVGElement): (() => void) | null {
       )
     }
     const tintEnd = to + tail
-    for (const t of tints)
+    for (const t of tints) {
+      // Up to the tint's own opacity (an 8% tint may be set with opacity rather than fill-opacity).
+      const full = getComputedStyle(t).opacity
       anims.push(
         t.animate(
           [
             { offset: 0, opacity: 0 },
             { offset: to, opacity: 0 },
-            { offset: tintEnd, opacity: 1 },
-            { offset: 1, opacity: 1 },
+            { offset: tintEnd, opacity: full },
+            { offset: 1, opacity: full },
           ],
           options,
         ),
       )
+    }
   })
   return () => {
     for (const a of anims) a.cancel()

@@ -40,7 +40,9 @@ type Job = {
   finalized: boolean
   anims: Set<Animation>
   undos: (() => void)[]
-  wills: Map<HTMLElement | SVGElement, string>
+  /** will-change per target: the value to restore and how many of its animations are running. */
+  wills: Map<HTMLElement | SVGElement, { rest: string; running: number }>
+  timers: number[]
   resolve: () => void
   promise: Promise<void>
 }
@@ -82,6 +84,7 @@ export function schedule(el: Element, delayMs: number, run: JobRun, variant = ''
     anims: new Set(),
     undos: [],
     wills: new Map(),
+    timers: [],
     resolve,
     promise,
   }
@@ -125,14 +128,28 @@ function start(job: Job) {
   const ctx: JobContext = {
     tier: readTier(),
     animate: (target, keyframes, options, willChange) => {
-      if (willChange && (target instanceof HTMLElement || target instanceof SVGElement)) {
-        if (!job.wills.has(target)) job.wills.set(target, target.style.willChange)
-        target.style.willChange = willChange
-      }
       const a = target.animate(keyframes, options)
       job.anims.add(a)
       // Completed early: jump the new animation to its end too.
       if (job.ended) a.finish()
+      else if (willChange && (target instanceof HTMLElement || target instanceof SVGElement)) {
+        // will-change only while this animation runs: from the end of its delay to its finish.
+        const on = () => {
+          if (job.finalized) return
+          const w = job.wills.get(target) ?? { rest: target.style.willChange, running: 0 }
+          w.running++
+          job.wills.set(target, w)
+          target.style.willChange = willChange
+          a.finished
+            .catch(() => {})
+            .then(() => {
+              if (--w.running === 0) target.style.willChange = w.rest
+            })
+        }
+        const delay = Number(options.delay) || 0
+        if (delay > 0) job.timers.push(window.setTimeout(on, delay))
+        else on()
+      }
       return a
     },
     undo: (fn) => {
@@ -162,9 +179,10 @@ function end(job: Job) {
   job.finalized = true
   const wasRunning = running.delete(job)
   job.ended = true
+  for (const t of job.timers.splice(0)) clearTimeout(t)
   for (const a of job.anims) a.cancel()
   job.anims.clear()
-  for (const [el, value] of job.wills) el.style.willChange = value
+  for (const [el, w] of job.wills) el.style.willChange = w.rest
   job.wills.clear()
   for (const fn of job.undos.splice(0)) fn()
   job.resolve()

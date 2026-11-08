@@ -1,7 +1,7 @@
 import { gapFor, msFor, pending } from './choreography'
 import { drawCards, fadeCards, fanCards } from './deal'
-import { type JobContext, completeAll, schedule } from './jobs'
-import { type Kind, fade, runKind, title } from './kinds'
+import { completeAll, schedule } from './jobs'
+import { type Kind, fade, isHeroImage, title } from './kinds'
 import { INTRO_DONE, INTRO_KEY } from './preferences'
 import { dur, stagger } from './tokens'
 import { readTier } from './use-tier'
@@ -26,16 +26,33 @@ const follows = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUM
 
 export type FirstLoadBlock = { el: HTMLElement; kind: Kind; order: number | null; delay: number }
 
-/** The short crossfade for revisits and client navigations to home. */
-export function revisit(h1: HTMLElement | null, blocks: FirstLoadBlock[]) {
-  // All parts start in this frame (the rest held by an animation delay), so the 300 ms is exact.
+/**
+ * The short crossfade for revisits and client navigations to home: one job
+ * for every part (so the mobile job cap never queues a part past the 300 ms),
+ * all started in this frame, the rest held by an animation delay. The eager
+ * hero image and reduced-motion digits stay as they are.
+ */
+export function revisit(seq: HTMLElement, h1: HTMLElement | null, blocks: FirstLoadBlock[]) {
   const later = gapFor(readTier(), stagger.lines)
-  if (h1) schedule(h1, 0, (ctx) => fade(ctx, h1, 's'))
-  for (const { el } of blocks) schedule(el, 0, (ctx) => fade(ctx, el, 's', later))
+  schedule(seq, 0, (ctx) => {
+    if (h1) {
+      h1.setAttribute('data-revealed', '')
+      fade(ctx, h1, 's')
+    }
+    for (const { el, kind } of blocks) {
+      el.setAttribute('data-revealed', '')
+      const still =
+        (kind === 'image' && isHeroImage(el.querySelector('img'))) || (kind === 'digits' && ctx.tier === 'reduced')
+      if (!still) fade(ctx, el, 's', later)
+    }
+  })
 }
 
+/** Starts one block's reveal in `delay` ms through the engine (its special cases: hero image, notes, ...). */
+export type StartAt = (el: HTMLElement, delay: number) => void
+
 /** The first-visit sequence (with no [data-first-load] on the page: the hand and the chrome only). Returns the skip. */
-export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[]) {
+export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[], startAt: StartAt) {
   const root = document.documentElement
   try {
     sessionStorage.setItem(INTRO_KEY, '1')
@@ -58,20 +75,17 @@ export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[]) {
   const rest: FirstLoadBlock[] = blocks.filter((b) => !after.includes(b))
   let slot = 0
   for (const b of sorted) {
-    const run = (ctx: JobContext) => runKind(b.kind, ctx, b.el)
-    if (b.kind === 'rule') schedule(b.el, at(F.rest) + b.delay, run)
+    if (b.kind === 'rule') startAt(b.el, at(F.rest) + b.delay)
     else if (slot === 0 && b.kind !== 'note') {
-      schedule(b.el, at(F.role) + b.delay, run)
+      startAt(b.el, at(F.role) + b.delay)
       slot++
     } else if (slot === 1 && b.kind !== 'note') {
-      schedule(b.el, at(F.intro) + b.delay, run)
+      startAt(b.el, at(F.intro) + b.delay)
       slot++
     } else rest.push(b)
   }
   rest.sort((a, b) => (follows(a.el, b.el) ? -1 : 1))
-  rest.forEach((b, i) =>
-    schedule(b.el, at(F.rest + (i + 1) * stagger.items) + b.delay, (ctx) => runKind(b.kind, ctx, b.el)),
-  )
+  rest.forEach((b, i) => startAt(b.el, at(F.rest + (i + 1) * stagger.items) + b.delay))
   const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome]')]
   const chromeAt = F.rest + (rest.length + 1) * stagger.items
   chrome.forEach((el, i) => schedule(el, at(chromeAt + i * stagger.items), (ctx) => fade(ctx, el, 's')))

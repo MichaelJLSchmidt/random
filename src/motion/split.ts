@@ -16,7 +16,10 @@ const markupLike = /<[a-z!/?]|&[#a-z0-9]+;/i
 /** Motion+ splitText (or its local fallback) is loaded on the first split, not with the page. */
 type SplitModule = typeof import('./split-text')
 let plus: Promise<SplitModule> | null = null
-export const loadSplit = () => (plus ??= import('./split-text'))
+let loaded: SplitModule | null = null
+export const loadSplit = () => (plus ??= import('./split-text').then((m) => (loaded = m)))
+/** The split module if it has already arrived (no await needed). */
+export const splitLoaded = () => loaded
 
 /** Splits `el` (call after `await loadSplit()`, so splitText is there). */
 export function splitLines(el: HTMLElement, { splitText }: SplitModule): Split | null {

@@ -1,6 +1,6 @@
 import { bezier, drawFor, gapFor, msFor, pending, spanFor } from './choreography'
 import type { JobContext } from './jobs'
-import { lineIndexes, loadSplit, splitLines } from './split'
+import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
 import { type DurationStep, angle, distance, ease, hand, opsz, stagger, weight } from './tokens'
 
 /*
@@ -19,14 +19,20 @@ export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'd
 const E = { outExpo: bezier(ease.outExpo), outQuint: bezier(ease.outQuint), inOut: bezier(ease.inOut) }
 const travel = `${pending.maskTravel * 100}%`
 
-/** Waits for the real fonts (line breaks are measured), keeping `el` hidden meanwhile. */
-async function fontsFor(el: HTMLElement) {
+/**
+ * Waits for the real fonts (line breaks are measured with them) and for the
+ * splitText chunk, keeping `el` hidden meanwhile: it is already [data-revealed],
+ * so without this its final text would paint once and then rise again.
+ */
+async function splitReady(el: HTMLElement) {
   const fonts = document.fonts
-  if (!fonts || fonts.status === 'loaded') return
+  const ready = splitLoaded()
+  if (ready && (!fonts || fonts.status === 'loaded')) return ready
   const previous = el.style.opacity
   el.style.opacity = '0'
-  await fonts.ready
+  const [plus] = await Promise.all([loadSplit(), fonts?.ready])
   el.style.opacity = previous
+  return plus
 }
 
 /** Opacity only: the reduced tier's crossfade, the note, the chrome and the short (revisit) reveals. */
@@ -73,8 +79,7 @@ export async function lines(ctx: JobContext, el: HTMLElement) {
     return
   }
   if (ctx.tier === 'calm' && !/^H[12]$/.test(el.tagName)) return block(ctx, el)
-  await fontsFor(el)
-  const plus = await loadSplit()
+  const plus = await splitReady(el)
   if (ctx.done) return
   const split = splitLines(el, plus)
   if (!split) return block(ctx, el)
@@ -268,7 +273,8 @@ export function draw(ctx: JobContext, el: HTMLElement) {
     for (const t of tints)
       ctx.animate(
         t,
-        [{ opacity: 0 }, { opacity: 1 }],
+        // Up to the tint's own opacity (an 8% tint may be set with opacity rather than fill-opacity).
+        [{ opacity: 0 }, { opacity: getComputedStyle(t).opacity }],
         { duration: msFor(ctx.tier, 'm'), delay: gi * gap + d, easing: E.outQuint, fill: 'backwards' },
         'opacity',
       )
@@ -298,8 +304,7 @@ export async function title(ctx: JobContext, el: HTMLElement, mode: 'full' | 'sh
       ctx.undo(() => (w.style.contain = contain))
     }
   } else {
-    await fontsFor(el)
-    const plus = await loadSplit()
+    const plus = await splitReady(el)
     if (ctx.done) return
     const split = el.childElementCount === 0 ? splitLines(el, plus) : null
     if (!split) return block(ctx, el)
