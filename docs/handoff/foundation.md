@@ -87,7 +87,8 @@ Verification: `npm run build` passes; `scripts/smoke.mjs` passes in full, calm a
 1440x900 and 390x844 (with new checks: no deck, counter text, counter follows hover); a separate
 check loads home, a case study, Management, More projects, About, Contact and a missing URL at
 both sizes with no console errors and no horizontal scroll; `scripts/budget.mjs`: 163.6 KB gzip
-initial JS (limit 170).
+initial JS (was 158.7 KB before this session; limit 170). Most of the +4.9 KB is the content
+module, which now carries the transcribed section text into the client chunk (see question 7).
 
 ## Deviations from the brief, and why
 
