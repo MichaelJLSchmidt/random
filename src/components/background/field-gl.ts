@@ -123,10 +123,13 @@ export class GlField {
     this.resize()
   }
 
+  /** Extra resolution factor: 1, or 1/2 while a pinned scene holds the viewport. */
+  detail = 1
+
   /** Matches the drawing buffer to the canvas's CSS size. */
   resize() {
     const rect = this.canvas.getBoundingClientRect()
-    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale
+    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale * this.detail
     const w = Math.max(1, Math.round(rect.width * scale))
     const h = Math.max(1, Math.round(rect.height * scale))
     if (w === this.width && h === this.height) return

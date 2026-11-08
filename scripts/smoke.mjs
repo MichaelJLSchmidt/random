@@ -1,5 +1,6 @@
 // Quick behaviour check in Chromium at 1440x900 and 390x844 (light, not exhaustive).
 // Usage: node scripts/smoke.mjs <base-url> [--motion=full|calm|reduced]
+// Run it once per tier: the motion suite checks what each tier must (and must not) do.
 // Needs `npm run preview` (or any server for dist/ under its BASE_PATH).
 import { createRequire } from 'node:module'
 
@@ -107,8 +108,14 @@ async function introSuite(browser, device) {
         const parts = {
           cards: () => document.querySelector('.hand-fan .hand-card[data-drawn]'),
           title: () => document.querySelector('h1 .wt-word > span'),
-          lines: () => document.querySelector('.home-role .rl-in') ?? document.querySelector('.home-role'),
+          lines: () => document.querySelector('.home-role .rv-line') ?? document.querySelector('.home-role'),
           chrome: () => document.querySelector('[data-chrome]'),
+        }
+        // Effective opacity: the reveal may hide an ancestor (the h1) while its words wait.
+        const opacity = (el) => {
+          let o = 1
+          for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= Number(getComputedStyle(e).opacity)
+          return o
         }
         const tick = () => {
           const t = performance.now() - t0
@@ -120,7 +127,7 @@ async function introSuite(browser, device) {
             if (seen[k] === undefined && el && el.getClientRects().length) {
               const r = el.getBoundingClientRect()
               const onScreen = r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth
-              if (onScreen && Number(getComputedStyle(el).opacity) > 0.3) seen[k] = Math.round(t)
+              if (onScreen && opacity(el) > 0.3) seen[k] = Math.round(t)
             }
           }
           if (Object.keys(seen).length === 4 || t > 5000) resolve(seen)
@@ -328,12 +335,87 @@ async function tableSuite(browser, device) {
   await context.close()
 }
 
+/**
+ * Motion per tier on a case study: every reveal ends visible and still, no
+ * will-change left, the deal scene pins only in full on desktop, the reading
+ * hairline follows the scroll, and reduced motion never animates a transform.
+ */
+async function motionSuite(browser, device) {
+  const { context, page, errors } = await newContext(browser, device)
+  // Record every animated property under <main>, the hand and the header while the page runs.
+  await context.addInitScript(() => {
+    window.__props = new Set()
+    const tick = () => {
+      for (const a of document.getAnimations()) {
+        const t = a.effect?.target
+        if (!t?.closest?.('main, .hand, header')) continue
+        for (const k of a.effect.getKeyframes())
+          for (const [p, v] of Object.entries(k)) {
+            if (['offset', 'easing', 'composite', 'computedOffset'].includes(p)) continue
+            // A transform that goes nowhere (0px travel in calm / reduced tokens) is not movement.
+            if (/^(transform|translate|scale|rotate)$/.test(p) && /^(none|0(px)?( 0(px)?)*|1( 1)*|0deg)$/.test(String(v).trim())) continue
+            window.__props.add(p)
+          }
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+  await page.goto(url('/work/team-of-teams/'), { waitUntil: 'networkidle' })
+  await wait(page, 600)
+  const deal = await page.evaluate(() => {
+    const el = document.querySelector('[data-scene="deal"]')
+    return el && { active: el.hasAttribute('data-scene-active'), ratio: el.offsetHeight / innerHeight }
+  })
+  if (deal) {
+    if (motion === 'full' && device === 'desktop')
+      check('deal scene: pinned stage (full, desktop)', deal.active && deal.ratio > 2, JSON.stringify(deal))
+    else check(`deal scene: static row, cards stack (${motion}, ${device})`, !deal.active && deal.ratio < 1.5, JSON.stringify(deal))
+  }
+  // Scroll the whole page like a reader.
+  const height = await page.evaluate(() => document.documentElement.scrollHeight)
+  for (let y = 0; y < height; y += 160) {
+    await page.mouse.wheel(0, 160)
+    await wait(page, 40)
+  }
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight / 2))
+  await wait(page, 2600)
+  const rest = await page.evaluate(() => ({
+    hidden: [...document.querySelectorAll('main [data-reveal]:not([data-reveal="breaker"])')]
+      .filter((el) => !el.hasAttribute('data-revealed') || Number(getComputedStyle(el).opacity) < 0.99)
+      .map((el) => el.dataset.reveal),
+    willChange: [...document.querySelectorAll('main *')].filter((el) => el.style.willChange).length,
+    moving: document
+      .getAnimations()
+      .filter((a) => a.playState === 'running' && a.timeline instanceof DocumentTimeline && !a.effect?.target?.closest?.('.field'))
+      .map((a) => a.effect?.target?.className || a.effect?.target?.tagName),
+    progress: Number(getComputedStyle(document.querySelector('[data-reading-hairline]')).getPropertyValue('--reading-progress')),
+    bar: (() => {
+      const cs = getComputedStyle(document.querySelector('[data-reading-hairline] > *'))
+      return { transform: cs.transform, clip: cs.clipPath }
+    })(),
+    props: [...window.__props],
+  }))
+  check('motion: every reveal ends visible after scrolling', rest.hidden.length === 0, rest.hidden.join(','))
+  check('motion: no will-change left at rest', rest.willChange === 0, String(rest.willChange))
+  check('motion: only the background moves at rest', rest.moving.length === 0, rest.moving.join(','))
+  check('hairline: follows the scroll (mid page)', rest.progress > 0.2 && rest.progress < 0.8, String(rest.progress))
+  const moves = rest.props.filter((p) => /transform|translate|scale|rotate|clipPath/.test(p))
+  if (motion === 'reduced') {
+    check('reduced: no transform or clip animated (opacity only)', moves.length === 0, rest.props.join(','))
+    check('reduced: hairline drawn with a clip, no transform', rest.bar.transform === 'none' && rest.bar.clip !== 'none', JSON.stringify(rest.bar))
+  } else check(`${motion}: reveals move (${moves.join(', ') || 'none'})`, moves.length > 0, rest.props.join(','))
+  check('no page errors (motion)', errors.length === 0, errors.slice(0, 3).join(' | '))
+  await context.close()
+}
+
 async function main() {
   const browser = await chromium.launch()
   for (const device of Object.keys(viewports)) {
     console.log(`\n# ${device} (${motion})`)
     await introSuite(browser, device)
     await tableSuite(browser, device)
+    await motionSuite(browser, device)
   }
   await browser.close()
   console.log(failures ? `\n${failures} failed` : '\nall passed')

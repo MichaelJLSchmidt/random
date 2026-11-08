@@ -2,7 +2,7 @@ import { announce } from '@/components/live-region'
 import { cardById, site } from '@/lib/hand-data'
 import { dealOffset, drawCards, fanCards } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
-import { duration as D, ease } from '@/motion/tokens'
+import { duration as D, durFor, ease } from '@/motion/tokens'
 import { buzz } from './haptics'
 import { eggOn } from './registry'
 
@@ -40,12 +40,12 @@ export async function mulligan() {
     await Promise.all(
       cards.map(
         (c) =>
-          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: D.calmReveal * 1000, fill: 'forwards' }).finished,
+          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' }).finished,
       ),
     )
     for (const card of cards) {
       for (const a of card.getAnimations()) a.cancel()
-      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: D.calmReveal * 1000 })
+      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: durFor(tier, 'm') * 1000 })
     }
   }
   announce(site.eggs.dealt)
