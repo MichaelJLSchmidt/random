@@ -19,7 +19,7 @@ type Props = {
   methods: { title: string; howTo: string }[]
 }
 
-/** Management: "Draw a workshop method" turns a card over to a random method. Copy comes in as props. */
+/** Management: the draw button (management.workshops.drawButton) turns a card over to a random method. Copy comes in as props. */
 export function WorkshopDraw({ button, again, drawn, methods }: Props) {
   const [index, setIndex] = useState<number | null>(null)
   const card = useRef<HTMLDivElement>(null)
