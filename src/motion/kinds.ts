@@ -1,6 +1,6 @@
 import { bezier, drawFor, gapFor, msFor, pending, spanFor } from './choreography'
 import type { JobContext } from './jobs'
-import { lineIndexes, splitLines } from './split'
+import { lineIndexes, loadSplit, splitLines } from './split'
 import { type DurationStep, angle, distance, ease, hand, opsz, stagger, weight } from './tokens'
 
 /*
@@ -74,8 +74,9 @@ export async function lines(ctx: JobContext, el: HTMLElement) {
   }
   if (ctx.tier === 'calm' && !/^H[12]$/.test(el.tagName)) return block(ctx, el)
   await fontsFor(el)
+  const plus = await loadSplit()
   if (ctx.done) return
-  const split = splitLines(el)
+  const split = splitLines(el, plus)
   if (!split) return block(ctx, el)
   ctx.undo(split.revert)
   split.lines.forEach((line, i) =>
@@ -298,8 +299,9 @@ export async function title(ctx: JobContext, el: HTMLElement, mode: 'full' | 'sh
     }
   } else {
     await fontsFor(el)
+    const plus = await loadSplit()
     if (ctx.done) return
-    const split = el.childElementCount === 0 ? splitLines(el) : null
+    const split = el.childElementCount === 0 ? splitLines(el, plus) : null
     if (!split) return block(ctx, el)
     ctx.undo(split.revert)
     words = [...el.querySelectorAll<HTMLElement>('.rv-word')]

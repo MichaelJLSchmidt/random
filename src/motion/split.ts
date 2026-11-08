@@ -1,5 +1,3 @@
-import { splitText } from 'motion-plus'
-
 /*
  * Line splitting for the `lines` reveal. Motion+ splitText measures the line
  * breaks (call it only after document.fonts.ready, so they are the real
@@ -15,7 +13,12 @@ export type Split = { lines: HTMLElement[]; revert: () => void }
 // Text splitText would read back as markup (it sets each word's innerHTML).
 const markupLike = /<[a-z!/?]|&[#a-z0-9]+;/i
 
-export function splitLines(el: HTMLElement): Split | null {
+/** Motion+ (or its local fallback) is loaded on the first split, not with the page. */
+let plus: Promise<typeof import('motion-plus')> | null = null
+export const loadSplit = () => (plus ??= import('motion-plus'))
+
+/** Splits `el` (call after `await loadSplit()`, so splitText is there). */
+export function splitLines(el: HTMLElement, { splitText }: Pick<typeof import('motion-plus'), 'splitText'>): Split | null {
   if (el.childElementCount > 0 || el.dataset.split !== undefined) return null
   const text = el.textContent ?? ''
   if (!text.trim() || markupLike.test(text) || el.getClientRects().length === 0) return null

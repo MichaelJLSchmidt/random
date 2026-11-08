@@ -143,7 +143,14 @@ function start(el: HTMLElement, delay: number, r: Route) {
       return
     }
   }
-  schedule(el, delay, (ctx) => (kind === 'discard' ? discard(ctx, el) : runKind(kind, ctx, el)))
+  // The 404 egg: the discarded card falls into the zone (legacy wrapper, or the
+  // DiscardedCard illustration inside a draw reveal, whose strokes draw as it lands).
+  const falls = kind === 'draw' && el.querySelector('[data-illustration="discarded-card"]')
+  schedule(el, delay, (ctx) => {
+    if (kind === 'discard') return discard(ctx, el)
+    if (falls) discard(ctx, el)
+    return runKind(kind, ctx, el)
+  })
 }
 
 function flush(r: Route) {

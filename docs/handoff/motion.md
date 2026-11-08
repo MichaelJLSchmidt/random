@@ -90,3 +90,107 @@ the same kind with the same order are nudged by 50 ms, so no two neighbours shar
 | `.hero-drift` | CSS `view()` | `exit` | translateY 0 → 6% |
 | Pinned deal (≥ 1024) | Motion `scroll`, target = stage, offset `start start` / `end end` | stage ≤ 250svh | 0–0.2 card 1, 0.2–0.4 card 2, 0.4–0.6 card 3, 0.6–0.8 card 4, 0.8–1 settle |
 | About timeline | `ViewTimeline` | entry 100% → cover 60% | groups drawn in order across the range |
+
+## What shipped
+
+All of it attaches through the documented hooks; no page, layout component, illustration, content
+or Foundation file was edited.
+
+- **Reveal engine** ([Reveal](../contracts.md#reveal)). `src/motion/reveal.ts` (orchestration:
+  home sequence, `data-reveal-order` sequence, Motion `inView` with the `reveal` tokens and
+  per-frame batching, margin notes after their paragraph, legacy breaker, Minimap
+  `aria-current`), `kinds.ts` (the eight kinds + the title), `jobs.ts` (one job per block:
+  start timer, `[data-revealed]`, `will-change` only while running, finished animations
+  cancelled, at most 8 jobs at once below 1024 px), `split.ts` (Motion+ `splitText` after
+  `document.fonts.ready`, words not characters so kerning and breaks hold, each line in an
+  `overflow: clip` mask pinned to the line-height so nothing below moves, reverted to the
+  original nodes afterwards), `first-load.ts`, `deal.ts` (`drawCards` / `fanCards` /
+  `dealOffset`, still exported from `reveal.ts` for the hand and the eggs),
+  `choreography.ts` (tier helpers `msFor` / `spanFor` / `gapFor` / `drawFor` and the `pending`
+  values). `<Reveal>` no longer writes `data-revealed`; `reveal.css` now only hides armed,
+  unrevealed blocks with `opacity: 0` (never the eager hero image, never digits in reduced) and
+  styles the masks; every movement is WAAPI from JS, so reduced never sees a transform and
+  no-JS visitors get the final page after the 4 s arming timeout.
+- **Legacy presets** (D4): their CSS presets and the `--reveal-calm` / `--reveal-reduced` uses
+  are gone; the values still in today's pages are aliased onto the kinds in `kindOf()`
+  (`headline` → title, `h2` / `paragraph` / `line` → lines, `tags` → list or block, `email` /
+  `callout` / `metric` / `row` → block, `divider` → rule, `discard` → the 404 egg) and
+  `data-order` groups onto orders. Integration can delete the alias cases once the Layout pages
+  have landed. WeightText titles (`.wt-word`) are animated in place (no split).
+- **First load** (`<FirstLoadSequence>`): the timeline above. The title is the `h1` inside the
+  wrapper (with or without `data-reveal`); the first block after it is the role line, the
+  second the intro, rules are the divider, everything else (including blocks before the title)
+  is "the rest" in document order; `[data-chrome]` last. The opsz / wght settle animates
+  `font-variation-settings` only; the live word gets `contain: inline-size` while it moves, so
+  its reserved box never widens. Revisits and client navigations to home: one 240 ms crossfade,
+  the rest 60 ms later, all started in the same frame (300 ms). Any key, click, wheel or scroll
+  completes the sequence.
+- **Scroll-linked** ([Scenes](../contracts.md#scenes), [Reading hairline](../contracts.md#reading-hairline)):
+  `ReadingHairline` animates the registered `--reading-progress` with
+  `animation-timeline: scroll(root)` inside `@supports`, otherwise Motion `scroll()` (loaded
+  on demand); in reduced the bar is clipped instead of scaled. `.hero-drift` in `reveal.css`
+  (full tier, `view()` range `exit`, so the gap it opens is above the fold; a `<picture>`
+  with the class is made `display: block`). `useDealScene`: full tier, ≥ 1024 px, a row that
+  fits under the header; the stage gets `height: 250svh`, the card row pins (sticky, centred
+  under the header), Motion `scroll(…, { target: stage, offset: ['start start', 'end end'] })`
+  drives five phases: the cards wait face down as a deck in the last slot, each travels to its
+  slot on a shallow arc turning face up, lands with a quarter of its hand-fan tilt, and the
+  settle squares the row up (phases ease in-out: the scroll is the clock). Everything is inline
+  and removed on teardown; the cards are never hidden by CSS. While pinned, the field renders
+  at half resolution (`scenes/pin.ts` → `GlField.detail`). About timeline: in full tier, an
+  SVG `[data-illustration="about-timeline"]` inside a `draw` reveal is linked to its
+  `ViewTimeline` (groups drawn in order across `entry 100%` → `cover 60%`, tints after);
+  otherwise the normal draw reveal.
+- **Tiers**: calm = every duration, offset and stagger × 0.6 (`motionScale`), no pinning, no
+  drift, `lines` split only on h1 / h2 (others reveal as `block`), SVG strokes 500 ms, the hand
+  fades in on first load. Reduced = every kind one 160 ms opacity crossfade, offsets 0, SVGs
+  drawn, digits static (never hidden), the field static (its swaps now `reducedCrossfade`), and
+  every view transition a 160 ms crossfade (`view-transitions.css`: morph groups do not move,
+  old / new images and page content crossfade).
+- **D3**: `heroTarget()` measures `main [data-hero-target]` at play time when it is on screen
+  and falls back to the computed geometry otherwise (playing from home).
+- **Field** (`src/components/background/**`): half resolution while pinned; every retarget
+  draws at least one frame, and the field redraws once each view transition has finished
+  (`VT_DONE` from `view-transition.ts`). This fixes a latent bug the reduced smoke exposed: a
+  160 ms swap that ran entirely while a transition held rendering left the previous colour on
+  screen after a switch.
+- **Eggs**: unchanged behaviour on the new timings (deal 420 ms / 80 ms apart for intro,
+  Mulligan and Coffee; calm fades on `dur.m`; the rare pull waits for the new deal). The 404
+  discard runs on the legacy wrapper and also on a `DiscardedCard` inside a `draw` reveal
+  (`src/eggs/discard.ts`), so it survives the Layout rewrite. Haptics stay `navigator.vibrate`
+  guarded, on card gestures only.
+- **Smoke** (`scripts/smoke.mjs`): new motion suite per tier on a case study (every reveal ends
+  visible and still, no `will-change` left, only the background runs at rest, hairline follows
+  the scroll, deal scene pinned in full desktop and a static stack otherwise, reduced animates
+  no transform or clip and draws the hairline with a clip); the intro probe reads effective
+  opacity (the hidden state now sits on the `h1`, not its words).
+
+## Contract change requests
+
+1. **Tokens** (`src/motion/tokens.ts`): move `pending` from `src/motion/choreography.ts` in, so
+   no motion value lives outside the tokens: `at.firstLoad = { title: 0.52, role: 0.9, intro:
+   1.0, rest: 1.3 }` (replacing the legacy `at.draw / title / lines / chrome`),
+   `duration.digits: 0.7`, `duration.svgDraw: 1.2`, `duration.svgDrawCalm: 0.5`,
+   `distance.block: 12` (block rise; today it borrows `distance.list`, also 12), `mask: 1.1`
+   (110%), `image: { inset: 0.1, scale: 1.12 }`, `digitRoll: 5`, `zoomLanded: 0.6`,
+   `deal: { stage: 250, phases, landTilt: 0.25 }`, `jobs.mobile: 8`, the timeline range. Also
+   rename `stagger.metric` (used for the 40 ms digit offset) to `stagger.digits`.
+2. **Retire unused tokens** (nothing references them after this branch): `duration.draw, words,
+   settle, repeatTitle, returnTitle, h2, line, list, image, imageScale, metric, tags, callout,
+   divider, buttons, emailUnderline, calmReveal, reducedReveal, reducedSwap`; `stagger.draw,
+   introLines, list, tags, rows`; `at.draw, title, lines, chrome, facts, summary, label,
+   buttons`; `distance.paragraph`; CSS `--reveal-calm`, `--reveal-reduced`, `--angle-word`,
+   `--angle-metric`.
+3. **Reveal section text**: the "Stub" paragraph (data-revealed up front) and the legacy intro
+   note are obsolete; describe the implementation instead (CSS hides armed blocks with opacity
+   only; JS animates). Add: a margin note's related paragraph is the last `block` / `lines`
+   reveal before it in its section (`[data-section]`, `section` or `article`).
+4. **Illustrations**: an explicit tint marker, `data-tint` on the 8% fill shapes. Supported now
+   alongside the fallback heuristic (a non-`data-draw` shape whose computed fill is not `none`).
+   Dashed strokes that also draw lose their dashes while drawing (the reveal uses
+   `stroke-dasharray: 1`) and get them back at the end.
+5. **Layout, hero**: put `.hero-drift` on the hero image (img or picture) inside a frame that
+   clips (`overflow: clip`); the class translates by 6% of the image's own height.
+6. **Breaker lift**: the field's intensity lift still keys off the legacy
+   `data-reveal="breaker"`. If Layout drops it, the lift goes; to keep it, name a hook (for
+   example `[data-numeral]`) and Motion will attach to it.

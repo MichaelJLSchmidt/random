@@ -1,6 +1,5 @@
 'use client'
 
-import { scroll } from 'motion'
 import { useEffect, useRef } from 'react'
 import styles from './reading-hairline.module.css'
 
@@ -24,13 +23,23 @@ export function ReadingHairline() {
   useEffect(() => {
     const el = ref.current
     if (!el || cssDriven()) return
+    // Only browsers without scroll-driven animations load Motion's scroll().
+    let stop: (() => void) | null = null
+    let gone = false
     let last = -1
-    return scroll((progress: number) => {
-      const p = Math.round(progress * 1000) / 1000
-      if (p === last) return
-      last = p
-      el.style.setProperty('--reading-progress', String(p))
+    import('motion').then(({ scroll }) => {
+      if (gone) return
+      stop = scroll((progress: number) => {
+        const p = Math.round(progress * 1000) / 1000
+        if (p === last) return
+        last = p
+        el.style.setProperty('--reading-progress', String(p))
+      })
     })
+    return () => {
+      gone = true
+      stop?.()
+    }
   }, [])
 
   return (
