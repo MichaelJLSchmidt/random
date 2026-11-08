@@ -32,10 +32,21 @@ export function registerNavigate(fn: Navigate | null) {
 }
 
 /**
- * Where the played card will lie on the detail page (centre and size, px).
- * Mirrors --hero-w and the .detail layout in the stylesheets.
+ * Where the played card will lie on the detail page (centre and size, px):
+ * the frame marked [data-hero-target] (D3), measured at play time when it is
+ * on screen (a switch from a detail page; the next page shares its layout).
+ * Otherwise (playing from home, no hero mounted) the computed fallback, which
+ * mirrors --hero-w and the .detail layout in the stylesheets.
  */
 export function heroTarget() {
+  const frame = document.querySelector('main [data-hero-target]')
+  const r = frame?.getBoundingClientRect()
+  if (r && r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight)
+    return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height }
+  return fallbackTarget()
+}
+
+function fallbackTarget() {
   const vw = innerWidth
   const vh = innerHeight
   const header = headerHeight

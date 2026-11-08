@@ -1,8 +1,11 @@
 import { glacierLines, palette, type Identity } from '@/design/palette'
 import { cardById } from '@/lib/cards'
+import { pending } from '@/motion/choreography'
 import { INTRO_DONE } from '@/motion/preferences'
+import { isPinned, onPinned } from '@/motion/scenes/pin'
+import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
-import { type MotionTier, duration as D, field as F } from '@/motion/tokens'
+import { type MotionTier, duration as D, field as F, motionScale, reducedCrossfade } from '@/motion/tokens'
 import { CssField } from './field-css'
 import { type Elevation, type FieldFrame, GlField } from './field-gl'
 import { hexToLab, labCss, labToRgb } from './oklab'
@@ -145,7 +148,7 @@ export class FieldEngine {
     if (document.documentElement.dataset.intro === 'first') {
       // First visit: the field fades in from black.
       this.tracks.fade.jump([0], now)
-      this.tracks.fade.set([1], this.dur(D.fieldIn, D.calmReveal), 'outSoft', now)
+      this.tracks.fade.set([1], this.dur(D.fieldIn, D.fieldIn * motionScale.calm), 'outSoft', now)
     }
 
     try {
@@ -162,6 +165,20 @@ export class FieldEngine {
     const onIntroDone = () => this.go('fade', [1], 0, 'linear')
     addEventListener(INTRO_DONE, onIntroDone)
     this.offs.push(() => removeEventListener(INTRO_DONE, onIntroDone))
+    // A pinned scene (the decision deal) holds the viewport: half the field's resolution meanwhile.
+    const onPin = (pinned: boolean) => {
+      if (!this.gl) return
+      this.gl.detail = pinned ? pending.pinnedDetail : 1
+      this.gl.resize()
+      this.kick(true)
+    }
+    if (isPinned()) onPin(true)
+    this.offs.push(onPinned(onPin))
+    // A view transition can hold rendering past a short retarget (reduced: 160 ms): the
+    // frames drawn meanwhile are never shown, so draw the settled state once it ends.
+    const onTransitionDone = () => this.kick(true)
+    addEventListener(VT_DONE, onTransitionDone)
+    this.offs.push(() => removeEventListener(VT_DONE, onTransitionDone))
     const onVisibility = () => this.setPaused()
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))
@@ -209,15 +226,15 @@ export class FieldEngine {
     if (s.sheetOpen !== p.sheetOpen) this.setPaused()
   }
 
-  /** Tier-scaled duration: full as given, calm as given or `calm`, reduced 200 ms. */
+  /** Tier-scaled duration: full as given, calm as given or `calm`, reduced one 160 ms crossfade. */
   private dur(full: number, calm = full) {
-    return this.tier === 'reduced' ? D.reducedSwap : this.tier === 'calm' ? calm : full
+    return this.tier === 'reduced' ? reducedCrossfade : this.tier === 'calm' ? calm : full
   }
 
   private setTier(tier: MotionTier) {
     this.tier = tier
     this.go('motion', [this.continuous() ? 1 : 0], D.crossfade, 'outSoft')
-    if (tier === 'reduced') this.go('topo', [0], D.reducedSwap, 'linear')
+    if (tier === 'reduced') this.go('topo', [0], reducedCrossfade, 'linear')
   }
 
   /** Brings every track up to date (the loop does not run in CSS mode or while idle). */
@@ -348,7 +365,9 @@ export class FieldEngine {
     const now = performance.now()
     this.tracks[name].set(to, dur, ease, now, delay)
     if (this.mode === 'css') this.writeCss(name, to, dur, ease, delay)
-    this.kick()
+    // Dirty: at least one frame is drawn even if the track has already ended by
+    // the next frame (a short reduced crossfade while a view transition holds rendering).
+    this.kick(true)
   }
 
   private jump(name: Name, to: number[]) {
