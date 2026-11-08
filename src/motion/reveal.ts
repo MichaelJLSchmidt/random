@@ -7,7 +7,7 @@ import { type Kind, isHeroImage, runKind } from './kinds'
 import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
 import { loadSplit } from './split'
 import { table } from './table-store'
-import { reveal as R, duration as D, stagger } from './tokens'
+import { reveal as R, duration as D, stagger, tiers } from './tokens'
 import { readTier } from './use-tier'
 
 export { dealOffset, drawCards, fanCards } from './deal'
@@ -23,7 +23,7 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *              crossfade on revisits and client navigations (first-load.ts)
  *   order      blocks with data-reveal-order in the first viewport play in
  *              sequence: base + 80 ms × (order + 1) + delay, where base is 0,
- *              or the moment the card zoom has mostly landed after a play
+ *              or the moment the card morph has mostly landed after a play
  *   on scroll  everything else reveals once 25% is in view (Motion inView,
  *              once); blocks entering in the same frame start 50 ms apart in
  *              document order
@@ -214,7 +214,10 @@ export function revealRoute(kind: NavigationKind) {
   // The page title outside the home sequence: after a play or switch the card → hero morph
   // delivers it, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
   const morphed = kind === 'play' || kind === 'switch'
-  const base = morphed ? D.zoom * R.zoomLanded : 0
+  // The page starts revealing once the morph has mostly landed: zoomLanded of the view
+  // transition as this tier runs it (calm keeps the full-length morph; reduced has no offsets).
+  const morph = kind === 'switch' ? D.switchDelay + D.switchIn : D.zoom
+  const base = morphed && tier !== 'reduced' ? morph * tiers[tier].vt * R.zoomLanded * 1000 : 0
   if (morphed)
     for (const el of all) {
       if (handled.has(el) || el.tagName !== 'H1') continue
@@ -228,12 +231,14 @@ export function revealRoute(kind: NavigationKind) {
     .sort((a, b) => orderOf(a)! - orderOf(b)! || byDocument(a, b))
   for (const el of ordered) {
     handled.add(el)
-    start(el, gapFor(tier, base + (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
+    start(el, base + gapFor(tier, (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
   }
 
-  // Everything else: once 25% is in view.
+  // Everything else: once 25% is in view (a block taller than the viewport: once it covers 25% of the
+  // viewport's height, so no block is ever too tall to reveal).
   for (const el of all) {
     if (handled.has(el) || !kindOf(el)) continue
+    const amount = Math.min(R.amount, (innerHeight * R.amount) / Math.max(1, el.getBoundingClientRect().height))
     const stop = inView(
       el,
       () => {
@@ -241,19 +246,25 @@ export function revealRoute(kind: NavigationKind) {
         r.batch.push(el)
         if (!r.frame) r.frame = requestAnimationFrame(() => flush(r))
       },
-      { amount: R.amount, margin: R.margin as `${number}px ${number}px ${number}% ${number}px` },
+      { amount, margin: R.margin as `${number}px ${number}px ${number}% ${number}px` },
     )
     r.stops.push(stop)
   }
 
-  // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while in view.
+  // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while any of them
+  // is in view: counted, because adjacent breakers overlap (one leaves while the next is in view).
+  const lifting = new Set<HTMLElement>()
   for (const el of main.querySelectorAll<HTMLElement>('[data-breaker]')) {
     r.stops.push(
       inView(
         el,
         () => {
+          lifting.add(el)
           table.setBreaker(true)
-          return () => table.setBreaker(false)
+          return () => {
+            lifting.delete(el)
+            table.setBreaker(lifting.size > 0)
+          }
         },
         { amount: R.amount },
       ),

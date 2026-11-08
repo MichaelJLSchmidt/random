@@ -98,6 +98,10 @@ export const duration = {
   /** SVG strokes (draw kind): full, and calm's own value (not × 0.6). */
   svgDraw: 1.2,
   svgDrawCalm: 0.5,
+  /** New hand: each card flies off to the dealer. */
+  gather: 0.44,
+  /** Play: a lift whose route never changed (offline, error) settles back after this. */
+  liftTimeout: 4,
   // UI
   underline: 0.16,
   rail: 0.2,
@@ -116,6 +120,8 @@ export const stagger = {
   items: 0.05,
   cards: 0.08,
   svgGroups: 0.12,
+  /** New hand: between cards flying off to the dealer. */
+  gather: 0.06,
   /** Digits: between the strips of one Scoreboard value. */
   digits: 0.04,
 } as const
@@ -149,6 +155,8 @@ export const angle = {
   hand: [-9, -3, 3, 9],
   /** Home title words turn up from this angle (rotateX). */
   word: -35,
+  /** Play: a lifted card tips back this far (rotateX). */
+  lift: -8,
   /** 404: the discarded card's resting tilt (--angle-discard). */
   discard: -12,
   tap: 90,
@@ -222,7 +230,8 @@ export const deal = {
   phases: [0.2, 0.4, 0.6, 0.8, 1],
   /** A dealt card lands with this share of its hand-fan angle (removed in the settle). */
   landTilt: 0.25,
-  /** Card flip perspective (px), toss angle (deg) and how far below the screen the dealer sits (card heights). */
+  /** Card flip perspective (px; every card that turns over, incl. the workshop draw), toss angle (deg)
+   *  and how far below the screen the dealer sits (card heights). */
   flipPerspective: 800,
   toss: 28,
   below: 0.6,

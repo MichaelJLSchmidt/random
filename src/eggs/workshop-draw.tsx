@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { announce } from '@/components/live-region'
 import { fill } from '@/lib/format'
-import { durFor, spring, springCss } from '@/motion/tokens'
+import { deal, durFor, spring, springCss } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { buzz } from './haptics'
 
@@ -33,7 +33,10 @@ export function WorkshopDraw({ button, again, drawn, methods }: Props) {
     buzz(8)
     if (tier === 'full') {
       el.animate(
-        [{ transform: 'perspective(900px) rotateY(180deg)' }, { transform: 'perspective(900px) rotateY(0deg)' }],
+        [
+          { transform: `perspective(${deal.flipPerspective}px) rotateY(180deg)` },
+          { transform: `perspective(${deal.flipPerspective}px) rotateY(0deg)` },
+        ],
         {
           duration: flip.duration * 1000,
           easing: flip.easing,

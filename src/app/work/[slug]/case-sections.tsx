@@ -229,10 +229,10 @@ export function CaseSections({ study }: { study: CaseStudy }) {
             </li>
           ))}
         </Reveal>
-        {/* The sticky column is narrow on desktop (about 370–560 px): the drawing takes its vertical layout. */}
-        {fig.approach && (
-          <Figure name={fig.approach} id="approach" variant="vertical" className="approach-figure row-mate cols-8-12" />
-        )}
+        {/* Both layouts render (variant "auto"): the sticky column from 1024 px is narrow (about
+            370–560 px), so detail.css shows the vertical layout there; below 1024 the drawing spans
+            the reading column and follows the default (horizontal from 640 px). */}
+        {fig.approach && <Figure name={fig.approach} id="approach" className="approach-figure row-mate cols-8-12" />}
         <Note>{s.approach.note}</Note>
       </Section>
 

@@ -123,7 +123,9 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
 - **I3. Tokens only.** The values Motion kept in `choreography.ts` live in `src/motion/tokens.ts`
   (`at.firstLoad`, `duration.digits`, `duration.svgDraw`, `duration.svgDrawCalm`,
   `distance.block`, `reveal.{mask, image, digitRoll, zoomLanded, mobileJobs, heroDrift}`,
-  `deal.*`, `timeline.*`, `discard.*`, `field.pinnedDetail`); `choreography.ts` holds only the
+  `deal.*`, `timeline.*`, `discard.*`, `field.pinnedDetail`, and for older literals
+  `duration.gather`, `duration.liftTimeout`, `stagger.gather`, `angle.lift`, `angle.tap`;
+  `deal.flipPerspective` serves every card that turns over); `choreography.ts` holds only the
   tier helpers. `stagger.metric` is `stagger.digits`. Retired: the legacy `data-reveal` presets and
   their aliases in `kindOf()`, `data-order`, `--reveal-calm`, `--reveal-reduced`, `--angle-word`,
   `--angle-metric`, every unreferenced `duration` / `stagger` / `at` entry (and `angle.handTilt`,
@@ -135,9 +137,10 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
   the browser on every page).
 - **I5. Breaker lift.** Full-bleed breakers carry `data-breaker` (every `Spread`, and the case
   study's 02 Problem section with its statement); the background field's 10% lift reads
-  `[data-breaker]`.
+  `[data-breaker]` and holds while any breaker is in view (counted: adjacent breakers overlap).
 - **I6. Hero drift.** `.hero-drift` sits on the hero `<picture>` inside the
-  `[data-hero-target]` frame, which clips its overflow.
+  `[data-hero-target]` frame, which clips its overflow with `overflow: clip` (not `hidden`: a
+  scroll container would capture the `view()` timeline, and the drift would never move).
 - **I7. 404.** The discard fall animates `.lost-card` (the draw reveal around `DiscardedCard`)
   from above to its own resting pose.
 - **I8. Minimap.** `aria-current="location"` is set by Layout's `MinimapObserver` only.
@@ -154,9 +157,12 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
 - **I11. Labels are SVG `<text>`** in `--font-mono` (no font is embedded). Labelled drawings have
   no root `viewBox`: they keep their proportions with CSS `aspect-ratio`, and the root is a size
   container, so give it a definite width and size it by width only.
-- **I12. Narrow columns.** A wide drawing in a narrow column passes `variant="vertical"` (the
-  sticky Approach column from 1024 px, whose drawing is also capped by the viewport height so it
-  stays in view while pinned). Every placement was checked in the browser.
+- **I12. Narrow columns.** A wide drawing in a narrow column takes its vertical layout: pass
+  `variant="vertical"` when the column is narrow at every width. The Approach drawing is narrow
+  only in the sticky column from 1024 px, so it renders both layouts (`auto`) and `detail.css`
+  shows the vertical one there, capped by the viewport height so it stays in view while pinned;
+  below 1024 it spans the reading column with the default layouts. Every placement was checked
+  in the browser.
 - **I13. Alignment with the page's HTML.** `AboutTimeline` places its stops at
   `x = (i + 0.5) × 960 / n` (with `labels={false}` it is line and dots only, 960×120);
   `CareerMatrix` with `axes={false}` spreads its levels and tracks evenly edge to edge, so HTML
@@ -625,8 +631,10 @@ After Wave 1 the kinds below are the only reveal system (D4).
   `data-revealed`, runs its kind, and at the end cancels its animations and removes `will-change`
   (nothing animated at rest). Below 1024 px at most `reveal.mobileJobs` jobs run at once.
 - Triggers: `data-reveal-order` blocks in the first viewport play in sequence (base + 80 ms ×
-  (order + 1) + delay; base = 0, or `duration.zoom × reveal.zoomLanded` after a play or switch);
-  everything else reveals once 25% is in view (Motion `inView`, once), blocks entering in the same
+  (order + 1) + delay; base = 0, or `reveal.zoomLanded` of the morph as the tier runs it after a
+  play (`duration.zoom`) or switch (`switchDelay + switchIn`), × `tiers[tier].vt`, 0 in reduced);
+  everything else reveals once 25% is in view (a block taller than the viewport: once it covers
+  25% of the viewport's height; Motion `inView`, once), blocks entering in the same
   frame 50 ms apart in document order, and a block revealing with the same kind as the block
   before it at least 80 ms after it. A `note` waits for its related paragraph: the last `block` /
   `lines` reveal before it in its section.

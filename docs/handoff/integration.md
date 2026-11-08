@@ -62,7 +62,7 @@ Recorded in `docs/contracts.md#integration-decisions-i1i27`. Where each one live
 9. `src/components/layout/workshop-row.tsx`: no `useDealScene`, no `data-scene`; `useDealPosition` for the mobile counter.
 10. Documented in the contract (Reading hairline, I10).
 11. Documented in the contract (Illustrations markup).
-12. `case-sections.tsx`: Approach drawings `variant="vertical"`; `detail.css` caps their width by the viewport height so the pinned drawing always fits (all three checked at 1024 and 1680 px: 740 px tall under the header).
+12. Approach drawings: vertical in the narrow sticky column from 1024 px (both layouts render, `detail.css` shows the vertical one there and caps its width by the viewport height, so the pinned drawing always fits: all three checked at 1024 and 1680 px, 740 px tall under the header); below 1024 the default layouts (horizontal in the wide reading column).
 13. `about-timeline.tsx` (`labels`, stops at `(i + 0.5) × 960 / n`), `career-matrix.tsx` (`axes`), `discarded-card.tsx` (upright); About's timeline grid has no column gap so stop centres match the dots.
 14. About passes `about.timeline.items`; `WorkshopFormat.glyph` in schema and content; Management renders a glyph per card; `CareerMatrix` and `WeekRing` take content.
 15. Contract table; any section's illustration renders (`placement()` reads content only).
@@ -94,11 +94,24 @@ Recorded in `docs/contracts.md#integration-decisions-i1i27`. Where each one live
 - Illustrations: each placed where the content says, in a `draw` reveal, in the page accent,
   fitting its column (checked in screenshots); registry and README texts of the eggs updated.
 
+## Review
+
+A subagent reviewed the merged diff against the contract, the decisions and the hard
+constraints (correctness only). Its findings, all fixed and re-verified:
+
+| Finding | Fix | Check |
+| --- | --- | --- |
+| Hero drift never moved: the frame's `overflow: hidden` made it a scroll container, so the `view()` timeline followed the frame | `overflow: clip` on `.case-hero-frame` | drift 0 → 6% from scroll 0 to 800 px, timeline source the root |
+| Field lift dropped while the problem statement was on screen: the context Spread's leave reset the single breaker flag | Breakers counted in `reveal.ts` | field brighter with only the statement in view (45.2 vs 41.1 average with no breaker) |
+| The vertical Approach drawing below 1024 px was taller than 4 viewports on short screens, so its 25% `inView` threshold was unreachable and it stayed hidden | `auto` layouts with the vertical one only in the sticky column; `inView` amount capped at 25% of the viewport's height for tall blocks | every reveal completes at 844×390, 1023×500, 640×360, 1024×600, 320×568 |
+| Calm: reveals after a play started at 36% of the (unscaled) morph | Base = `zoomLanded` × the morph as the tier runs it (`tiers.vt`); switch timings for switches | smoke all tiers |
+| Motion literals left in `hand-eggs.ts`, `play.ts`, `workshop-draw.tsx` | `duration.gather`, `duration.liftTimeout`, `stagger.gather`, `angle.lift`, `deal.toss`, `deal.flipPerspective` | eggs re-checked |
+
 ## Verification
 
 - `BASE_PATH=/random/ npm run build`: passes (type check, content count checks, 12 routes).
 - `node scripts/smoke.mjs http://localhost:4100/random/ --motion=full|calm|reduced`: all passed in
-  each tier at 1440×900 and 390×844 (90 checks per tier).
+  each tier at 1440×900 and 390×844 (90 checks per tier), before and after the review fixes.
 - Eggs in Chromium: new hand (M; counter long press by touch), Coffee ("draw" → fifth card),
   "?" sheet, tap 90° (T), inspect (hold Space), rare pull (`?rare`), workshop draw, "What's on the
   table" flip, 404 discard (`.lost-card` falls and rests at −12°, no animation left): all pass, no

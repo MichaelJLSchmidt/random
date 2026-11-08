@@ -34,7 +34,9 @@
   position: relative;
   grid-column: content-start / full-end;
   height: clamp(208px, 32svh, 400px);
-  overflow: hidden;
+  /* clip, not hidden: a hidden overflow makes a scroll container, and the .hero-drift view()
+     timeline would follow the frame (which never scrolls) instead of the page. */
+  overflow: clip;
   border-radius: 16px 0 0 16px;
   background:
     radial-gradient(120% 90% at 0% 100%, color-mix(in oklab, var(--id-glow) 45%, transparent), transparent 70%),
@@ -218,11 +220,18 @@
     top: calc(var(--header-h) + var(--space-7));
     align-self: start;
   }
-  /* The vertical layout (variant="vertical") is tall: its width follows the viewport height, so
-     the whole drawing stays in view while the column is pinned. */
-  .approach-figure .illustration {
+  /* The narrow sticky column takes the vertical layout; it is tall, so its width follows the
+     viewport height and the whole drawing stays in view while the column is pinned. */
+  .approach-figure .illustration[data-layouts='h v'] {
+    aspect-ratio: var(--il-ratio-v);
     max-width: calc((100svh - var(--header-h) - var(--space-7) * 2) * (var(--il-ratio-v)));
     margin-inline: auto;
+  }
+  .approach-figure .illustration[data-layouts='h v'] [data-layout='h'] {
+    display: none;
+  }
+  .approach-figure .illustration[data-layouts='h v'] [data-layout='v'] {
+    display: inline;
   }
 }
 
