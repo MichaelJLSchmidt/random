@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
+import { AboutSmallPrint } from '@/components/about-small-print'
 import { BackgroundField } from '@/components/background/background-field'
 import { fieldInitialCss } from '@/components/background/field-css'
-import { DisplaySettings } from '@/components/display-settings'
 import { Hand } from '@/components/hand/hand'
 import { Header } from '@/components/header'
 import { LiveRegion } from '@/components/live-region'
@@ -15,7 +15,7 @@ import { absoluteUrl } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
 import { pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
-import { display, mono, text } from './fonts'
+import { display, hand, mono, text } from './fonts'
 import './globals.css'
 
 /** Default Open Graph image (about-og, 1280 px JPEG), only when the deploy passes SITE_URL. */
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${display.variable} ${text.variable} ${mono.variable}`}
+      className={`${display.variable} ${text.variable} ${mono.variable} ${hand.variable}`}
       data-motion="full"
       suppressHydrationWarning
     >
@@ -74,9 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main" tabIndex={-1}>
           {children}
         </main>
-        <SiteFooter>
-          <DisplaySettings labels={site.settings} />
-        </SiteFooter>
+        <SiteFooter about={<AboutSmallPrint />} />
         <Hand />
         <LiveRegion />
         <RouteFocus />

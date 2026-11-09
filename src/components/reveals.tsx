@@ -44,7 +44,7 @@ export function Reveals() {
 }
 
 /** What a block does when it reveals (data-reveal). */
-export const revealKinds = ['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note'] as const
+export const revealKinds = ['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair'] as const
 export type RevealKind = (typeof revealKinds)[number]
 
 /** Elements <Reveal> may render as. */
@@ -56,6 +56,7 @@ export type RevealTag =
   | 'header'
   | 'footer'
   | 'figure'
+  | 'figcaption'
   | 'p'
   | 'span'
   | 'h1'
@@ -79,11 +80,17 @@ export type RevealProps = Omit<HTMLAttributes<HTMLElement>, 'children'> & {
   order?: number
   /** Extra delay in ms after the block's turn comes. Written to data-reveal-delay. */
   delay?: number
+  /**
+   * The part of a timed sequence the block belongs to (data-reveal-step): on home "label",
+   * "copy", "divider", "items", "hint"; on detail pages "summary", "label", "meta". The sequence
+   * takes its timing from tokens.ts (at.firstLoad, at.detail).
+   */
+  step?: string
   children?: ReactNode
 }
 
 /** Marks a block for a reveal of `kind` (see the file comment). */
-export function Reveal({ as = 'div', kind, order, delay, children, ...rest }: RevealProps) {
+export function Reveal({ as = 'div', kind, order, delay, step, children, ...rest }: RevealProps) {
   return createElement(
     as,
     {
@@ -91,14 +98,16 @@ export function Reveal({ as = 'div', kind, order, delay, children, ...rest }: Re
       'data-reveal': kind,
       'data-reveal-order': order,
       'data-reveal-delay': delay,
+      'data-reveal-step': step,
     },
     as === 'hr' ? undefined : children,
   )
 }
 
 /**
- * Wraps the home hero for the first-load sequence (hand, title, role, intro,
- * divider, the rest, chrome; src/motion/first-load.ts). No layout of its own.
+ * Wraps the home hero for the first-load sequence (name, label, role and intro,
+ * divider, items and hint, the hand, chrome; src/motion/first-load.ts). No
+ * layout of its own.
  */
 export function FirstLoadSequence({ children, className }: { children: ReactNode; className?: string }) {
   return (

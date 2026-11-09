@@ -1,7 +1,7 @@
 import { bezier, drawFor, gapFor, msFor, spanFor } from './choreography'
 import type { JobContext } from './jobs'
 import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
-import { type DurationStep, angle, distance, duration, ease, hand, opsz, reveal, stagger, weight } from './tokens'
+import { type DurationStep, angle, at, distance, duration, ease, hand, opsz, reveal, stagger, weight } from './tokens'
 
 /*
  * The reveal kinds (docs/contracts.md#reveal). Each one runs inside a job
@@ -14,7 +14,22 @@ import { type DurationStep, angle, distance, duration, ease, hand, opsz, reveal,
  * Calm: durations and staggers × 0.6 (choreography.ts); `lines` splits only
  * h1 / h2, the rest of `lines` reveals as `block`; SVG strokes take 500 ms.
  */
-export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note'
+export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair'
+
+/**
+ * Timing a sequence may set for one block (ms, already scaled for the tier by the caller; the
+ * home intro and the detail hero use them). Unset values fall back to each kind's own.
+ */
+export type KindOptions = {
+  /** block, rule, pair, title: the whole reveal's duration. */
+  dur?: number
+  /** lines: the whole block's span; each line takes span - (lines - 1) x stagger (at least dur.s). */
+  span?: number
+  /** list: between items (and each item's duration is `dur`); lines: between lines. */
+  stagger?: number
+  /** rule: draw like a link underline (outSoft) instead of the default inOut. */
+  underline?: boolean
+}
 
 const E = { outExpo: bezier(ease.outExpo), outQuint: bezier(ease.outQuint), inOut: bezier(ease.inOut) }
 const travel = `${reveal.mask * 100}%`
@@ -46,7 +61,7 @@ export function fade(ctx: JobContext, el: Element, step: DurationStep = 's', del
 }
 
 /** block: rises 12 px with opacity, 420 ms outQuint. */
-export function block(ctx: JobContext, el: Element, delay = 0) {
+export function block(ctx: JobContext, el: Element, delay = 0, opts: KindOptions = {}) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
   ctx.animate(
     el,
@@ -54,20 +69,23 @@ export function block(ctx: JobContext, el: Element, delay = 0) {
       { opacity: 0, translate: `0 ${distance.block}px` },
       { opacity: 1, translate: '0 0' },
     ],
-    { duration: msFor(ctx.tier, 'm'), delay, easing: E.outQuint, fill: 'backwards' },
+    { duration: opts.dur ?? msFor(ctx.tier, 'm'), delay, easing: E.outQuint, fill: 'backwards' },
     'transform, opacity',
   )
 }
 
 /** lines: split into lines inside clip masks, each rising from 110%, 640 ms outExpo, 60 ms apart. */
-export async function lines(ctx: JobContext, el: HTMLElement) {
+export async function lines(ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
-  const duration = msFor(ctx.tier, 'l')
-  const gap = gapFor(ctx.tier, stagger.lines)
+  const gap = opts.stagger ?? gapFor(ctx.tier, stagger.lines)
+  // A span (the home intro) fits every line into it; otherwise each line takes dur.l.
+  const each = (n: number) =>
+    opts.span ? Math.max(msFor(ctx.tier, 's'), opts.span - (n - 1) * gap) : msFor(ctx.tier, 'l')
   // Build-time split words (WeightText, e.g. section titles): each word has its own mask.
   const words = [...el.querySelectorAll<HTMLElement>('.wt-word > span')]
   if (words.length) {
     const line = lineIndexes(words.map((w) => w.parentElement!))
+    const duration = each(Math.max(...line) + 1)
     words.forEach((w, i) =>
       ctx.animate(
         w,
@@ -78,12 +96,13 @@ export async function lines(ctx: JobContext, el: HTMLElement) {
     )
     return
   }
-  if (ctx.tier === 'calm' && !/^H[12]$/.test(el.tagName)) return block(ctx, el)
+  if (ctx.tier === 'calm' && !/^H[12]$/.test(el.tagName)) return block(ctx, el, 0, { dur: opts.span })
   const plus = await splitReady(el)
   if (ctx.done) return
   const split = splitLines(el, plus)
-  if (!split) return block(ctx, el)
+  if (!split) return block(ctx, el, 0, { dur: opts.span })
   ctx.undo(split.revert)
+  const duration = each(split.lines.length)
   split.lines.forEach((line, i) =>
     ctx.animate(
       line,
@@ -95,10 +114,10 @@ export async function lines(ctx: JobContext, el: HTMLElement) {
 }
 
 /** list: direct children dealt from x −12 px with opacity, 50 ms apart. */
-export function list(ctx: JobContext, el: Element) {
+export function list(ctx: JobContext, el: Element, opts: KindOptions = {}) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
   const items = [...el.children].filter((c) => c.getClientRects().length > 0)
-  const gap = gapFor(ctx.tier, stagger.items)
+  const gap = opts.stagger ?? gapFor(ctx.tier, stagger.items)
   items.forEach((item, i) =>
     ctx.animate(
       item,
@@ -106,7 +125,7 @@ export function list(ctx: JobContext, el: Element) {
         { opacity: 0, translate: `${-distance.list}px 0` },
         { opacity: 1, translate: '0 0' },
       ],
-      { duration: msFor(ctx.tier, 'm'), delay: i * gap, easing: E.outQuint, fill: 'backwards' },
+      { duration: opts.dur ?? msFor(ctx.tier, 'm'), delay: i * gap, easing: E.outQuint, fill: 'backwards' },
       'transform, opacity',
     ),
   )
@@ -205,17 +224,51 @@ export function digits(ctx: JobContext, el: HTMLElement) {
   })
 }
 
-/** rule: a hairline draws from the left, scaleX 0 → 1, 640 ms. */
-export function rule(ctx: JobContext, el: HTMLElement) {
-  if (ctx.tier === 'reduced') return fade(ctx, el)
+/**
+ * rule: a hairline draws from the left, scaleX 0 → 1, 640 ms inOut; with `underline` it draws
+ * like a link underline (outSoft, the given duration).
+ */
+export function rule(ctx: JobContext, el: HTMLElement, delay = 0, opts: KindOptions = {}) {
+  if (ctx.tier === 'reduced') return fade(ctx, el, 's', delay)
   const origin = el.style.transformOrigin
   el.style.transformOrigin = '0 50%'
   ctx.undo(() => (el.style.transformOrigin = origin))
   ctx.animate(
     el,
     [{ scale: '0 1' }, { scale: '1 1' }],
-    { duration: msFor(ctx.tier, 'l'), easing: E.inOut, fill: 'backwards' },
+    {
+      duration: opts.dur ?? msFor(ctx.tier, 'l'),
+      delay,
+      easing: opts.underline ? E.outQuint : E.inOut,
+      fill: 'backwards',
+    },
     'transform',
+  )
+}
+
+/**
+ * pair: one meta pair (rule, label, value; MetaPairs). The rule draws from the left, then the
+ * label and the value rise into place, each `cascade` after the one before, all within `dur`
+ * (at.detail.meta). Reduced: one crossfade.
+ */
+export function pair(ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
+  if (ctx.tier === 'reduced') return fade(ctx, el)
+  const total = opts.dur ?? spanFor(ctx.tier, at.detail.meta.dur)
+  const step = gapFor(ctx.tier, at.detail.meta.cascade)
+  const part = Math.max(0, total - 2 * step)
+  const ruleEl = el.querySelector<HTMLElement>('[data-pair-rule]')
+  const parts = [...el.querySelectorAll<HTMLElement>('[data-pair-part]')]
+  if (ruleEl) rule(ctx, ruleEl, 0, { dur: part, underline: true })
+  parts.forEach((p, i) =>
+    ctx.animate(
+      p,
+      [
+        { opacity: 0, translate: `0 ${distance.reveal}px` },
+        { opacity: 1, translate: '0 0' },
+      ],
+      { duration: part, delay: (i + 1) * step, easing: E.outQuint, fill: 'backwards' },
+      'transform, opacity',
+    ),
   )
 }
 
@@ -300,7 +353,7 @@ export function note(ctx: JobContext, el: Element) {
  * move, never width; word boxes keep their final size throughout, so
  * nothing reflows. Other page titles reveal as "lines".
  */
-export async function title(ctx: JobContext, el: HTMLElement) {
+export async function title(ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
   if (ctx.tier === 'reduced') return fade(ctx, el, 's')
   let words = [...el.querySelectorAll<HTMLElement>('.wt-word > span')]
   if (words.length) {
@@ -323,8 +376,10 @@ export async function title(ctx: JobContext, el: HTMLElement) {
     }
   }
   const gap = gapFor(ctx.tier, stagger.words)
-  const turn = msFor(ctx.tier, 'l')
-  const settle = msFor(ctx.tier, 'xl')
+  // A total duration (the home intro) fits every word into it: turn and settle end together.
+  const fit = opts.dur ? Math.max(msFor(ctx.tier, 's'), opts.dur - (words.length - 1) * gap) : 0
+  const turn = fit || msFor(ctx.tier, 'l')
+  const settle = fit || msFor(ctx.tier, 'xl')
   const p = `perspective(${hand.perspective}px)`
   words.forEach((w, i) => {
     const cs = getComputedStyle(w)
@@ -352,23 +407,25 @@ export async function title(ctx: JobContext, el: HTMLElement) {
 }
 
 /** Runs a kind (the dispatcher the engine and the first-load sequence share). */
-export function runKind(kind: Kind, ctx: JobContext, el: HTMLElement) {
+export function runKind(kind: Kind, ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
   switch (kind) {
     case 'lines':
-      return lines(ctx, el)
+      return lines(ctx, el, opts)
     case 'block':
-      return block(ctx, el)
+      return block(ctx, el, 0, opts)
     case 'list':
-      return list(ctx, el)
+      return list(ctx, el, opts)
     case 'image':
       return image(ctx, el)
     case 'digits':
       return digits(ctx, el)
     case 'rule':
-      return rule(ctx, el)
+      return rule(ctx, el, 0, opts)
     case 'draw':
       return draw(ctx, el)
     case 'note':
       return note(ctx, el)
+    case 'pair':
+      return pair(ctx, el, opts)
   }
 }

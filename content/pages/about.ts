@@ -1,8 +1,8 @@
 /*
- * About (/about, glacier). Server-only page text. Photos without a fixed slot
- * (about-mountain, about-tcg2 and about-og, the Open Graph image) are in
- * content/images.ts for Layout to use as breakers. The topography label,
- * attribution and placeholder note are the existing copy.
+ * About (/about, glacier). Server-only page text: the chapters in order, the
+ * "Projects" list and the closing "Contact" chapter (both were pages of their
+ * own), the credits heading and the topography's label and attribution.
+ * about-og (the Open Graph image) has no slot on the page.
  */
 import type { About } from '../schema'
 
@@ -89,10 +89,108 @@ export const about: About = {
       { label: 'Brewing', value: 'A V60 every morning, light roast' },
     ],
   },
+  projects: {
+    label: 'Projects',
+    title: 'Projects',
+    intro: '13 projects · 2014–2025',
+    columns: { title: 'Project', year: 'Year', client: 'Client', role: 'What I did' },
+    items: [
+      {
+        title: 'Accessibility audit programme',
+        year: '2025',
+        client: 'Federal office',
+        role: 'Audit lead and facilitator',
+      },
+      {
+        title: 'Case-management tool redesign',
+        year: '2024',
+        client: 'Municipal social services',
+        role: 'UX lead, research and interaction design',
+      },
+      {
+        title: 'Citizen portal information architecture',
+        year: '2024',
+        client: 'City administration',
+        role: 'Information architecture, card sorting and tree tests',
+      },
+      {
+        title: 'Appointment booking service',
+        year: '2023',
+        client: 'Cantonal road traffic office',
+        role: 'Interaction design and prototyping',
+      },
+      {
+        title: 'Design sprint facilitation',
+        year: '2023',
+        client: 'Intercantonal e-government association',
+        role: 'Facilitator',
+      },
+      {
+        title: 'Tax return assistant',
+        year: '2022',
+        client: 'Cantonal tax administration',
+        role: 'Lead designer, research and prototypes in code',
+      },
+      {
+        title: 'Internal design-ops tooling',
+        year: '2022',
+        client: 'Lindengrund Informatik',
+        role: 'Product owner and front-end development',
+      },
+      {
+        title: 'Grant application service',
+        year: '2021',
+        client: 'Cantonal agriculture office',
+        role: 'Service design and form design',
+      },
+      {
+        title: 'Statistics data portal',
+        year: '2020',
+        client: 'Federal statistics office',
+        role: 'UX design and data visualisation',
+      },
+      {
+        title: 'Intranet relaunch',
+        year: '2019',
+        client: 'Cantonal administration',
+        role: 'UX design and content structure',
+      },
+      {
+        title: 'Checkout redesign',
+        year: '2017',
+        client: 'Retail company (agency project)',
+        role: 'UX design and usability testing',
+      },
+      {
+        title: 'Tourism booking platform',
+        year: '2016',
+        client: 'Regional tourism organisation (agency project)',
+        role: 'UX design and front-end development',
+      },
+      {
+        title: 'Responsive news site',
+        year: '2014',
+        client: 'Regional publisher (agency project)',
+        role: 'Front-end development',
+      },
+    ],
+    end: "That's the whole deck.",
+  },
+  contact: {
+    label: 'Contact',
+    title: "Let's talk.",
+    body: "If you're working on public services, design systems or design leadership and want to compare notes, I'd like to hear from you. I usually reply within a few days. If you're in Bern, coffee works too.",
+    email: 'moritz@mjls.example',
+    links: [
+      // Placeholder profile: shown as text, deliberately without a link.
+      { label: 'LinkedIn', value: 'linkedin.com/in/example' },
+      { label: 'Location', value: 'Bern, Switzerland' },
+    ],
+    note: 'No newsletter, no tracking. Just email.',
+  },
   creditsTitle: 'Photo credits',
   topo: {
     label: 'Interlaken, between Lake Thun and Lake Brienz',
     attribution: 'Contours derived from swissALTI3D – Source: Federal Office of Topography swisstopo',
-    placeholderNote: 'Placeholder terrain generated from noise until the real data is built (see scripts/topo).',
   },
 }

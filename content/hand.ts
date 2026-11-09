@@ -76,8 +76,6 @@ export const hand: HandContent = {
   labels: {
     nav: 'Work',
     viewing: 'Viewing',
-    moreProjects: 'More projects',
-    counter: 'Card {n} of {total}: {title}',
   },
 }
 

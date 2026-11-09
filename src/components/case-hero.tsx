@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef, useState, ViewTransition } from 'rea
 import { headerHeight } from '@/design/layout'
 import { cardNumber, pad2 } from '@/lib/format'
 import { type HandCard, handCards } from '@/lib/hand-data'
+import { heroVisible } from '@/motion/play'
 import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
 import { PageTitle } from './page-title'
 import { Reveal } from './reveals'
@@ -32,8 +33,13 @@ type Props = {
  * frame, which slides off the right edge of the table ([data-hero-target],
  * D3). The frame carries the card's view-transition name while it is in view,
  * the h1 carries the title's, so play / switch / return morph into and out of
- * it. Once the frame has scrolled away a 40x56 mini card takes the name, so
- * Back still flies a card into the hand.
+ * it. Once the frame has scrolled away nothing carries the name: Back then
+ * deals the card into its slot (no shared-element morph, nothing flies in from
+ * off screen; src/components/hand/hand.tsx). The frame is capped at 1200 px.
+ *
+ * Above the fold (src/motion/reveal.ts, at.detail): the title and the frame
+ * as they come, then the summary, then the top label and counter, then the
+ * meta pairs (MetaPairs) left to right, each data-reveal-step.
  *
  *   desktop   counter + label in the index column; frame from column 6 to the
  *             right edge, full height; the display h1 runs onto the frame,
@@ -46,41 +52,44 @@ export function CaseHero({ card, title = card.title, label, summary, media, medi
   const [inView, setInView] = useState(true)
 
   useEffect(() => {
-    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
-      rootMargin: `-${headerHeight}px 0px 0px 0px`,
-    })
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting)
+        heroVisible(card.id, entry.isIntersecting)
+      },
+      { rootMargin: `-${headerHeight}px 0px 0px 0px` },
+    )
     io.observe(ref.current!)
     return () => io.disconnect()
-  }, [])
+  }, [card.id])
 
   return (
     <header className="case-hero spread-grid" data-identity={card.identity} data-media={mediaKind}>
-      <p className="case-hero-meta t-label">
+      <Reveal as="p" kind="block" step="label" className="case-hero-meta t-label">
         <span className="case-hero-counter">
           <span className="case-hero-index">{cardNumber(card.index)}</span> / {pad2(handCards.length)}
         </span>
         <span className="case-hero-label">{label}</span>
-      </p>
+      </Reveal>
       <ViewTransition name={inView ? cardName(card.id) : undefined} share={heroShare} enter={pageEnter} exit={pageExit}>
         <div ref={ref} className="case-hero-frame" data-hero-target="">
           {media}
         </div>
       </ViewTransition>
       <div className="case-hero-text">
-        <ViewTransition name={titleName(card.id)} share={heroTitleShare} enter="none" exit="none" default="none">
+        <ViewTransition
+          name={inView ? titleName(card.id) : undefined}
+          share={heroTitleShare}
+          enter="none"
+          exit="none"
+          default="none"
+        >
           <PageTitle className="case-hero-title t-display">{title}</PageTitle>
         </ViewTransition>
-        <Reveal as="p" kind="lines" order={1} className="case-hero-summary t-lead">
+        <Reveal as="p" kind="lines" step="summary" className="case-hero-summary t-lead">
           {summary}
         </Reveal>
       </div>
-      {!inView && (
-        <ViewTransition name={cardName(card.id)} share={heroShare} default="none">
-          <span className="hero-mini" data-identity={card.identity} aria-hidden="true">
-            <span className="mono">{cardNumber(card.index)}</span>
-          </span>
-        </ViewTransition>
-      )}
     </header>
   )
 }

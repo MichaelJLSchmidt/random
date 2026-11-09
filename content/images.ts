@@ -121,17 +121,6 @@ export const images = {
     photographerUrl: 'https://unsplash.com/@ratsk1',
     pageUrl: 'https://unsplash.com/photos/a-scenic-view-of-a-lake-surrounded-by-mountains-SMj2DY7QUfw',
   },
-  'about-mountain': {
-    kind: 'photo',
-    alt: 'A snow-coated peak above Interlaken',
-    width: 2048,
-    height: 1365,
-    local: { widths: [640, 1280, 2048], formats: ['avif', 'webp', 'jpeg'] },
-    placeholder: '#182828',
-    photographer: 'Etienne Bösiger',
-    photographerUrl: 'https://unsplash.com/@etienneboesiger',
-    pageUrl: 'https://unsplash.com/photos/snow-coated-mountain-WTkUYzNCu-A',
-  },
   'about-og': {
     kind: 'photo',
     alt: 'The ice-covered mountain range seen from Interlaken',
@@ -153,17 +142,6 @@ export const images = {
     photographer: 'Sergi Viladesau',
     photographerUrl: 'https://unsplash.com/@svi_designs',
     pageUrl: 'https://unsplash.com/photos/person-playing-with-cards-dttmeqFUDSU',
-  },
-  'about-tcg2': {
-    kind: 'photo',
-    alt: 'A hand holding a deck of cards',
-    width: 2048,
-    height: 1365,
-    local: { widths: [640, 1280, 2048], formats: ['avif', 'webp', 'jpeg'] },
-    placeholder: '#080808',
-    photographer: 'Klim Musalimov',
-    photographerUrl: 'https://unsplash.com/@klim11',
-    pageUrl: 'https://unsplash.com/photos/a-hand-holding-a-deck-of-playing-cards-_6M_kY5fRSE',
   },
 } satisfies Record<string, ImageEntry>
 

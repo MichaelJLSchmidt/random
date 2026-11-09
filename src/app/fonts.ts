@@ -29,3 +29,16 @@ export const mono = localFont({
   display: 'swap',
   adjustFontFallback: false,
 })
+
+/*
+ * Handwriting: Caveat (OFL, latin subset incl. German umlauts), only for the idle hint on home.
+ * Not preloaded: the browser fetches it the first time the note renders.
+ */
+export const hand = localFont({
+  src: '../fonts/Caveat-wght.latin.woff2',
+  variable: '--font-hand-face',
+  weight: '400 700',
+  display: 'swap',
+  preload: false,
+  adjustFontFallback: false,
+})

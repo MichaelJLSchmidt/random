@@ -4,17 +4,19 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { fill } from '@/lib/format'
 import { coffeeEgg, site } from '@/lib/hand-data'
-import { dur, stagger as S } from '@/motion/tokens'
+import { at, dur } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
+import { attachTableLongPress } from './hand-eggs'
 import { eggOn } from './registry'
 
 const typing = (el: EventTarget | null) =>
   el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
 
 /*
- * Global egg wiring: "?" opens the shortcut sheet, M deals a new hand and
- * typing "draw" deals "Coffee?" (start page), and 1 page load in 40 gets a
- * rare card. Each egg's code is imported the first time it fires.
+ * Global egg wiring: "?" opens the shortcut sheet, M (or a long press on the
+ * empty table, by touch) deals a new hand and typing "draw" deals "Coffee?"
+ * (start page), and 1 page load in 40 gets a rare card. Each egg's code is
+ * imported the first time it fires.
  */
 export function Eggs() {
   const path = usePathname().replace(/\/$/, '') || '/'
@@ -50,15 +52,20 @@ export function Eggs() {
       }
     }
     addEventListener('keydown', onKey)
+    const offLongPress = attachTableLongPress(() => pathRef.current === '/')
 
     // Rare pull: 1 in 40 loads (or ?rare), once the hand has landed.
     if (eggOn('rarePull') && (Math.random() < 1 / 40 || new URLSearchParams(location.search).has('rare'))) {
       const first = document.documentElement.dataset.intro === 'first'
-      // Once the first-visit deal has landed (four cards, 80 ms apart, 420 ms each), plus a beat.
-      const delay = first ? 3 * S.cards + dur.m + dur.s : 1
+      // Once the first-visit deal has landed (at.firstLoad.cards), plus a beat.
+      const C = at.firstLoad.cards
+      const delay = first ? C.at + 3 * C.stagger + C.dur + dur.s : 1
       import('./hand-eggs').then((m) => m.rarePull(delay))
     }
-    return () => removeEventListener('keydown', onKey)
+    return () => {
+      removeEventListener('keydown', onKey)
+      offLongPress()
+    }
   }, [])
 
   function openShortcuts() {

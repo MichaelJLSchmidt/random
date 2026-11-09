@@ -1,9 +1,9 @@
 // Checks what the Content & Images session ships, against the real modules:
 //   node scripts/images/check.mjs
-// - the image registry: 14 photos, each with alt, photographer, photographerUrl
+// - the image registry: 12 photos, each with alt, photographer, photographerUrl
 //   and pageUrl; every local rendition exists and the 2048 px JPEG matches the
 //   recorded width and height
-// - content counts: 3 case studies, 13 More projects items (and the count line
+// - content counts: 3 case studies, 13 About projects (and the count line
 //   agrees), 12 workshop methods; every image id the content names exists
 // - the slim modules (content/hand.ts, content/site.ts) import only types
 // - no placeholder copy ("To be written.", TODO) and no deleted legacy file
@@ -44,21 +44,20 @@ const eq = (what, actual, expected) => check(actual === expected, `${what}: expe
 
 // Content counts
 eq('caseStudies', content.caseStudies.length, 3)
-eq('moreProjects.items', content.moreProjects.items.length, 13)
+eq('about.projects.items', content.about.projects.items.length, 13)
 eq('workshopMethods.methods', content.workshopMethods.methods.length, 12)
-const years = content.moreProjects.items.map((p) => Number(p.year))
+const years = content.about.projects.items.map((p) => Number(p.year))
 eq(
-  'moreProjects.intro',
-  content.moreProjects.intro,
-  `${content.moreProjects.items.length} projects · ${Math.min(...years)}–${Math.max(...years)}`,
+  'about.projects.intro',
+  content.about.projects.intro,
+  `${content.about.projects.items.length} projects · ${Math.min(...years)}–${Math.max(...years)}`,
 )
-content.moreProjects.items.forEach((p, i) => eq(`moreProjects.items[${i}].number`, p.number, i + 1))
 
 // Image registry
 const entries = Object.entries(images)
 const photos = entries.filter(([, e]) => e.kind === 'photo')
-eq('images', entries.length, 14)
-eq('photos (kind "photo")', photos.length, 14)
+eq('images', entries.length, 12)
+eq('photos (kind "photo")', photos.length, 12)
 for (const [id, e] of photos) {
   check(typeof e.alt === 'string' && e.alt.trim().length > 0, `${id}: alt is empty`)
   check(Boolean(e.photographer), `${id}: no photographer`)
@@ -119,6 +118,10 @@ for (const file of [
   'content/work',
   'content/adapters.ts',
   'content/cards.ts',
+  'content/pages/more-projects.ts',
+  'content/pages/contact.ts',
+  'public/topo',
+  'scripts/topo',
 ])
   check(!existsSync(join(root, file)), `${file} still exists`)
 
@@ -127,7 +130,7 @@ if (failures.length) {
   process.exit(1)
 }
 console.log(
-  `ok: ${content.caseStudies.length} case studies, ${content.moreProjects.items.length} More projects items, ` +
+  `ok: ${content.caseStudies.length} case studies, ${content.about.projects.items.length} About projects, ` +
     `${content.workshopMethods.methods.length} workshop methods, ${photos.length} photos with credits, ` +
     `${named.length} image references, slim modules type-only`,
 )

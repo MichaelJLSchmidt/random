@@ -1,5 +1,6 @@
 import { field as F } from '@/motion/tokens'
 import { fragmentSource, vertexSource } from './shader'
+import { contourInterval, coverTransform, loadTerrain, region } from './terrain'
 
 /** Everything the shader needs for one frame (colours in sRGB 0..1). */
 export type FieldFrame = {
@@ -12,16 +13,16 @@ export type FieldFrame = {
   maxD: number
   pull: [number, number]
   pullAmt: number
+  /** Each pool's drift offset (x already scaled by the aspect), 3 x vec2. */
+  drift: Float32Array
   breath: [number, number]
   lum: number
   fade: number
+  /** About's contours, 0..1, eased. */
   topo: number
-  topoShape: number
-  topoTime: number
-  lineColor: [number, number, number]
+  ground: [number, number, number]
+  line: [number, number, number]
 }
-
-export type Elevation = { width: number; height: number; data: Float32Array; min: number; max: number }
 
 const UNIFORMS = [
   'uRes',
@@ -35,34 +36,50 @@ const UNIFORMS = [
   'uMaxD',
   'uPull',
   'uPullAmt',
+  'uDrift',
   'uBreath',
   'uLum',
   'uFade',
   'uGrain',
   'uTopo',
-  'uTopoShape',
-  'uTopoTime',
-  'uTopoLines',
-  'uElevRange',
-  'uElevMap',
-  'uElev',
-  'uLineColor',
+  'uHeight',
+  'uEnc',
+  'uUv',
+  'uInterval',
+  'uLines',
+  'uIndexEvery',
+  'uBand',
+  'uGround',
+  'uLine',
 ] as const
 
+const C = F.contours
+
+/** The contour tuning for this device: desktop (fine pointer, a large screen) or mobile. */
+function contourTier() {
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches
+  return fine && Math.max(screen.width, screen.height) >= C.desktopMinScreen ? C.desktop : C.mobile
+}
+
 /*
- * One WebGL2 context on one canvas. The drawing buffer is half the CSS size
- * with devicePixelRatio capped at 1; CSS scales it up. Throws when WebGL2 or
- * the shader is unavailable, so the caller can keep the CSS fallback.
+ * One WebGL2 context on one canvas. The gradient's drawing buffer is half the
+ * CSS size with devicePixelRatio capped at 1; CSS scales it up. While About's
+ * contours show or morph (`crisp`), the buffer runs at the device pixel ratio
+ * capped at 1.5 (desktop) or 1.25 (mobile), so 1 px lines are 1 px. Throws
+ * when WebGL2 or the shader is unavailable, so the caller can keep the CSS
+ * fallback.
  */
 export class GlField {
   private gl: WebGL2RenderingContext
   private u: Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
   private program: WebGLProgram
-  private texture: WebGLTexture
-  // Until About's elevation loads, noise contours span a plausible range (lake level to summits).
-  private elev = { width: 1, height: 1, min: 558, max: 2400, aspect: 1 }
+  private terrain: WebGLTexture | null = null
+  private loading: Promise<boolean> | null = null
   private width = 0
   private height = 0
+  private cssW = 1
+  private cssH = 1
+  private tier = contourTier()
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -108,28 +125,36 @@ export class GlField {
     gl.enableVertexAttribArray(0)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
 
-    // Elevation texture (RG16F: elevation 0..1, lake mask); 1x1 until About loads it.
-    this.texture = gl.createTexture()!
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, 1, 1, 0, gl.RG, gl.FLOAT, new Float32Array([0.5, 0]))
-    gl.uniform1i(this.u.uElev, 0)
+    gl.uniform1i(this.u.uHeight, 0)
     gl.uniform1f(this.u.uGrain, F.grain)
-    gl.uniform4f(this.u.uTopoLines, F.topoLine, F.topoIndex, 100, 500)
+    gl.uniform2f(this.u.uEnc, region.offset, region.scale)
+    gl.uniform1f(this.u.uIndexEvery, C.indexEvery)
     this.resize()
   }
 
   /** Extra resolution factor: 1, or 1/2 while a pinned scene holds the viewport. */
   detail = 1
 
+  /** Full device resolution (capped) for the contour lines. */
+  private sharp = false
+
+  get crisp() {
+    return this.sharp
+  }
+
+  set crisp(on: boolean) {
+    if (on === this.sharp) return
+    this.sharp = on
+    this.resize()
+  }
+
   /** Matches the drawing buffer to the canvas's CSS size. */
   resize() {
     const rect = this.canvas.getBoundingClientRect()
-    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale * this.detail
+    const dpr = devicePixelRatio || 1
+    const scale = this.sharp ? Math.min(dpr, this.tier.dprMax) : Math.min(dpr, 1) * F.renderScale * this.detail
+    this.cssW = Math.max(1, rect.width)
+    this.cssH = Math.max(1, rect.height)
     const w = Math.max(1, Math.round(rect.width * scale))
     const h = Math.max(1, Math.round(rect.height * scale))
     if (w === this.width && h === this.height) return
@@ -138,12 +163,21 @@ export class GlField {
     this.gl.viewport(0, 0, w, h)
   }
 
-  /** Uploads the About elevation (row 0 = north). */
-  setElevation({ width, height, data, min, max }: Elevation) {
-    const gl = this.gl
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, width, height, 0, gl.RG, gl.FLOAT, data)
-    this.elev = { width, height, min, max, aspect: width / height }
+  /** True once the region heightmap is on the GPU. */
+  get hasTerrain() {
+    return this.terrain !== null
+  }
+
+  /** Loads the region heightmap once (resolves false when it cannot be decoded exactly). */
+  loadTerrain() {
+    this.loading ??= loadTerrain(this.gl, 0).then(
+      (tex) => {
+        this.terrain = tex
+        return true
+      },
+      () => false,
+    )
+    return this.loading
   }
 
   draw(f: FieldFrame) {
@@ -160,23 +194,31 @@ export class GlField {
     gl.uniform1f(u.uMaxD, f.maxD)
     gl.uniform2f(u.uPull, f.pull[0], f.pull[1])
     gl.uniform1f(u.uPullAmt, f.pullAmt)
+    gl.uniform2fv(u.uDrift, f.drift)
     gl.uniform2f(u.uBreath, f.breath[0], f.breath[1])
     gl.uniform1f(u.uLum, f.lum)
     gl.uniform1f(u.uFade, f.fade)
-    gl.uniform1f(u.uTopo, f.topo)
-    gl.uniform1f(u.uTopoShape, f.topoShape)
-    gl.uniform1f(u.uTopoTime, f.topoTime)
-    gl.uniform3f(u.uLineColor, ...f.lineColor)
-    gl.uniform2f(u.uElevRange, this.elev.min, this.elev.max)
-    // Cover the viewport with the (square) elevation, centred.
-    const ratio = aspect / this.elev.aspect
-    gl.uniform4f(u.uElevMap, ratio > 1 ? 1 : ratio, ratio > 1 ? 1 / ratio : 1, 0, 0)
+    // Contours only with the heightmap on the GPU (the engine never raises topo before).
+    const topo = this.terrain ? f.topo : 0
+    gl.uniform1f(u.uTopo, topo)
+    if (topo > 0) {
+      // Device px per CSS px of the buffer as drawn: line widths and the morph's bands in device px.
+      const px = this.width / this.cssW
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, this.terrain)
+      gl.uniform4f(u.uUv, ...coverTransform(this.cssW, this.cssH, region, C.zoom))
+      gl.uniform1f(u.uInterval, contourInterval(region, this.cssW, this.cssH, C.zoom, this.tier.minSpacingPx))
+      gl.uniform4f(u.uLines, C.lineWidthPx * px, C.indexWidthPx * px, C.lineAlpha, C.indexAlpha)
+      gl.uniform1f(u.uBand, C.bandPx * px * (1 - topo))
+      gl.uniform3f(u.uGround, ...f.ground)
+      gl.uniform3f(u.uLine, ...f.line)
+    }
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
 
   destroy() {
     this.gl.deleteProgram(this.program)
-    this.gl.deleteTexture(this.texture)
+    if (this.terrain) this.gl.deleteTexture(this.terrain)
     this.gl.getExtension('WEBGL_lose_context')?.loseContext()
   }
 }

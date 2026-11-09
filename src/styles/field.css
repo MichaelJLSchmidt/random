@@ -182,3 +182,54 @@
 :root[data-motion='full'] .field-layer[data-layer='b']::before {
   animation-name: field-breath-half;
 }
+
+/*
+ * About: the region's poster (the old field's first frame of the contours), in
+ * place of live contours with reduced motion, without WebGL2 or the heightmap,
+ * and on a direct visit until the heightmap is ready. A 160 ms crossfade; not
+ * displayed (so not loaded) anywhere else.
+ */
+.field-poster {
+  position: absolute;
+  inset: 0;
+  display: none;
+  opacity: 0;
+  background: var(--contour-ground);
+  transition:
+    opacity var(--dur-reduced) linear,
+    display var(--dur-reduced) linear allow-discrete;
+}
+.field[data-poster] .field-poster {
+  display: block;
+  opacity: 1;
+}
+@starting-style {
+  .field[data-poster] .field-poster {
+    opacity: 0;
+  }
+}
+.field-poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* The contour field's top and bottom edges fade into its ground (the old password page's frame). */
+.field::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--contour-ground) 85%, transparent),
+    transparent 16%,
+    transparent 84%,
+    color-mix(in srgb, var(--contour-ground) 85%, transparent)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-topo) var(--ease-bloom);
+}
+.field[data-topo]::after {
+  opacity: 1;
+}

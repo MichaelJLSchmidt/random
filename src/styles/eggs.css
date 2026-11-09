@@ -55,8 +55,7 @@
 .hand-card[data-inspect] :is(.card-summary, .card-facts) {
   display: revert;
 }
-.hand-card,
-.hand-counter {
+.hand-card {
   -webkit-touch-callout: none;
   user-select: none;
 }
@@ -252,14 +251,14 @@
   padding: var(--space-4);
   transform: rotateY(180deg);
   background: var(--glacier-field);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-lines) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-accent) 45%, transparent);
   text-align: left;
 }
 .on-table-name {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  color: var(--glacier-lines);
+  color: var(--glacier-accent);
 }
 .on-table-line {
   font-size: var(--text-sm);
@@ -282,4 +281,71 @@
 :root:not([data-motion='full']) .on-table-card:not([data-open]) .on-table-front,
 :root:not([data-motion='full']) .on-table-card[data-open] .on-table-back {
   opacity: 0;
+}
+
+/*
+ * ---------- Idle hint (home, once per session; src/eggs/idle-hint.tsx) ----------
+ * A handwritten note beside the hand with a curly arrow toward the cards, in
+ * the secondary text colour. Desktop: right of the fan, the arrow curling down
+ * and left onto the last card. Phones: above the right end of the fan, the
+ * arrow pointing down into it. Still once written; decorative (aria-hidden).
+ */
+.idle-hint {
+  position: fixed;
+  z-index: calc(var(--z-hand) + 1);
+  right: var(--grid-margin);
+  bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 * 0.85 + var(--safe-bottom) + var(--space-6));
+  color: var(--muted);
+  pointer-events: none;
+  user-select: none;
+}
+.idle-hint:not([data-ready]) {
+  opacity: 0;
+}
+.idle-hint-text {
+  max-width: 9em;
+  margin: 0;
+  font-family: var(--font-hand-face), cursive;
+  font-size: clamp(1.25rem, 0.5rem + 1.1vw, 1.875rem);
+  font-weight: 500;
+  line-height: 1.05;
+  text-align: right;
+  text-wrap: balance;
+}
+.idle-hint-word {
+  display: inline-block;
+}
+.idle-hint-arrow {
+  position: absolute;
+  top: calc(100% - 0.25rem);
+  right: 45%;
+  width: 52px;
+  height: auto;
+  overflow: visible;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.idle-hint-arrow path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+@media (min-width: 1024px) {
+  .idle-hint {
+    /* Right of the fan (four cards of --card-w, overlapping --card-overlap), far enough that the
+       arrow's head stops just outside the last card's tilted edge. */
+    --idle-left: calc((var(--card-w) * 4 - var(--card-overlap) * 3) / 2 + var(--space-8) + var(--space-5));
+    right: auto;
+    left: calc(50% + var(--idle-left));
+    bottom: calc(var(--card-h) * 0.72 * 0.55);
+    max-width: calc(50vw - var(--idle-left) - var(--space-4));
+  }
+  .idle-hint-text {
+    text-align: left;
+  }
+  .idle-hint-arrow {
+    top: 0.2em;
+    right: calc(100% + 2px);
+    width: 52px;
+  }
 }

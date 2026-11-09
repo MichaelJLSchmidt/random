@@ -12,8 +12,7 @@ export { aboutSectionKeys, caseStudySectionKeys, managementSectionKeys } from '@
 export { images } from '@content/index'
 export { cardNumber, fill, pad2 } from './format'
 
-export const { site, hand, home, management, moreProjects, about, contact, notFound, coffeeEgg, workshopMethods } =
-  content
+export const { site, hand, home, management, about, notFound, coffeeEgg, workshopMethods } = content
 
 /** Fails the build with a pointer to the contract when content breaks a fixed count. */
 function expect(ok: boolean, message: string) {
@@ -42,7 +41,12 @@ function validate() {
   count('about.timeline.items', content.about.timeline.items, 7)
   count('about.howIWork.items', content.about.howIWork.items, 4)
   count('about.onTheTable.items', content.about.onTheTable.items, 5)
-  count('home.onTheTableNow.items', content.home.onTheTableNow.items, 3)
+  const projects = content.about.projects.items
+  count('about.projects.items', projects, 13)
+  const years = projects.map((p) => Number(p.year))
+  const line = `${projects.length} projects · ${Math.min(...years)}–${Math.max(...years)}`
+  expect(content.about.projects.intro === line, `about.projects.intro must be "${line}".`)
+  count('home.bring.items', content.home.bring.items, 3)
 }
 validate()
 

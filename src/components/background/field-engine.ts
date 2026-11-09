@@ -1,4 +1,4 @@
-import { glacierLines, palette, type Identity } from '@/design/palette'
+import { contour, palette, type Identity } from '@/design/palette'
 import { cardById } from '@/lib/cards'
 import { INTRO_DONE } from '@/motion/preferences'
 import { isPinned, onPinned } from '@/motion/scenes/pin'
@@ -6,7 +6,7 @@ import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F, motionScale, reducedCrossfade } from '@/motion/tokens'
 import { CssField } from './field-css'
-import { type Elevation, type FieldFrame, GlField } from './field-gl'
+import { type FieldFrame, GlField } from './field-gl'
 import { hexToLab, labCss, labToRgb } from './oklab'
 import { type EaseName, Track, easeCss } from './tracks'
 
@@ -17,7 +17,8 @@ import { type EaseName, Track, easeCss } from './tracks'
  * fallback receives each change as a transition. React never re-renders for
  * any of it.
  *
- *   rest     ink pools breathing on a 9 s sine, drifting slowly
+ *   rest     ink pools breathing on a 9 s sine, their centres drifting on slow
+ *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier)
  *   hover    A's mid/glow blend to the card's, intensity up, pools lean to its slot
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
@@ -36,7 +37,6 @@ type Name =
   | 'breaker'
   | 'breath'
   | 'topo'
-  | 'elev'
   | 'dip'
   | 'fade'
   | 'motion'
@@ -46,6 +46,11 @@ const swatch = (id: Identity) => [
   ...hexToLab(palette[id].mid),
   ...hexToLab(palette[id].glow),
 ]
+/** A hex colour as sRGB 0..1 (the contour field's ground and lines, exactly as the old field drew them). */
+const srgb = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1), 16)
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
+}
 const hoverSwatch = (id: Identity) => [...hexToLab(palette[id].mid), ...hexToLab(palette[id].glow)]
 const mixArr = (a: number[], b: number[], t: number) => a.map((v, i) => v + (b[i] - v) * t)
 
@@ -115,7 +120,6 @@ export class FieldEngine {
       breaker: new Track([0]),
       breath: new Track([1]),
       topo: new Track([0]),
-      elev: new Track([0]),
       dip: new Track([1]),
       fade: new Track([1]),
       motion: new Track([0]),
@@ -130,13 +134,13 @@ export class FieldEngine {
       maxD: 1,
       pull: [0.5, 1],
       pullAmt: 0,
+      drift: new Float32Array(6),
       breath: [1, 1],
       lum: 1,
       fade: 1,
       topo: 0,
-      topoShape: 0,
-      topoTime: 0,
-      lineColor: labToRgb(hexToLab(glacierLines)) as [number, number, number],
+      ground: srgb(contour.ground),
+      line: srgb(contour.line),
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
     this.tracks.motion.jump([this.continuous() ? 1 : 0], performance.now())
@@ -192,6 +196,16 @@ export class FieldEngine {
       this.syncCss(now)
       document.documentElement.dataset.renderer = 'css'
     }
+    this.updatePoster()
+    // About's heightmap: fetched when a link to About is hovered, focused or touched (or on About).
+    const onIntent = (e: Event) => {
+      const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null
+      if (a && /\/about\/?$/.test(new URL(a.href, location.href).pathname)) this.requestTerrain()
+    }
+    for (const type of ['pointerover', 'focusin', 'touchstart'] as const) {
+      document.addEventListener(type, onIntent, { passive: true })
+      this.offs.push(() => document.removeEventListener(type, onIntent))
+    }
     this.kick(true)
   }
 
@@ -201,19 +215,69 @@ export class FieldEngine {
     this.gl?.destroy()
   }
 
-  /** About's elevation arrived: contour lines ease from noise into the terrain. */
-  setElevation(e: Elevation) {
-    if (!this.gl || this.hasElevation) return
-    this.hasElevation = true
-    this.gl.setElevation(e)
-    this.go('elev', [1], this.dur(D.topo, D.calmBloom), 'bloom')
-  }
-
   get renderer() {
     return this.mode
   }
 
-  hasElevation = false
+  // ---------------------------------------------------------------- About's contours
+
+  /** What the route asks for: the contours (1) or not (0). */
+  private wantTopo: 0 | 1 = 0
+  /** A morph to the contours waiting for the heightmap (dur 0: a direct load, the poster shows meanwhile). */
+  private pendingTopo: { dur: number; ease: EaseName } | null = null
+  private terrainFailed = false
+
+  /** Starts loading the region heightmap (once): on About, or when a link to it is hovered or focused. */
+  requestTerrain() {
+    if (!this.gl || this.gl.hasTerrain || this.terrainFailed) return
+    void this.gl.loadTerrain().then((ok) => {
+      if (!ok) this.terrainFailed = true
+      const pending = this.pendingTopo
+      if (ok && pending && this.wantTopo === 1) this.toTopo(1, pending.dur, pending.ease)
+      else this.updatePoster()
+    })
+  }
+
+  /** Eases the contours in or out; to the contours only once the heightmap is on the GPU. */
+  private toTopo(to: 0 | 1, dur: number, ease: EaseName) {
+    this.wantTopo = to
+    if (to === 1 && this.gl && !this.gl.hasTerrain) {
+      this.pendingTopo = { dur, ease }
+      this.requestTerrain()
+      this.updatePoster()
+      return
+    }
+    this.pendingTopo = null
+    // Lines are drawn at the device pixel ratio (capped) from the first frame of the morph.
+    if (to === 1 && this.gl) this.gl.crisp = true
+    this.go('topo', [to], dur, ease)
+    this.updatePoster()
+  }
+
+  /** On rest at 1 the contours are one still frame: nothing else shows, so nothing else asks for frames. */
+  private contoursAtRest() {
+    const topo = this.tracks.topo
+    return topo.value[0] >= 1 && topo.to[0] >= 1
+  }
+
+  /**
+   * About shows the region's poster (the old field's first frame) instead of live contours with
+   * reduced motion, without WebGL2 or the heightmap, and on a direct load until the heightmap is
+   * ready (160 ms crossfade, src/styles/field.css). data-topo dims the field's top and bottom edges.
+   */
+  private updatePoster() {
+    const about = table.get().field.topo === 1
+    const show =
+      about &&
+      (this.mode === 'css' ||
+        this.tier === 'reduced' ||
+        this.terrainFailed ||
+        (this.pendingTopo !== null && this.pendingTopo.dur === 0))
+    if (show) this.root.dataset.poster = ''
+    else delete this.root.dataset.poster
+    if (about) this.root.dataset.topo = ''
+    else delete this.root.dataset.topo
+  }
 
   // ---------------------------------------------------------------- input
 
@@ -233,7 +297,10 @@ export class FieldEngine {
   private setTier(tier: MotionTier) {
     this.tier = tier
     this.go('motion', [this.continuous() ? 1 : 0], D.crossfade, 'outSoft')
-    if (tier === 'reduced') this.go('topo', [0], reducedCrossfade, 'linear')
+    // Reduced shows the poster on About instead of the contours; leaving reduced brings them back.
+    const topo = table.get().field.topo && tier !== 'reduced' ? 1 : 0
+    if (topo !== this.wantTopo) this.toTopo(topo, reducedCrossfade, 'linear')
+    else this.updatePoster()
   }
 
   /** Brings every track up to date (the loop does not run in CSS mode or while idle). */
@@ -249,7 +316,7 @@ export class FieldEngine {
     this.sampleAll(now)
     const P = swatch(t.identity)
     const iTo = t.spread ? F.intensityPage : F.intensityRest
-    // Reduced shows the static contour SVG on About instead of shader lines.
+    // Reduced shows the region's poster on About instead of the contours.
     const topo = t.topo && this.tier !== 'reduced' ? 1 : 0
     const topoDur = this.dur(D.topo, D.calmBloom)
     const spreadNow = tr.spread.value[0]
@@ -268,7 +335,7 @@ export class FieldEngine {
         this.jump('iA', [F.intensityRest])
         this.jump('iB', [F.intensityPage])
         this.jump('breath', [t.spread ? 0.5 : 1])
-        this.jump('topo', [topo])
+        this.toTopo(topo, 0, 'linear')
         this.jump('dip', [1])
         break
 
@@ -278,7 +345,7 @@ export class FieldEngine {
         this.jump('iB', [F.intensityPage])
         this.go('spread', [1], D.bloom, 'bloom')
         this.go('breath', [0.5], D.bloom, 'bloom')
-        this.go('topo', [0], D.bloom, 'outSoft')
+        this.toTopo(0, D.bloom, 'outSoft')
         break
 
       case 'unbloom':
@@ -293,7 +360,7 @@ export class FieldEngine {
         this.go('a', P, D.toInk, 'outSoft', D.unbloom)
         this.go('iA', [iTo], D.toInk, 'outSoft', D.unbloom)
         this.go('breath', [1], D.toInk, 'outSoft', D.unbloom)
-        this.go('topo', [topo], topoDur, 'bloom')
+        this.toTopo(topo, topoDur, 'bloom')
         break
 
       case 'switch':
@@ -303,7 +370,7 @@ export class FieldEngine {
         this.go('dip', [1], D.crossfade, 'linear')
         if (tr.spread.to[0] !== 1) this.go('spread', [1], D.bloom, 'bloom')
         this.go('breath', [0.5], D.crossfade, 'bloom')
-        this.go('topo', [0], D.crossfade, 'outSoft')
+        this.toTopo(0, D.crossfade, 'outSoft')
         break
 
       case 'crossfade': {
@@ -337,7 +404,7 @@ export class FieldEngine {
           this.go('spread', [t.spread], dur, 'bloom')
         }
         this.go('breath', [t.spread ? 0.5 : 1], dur, 'bloom')
-        this.go('topo', [topo], topoDur, 'bloom')
+        this.toTopo(topo, topoDur, 'bloom')
         break
       }
     }
@@ -364,6 +431,8 @@ export class FieldEngine {
     const now = performance.now()
     this.tracks[name].set(to, dur, ease, now, delay)
     if (this.mode === 'css') this.writeCss(name, to, dur, ease, delay)
+    // About at rest: only the contours show, so other channels (hover, breaker, tier) ask for no frame.
+    if (name !== 'topo' && this.contoursAtRest()) return
     // Dirty: at least one frame is drawn even if the track has already ended by
     // the next frame (a short reduced crossfade while a view transition holds rendering).
     this.kick(true)
@@ -440,6 +509,7 @@ export class FieldEngine {
   }
 
   private dirty = true
+  private wasMoving = false
 
   private kick(dirty = false) {
     if (dirty) this.dirty = true
@@ -451,8 +521,24 @@ export class FieldEngine {
   private tick = (now: number) => {
     this.raf = 0
     if (this.mode !== 'gl' || this.paused) return
-    const moving = this.sampleAll(now)
-    const continuous = this.continuous()
+    let moving = this.sampleAll(now)
+    // A track that has just settled: draw its final value once more (the last moving frame showed
+    // a value from just before its end).
+    if (this.wasMoving && !moving) this.dirty = true
+    this.wasMoving = moving
+    // About at rest: one static frame (redrawn only when dirty: a resize, a view transition's end),
+    // and always the settled frame itself (topo exactly 1).
+    const still = this.contoursAtRest()
+    if (still) {
+      moving = false
+      if (this.frame.topo < 1) this.dirty = true
+    }
+    const continuous = !still && this.continuous()
+    // Back to the gradient: its half-resolution buffer again.
+    if (this.gl?.crisp && this.tracks.topo.value[0] <= 0 && this.wantTopo === 0) {
+      this.gl.crisp = false
+      this.dirty = true
+    }
     if (!moving && !continuous && !this.dirty) return
     this.raf = requestAnimationFrame(this.tick)
 
@@ -488,6 +574,7 @@ export class FieldEngine {
     this.syncCss(performance.now())
     this.root.dataset.mode = 'css'
     document.documentElement.dataset.renderer = 'css'
+    this.updatePoster()
   }
 
   private draw() {
@@ -510,6 +597,14 @@ export class FieldEngine {
     f.maxD = this.maxD
     f.pull = t.pull.value as [number, number]
     f.pullAmt = hover * 0.5 * motion
+    // Drift: each pool's centre loops a slow Lissajous figure, 2.5% of the viewport (full tier;
+    // the field's clock stops in calm and reduced, and `motion` eases the offset back to 0).
+    const aspect = innerWidth / Math.max(1, innerHeight)
+    const reach = F.poolDrift * motion
+    F.poolDriftPeriods.forEach(([px, py], i) => {
+      f.drift[i * 2] = reach * aspect * Math.sin((2 * Math.PI * this.time) / px + i * 2.1)
+      f.drift[i * 2 + 1] = reach * Math.sin((2 * Math.PI * this.time) / py + i * 1.3)
+    })
     // Breath: a 9 s sine in-out; pool scale 1.00-1.06, luminance ±4%.
     const amp = t.breath.value[0] * motion
     const b = (1 - Math.cos((2 * Math.PI * this.time) / D.breath)) / 2
@@ -518,8 +613,6 @@ export class FieldEngine {
     f.lum = 1 - F.switchDip * Math.sin(Math.PI * t.dip.value[0])
     f.fade = t.fade.value[0]
     f.topo = t.topo.value[0]
-    f.topoShape = t.topo.value[0] * t.elev.value[0]
-    f.topoTime = (this.time / D.topoBand) % 1
     this.gl!.draw(f)
     if (this.root.dataset.mode !== 'gl') {
       this.root.dataset.mode = 'gl'

@@ -25,9 +25,14 @@ export const palette: Record<Identity, Swatch> = {
   glacier: { field: '#0B1A1C', mid: '#14393B', glow: '#2C6E6C', accent: '#5FB3B0', ink: '#061011' },
 }
 
-/** About's contour lines and text colour. */
-export const glacierLines = '#5FB3B0'
+/** About's text colour on the contour field. */
 export const glacierText = '#DCE8E6'
+
+/**
+ * About's contour field: the old portfolio's ground and its stone-grey line
+ * colour (drawn at low alpha, field.contours in src/motion/tokens.ts).
+ */
+export const contour = { ground: '#1B1C18', line: '#8A8C80' } as const
 
 export const identities = Object.keys(palette) as Identity[]
 
@@ -40,8 +45,9 @@ export function identityCss(): string {
   const root = [
     `--text:${text}`,
     `--muted:${muted}`,
-    `--glacier-lines:${glacierLines}`,
     `--glacier-text:${glacierText}`,
+    `--contour-ground:${contour.ground}`,
+    `--contour-line:${contour.line}`,
   ]
   for (const id of identities) {
     for (const [k, v] of Object.entries(palette[id])) root.push(`--${id}-${k}:${v}`)

@@ -1,13 +1,13 @@
 import { inView } from 'motion'
 import { discard } from '@/eggs/discard'
-import { gapFor } from './choreography'
+import { gapFor, spanFor } from './choreography'
 import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
 import { completeAll, revealNow, revealed, schedule } from './jobs'
-import { type Kind, isHeroImage, runKind } from './kinds'
+import { type Kind, type KindOptions, isHeroImage, runKind } from './kinds'
 import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
 import { loadSplit } from './split'
 import { table } from './table-store'
-import { reveal as R, duration as D, stagger, tiers } from './tokens'
+import { at as AT, reveal as R, duration as D, stagger, tiers } from './tokens'
 import { readTier } from './use-tier'
 
 export { dealOffset, drawCards, fanCards } from './deal'
@@ -24,6 +24,9 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *   order      blocks with data-reveal-order in the first viewport play in
  *              sequence: base + 80 ms × (order + 1) + delay, where base is 0,
  *              or the moment the card morph has mostly landed after a play
+ *   detail     the detail hero's data-reveal-step blocks in the first viewport
+ *              follow its title by at.detail: summary, label and counter, then
+ *              the meta pairs left to right (each a `pair`: rule, label, value)
  *   on scroll  everything else reveals once 25% is in view (Motion inView,
  *              once); blocks entering in the same frame start 50 ms apart in
  *              document order
@@ -42,7 +45,7 @@ export { dealOffset, drawCards, fanCards } from './deal'
 /** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
 export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
 
-const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note'])
+const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair'])
 
 /** The kind a block reveals with (data-reveal), or null when it is not one of the eight. */
 export function kindOf(el: HTMLElement): Kind | null {
@@ -110,12 +113,15 @@ function spaced(el: HTMLElement, kind: string, delay: number, r: Route) {
 
 let introSkip: (() => void) | null = null
 
-/** Starts the reveal of one block in `delay` ms (resolving its special cases). */
-function start(el: HTMLElement, wanted: number, r: Route) {
+/**
+ * Starts the reveal of one block in `delay` ms (resolving its special cases). A sequence with its
+ * own timing (the home intro, the detail hero) passes `opts` and is exact: no neighbour spacing.
+ */
+function start(el: HTMLElement, wanted: number, r: Route, opts?: KindOptions) {
   const kind = kindOf(el)
   if (!kind || el.hasAttribute('data-revealed')) return
   const tier = readTier()
-  const delay = spaced(el, kind, wanted, r)
+  const delay = opts ? wanted : spaced(el, kind, wanted, r)
   r.planned.set(el, performance.now() + delay)
   if (kind === 'image' && isHeroImage(el.querySelector('img'))) return revealNow(el)
   if (kind === 'digits' && tier === 'reduced') return revealNow(el, '')
@@ -146,7 +152,7 @@ function start(el: HTMLElement, wanted: number, r: Route) {
   const falls = kind === 'draw' && el.classList.contains('lost-card')
   schedule(el, delay, (ctx) => {
     if (falls) discard(ctx, el)
-    return runKind(kind, ctx, el)
+    return runKind(kind, ctx, el, opts)
   })
 }
 
@@ -204,10 +210,10 @@ export function revealRoute(kind: NavigationKind) {
       const k = kindOf(el)
       handled.add(el)
       if (!k) continue
-      blocks.push({ el, kind: k, order: orderOf(el), delay: delayOf(el) })
+      blocks.push({ el, kind: k, order: orderOf(el), delay: delayOf(el), step: el.dataset.revealStep ?? null })
     }
     if (h1) handled.add(h1)
-    if (kind === 'first') introSkip = firstVisit(h1, blocks, (el, delay) => start(el, delay, r))
+    if (kind === 'first') introSkip = firstVisit(h1, blocks, (el, delay, opts) => start(el, delay, r, opts ?? {}))
     else if (seq) revisit(seq, h1, blocks)
   }
 
@@ -224,6 +230,24 @@ export function revealRoute(kind: NavigationKind) {
       handled.add(el)
       revealNow(el)
     }
+
+  // Detail pages (case studies, Management): the hero's sequence after its title (at.detail): the
+  // summary, the top label and counter, then the meta pairs left to right. Only blocks in the
+  // viewport now join it (measured once, here); the rest reveal on scroll like any other block.
+  const titleAt = base + gapFor(tier, stagger.cards)
+  let pairs = 0
+  for (const el of all) {
+    const step = el.dataset.revealStep
+    if (!step || handled.has(el) || seq?.contains(el) || !kindOf(el) || !inFirstViewport(el)) continue
+    handled.add(el)
+    if (step === 'meta') {
+      const at = AT.detail.meta.at + pairs++ * AT.detail.meta.stagger
+      start(el, titleAt + gapFor(tier, at), r, { dur: spanFor(tier, AT.detail.meta.dur) })
+    } else {
+      const at = step === 'summary' ? AT.detail.summary : AT.detail.label
+      start(el, titleAt + gapFor(tier, at), r, {})
+    }
+  }
 
   // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
   const ordered = all

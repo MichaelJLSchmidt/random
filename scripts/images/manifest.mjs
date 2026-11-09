@@ -91,14 +91,6 @@ export const photos = [
     alt: 'A turquoise lake near Interlaken framed by forested mountains',
   },
   {
-    id: 'about-mountain',
-    base: 'https://images.unsplash.com/photo-1503079789711-148472409b63',
-    page: 'https://unsplash.com/photos/snow-coated-mountain-WTkUYzNCu-A',
-    photographer: 'Etienne Bösiger',
-    handle: 'etienneboesiger',
-    alt: 'A snow-coated peak above Interlaken',
-  },
-  {
     id: 'about-og',
     base: 'https://images.unsplash.com/photo-1671423118843-ffd672bd5134',
     page: 'https://unsplash.com/photos/a-view-of-a-snow-covered-mountain-range-0bwiQpZae9k',
@@ -113,14 +105,5 @@ export const photos = [
     photographer: 'Sergi Viladesau',
     handle: 'svi_designs',
     alt: 'Hands laying cards on a dark table',
-  },
-  {
-    id: 'about-tcg2',
-    base: 'https://images.unsplash.com/photo-1632032858061-b321b3c1d52b',
-    page: 'https://unsplash.com/photos/a-hand-holding-a-deck-of-playing-cards-_6M_kY5fRSE',
-    photographer: 'Klim Musalimov',
-    handle: 'klim11',
-    alt: 'A hand holding a deck of cards',
-    crop: [3, 2],
   },
 ]

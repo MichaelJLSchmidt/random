@@ -169,6 +169,12 @@
   position: relative;
   z-index: 1;
 }
+/* Below 1024 the index label leads, then the numeral with the h2 over its lower third. */
+@media (max-width: 1023.98px) {
+  .page-section > .numeral-breaker + .section-index {
+    order: -1;
+  }
+}
 @media (min-width: 1024px) {
   .page-section > .numeral-breaker,
   .numeral-breaker {
@@ -179,23 +185,90 @@
   }
 }
 
-/* ---------- Spread: full-bleed image, caption below (margin track from 1680) ---------- */
-.spread {
+/*
+ * ---------- OffsetImage: anchored to the content column, toward one edge ----------
+ * Below 1024: edge to edge, 4:3, caption below in the content column.
+ * From 1024: "right" spans the content column's start to the right edge, "left"
+ * the left edge to the content column's end; the frame is 3:2 (cover), at most
+ * 1200 px wide and 72svh tall, kept against its anchor. Its far corners round
+ * only when a cap keeps it off the edge (100cqw of the area > its width).
+ * From 1680 the caption sits in the free space beside it.
+ */
+.offset-image {
   row-gap: var(--space-4);
   margin: 0;
 }
-.spread-media img {
+.offset-image-area {
+  grid-column: full-start / full-end;
+  container-type: inline-size;
+}
+.offset-image-frame {
   width: 100%;
-  height: auto;
-  max-height: 84svh;
+  aspect-ratio: 4 / 3;
+  overflow: clip;
+  background: color-mix(in srgb, var(--id-field) 80%, black);
+}
+/* Fill the frame (more specific than picture.css's intrinsic height). */
+.offset-image-frame picture[data-image],
+.offset-image-frame picture[data-image] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.offset-image-frame picture[data-image] img {
   object-fit: cover;
 }
-.spread-caption {
+.offset-image-caption {
+  grid-column: content-start / content-end;
   margin: 0;
   color: var(--muted);
 }
-.page-section > .section-spread {
+.page-section > .section-image {
   margin-top: var(--space-s);
+}
+@media (min-width: 1024px) {
+  .offset-image {
+    --image-radius: 16px;
+    /* At most 1200 px wide and 72svh tall, always 3:2: the height cap narrows the frame. */
+    --image-max: min(1200px, 72svh * 3 / 2);
+    --image-far: clamp(0px, (100cqw - var(--image-max)) * 1000, var(--image-radius));
+  }
+  .offset-image-frame {
+    width: min(100%, var(--image-max));
+    aspect-ratio: 3 / 2;
+  }
+  .offset-image[data-side='right'] .offset-image-area {
+    grid-column: 5 / full-end;
+  }
+  .offset-image[data-side='right'] .offset-image-frame {
+    border-radius: var(--image-radius) var(--image-far) var(--image-far) var(--image-radius);
+  }
+  .offset-image[data-side='left'] .offset-image-area {
+    grid-column: full-start / 13;
+  }
+  .offset-image[data-side='left'] .offset-image-frame {
+    margin-left: auto;
+    border-radius: var(--image-far) var(--image-radius) var(--image-radius) var(--image-far);
+  }
+  .offset-image-caption {
+    grid-column: 5 / 13;
+  }
+}
+@media (min-width: 1680px) {
+  /* Beside the image, level with its bottom edge: columns 1–3 for "right", column 12 + the outer track for "left". */
+  .offset-image-caption {
+    grid-row: 1;
+    align-self: end;
+  }
+  .offset-image[data-side='right'] .offset-image-caption {
+    grid-column: 2 / 5;
+    padding-right: var(--space-5);
+  }
+  .offset-image[data-side='left'] .offset-image-caption {
+    grid-column: 13 / full-end;
+    margin-right: var(--space-6);
+    padding-left: var(--space-2);
+  }
 }
 
 /* ---------- MetaPairs: ruled row, 5 up from 1024, 2 columns below ---------- */
@@ -206,14 +279,24 @@
   margin: 0;
 }
 .meta-pair {
+  position: relative;
   display: grid;
   align-content: start;
   gap: var(--space-2);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
+}
+/* The pair's 1 px top rule: an element of its own, so the `pair` reveal can draw it. */
+.meta-pair-rule {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--line);
 }
 .meta-pair-label {
   color: var(--muted);
+}
+.meta-pair-label > [data-pair-part] {
+  display: block;
 }
 .meta-pair-value {
   margin: 0;
@@ -396,8 +479,7 @@
 }
 @media (min-width: 1680px) {
   /* Column 12 + the outer track runs to the viewport edge: keep a margin on the right. */
-  .page-section > .margin-note,
-  .spread-caption {
+  .page-section > .margin-note {
     margin-right: var(--space-6);
   }
   /* Level with the block it annotates (the row it shares). */

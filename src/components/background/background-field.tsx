@@ -4,17 +4,25 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { table } from '@/motion/table-store'
 import { onTierChange, readTier } from '@/motion/use-tier'
+import { withBase } from '@/lib/site'
 import { FieldEngine } from './field-engine'
+import { region } from './terrain'
 
 let engine: FieldEngine | null = null
 
-/** The running field (About uses it to hand over its elevation texture). */
+/** The running field. */
 export const fieldEngine = () => engine
+
+/** The poster's crop: the region's focus (Interlaken), like the live field's cover crop. */
+const posterPosition = `${region.focus.u * 100}% ${region.focus.v * 100}%`
 
 /**
  * Persistent background field, mounted once in the root layout. It renders no
  * React state: the engine listens to the table store and drives the canvas
- * (or the CSS fallback) directly.
+ * (or the CSS fallback) directly. On About the canvas draws the contour field;
+ * the region's poster (its first frame) stands in with reduced motion, without
+ * WebGL2 and while the heightmap loads on a direct visit (data-poster, set by
+ * the engine; the image loads only once it is shown).
  */
 export function BackgroundField() {
   const root = useRef<HTMLDivElement>(null)
@@ -39,6 +47,17 @@ export function BackgroundField() {
         <div className="field-layer" data-layer="b" />
       </div>
       <canvas ref={canvas} className="field-canvas" />
+      <picture className="field-poster">
+        <source media="(orientation: portrait)" srcSet={withBase(region.posters.portrait)} type="image/avif" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={withBase(region.posters.landscape)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          style={{ objectPosition: posterPosition }}
+        />
+      </picture>
       <RouteSync />
     </div>
   )

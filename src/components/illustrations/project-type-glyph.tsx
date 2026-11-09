@@ -74,7 +74,7 @@ const glyphs: Record<ProjectType, [ReactNode, ReactNode]> = {
 }
 
 /**
- * More projects: one small glyph per project type, 48×48, meant for 20–32 px (one per row; the
+ * Project types (not placed: About's projects are a plain list): one small glyph per project type, 48×48, meant for 20–32 px (one per row; the
  * Layout session draws it on row hover / focus). Groups: 1 outline, 2 details.
  */
 export function ProjectTypeGlyph({ type, className, titleId, title, description }: ProjectTypeGlyphProps) {

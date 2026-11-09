@@ -3,17 +3,25 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { palette } from '@/design/palette'
+import { contour, palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
-import { cardForPath, coffeeEgg, handCards, handLabels, site } from '@/lib/hand-data'
+import { cardForPath, coffeeEgg, handCards, handLabels } from '@/lib/hand-data'
 import { drawCards } from '@/motion/reveal'
-import { cancelPlay, interceptHistory, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
+import {
+  cancelPlay,
+  dealIn,
+  heroWasVisible,
+  interceptHistory,
+  play,
+  registerNavigate,
+  returnHome,
+  settleLift,
+} from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
 import '@/motion/view-transition'
 import { CardBack, CardFace } from './card-face'
-import { HandCounter } from './hand-counter'
 
 /** Outer cards sit a little lower: the hand's arc (px at desktop size). */
 const ARC = [10, 2, 2, 10]
@@ -25,9 +33,8 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
  *   desktop      a fan fixed at the bottom centre (72% visible on home, 45% elsewhere)
  *   mobile home  the same fan, smaller
  *   mobile else  a 48px peek rail; tapping or swiping it up opens the list as
- *                a bottom sheet (a native popover, so it also works without JS),
- *                with plain links to More projects, About and Contact under the cards
- * On home a card counter ("01 / 04" + title) sits beside the fan.
+ *                a bottom sheet (a native popover, so it also works without JS)
+ *                with the four cards only (About is in the header)
  * Hover and focus are pure CSS; the background hears about them through the
  * table store after an 80 ms intent delay. Nothing here re-renders React
  * except a route change. Foundation-owned (read-only in Wave 1); styles in
@@ -60,7 +67,6 @@ export function Hand() {
     )
     const offHistory = interceptHistory(() => pathRef.current)
     for (const card of handCards) router.prefetch(card.href)
-    router.prefetch('/more-projects')
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || !table.get().activeCard) return
       if (document.querySelector(':popover-open, dialog[open]')) return
@@ -84,12 +90,21 @@ export function Hand() {
   }, [home])
 
   // Inside the view transition's update: the lifted card drops back as the ghost; tapped cards untap.
+  // Leaving a card page whose hero had scrolled away: no morph carries the card back, so it is
+  // dealt into its slot (a short rise, never from off screen).
+  const prevPath = useRef(path)
   useLayoutEffect(() => {
     settleLift()
     untapAll()
+    const from = prevPath.current
+    prevPath.current = path
+    const left = from !== path ? cardForPath(from) : undefined
+    if (!left || heroWasVisible(left.id)) return
+    const card = root.current?.querySelector<HTMLElement>(`.hand-fan .hand-card[data-play="${CSS.escape(left.id)}"]`)
+    if (card && card.getClientRects().length) dealIn(card)
   }, [path])
 
-  // Eggs on the hand: inspect, tap (T, or a double tap while a card lifts), new hand (long press on the counter).
+  // Eggs on the hand: inspect, tap (T, or a double tap while a card lifts), new hand (long press on the table).
   useEffect(() => {
     const nav = root.current!
     const off = attachHandEggs(nav)
@@ -118,12 +133,17 @@ export function Hand() {
     else card.dataset.drawn = ''
   }, [coffee])
 
-  // The scrim under the hand follows the page colour.
+  // The scrim under the hand follows the page colour (on About: the contour field's ground).
   useEffect(() => {
     const nav = root.current!
-    const paint = () => nav.style.setProperty('--page-field', palette[table.get().field.identity].field)
+    const paint = () => {
+      const f = table.get().field
+      nav.style.setProperty('--page-field', f.topo ? contour.ground : palette[f.identity].field)
+    }
     paint()
-    return table.subscribe((s, p) => s.field.seq !== p.field.seq && paint())
+    return table.subscribe((s, p) => {
+      if (s.field.seq !== p.field.seq) paint()
+    })
   }, [])
 
   // Slots, hover intent, keyboard.
@@ -364,7 +384,7 @@ export function Hand() {
             ))}
             {coffee && home && (
               <li className="hand-slot" data-slot="coffee" style={{ '--r': '15deg', '--dy': '24px' } as CSSProperties}>
-                <Link ref={coffeeRef} href="/contact" className="hand-card hand-coffee" transitionTypes={[NAV]}>
+                <Link ref={coffeeRef} href="/about#contact" className="hand-card hand-coffee" transitionTypes={[NAV]}>
                   <span className="card-face" data-identity="saffron">
                     <span className="card-band">
                       <span className="card-title">{coffeeEgg.title}</span>
@@ -377,30 +397,8 @@ export function Hand() {
               </li>
             )}
           </ul>
-          {/* Bottom sheet only (mobile, off home): the pages that are not cards. */}
-          <ul className="hand-sheet-links">
-            {sheetLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="link"
-                  transitionTypes={[NAV]}
-                  aria-current={path === link.href ? 'page' : undefined}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
-      {home && <HandCounter />}
     </nav>
   )
 }
-
-const sheetLinks = [
-  { href: '/more-projects', label: site.header.moreProjects },
-  { href: '/about', label: site.header.about },
-  { href: '/contact', label: site.header.contact },
-]

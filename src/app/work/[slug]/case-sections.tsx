@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Illustration } from '@/components/illustrations'
-import { DealRow, MarginNote, Section, Spread } from '@/components/layout'
+import { CareerMatrix, Illustration } from '@/components/illustrations'
+import { DealRow, MarginNote, OffsetImage, Section, imageSides } from '@/components/layout'
 import { NextProject } from '@/components/next-project'
 import { Picture } from '@/components/picture'
 import { Reveal } from '@/components/reveals'
@@ -11,6 +11,7 @@ import {
   type CaseStudySectionKey,
   type ContentIllustration,
   caseStudySectionKeys,
+  management,
   pad2,
   site,
 } from '@/lib/content'
@@ -23,9 +24,10 @@ import { cx } from '@/lib/cx'
  *   col-content   columns 4–11 (the reading column)
  *   cols-4-7 / cols-8-11 / cols-8-12 / cols-9-12 / cols-4-11 / cols-4-12 / cols-4-10
  *   col-wide      columns 1–12 (stages, the gallery)
- *   col-full      edge to edge (Spread)
+ *   col-full      edge to edge (OffsetImage: anchored to the content column, toward one edge)
  *
- * Below 1024 px everything stacks in source order.
+ * Every chapter 01–08 opens with its outlined numeral (NumeralBreaker); 09 Next
+ * has none. Below 1024 px everything stacks in source order.
  */
 
 type Placement = Partial<Record<CaseStudySectionKey, ContentIllustration>>
@@ -40,17 +42,27 @@ function placement(study: CaseStudy): Placement {
   return placed
 }
 
-/** Space above each section: chosen per section so the rhythm varies (S 96 / M 160 / L 240 desktop). */
+/**
+ * Space above each section (S 96 / M 160 / L 240 desktop). Every chapter opens with its numeral,
+ * so each gets the large space; the numerals carry the rhythm.
+ */
 const space: Record<CaseStudySectionKey, 's' | 'm' | 'l'> = {
-  context: 'm',
+  context: 'l',
   problem: 'l',
-  role: 'm',
-  approach: 'm',
-  decisions: 's',
+  role: 'l',
+  approach: 'l',
+  decisions: 'l',
   artefacts: 'l',
-  outcomes: 'm',
-  differently: 's',
+  outcomes: 'l',
+  differently: 'l',
   next: 'l',
+}
+
+/** Data for a drawing in the gallery: the career framework draws Management's levels and dimensions. */
+function ArtefactDrawing({ name, titleId }: { name: ContentIllustration; titleId: string }) {
+  if (name === 'CareerMatrix')
+    return <CareerMatrix titleId={titleId} levels={management.growth.levels} tracks={management.growth.dimensions} />
+  return <Illustration name={name} titleId={titleId} />
 }
 
 /** Paragraphs (+ the plain list) in one block. */
@@ -129,15 +141,24 @@ function Gallery({ items }: { items: Artefact[] }) {
               </Reveal>
             ) : a.illustration ? (
               <Reveal kind="draw" className="artefact-media" data-media="illustration">
-                <Illustration name={a.illustration} titleId={`artefact-${k + 1}-title`} />
+                <ArtefactDrawing name={a.illustration} titleId={`artefact-${k + 1}-title`} />
               </Reveal>
             ) : null}
-            <figcaption className="artefact-caption">
-              <span className="t-label">
-                <span className="artefact-number">06.{k + 1}</span> {a.title}
-              </span>
-              {a.caption && <span className="artefact-text t-body">{a.caption}</span>}
-            </figcaption>
+            {a.image || a.illustration ? (
+              <figcaption className="artefact-caption">
+                <span className="t-label">
+                  <span className="artefact-number">06.{k + 1}</span> {a.title}
+                </span>
+                {a.caption && <span className="artefact-text t-body">{a.caption}</span>}
+              </figcaption>
+            ) : (
+              // A text card (no image, no drawing): set as a document of its own, never an empty frame.
+              <Reveal as="figcaption" kind="block" className="artefact-caption artefact-card">
+                <span className="artefact-card-number t-label">06.{k + 1}</span>
+                <span className="artefact-card-title t-h3">{a.title}</span>
+                {a.caption && <span className="artefact-text t-body">{a.caption}</span>}
+              </Reveal>
+            )}
           </figure>
         </li>
       ))}
@@ -164,18 +185,19 @@ export function CaseSections({ study }: { study: CaseStudy }) {
   )
 
   const spreadImage = s.context.image ?? study.heroImage
+  const side = imageSides()
   // 02 Problem opens with the case's statement at h2 size (the first problem paragraph when there is none).
   const statement = study.statement ?? s.problem.body[0]
   const problemRest = study.statement ? s.problem.body : s.problem.body.slice(1)
 
   return (
     <>
-      {/* 01 Context: reading column, margin note, then a full-bleed Spread. */}
-      <Section {...head('context')} pin={2}>
+      {/* 01 Context: reading column, margin note, then an offset image. */}
+      <Section {...head('context')} breaker pin={2}>
         <Body body={s.context.body} list={s.context.list} className="col-content" />
         <Note>{s.context.note}</Note>
         {fig.context && <Figure name={fig.context} id="context" className="cols-4-12" />}
-        <Spread image={spreadImage} caption={s.context.caption} className="section-spread" />
+        <OffsetImage image={spreadImage} side={side()} caption={s.context.caption} className="section-image" />
       </Section>
 
       {/* 02 Problem: the statement set at h2 size; the h2 stays for screen readers. */}
@@ -183,6 +205,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
         {...head('problem')}
         titleHidden
         lift
+        breaker
         pin={1 + (problemRest.length > 0 || s.problem.list?.length ? 1 : 0) + (fig.problem ? 1 : 0)}
       >
         {statement && (
@@ -196,7 +219,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
       </Section>
 
       {/* 03 Role: what I owned / what I didn't, two columns. */}
-      <Section {...head('role')} pin={1 + (hasBody(s.role) ? 1 : 0) + 1}>
+      <Section {...head('role')} breaker pin={1 + (hasBody(s.role) ? 1 : 0) + 1}>
         <Body body={s.role.body} list={s.role.list} className="col-content" />
         <div className="role-col cols-4-7">
           <h3 className="role-head t-label">{site.labels.owned}</h3>
@@ -218,7 +241,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
       </Section>
 
       {/* 04 Approach: steps on the left, the illustration pinned on the right from 1024. */}
-      <Section {...head('approach')} pin={1 + (hasBody(s.approach) ? 1 : 0) + 1}>
+      <Section {...head('approach')} breaker pin={1 + (hasBody(s.approach) ? 1 : 0) + 1}>
         <Body body={s.approach.body} list={s.approach.list} className="col-content" />
         <Reveal as="ol" kind="list" className={cx('approach-steps', fig.approach ? 'cols-4-7' : 'col-content')}>
           {s.approach.steps.map((step, k) => (
@@ -236,7 +259,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
         <Note>{s.approach.note}</Note>
       </Section>
 
-      {/* NumeralBreaker, then 05 Decisions: the deal stage across all twelve columns. */}
+      {/* 05 Decisions: the deal stage across all twelve columns. */}
       <Section {...head('decisions')} breaker pin={1 + (hasBody(s.decisions) || fig.decisions ? 1 : 0)}>
         <Body body={s.decisions.body} list={s.decisions.list} className={fig.decisions ? 'cols-4-8' : 'col-content'} />
         {fig.decisions && (
@@ -247,7 +270,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
       </Section>
 
       {/* 06 Artefacts: asymmetric gallery (7 + 5, then 4 + 8). */}
-      <Section {...head('artefacts')} pin={1 + (hasBody(s.artefacts) ? 1 : 0)}>
+      <Section {...head('artefacts')} breaker pin={1 + (hasBody(s.artefacts) ? 1 : 0)}>
         <Body body={s.artefacts.body} list={s.artefacts.list} className="col-content" />
         <Note>{s.artefacts.note}</Note>
         {gallery.length > 0 && <Gallery items={gallery} />}
@@ -256,6 +279,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
       {/* 07 Outcomes */}
       <Section
         {...head('outcomes')}
+        breaker
         pin={1 + (hasBody(s.outcomes) ? 1 : 0) + (s.outcomes.items?.length ? 1 : 0) + (fig.outcomes ? 1 : 0)}
       >
         <Body body={s.outcomes.body} list={s.outcomes.list} className="col-content" />
@@ -274,7 +298,7 @@ export function CaseSections({ study }: { study: CaseStudy }) {
       </Section>
 
       {/* 08 What I'd do differently: lead size under a rule in the case accent. */}
-      <Section {...head('differently')} pin={3 + (s.differently.items?.length ? 1 : 0)}>
+      <Section {...head('differently')} breaker pin={3 + (s.differently.items?.length ? 1 : 0)}>
         <Reveal as="hr" kind="rule" className="accent-rule col-content" />
         <div className="differently-body cols-4-10">
           {s.differently.body.map((p, i) => (

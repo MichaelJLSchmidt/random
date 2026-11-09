@@ -1,7 +1,7 @@
 import { headerHeight } from '@/design/layout'
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
-import { angle, at, duration as D, distance, ease, hand as H, spring, springCss } from './tokens'
+import { angle, at, duration as D, distance, durFor, ease, hand as H, spring, springCss } from './tokens'
 import { cardForPath } from '@/lib/hand-data'
 import { NAV, PLAY, RETURN, SWITCH } from './transitions'
 
@@ -194,6 +194,36 @@ export function land(card: HTMLElement) {
     duration: landSpring.duration * 1000,
     easing: landSpring.easing,
   })
+}
+
+/** The detail hero whose frame is on screen (it carries the card's view-transition name). */
+let heroOnScreen: string | null = null
+
+/** The case hero reports whether its frame is in view (an IntersectionObserver in case-hero.tsx). */
+export function heroVisible(id: string, on: boolean) {
+  if (on) heroOnScreen = id
+  else if (heroOnScreen === id) heroOnScreen = null
+}
+
+/** Was card `id`'s hero frame on screen when its page was left (a return then morphs it into the hand)? */
+export const heroWasVisible = (id: string) => heroOnScreen === id
+
+/**
+ * A return with the hero scrolled away: no shared-element morph. The card is
+ * dealt into its own slot instead: it rises from just below with opacity
+ * (dur.m, outQuint; calm: a fade x 0.6; reduced: a 160 ms fade). Nothing flies
+ * in from off screen.
+ */
+export function dealIn(card: HTMLElement) {
+  const tier = table.get().tier
+  const rise = tier === 'full' ? distance.returnDeal : 0
+  card.animate(
+    [
+      { opacity: 0, transform: `translateY(${rise}px)` },
+      { opacity: 1, transform: 'none' },
+    ],
+    { duration: durFor(tier, 'm') * 1000, easing: bezier(ease.outQuint), fill: 'backwards' },
+  )
 }
 
 const normalise = (path: string) => path.replace(/\/$/, '') || '/'

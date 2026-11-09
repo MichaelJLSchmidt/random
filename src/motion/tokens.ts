@@ -89,8 +89,8 @@ export const duration = {
   hoverIntent: 0.08,
   breath: 9,
   fieldIn: 1.2,
+  /** About: the gradient's colour bands narrow into the contour lines (and back on leaving). */
   topo: 1.6,
-  topoBand: 40,
   calmBloom: 0.5,
   // Reveals (the rest use the scale, dur.*)
   /** Digits: one value's strips, from the first strip's start to the last strip's end. */
@@ -104,6 +104,9 @@ export const duration = {
   liftTimeout: 4,
   // UI
   underline: 0.16,
+  /** Header home slot: wordmark <-> Back morph, and the beat before its second part. */
+  slotMorph: 0.42,
+  slotLag: 0.12,
   rail: 0.2,
   sheet: 0.32,
   discard: 0.7,
@@ -128,12 +131,60 @@ export const stagger = {
 
 /** Seconds from the start of a sequence. */
 export const at = {
-  /** Home, first visit (<FirstLoadSequence>): when each part starts (the hand is dealt at 0). */
-  firstLoad: { title: 0.52, role: 0.9, intro: 1.0, rest: 1.3 },
+  /**
+   * Home, first visit (<FirstLoadSequence>, src/motion/first-load.ts): when each part starts and
+   * how long it takes, in order. Steps 1-5 take about 1.25 s together, the hand the last 0.75 s;
+   * the chrome (header) follows the hand. Calm: every value x 0.6. Reduced: all at once, 160 ms
+   * crossfades. Revisits in the same session stay a short crossfade.
+   */
+  firstLoad: {
+    /** 1. The name: its words turn up and settle (opsz / wght), stagger.words apart. */
+    title: { at: 0, dur: 0.6 },
+    /** 2. The label above the name. */
+    label: { at: 0.25, dur: 0.35 },
+    /** 3. The role line, then the intro: lines rise stagger.lines apart, all in by `end`. */
+    copy: { at: 0.45, end: 0.95 },
+    /** 4. The divider, drawn left to right like a link underline (ease.outSoft). */
+    divider: { at: 0.85, dur: 0.3 },
+    /** 5. "What I bring to the table", its items, then the hint, top to bottom. */
+    items: { at: 1.0, dur: 0.25, stagger: 0.08 },
+    /** 6. The hand: the four cards dealt one after the other. */
+    cards: { at: 1.25, dur: 0.33, stagger: 0.14 },
+  },
+  /**
+   * Detail pages (case studies, Management), above the fold, after the card morph or on a direct
+   * load: the title and hero as before, then the summary, the top label and counter, then the
+   * meta data left to right (each pair: rule, then label, then value). Offsets from the title's
+   * start; calm x 0.6; reduced 160 ms crossfades.
+   */
+  detail: {
+    summary: 0.2,
+    label: 0.36,
+    meta: { at: 0.5, stagger: 0.1, dur: 0.3, part: 0.2, cascade: 0.05 },
+  },
   // Play: when the route change starts (press + lift)
   navigate: 0.43,
   switchNavigate: 0.4,
 } as const
+
+/**
+ * The idle hint (home, once per session): after `after` seconds without a click, tap or key press
+ * a handwritten note writes itself (a left-to-right reveal, `write` s), then its arrow draws
+ * (`arrow` s, after `gap`). The next click, tap or key press fades it out (`fade`). Calm: every
+ * value x 0.6 except `after`; reduced: one 160 ms fade in and out.
+ */
+export const idle = {
+  after: 30,
+  write: 1.2,
+  gap: 0.08,
+  arrow: 0.7,
+  /** Share of the arrow's time for its curl; the head draws in the rest. */
+  arrowCurl: 0.8,
+  fade: 0.32,
+} as const
+
+/** The header's home slot (wordmark <-> Back): how narrow the mark gets as it compresses into the left edge. */
+export const slot = { markScale: 0.12 } as const
 
 /** Pixels unless noted. */
 export const distance = {
@@ -148,6 +199,8 @@ export const distance = {
   hoverLift: 28,
   spread: 12,
   landY: 10,
+  /** A return with the hero scrolled away: the card rises this far into its slot (no morph). */
+  returnDeal: 24,
 } as const
 
 /** Degrees. */
@@ -198,8 +251,39 @@ export const field = {
   maxFrameMs: 24,
   frameWindow: 60,
   switchDip: 0.06,
-  topoLine: 0.22,
-  topoIndex: 0.38,
+  /**
+   * About's contours: the old portfolio's password-page field, unchanged (its
+   * contour-field.json): 1 px lines and every fifth an index line at 1.5 px, at
+   * these alphas over the ground (src/design/palette.ts contour.*); a slight zoom
+   * on the region's focus; lines on steep terrain at least `minSpacingPx` CSS px
+   * apart (that picks the interval); the drawing buffer at the device pixel ratio,
+   * capped. "desktop" is a fine pointer on a screen at least 900 px on its long
+   * side, everything else "mobile". `bandPx`: how much wider than a line the
+   * colour bands are when the gradient starts to morph into the lines (CSS px,
+   * narrowing to 0 as the morph ends).
+   */
+  contours: {
+    lineAlpha: 0.28,
+    indexAlpha: 0.42,
+    lineWidthPx: 1,
+    indexWidthPx: 1.5,
+    indexEvery: 5,
+    zoom: 1.06,
+    desktop: { dprMax: 1.5, minSpacingPx: 3.25 },
+    mobile: { dprMax: 1.25, minSpacingPx: 3 },
+    desktopMinScreen: 900,
+    bandPx: 20,
+  },
+  /**
+   * Pool drift (full tier, on top of the breath): a slow Lissajous offset of each pool's centre,
+   * `poolDrift` of the viewport, one pair of loop lengths (s) per pool, all of them >= 90 s.
+   */
+  poolDrift: 0.025,
+  poolDriftPeriods: [
+    [97, 131],
+    [113, 151],
+    [127, 103],
+  ],
   /** Resolution factor while a pinned scene holds the viewport (half of renderScale). */
   pinnedDetail: 0.5,
 } as const
@@ -224,8 +308,8 @@ export const reveal = {
 
 /** The deal: the pinned decisions scene (stage, phases, tilt) and dealing hand cards from off screen. */
 export const deal = {
-  /** Pinned stage height (svh). */
-  stage: 250,
+  /** Pinned stage height (svh): short, so all four cards land soon. */
+  stage: 180,
   /** Scroll progress where each phase ends: four cards, then the settle. */
   phases: [0.2, 0.4, 0.6, 0.8, 1],
   /** A dealt card lands with this share of its hand-fan angle (removed in the settle). */
@@ -352,6 +436,8 @@ export function motionCss(): string {
     `--angle-discard:${angle.discard}deg`,
     `--angle-tap:${angle.tap}deg`,
     `--hero-drift:${reveal.heroDrift * 100}%`,
+    `--reveal-mask:${reveal.mask * 100}%`,
+    `--slot-mark-scale:${slot.markScale}`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

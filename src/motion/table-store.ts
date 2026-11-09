@@ -9,7 +9,7 @@ import type { MotionTier } from './tokens'
  *
  *   activeCard  the card whose page is open (null elsewhere)
  *   hoverCard   the card under the pointer or focus (after the intent delay)
- *   lastPlayed  the last card played (Contact keeps its colour)
+ *   lastPlayed  the last card played
  *   field       what the background should show, with how to get there
  */
 
@@ -149,17 +149,7 @@ export const table = {
       field({ identity: 'glacier', spread: 0, origin: state.field.origin, topo: 1, kind: kind('crossfade') })
       return
     }
-    if (path === '/contact') {
-      // Contact keeps the colour of the last card played.
-      const last = cardById(state.lastPlayed)
-      if (last) {
-        field({ identity: last.identity, spread: 1, origin: state.field.origin, topo: 0, kind: kind('crossfade') })
-      } else {
-        field({ identity: 'ink', spread: 0, origin: [0.5, 1], topo: 0, kind: kind('crossfade') })
-      }
-      return
-    }
-    // Home, More projects, 404: back to the ink field.
+    // Home and 404: back to the ink field.
     if (state.field.spread === 1 && prevActive) {
       const origin = slotCenter(prevActive) ?? [0.5, 1]
       field({ identity: 'ink', spread: 0, origin, topo: 0, kind: kind('unbloom') })

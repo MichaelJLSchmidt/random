@@ -47,7 +47,8 @@ export async function mulligan() {
     await Promise.all(
       cards.map(
         (c) =>
-          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' }).finished,
+          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' })
+            .finished,
       ),
     )
     for (const card of cards) {
@@ -104,8 +105,9 @@ export function rarePull(delay: number) {
 }
 
 /**
- * Wires hold-Space and long-press (Inspect), T and double tap (Tap) and the
- * card counter's long press (Mulligan) on the hand. Returns a cleanup.
+ * Wires hold-Space and long-press (Inspect), T and double tap (Tap) on the
+ * hand. Returns a cleanup. (Mulligan's touch trigger, a long press on the
+ * empty table, is wired by attachTableLongPress.)
  */
 export function attachHandEggs(nav: HTMLElement) {
   let spaceTimer = 0
@@ -144,38 +146,32 @@ export function attachHandEggs(nav: HTMLElement) {
     else el.click()
   }
 
-  // Long press: Inspect on a card (400 ms), Mulligan on the counter (800 ms, home only). Double tap: Tap.
+  // Long press: Inspect on a card (400 ms). Double tap: Tap.
   let pressTimer = 0
   let pressed: HTMLElement | null = null
   let held = false
   let start: [number, number] = [0, 0]
   let lastTap = { card: null as HTMLElement | null, at: 0 }
   const onPointerDown = (e: PointerEvent) => {
-    const el = (e.target as Element).closest<HTMLElement>('.hand-card, .hand-counter')
+    const el = (e.target as Element).closest<HTMLElement>('.hand-card')
     if (!el || e.button !== 0) return
     held = false
     pressed = el
     start = [e.clientX, e.clientY]
-    const counter = el.classList.contains('hand-counter')
-    if (counter && !nav.hasAttribute('data-home')) return
-    if (!counter && e.pointerType === 'mouse') return
-    pressTimer = window.setTimeout(
-      () => {
-        held = true
-        buzz(10)
-        if (counter) mulligan()
-        else inspect(el, true)
-      },
-      (counter ? D.longPress : D.inspectHold) * 1000,
-    )
+    if (e.pointerType === 'mouse') return
+    pressTimer = window.setTimeout(() => {
+      held = true
+      buzz(10)
+      inspect(el, true)
+    }, D.inspectHold * 1000)
   }
   const onPointerMove = (e: PointerEvent) => {
     if (pressed && Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 10) clearTimeout(pressTimer)
   }
   const onPointerUp = (e: PointerEvent) => {
     clearTimeout(pressTimer)
-    if (pressed && held && pressed.classList.contains('hand-card')) inspect(pressed, false)
-    if (pressed && !held && e.pointerType === 'touch' && pressed.classList.contains('hand-card')) {
+    if (pressed && held) inspect(pressed, false)
+    if (pressed && !held && e.pointerType === 'touch') {
       const now = performance.now()
       if (lastTap.card === pressed && now - lastTap.at < 350) {
         nav.dispatchEvent(new CustomEvent('egg:double-tap', { detail: pressed }))
@@ -192,7 +188,7 @@ export function attachHandEggs(nav: HTMLElement) {
     e.stopPropagation()
   }
   const onContextMenu = (e: Event) => {
-    if ((e.target as Element).closest('.hand-card, .hand-counter')) e.preventDefault()
+    if ((e.target as Element).closest('.hand-card')) e.preventDefault()
   }
 
   nav.addEventListener('keydown', onKeyDown)
@@ -216,3 +212,53 @@ export function attachHandEggs(nav: HTMLElement) {
     nav.removeEventListener('contextmenu', onContextMenu)
   }
 }
+
+/**
+ * Mulligan by touch: a long press (800 ms, 10 ms haptic) on the empty table on
+ * the start page, never on a card, a link, a control or text. `home` says
+ * whether the start page is showing. Returns a cleanup.
+ */
+export function attachTableLongPress(home: () => boolean) {
+  let timer = 0
+  let start: [number, number] | null = null
+  const cancel = () => {
+    clearTimeout(timer)
+    start = null
+  }
+  const onDown = (e: PointerEvent) => {
+    cancel()
+    if (e.pointerType !== 'touch' || !home() || !eggOn('mulligan')) return
+    const target = e.target as Element
+    if (target.closest(TEXT_OR_CONTROL) || hasOwnText(target)) return
+    start = [e.clientX, e.clientY]
+    timer = window.setTimeout(() => {
+      start = null
+      buzz(10)
+      mulligan()
+    }, D.longPress * 1000)
+  }
+  const onMove = (e: PointerEvent) => {
+    if (start && Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 10) cancel()
+  }
+  addEventListener('pointerdown', onDown, { passive: true })
+  addEventListener('pointermove', onMove, { passive: true })
+  addEventListener('pointerup', cancel, { passive: true })
+  addEventListener('pointercancel', cancel, { passive: true })
+  addEventListener('scroll', cancel, { passive: true })
+  return () => {
+    cancel()
+    removeEventListener('pointerdown', onDown)
+    removeEventListener('pointermove', onMove)
+    removeEventListener('pointerup', cancel)
+    removeEventListener('pointercancel', cancel)
+    removeEventListener('scroll', cancel)
+  }
+}
+
+/** Cards, links, controls, dialogs and text blocks: a long press there is not on the empty table. */
+const TEXT_OR_CONTROL =
+  '.hand, a, button, input, select, textarea, label, dialog, [role="switch"], p, h1, h2, h3, li, dt, dd, figure, svg, img'
+
+/** An element with text of its own (not only in its children). */
+const hasOwnText = (el: Element) =>
+  [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())

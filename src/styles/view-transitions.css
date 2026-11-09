@@ -141,7 +141,7 @@
 ::view-transition-new(.page-enter-return) {
   animation: vt-fade-in var(--dur-exit-return) var(--ease-out-soft) var(--dur-exit-return) both;
 }
-/* Other links (About, Contact, More projects): a short cross-fade. */
+/* Other links (About, the home slot off a card page): a short cross-fade. */
 ::view-transition-old(.page-fade) {
   animation: vt-fade-out var(--dur-exit-return) var(--ease-in) both;
 }
