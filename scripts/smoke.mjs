@@ -239,21 +239,8 @@ async function tableSuite(browser, device) {
     links.length === 2 && links.includes(site.header.about),
     links.join(' | '),
   )
-  // M2: the pause / play button for ambient background motion (hidden under reduced motion).
-  const toggle = () =>
-    page.evaluate(() => {
-      const b = document.querySelector('[data-ambient-toggle]')
-      const r = b?.getBoundingClientRect()
-      return {
-        shown: Boolean(b && b.getClientRects().length),
-        size: r ? [Math.round(r.width), Math.round(r.height)] : null,
-        pressed: b?.getAttribute('aria-pressed'),
-        name: b?.getAttribute('aria-label'),
-        ambient: document.documentElement.dataset.ambient ?? null,
-        stored: localStorage.getItem('ambient'),
-        motion: document.documentElement.dataset.motion,
-      }
-    })
+  // R2: no pause / play button; the background follows prefers-reduced-motion and the tab's
+  // visibility only.
   const fieldFrames = (ms) =>
     page.evaluate(
       (ms) =>
@@ -269,43 +256,14 @@ async function tableSuite(browser, device) {
         }),
       ms,
     )
-  const t0 = await toggle()
-  if (motion === 'reduced') check('ambient toggle: hidden (reduced)', !t0.shown, JSON.stringify(t0))
-  else {
-    check(
-      `ambient toggle: "${site.settings.pause}", not pressed, 44 px target`,
-      t0.shown && t0.pressed === 'false' && t0.name === site.settings.pause && t0.size.every((v) => v >= 44),
-      JSON.stringify(t0),
-    )
-    const playing = await fieldFrames(1000)
-    await page.click('[data-ambient-toggle]')
-    await wait(page, 1000)
-    const t1 = await toggle()
-    const paused = await fieldFrames(1000)
-    check(
-      'ambient toggle: pauses (pressed, stored, the field stops drawing)',
-      t1.pressed === 'true' && t1.ambient === 'paused' && t1.stored === 'paused' && playing > 5 && paused === 0,
-      JSON.stringify({ ...t1, playing, paused }),
-    )
-    await page.reload({ waitUntil: 'domcontentloaded' })
-    const early = await page.evaluate(() => document.documentElement.dataset.ambient ?? null)
-    await page.waitForLoadState('networkidle')
-    await wait(page, 600)
-    const t2 = await toggle()
-    check(
-      'ambient toggle: the choice survives a reload, applied before first paint',
-      early === 'paused' && t2.pressed === 'true',
-      JSON.stringify({ early, ...t2 }),
-    )
-    await page.click('[data-ambient-toggle]')
-    await wait(page, 600)
-    const t3 = await toggle()
-    const again = await fieldFrames(1000)
-    check(
-      'ambient toggle: plays again',
-      t3.pressed === 'false' && t3.ambient === null && t3.stored !== 'paused' && again > 5,
-      JSON.stringify({ ...t3, again }),
-    )
+  const header = await page.evaluate(() => ({
+    toggle: document.querySelectorAll('header button, [data-ambient-toggle]').length,
+    ambient: document.documentElement.dataset.ambient ?? null,
+  }))
+  check('header: no pause / play button', header.toggle === 0 && header.ambient === null, JSON.stringify(header))
+  if (motion === 'full') {
+    const frames = await fieldFrames(1000)
+    check('field: the resting field breathes (frames at rest on home)', frames > 5, String(frames))
   }
 
   // Hover colour blend (fine pointers).

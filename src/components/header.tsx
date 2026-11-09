@@ -11,16 +11,14 @@ import { showHeader, watchHeader } from '@/motion/header-scroll'
 import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
 import { table } from '@/motion/table-store'
 import { LOCALE, NAV, RETURN } from '@/motion/transitions'
-import { AmbientToggle } from './ambient-toggle'
 import { Logo } from './logo'
 import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
 /*
- * Persistent header: the home slot at the top left; About, the language
- * switcher ("DE · EN") and the pause / play button for the background's
- * ambient motion at the right; the reading hairline on its bottom edge. 64 px
- * high (--header-h).
+ * Persistent header: the home slot at the top left; About and the language
+ * switcher ("DE · EN") at the right; the reading hairline on its bottom edge.
+ * 64 px high (--header-h).
  *
  * The home slot is one link to the table. On detail pages (the three case
  * studies and Management) it shows a back arrow and "Back" (the card returns
@@ -126,7 +124,6 @@ export function Header() {
             ))}
           </ul>
         </nav>
-        <AmbientToggle labels={site.settings} />
       </div>
       <ReadingHairline />
     </header>

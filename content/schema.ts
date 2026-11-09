@@ -73,7 +73,7 @@ export type ImageEntry =
   (ImageBase & { kind: 'photo' } & ImageCredit) | (ImageBase & { kind: 'generated' } & Partial<ImageCredit>)
 
 // ---------------------------------------------------------------------------
-// Site chrome (header, footer, settings, shortcut sheet, shared labels)
+// Site chrome (header, footer, shortcut sheet, shared labels)
 
 export type Site = {
   name: string
@@ -88,12 +88,6 @@ export type Site = {
    */
   header: { homeLabel: string; back: string; about: string; nav: string; language: string }
   footer: { note: string }
-  /**
-   * The header's pause / play button for the background's ambient motion: `pause` is its accessible
-   * name (it stays the same in both states; aria-pressed carries the state), `play` the tooltip
-   * while paused.
-   */
-  settings: { pause: string; play: string }
   /** The "?" sheet. */
   shortcuts: { title: string; close: string; items: { keys: string; label: string }[] }
   /** Egg announcements (live region): new hand, tap, rare pull, Coffee dealt, an About card flipped. */

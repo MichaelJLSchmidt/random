@@ -23,18 +23,3 @@ export function useMotionTier(): MotionTier {
 export function onTierChange(fn: (tier: MotionTier) => void) {
   return subscribe(() => fn(readTier()))
 }
-
-/** True while the visitor has paused the background's ambient motion (html[data-ambient="paused"]). */
-export const ambientPaused = () => document.documentElement.dataset.ambient === 'paused'
-
-const subscribeAmbient = (onChange: () => void) => watch('data-ambient', onChange)
-
-/** Whether ambient background motion is paused (the header's pause / play button). */
-export function useAmbientPaused(): boolean {
-  return useSyncExternalStore(subscribeAmbient, ambientPaused, () => false)
-}
-
-/** Calls `fn` whenever ambient motion is paused or played (outside React). */
-export function onAmbientChange(fn: (paused: boolean) => void) {
-  return subscribeAmbient(() => fn(ambientPaused()))
-}

@@ -52,7 +52,7 @@ src/
     play.ts                 Play / return / switch, stage 1 (lift); view-transition.ts watches stage 2
     reveal.ts               Reveal engine (kinds.ts, jobs.ts, first-load.ts, split.ts)
     transitions.ts          Transition types and view-transition class maps
-    preferences.ts          Pre-paint script: tier, ambient pause, intro flag, reveal arming, initial field colour
+    preferences.ts          Pre-paint script: tier, intro flag, reveal arming, initial field colour
     header-scroll.ts        The header leaving on a scroll down and returning on a scroll up
   components/
     background/             The field: engine, WebGL2 shader, OKLab, CSS fallback, About's contour layer
@@ -61,7 +61,7 @@ src/
                             WorkshopRow, MarginNote, Minimap, Section
     illustrations/          13 SVG illustrations behind one registry
     picture.tsx             <Picture id sizes priority> from content/images.ts
-    case-hero.tsx           Played card as hero; header.tsx (home slot, pause button), reveals.tsx, ...
+    case-hero.tsx           Played card as hero; header.tsx (home slot, About, language), reveals.tsx, ...
   eggs/                     registry.ts (flags + tier behaviour) and one module per egg
   styles/                   tokens, layout (Spread grid), type (scale), field, hand, reveal,
                             view-transitions, eggs, pages/
@@ -116,20 +116,19 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
 - **Background field**: one WebGL2 canvas (hand-written shader, half resolution, DPR capped at 1,
   30 fps, idle when nothing moves). Three soft colour pools in low-frequency noise, 2% static grain,
   a 9 s breath and a slow drift of the pools (loops of 90 s and more). It never reads the pointer.
-  On About its pools contract and fade into the ground while the old password page's contour
-  background (two SVGs, `public/contour-bg/`) opens from the centre (1.6 s); there the canvas draws
-  nothing and only the contours' poster drifts, very slowly. Colours are mixed in OKLab. Without
-  WebGL2, or after slow frames (average over 24 ms in two 60-frame windows), registered
-  `@property` colours on stacked gradients take over with the same transitions. It pauses when the
-  tab is hidden, while the mobile sheet is open, and on Save-Data (no breathing). The header's
-  pause button stops the ambient motion (breath, drift, the contours' drift) and remembers it.
+  On About its pools contract and fade into the ground while contour lines rise from a noise
+  relief onto the region's real heights (1.6 s, at the device's resolution only while it runs);
+  in its last 300 ms the old password page's SVG (`public/contour-bg/`) crossfades over it, and
+  from then on the canvas draws nothing and only the SVG drifts, very slowly. Colours are mixed in
+  OKLab. Without WebGL2, or after slow frames (average over 24 ms in two 60-frame windows),
+  registered `@property` colours on stacked gradients take over with the same transitions. It
+  pauses when the tab is hidden, while the mobile sheet is open, and on Save-Data (no breathing).
 - **Hand**: `<nav aria-label="Work">`, exactly four card links. Cards show index, years, title
   band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246 cards, 72%
   visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows. Mobile: the fan
   on home, elsewhere a 48px peek rail that opens a bottom sheet (a native popover) with the
   cards. One tab stop (arrows, Home/End). The header holds the home slot (the logo, or Back on
-  detail pages), About, the language switcher and the pause / play button for the background's
-  ambient motion. On pages that scroll it leaves on a scroll down and returns on a scroll up (the
+  detail pages), About and the language switcher. On pages that scroll it leaves on a scroll down and returns on a scroll up (the
   mobile rail with it).
 - **Detail pages**: the played card continues as the hero: its media frame slides off the right
   edge (the hero photo, or Management's drawing), the display H1 runs onto it, then the facts,
@@ -142,16 +141,16 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   leaving a card page. Browser back / forward are replayed as typed navigations, so they morph
   too.
 
-Two motion tiers: full, and reduced from the system setting (`prefers-reduced-motion`). The pause
-button stops only the background's ambient motion, never transitions or reveals.
+Two motion tiers: full, and reduced from the system setting (`prefers-reduced-motion`), which also
+stills the background's ambient motion.
 
 | Effect                | Full                                                                     | Reduced                 |
 | --------------------- | ------------------------------------------------------------------------ | ----------------------- |
-| Field breath, drift   | 9 s breath, pools drift; About: the contours drift (stops when paused)   | still, 160 ms swaps     |
+| Field breath, drift   | 9 s breath, pools drift; About: the contours drift                       | still, 160 ms swaps     |
 | Hover a card          | lift to 90% shown on the hover spring; field blends (80 ms)              | instant                 |
 | Play                  | press, lift, bloom 800 ms, zoom 580 ms                                   | near-instant            |
 | Return / switch       | 520 ms back to the slot / 560 ms in, OKLab crossfade                     | near-instant            |
-| Into / out of About   | pools fade into the ground, the contours open from the centre (1.6 s)    | 160 ms crossfade        |
+| Into / out of About   | pools fade into the ground, lines rise onto the terrain (1.6 s)          | 160 ms crossfade        |
 | Header on scroll      | leaves 200 ms ease-in, returns 240 ms outQuint (translate)               | 160 ms crossfade        |
 | Home first visit      | name, label, intro, divider, items, then the hand dealt, in about 2 s    | fades, 160 ms           |
 | Home title            | words turn up, wght 280 -> 700, opsz 24 -> 96                            | opacity, 160 ms         |
@@ -162,10 +161,12 @@ button stops only the background's ambient motion, never transitions or reveals.
 
 The old password page's contour background of Interlaken between Lake Thun and Lake Brienz: two
 SVGs (`public/contour-bg/contours.svg` and the lighter `contours-200.svg`, added by hand and used
-unchanged; lakes as an 8% fill, 1 px lines at 0.55 and index lines at 1.5 px at 0.9 in #8A8C80)
-under the page's CSS, reproduced exactly in `src/styles/field.css` (the url()s through the base
-path). No headlamp and no pointer. Credit: "Terrain data © swisstopo", linked to swisstopo's
-terms of use.
+unchanged; lakes as an 8% fill, 1 px lines at 0.55 and index lines at 1.5 px at 0.9 in #8A8C80),
+shown as an `<img>` layer at 42% over the page's ground under its vignette. The shader morph
+draws the same picture from a small region heightmap (`public/terrain/field.webp`, built by
+`scripts/terrain/build-field.py` from the portfolio repository's swissALTIRegio master, with the
+SVG's lakes baked in), so the hand-over to the SVG is seamless. No headlamp and no pointer.
+Credit: "Terrain data © swisstopo", linked to swisstopo's terms of use.
 
 ## Easter eggs
 
@@ -191,6 +192,6 @@ Skip link, landmarks, one `h1` per page, card links named by their visible text,
 was open), and the title is announced in a polite live region; eggs announce themselves there too.
 Weight-animated text keeps one plain copy for screen readers and reserves every word box at its
 final weight. Without JavaScript every page is complete and shows its final state. The background
-moves on its own for longer than five seconds, so the header has a pause button for it (WCAG 2.2.2;
-stored, applied before first paint, hidden when the system asks for reduced motion). A header
+moves on its own, very slowly and at low contrast; it is still when the system asks for reduced
+motion and while the tab is hidden (the header's pause button was removed in round 3). A header
 that has left on a scroll comes back as soon as focus moves into it.

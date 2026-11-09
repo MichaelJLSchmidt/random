@@ -4,7 +4,6 @@ import { INTRO_DONE } from '@/motion/preferences'
 import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
-import { ambientPaused, onAmbientChange } from '@/motion/use-tier'
 import { ContourLayer } from './contour-layer'
 import { contourLevels, contourQuery, contourStyle } from './contours'
 import { CssField } from './field-css'
@@ -21,10 +20,8 @@ import { type EaseName, Track, easeCss } from './tracks'
  * any of it.
  *
  *   rest     ink pools breathing on a 9 s sine, their centres drifting on slow
- *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier).
- *            This is the ambient motion the header's pause button stops: the
- *            field's clock freezes where it is (html[data-ambient="paused"]);
- *            hover, bloom, switch and About's morph still run.
+ *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier,
+ *            no data saver). The loop stops while the tab is hidden.
  *   hover    A's mid/glow blend to the card's, intensity up, pools lean to its slot
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
@@ -107,8 +104,6 @@ export class FieldEngine {
   private lastFrame = 0
   private lastDraw = 0
   private paused = false
-  /** The visitor paused ambient motion: the clock stands still (transitions still run). */
-  private held = false
   private saveData = false
   private samples: number[] = []
   private slowWindows = 0
@@ -171,7 +166,6 @@ export class FieldEngine {
       },
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
-    this.held = ambientPaused()
     this.tracks.motion.jump([this.animated() ? 1 : 0], performance.now())
 
     const now = performance.now()
@@ -207,14 +201,6 @@ export class FieldEngine {
     const onTransitionDone = () => this.kick(true)
     addEventListener(VT_DONE, onTransitionDone)
     this.offs.push(() => removeEventListener(VT_DONE, onTransitionDone))
-    // Pause / play (the header's button): freeze or restart the clock in place.
-    this.offs.push(
-      onAmbientChange((paused) => {
-        this.held = paused
-        this.samples = []
-        this.kick(true)
-      }),
-    )
     const onVisibility = () => {
       this.setPaused()
       // The contour drift stands still while the tab is hidden.
@@ -768,9 +754,9 @@ export class FieldEngine {
     return this.tier === 'full' && !this.saveData
   }
 
-  /** The loop runs while something moves; the breathing field keeps it running unless paused. */
+  /** The loop runs while something moves; the breathing field keeps it running. */
   private continuous() {
-    return this.animated() && !this.held
+    return this.animated()
   }
 
   private dirty = true

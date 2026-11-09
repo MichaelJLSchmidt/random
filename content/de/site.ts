@@ -1,5 +1,5 @@
 /*
- * Site chrome copy (German): header, footer, settings, the "?" sheet, egg
+ * Site chrome copy (German): header, footer, the "?" sheet, egg
  * announcements and shared labels. A slim module: the layout passes it to the
  * client (src/lib/chrome.tsx) on German pages only, so it holds short labels
  * only and imports no page text (D7). Contract: docs/contracts.md#content-schema.
@@ -22,10 +22,6 @@ export const site: Site = {
     language: 'Sprache',
   },
   footer: { note: 'Moritz Lauber · Bern, Schweiz · Zuletzt aktualisiert im November 2026' },
-  settings: {
-    pause: 'Hintergrundbewegung anhalten',
-    play: 'Hintergrundbewegung abspielen',
-  },
   shortcuts: {
     title: 'Tastenkürzel',
     close: 'Schliessen',

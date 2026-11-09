@@ -382,7 +382,7 @@ motion and the three tiers are unchanged.
   labels) and `imageAlt` (German alt text; English: the registry's). The build-time checks run
   for both locales and check that they tell the same story (slugs, card order); German strings
   may not contain "ß", em-dashes or semicolons.
-- **L6. Switcher.** `nav[data-locale-switcher]` in the header between About and the pause button (the calm switch until M2):
+- **L6. Switcher.** `nav[data-locale-switcher]` in the header after About (the calm switch until M2, the pause button until R2):
   "DE · EN", one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
   language, the active one `aria-current="page"` (its `.link` underline drawn, like the current
   page link); each a 44 × 44 px target. On the 404 page the other language's link reloads the
@@ -408,7 +408,7 @@ motion and the three tiers are unchanged.
 - **L10. Labels.** `site.header.nav` and `site.header.language` name the two header navs;
   `site.settings.calmLabel` is the calm switch's visible label, `site.settings.calm` its
   accessible name ("Ruhig" / "Ruhigere Animationen"; "Calm" / "Calm motion"). Since M2:
-  `site.settings.pause` / `play` (the pause button's name and its tooltip while paused).
+  `site.settings.pause` / `play` (the pause button's name and its tooltip while paused; removed by R2).
 - **L11. German type.** Running text hyphenates under `:lang(de)` (`.t-body`, `.t-lead`, the
   decision cards' fields, margin notes, timeline stops, project rows; `type.css`); display type,
   headings and labels never do, their copy is written to fit at 390 px.
@@ -429,7 +429,7 @@ below describe the new state.
   `'full' | 'reduced'`; `motionScale.calm`, `tiers.calm`, `duration.svgDrawCalm`,
   `duration.calmBloom`, the stored `motion` preference, `CalmSwitch` and `site.settings.calm*` are
   gone. `durFor` / `msFor` / `spanFor` / `gapFor` / `drawFor` know the two tiers only.
-- **M2. Ambient pause** (WCAG 2.2.2): `AmbientToggle` (`src/components/ambient-toggle.tsx`,
+- **M2. Ambient pause** (superseded by R2: the button and everything only it used are gone) (WCAG 2.2.2): `AmbientToggle` (`src/components/ambient-toggle.tsx`,
   `button[data-ambient-toggle][aria-pressed]`) in the header where the calm switch was: a 16 px
   pause / play glyph in a 44 px target. The stored choice (localStorage `ambient` = `paused`) is
   applied before first paint by the pre-paint script as `html[data-ambient="paused"]` (its single
@@ -571,6 +571,14 @@ sharp, and hands over to the SVG with opacity only:
 - Removed: the `mask-image` reveal, `--contour-reveal` and its transition, the CSS background
   images (`--contour-poster`, `--contour-full`), the CSS drift keyframes, `data-tab-hidden`.
 
+**R2. No pause button** (supersedes M2 and the pause parts of L6, L10): `AmbientToggle`, its
+glyphs and styles, `site.settings` (both locales and the schema), `AMBIENT_KEY`,
+`savePreference`, `PREFS_EVENT`, `html[data-ambient]`, `useAmbientPaused` / `ambientPaused` /
+`onAmbientChange` and the engine's paused clock are gone. The header is the logo / Back slot (top
+left), About and "DE · EN". Ambient motion follows `prefers-reduced-motion` (still in reduced) and
+stops while the tab is hidden; that is the only control (a visitor's stored `ambient` value is
+simply no longer read).
+
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
 (`device-pixel-content-box`), which draws in the same callback; height-only changes under
@@ -602,7 +610,7 @@ Paths the table does not name, and how to read the short names in it:
 | `src/lib/**` (`content.ts`, `hand-data.ts`, `format.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
 | `content/<locale>/hand.ts`, `content/<locale>/site.ts` (slim modules, D7), `content/deck.ts` | Content & Images, under one rule: they import no page text |
 | `src/app/**` (all of it: `layout.tsx`, `globals.css`, `fonts.ts`, routes) | Layout & Pages |
-| `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx`, `ambient-toggle.*` | Layout & Pages |
+| `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx` | Layout & Pages |
 | `src/components/weight-text.tsx`, `play-link.tsx`, `route-focus.tsx`, `live-region.tsx`, `reading-hairline.module.css`, `src/styles/view-transitions.css`, `field.css`, `eggs.css` | Motion |
 | `src/components/picture.css`, `public/contour-bg/**` (the old password page's SVGs, added by hand, unchanged) | Content & Images |
 | `docs/handoff/<agent>.md` | that agent |
@@ -675,7 +683,6 @@ src/components/
   header.tsx                   header: home slot (wordmark / Back morph), About, language switcher, AmbientToggle, hairline
   locale-sync.tsx              <html lang> on the client; settles a language switch (L3, L7)
   router-bridge.tsx            root layout: registerNavigate + the back / forward replay (L2)
-  ambient-toggle.tsx           pause / play for the background's ambient motion (look from html[data-ambient], M2)
   site-footer.tsx, footer-shell.tsx, about-small-print.tsx   footer (none on home; About's small print)
   background/                  background-field.tsx (with About's SVG layer and vignette), field-engine.ts,
                                field-gl.ts, shader.ts, field-css.ts, tracks.ts, oklab.ts, contours.ts (the
@@ -821,8 +828,8 @@ spring is critically damped.
 Two tiers (M1): **full** as listed; **reduced** (`prefers-reduced-motion`) every `--dur-*` =
 160 ms and the only allowed change is an opacity crossfade (travel distances are 0). Read the tier
 with `useMotionTier()` / `readTier()` / `onTierChange()` from `src/motion/use-tier.ts`; the root
-carries `data-motion="full|reduced"`. Separately, `html[data-ambient="paused"]` (M2) stops the
-background's ambient motion only (`useAmbientPaused()`, `ambientPaused()`, `onAmbientChange()`).
+carries `data-motion="full|reduced"`. There is no other motion setting (R2): the background's
+ambient motion follows the tier and stops while the tab is hidden.
 
 **Table vocabulary**: `ease.outSoft` (= outQuint), `draw` (= outExpo), `bloom` (= inOut),
 `zoom`, `return`, `in` → `--ease-out-soft`, `--ease-draw`, `--ease-bloom`, `--ease-zoom`,
@@ -1250,7 +1257,7 @@ optional image with an optional `caption` (I16).
 
 | Type | Fields |
 | --- | --- |
-| `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, settings { pause, play }` (the pause button's name and its tooltip while paused, M2)`, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
+| `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
 | `HandContent` (`content/<locale>/hand.ts`; `order` and `identity` from `content/deck.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing }` |
 | `HandCardCopy` | `title` (equals the page title; "Management" for the fourth card)`, type, year, inspect, tapLine, facts: Fact[]` (the card's own facts, each with its label; two in the final content) |
 | `CoffeeEgg` (`content/<locale>/hand.ts`) | `title, body, cta` |
@@ -1305,7 +1312,7 @@ Spread grid (D9).
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
 unlinked logo lab (English, `lang="en"`). Header: the home slot (logo, or Back on card
-pages), About, the language switcher (L6), the pause button (M2); it leaves on a scroll down (N1). Every page has one `h1` (`PageTitle`,
+pages), About, the language switcher (L6); it leaves on a scroll down (N1). Every page has one `h1` (`PageTitle`,
 `id="page-heading"`, focus target after navigation).
 
 ---
@@ -1322,7 +1329,6 @@ pages), About, the language switcher (L6), the pause button (M2); it leaves on a
 | `data-breaker` | OffsetImage, the problem statement section | the field lifts 10% while in view (I5) |
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
 | `data-slot-mode="mark\|back"` | the header's home slot | logo or Back (G4) |
-| `data-ambient-toggle` (+ `aria-pressed`) | the pause / play button | its glyph follows `html[data-ambient]` (M2) |
 | `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
@@ -1348,7 +1354,6 @@ pages), About, the language switcher (L6), the pause button (M2); it leaves on a
 | `data-tapped`, `data-inspect`, `data-rare`, `data-drawn`, `data-lifting`, `data-closing` | hand cards / slots / row | egg and play states |
 | `data-sheet-moving` | `nav.hand` | the mobile sheet moving |
 | `data-motion="full\|reduced"` | `<html>` | motion tier (pre-paint script, M1) |
-| `data-ambient="paused"` | `<html>` | the background's ambient motion is paused (pre-paint script, M2) |
 | `data-header="hidden"` | `<html>` | the header (and the mobile rail) has left on a scroll down (N1) |
 | `data-intro="first|repeat"`, `data-reveal="armed|live"`, `data-reveal-skip` | `<html>` | intro and reveal arming |
 | `data-field="<identity>"`, `data-renderer="gl|css"` | `<html>` | background field |
@@ -1384,11 +1389,12 @@ with the four-card hand:
 - `npm run preview` then, once per locale,
   `node scripts/smoke.mjs http://localhost:4100/random/<locale>/ [--motion=full|reduced]`
   (behaviour at 1440×900 and 390×844: intro order (from the animations' own start times, F3) and
-  length, home on one screen, header links and the pause button (pauses the field, stored, before
-  first paint, hidden in reduced), the header leaving and returning on a case study with the rail,
-  play / switch / return, the detail hero order, a return with the hero scrolled away, the idle
-  hint (after 10 s), About's contour layer (base path, no frames at rest, drift and pause, no
-  pointer reaction, the swisstopo credit), its cards and portrait, removed routes, reveals,
+  length, home on one screen, header links (no pause button, R2), the header leaving and returning
+  on a case study with the rail, play / switch / return, the detail hero order, a return with the
+  hero scrolled away, the idle hint (after 10 s), About's morph (full resolution only while it
+  runs, the SVG covering the canvas, back to rest on leaving; R1) and contour layer (base path,
+  cover, 42%, scale 1.03, no mask, no frames at rest, drift by tier, no pointer reaction, the
+  swisstopo credit), its cards and portrait, removed routes, reveals,
   motion per tier; the root's language choice (de-CH, en-US, fr-FR, no language, a stored
   choice, no JavaScript), the 404 page's language (the address's locale wins, F1), `<html lang>` and hreflang, the switcher on
   home, a case study, Management and About, back across a switch; card and page titles and

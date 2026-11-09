@@ -58,10 +58,8 @@ dividers and illustration strokes.
 - Calm, subtle, smooth, professional, with playful moments (the easter eggs).
 - Only the background moves at rest; everything else is still until the visitor scrolls or
   interacts. No bounce, no overshoot.
-- Two motion tiers: full, and reduced (`prefers-reduced-motion`: 160 ms crossfades only). The
-  background's ambient motion (breath, drift) can be paused from the header (WCAG 2.2.2); the
-  pause stops nothing else, and the button is hidden when the system already asks for reduced
-  motion.
+- Two motion tiers: full, and reduced (`prefers-reduced-motion`: 160 ms crossfades only, and the
+  background's ambient motion is still). There is no motion setting on the site.
 - Dark mode first. Mobile first, with full creativity on desktop.
 - Type: Bricolage Grotesque (display, opsz + wght), Hanken Grotesk (text), Martian Mono (labels,
   numbers); Caveat (handwriting) only for the idle hint's note on home.
