@@ -120,17 +120,19 @@
 }
 .slot[data-slot-mode='mark'] .label {
   opacity: 0;
-  translate: 0 110%;
+  translate: 0 var(--reveal-mask);
 }
 /* Back showing: the mark is compressed into the left edge. */
 .slot[data-slot-mode='back'] .mark {
   opacity: 0;
-  scale: 0.12 1;
+  scale: var(--slot-mark-scale) 1;
 }
-/* What appears second waits a beat: the head and label after the shaft, the mark after Back has gone. */
+/* What appears second waits a beat (the head and label after the shaft, the mark after Back has
+   gone) and runs in the rest of the morph, so the whole morph takes --dur-slot-morph. */
 .slot[data-slot-mode='back'] :is(.head, .label),
 .slot[data-slot-mode='mark'] .mark {
   transition-delay: var(--dur-slot-lag);
+  transition-duration: calc(var(--dur-slot-morph) - var(--dur-slot-lag));
 }
 
 :root[data-motion='reduced'] .slot :is(.shaft, .head, .label) {

@@ -431,6 +431,8 @@ export class FieldEngine {
     const now = performance.now()
     this.tracks[name].set(to, dur, ease, now, delay)
     if (this.mode === 'css') this.writeCss(name, to, dur, ease, delay)
+    // About at rest: only the contours show, so other channels (hover, breaker, tier) ask for no frame.
+    if (name !== 'topo' && this.contoursAtRest()) return
     // Dirty: at least one frame is drawn even if the track has already ended by
     // the next frame (a short reduced crossfade while a view transition holds rendering).
     this.kick(true)
@@ -507,6 +509,7 @@ export class FieldEngine {
   }
 
   private dirty = true
+  private wasMoving = false
 
   private kick(dirty = false) {
     if (dirty) this.dirty = true
@@ -519,9 +522,17 @@ export class FieldEngine {
     this.raf = 0
     if (this.mode !== 'gl' || this.paused) return
     let moving = this.sampleAll(now)
-    // About at rest: one static frame (redrawn only when dirty: a resize, a view transition's end).
+    // A track that has just settled: draw its final value once more (the last moving frame showed
+    // a value from just before its end).
+    if (this.wasMoving && !moving) this.dirty = true
+    this.wasMoving = moving
+    // About at rest: one static frame (redrawn only when dirty: a resize, a view transition's end),
+    // and always the settled frame itself (topo exactly 1).
     const still = this.contoursAtRest()
-    if (still) moving = false
+    if (still) {
+      moving = false
+      if (this.frame.topo < 1) this.dirty = true
+    }
     const continuous = !still && this.continuous()
     // Back to the gradient: its half-resolution buffer again.
     if (this.gl?.crisp && this.tracks.topo.value[0] <= 0 && this.wantTopo === 0) {

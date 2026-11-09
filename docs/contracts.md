@@ -244,9 +244,10 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   `header.tsx`): the wordmark (`.mark`, any content: text now, the SVG logo later), or on detail
   pages (the case studies and Management) a back arrow + "Back" (`.back`: an SVG shaft and head,
   the label in a mask). Between them a CSS morph (`header.module.css`, `duration.slotMorph`
-  420 ms, `duration.slotLag` 120 ms, outQuint): the mark compresses (`scale` x) and fades toward
-  the left edge while the shaft draws out of it and the label rises from its mask, and back. The
-  mark is one box, never its letters. Reduced: a 160 ms crossfade. Back keeps its behaviour
+  420 ms in all, `duration.slotLag` 120 ms, outQuint): the mark compresses (`scale` x to
+  `slot.markScale`) and fades toward the left edge while the shaft draws out of it and the label
+  rises from its mask (`--reveal-mask`), and back; the parts that start second wait the lag and
+  run in the rest of the 420 ms. The mark is one box, never its letters. Reduced: a 160 ms crossfade. Back keeps its behaviour
   (`RETURN`, `table.returnHome`). The header is live in every view transition, so the morph runs
   during play / return.
 - **G5. Footer.** None on home (`FooterShell`, a client gate on the pathname). On About it adds
@@ -266,7 +267,8 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   `home.onTheTableNow`.
 - **H4. First visit.** `at.firstLoad` holds every offset and duration (supersedes the old
   title 520 / role 900 / intro 1000 / rest 1300): name 0–600 ms, label 250–600, role and intro
-  450–950 (lines 60 apart, the intro's lines after the role's), divider 850–1150 (drawn left to
+  450–950 (lines 60 apart, the intro's lines after the role's; with more lines than fit, as on
+  phones, the stagger narrows so the last line lands by 950), divider 850–1150 (drawn left to
   right like a link underline), "What I bring" label and items from 1000 (80 apart) with the hint
   on the last item, the four cards 1250–2000 (330 ms each, 140 apart), then the chrome. The parts
   carry `data-reveal-step`. Calm × 0.6; reduced: everything at once, 160 ms. Revisits: unchanged.
@@ -286,8 +288,8 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   (`data-reveal-step`, measured once); the rest reveal on scroll.
 - **D2. Offset images** (supersedes the full-bleed Spread and I5's "full-bleed"):
   `OffsetImage` replaces `Spread` on case studies, Management and About. From 1024 anchored to
-  the content column on one side and running toward the viewport edge on the other, max 1200 px
-  wide and 72svh tall, 3:2, `object-fit: cover`; consecutive images alternate sides
+  the content column on one side and running toward the viewport edge on the other, always 3:2
+  (`object-fit: cover`), at most 1200 px wide and 72svh tall (the height cap narrows the frame); consecutive images alternate sides
   (`imageSides()`, starting left: the hero runs right); caption beside the image from 1680, below
   otherwise; edge to edge at 4:3 below 1024. The case hero frame is capped at 1200 px.
 - **D3. No mini card.** When the hero frame has scrolled away nothing carries `card-<id>`: a
@@ -341,7 +343,7 @@ Wave 1 is merged; the table is kept as the default split for future parallel wav
 
 ```text
 - Foundation (read-only for everyone in Wave 1): docs/contracts.md, CLAUDE.md, src/design/**, src/styles/layout.css, src/styles/type.css, tokens.ts, content/schema.ts, src/components/hand/**, header.tsx structure, table-store.ts.
-- Layout & Pages: app/** pages, src/components/layout/**, detail-page.tsx, case-hero.tsx, blocks.tsx, next-project.tsx, about-topo.tsx, src/styles/pages/**.
+- Layout & Pages: app/** pages, src/components/layout/**, detail-page.tsx, case-hero.tsx, next-project.tsx, src/styles/pages/**.
 - Motion: src/motion/** except tokens.ts, src/components/reveals.tsx, src/components/reading-hairline.tsx, src/styles/reveal.css, src/styles/hand.css, src/components/background/**, src/eggs/** behaviour, scripts/smoke.mjs.
 - Illustrations: src/components/illustrations/**.
 - Content & Images: content/** except schema.ts, scripts/images/**, public/images/**, src/components/picture.tsx.
@@ -357,9 +359,9 @@ Paths the table does not name, and how to read the short names in it:
 | `src/lib/**` (`content.ts`, `hand-data.ts`, `format.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
 | `content/hand.ts`, `content/site.ts` (slim modules, D7) | Content & Images, under one rule: they import no page text |
 | `src/app/**` (all of it: `layout.tsx`, `globals.css`, `fonts.ts`, routes) | Layout & Pages |
-| `src/components/page-title.tsx`, `section-title.tsx`, `title-fill.tsx`, `page-transition.tsx`, `site-footer.*`, `display-settings.*` | Layout & Pages |
+| `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx`, `calm-switch.*` | Layout & Pages |
 | `src/components/weight-text.tsx`, `play-link.tsx`, `route-focus.tsx`, `live-region.tsx`, `reading-hairline.module.css`, `src/styles/view-transitions.css`, `field.css`, `eggs.css` | Motion |
-| `src/components/picture.css`, `scripts/topo/**`, `public/topo/**` | Content & Images |
+| `src/components/picture.css`, `public/terrain/**` (copied from the old portfolio, unchanged) | Content & Images |
 | `docs/handoff/<agent>.md` | that agent |
 | `README.md`, `package.json`, `package-lock.json`, `scripts/{budget,audit,vitals,lighthouse,serve-static}.mjs` | Integration (Wave 1 may run them, not change them) |
 
@@ -575,7 +577,8 @@ are 0). Read the tier with `useMotionTier()` / `readTier()` / `onTierChange()` f
 strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label, copy
 `{ at, end }`, divider, items `{ at, dur, stagger }`, cards `{ at, dur, stagger }`; H4),
 `at.detail` (summary, label, meta `{ at, stagger, dur, part, cascade }`; D1), `at.navigate`,
-`at.switchNavigate`; `idle` (`after` 30 s, `write`, `gap`, `arrow`, `fade`; H5);
+`at.switchNavigate`; `idle` (`after` 30 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5);
+`slot.markScale` (`--slot-mark-scale`, G4); `reveal.mask` also as `--reveal-mask`;
 `duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s);
 `distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `pinnedDetail`, `poolDrift`, `poolDriftPeriods`
@@ -672,8 +675,8 @@ with one (`Section breaker`, D4); Management's sections and 09 Next have none.
 `div.offset-image-area` (a size container) > `div.offset-image-frame` > `<Picture class="offset-image-media">`,
 and only when `caption` is set (I16) `figcaption.offset-image-caption.t-label`. From 1024: `right`
 spans the content column's start (line 5) to `full-end`, `left` `full-start` to the content
-column's end (line 13); the frame is `min(100%, 1200px)` wide, 3:2, at most 72svh tall, `cover`,
-rounded on its anchored side and on the far side only once the cap keeps it off the edge. Caption
+column's end (line 13); the frame is 3:2, `min(100%, 1200px, 72svh × 3/2)` wide, `cover`,
+rounded on its anchored side and on the far side only once a cap keeps it off the edge. Caption
 beside it from 1680 (columns 1–3 for `right`, column 12 + the outer track for `left`), below it in
 the content column otherwise. Below 1024: edge to edge, 4:3. `imageSides()` returns a counter that
 alternates sides per page, starting left. `data-breaker` lifts the field while in view (I5).

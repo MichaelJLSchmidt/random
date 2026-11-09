@@ -306,7 +306,7 @@
   max-width: 9em;
   margin: 0;
   font-family: var(--font-hand-face), cursive;
-  font-size: clamp(1.375rem, 1rem + 1vw, 1.875rem);
+  font-size: clamp(1.25rem, 0.5rem + 1.1vw, 1.875rem);
   font-weight: 500;
   line-height: 1.05;
   text-align: right;
@@ -332,18 +332,20 @@
 }
 @media (min-width: 1024px) {
   .idle-hint {
+    /* Right of the fan (four cards of --card-w, overlapping --card-overlap), far enough that the
+       arrow's head stops just outside the last card's tilted edge. */
+    --idle-left: calc((var(--card-w) * 4 - var(--card-overlap) * 3) / 2 + var(--space-8) + var(--space-5));
     right: auto;
-    /* Right of the fan (four cards of --card-w, overlapping --card-overlap), with room for the arrow. */
-    left: calc(50% + (var(--card-w) * 4 - var(--card-overlap) * 3) / 2 + var(--space-7));
+    left: calc(50% + var(--idle-left));
     bottom: calc(var(--card-h) * 0.72 * 0.55);
-    max-width: calc(50vw - (var(--card-w) * 4 - var(--card-overlap) * 3) / 2 - var(--space-7) - var(--grid-margin));
+    max-width: calc(50vw - var(--idle-left) - var(--space-4));
   }
   .idle-hint-text {
     text-align: left;
   }
   .idle-hint-arrow {
     top: 0.2em;
-    right: calc(100% + var(--space-1));
-    width: 76px;
+    right: calc(100% + 2px);
+    width: 52px;
   }
 }

@@ -29,7 +29,7 @@
   opacity: 0;
 }
 
-/* First visit: the hand is dealt from off screen; the chrome (header, card counter) comes last. */
+/* First visit: the hand is dealt from off screen (last but the chrome); the chrome (the header) comes last. */
 :root[data-intro='first'] .hand-card:not([data-drawn]),
 :root[data-intro='first'] [data-chrome]:not([data-revealed]) {
   opacity: 0;

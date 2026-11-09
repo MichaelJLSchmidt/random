@@ -25,7 +25,7 @@ export type KindOptions = {
   dur?: number
   /** lines: the whole block's span; each line takes span - (lines - 1) x stagger (at least dur.s). */
   span?: number
-  /** list: between items (and each item's duration is `dur`). */
+  /** list: between items (and each item's duration is `dur`); lines: between lines. */
   stagger?: number
   /** rule: draw like a link underline (outSoft) instead of the default inOut. */
   underline?: boolean
@@ -77,7 +77,7 @@ export function block(ctx: JobContext, el: Element, delay = 0, opts: KindOptions
 /** lines: split into lines inside clip masks, each rising from 110%, 640 ms outExpo, 60 ms apart. */
 export async function lines(ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
-  const gap = gapFor(ctx.tier, stagger.lines)
+  const gap = opts.stagger ?? gapFor(ctx.tier, stagger.lines)
   // A span (the home intro) fits every line into it; otherwise each line takes dur.l.
   const each = (n: number) =>
     opts.span ? Math.max(msFor(ctx.tier, 's'), opts.span - (n - 1) * gap) : msFor(ctx.tier, 'l')

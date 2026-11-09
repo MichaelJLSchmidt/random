@@ -189,9 +189,9 @@
  * ---------- OffsetImage: anchored to the content column, toward one edge ----------
  * Below 1024: edge to edge, 4:3, caption below in the content column.
  * From 1024: "right" spans the content column's start to the right edge, "left"
- * the left edge to the content column's end; the frame is at most 1200 px wide
- * and 72svh tall (3:2, cover), kept against its anchor. Its far corners round
- * only when the cap keeps it off the edge (100cqw of the area > 1200 px).
+ * the left edge to the content column's end; the frame is 3:2 (cover), at most
+ * 1200 px wide and 72svh tall, kept against its anchor. Its far corners round
+ * only when a cap keeps it off the edge (100cqw of the area > its width).
  * From 1680 the caption sits in the free space beside it.
  */
 .offset-image {
@@ -229,12 +229,13 @@
 @media (min-width: 1024px) {
   .offset-image {
     --image-radius: 16px;
-    --image-far: clamp(0px, (100cqw - 1200px) * 1000, var(--image-radius));
+    /* At most 1200 px wide and 72svh tall, always 3:2: the height cap narrows the frame. */
+    --image-max: min(1200px, 72svh * 3 / 2);
+    --image-far: clamp(0px, (100cqw - var(--image-max)) * 1000, var(--image-radius));
   }
   .offset-image-frame {
-    width: min(100%, 1200px);
+    width: min(100%, var(--image-max));
     aspect-ratio: 3 / 2;
-    max-height: 72svh;
   }
   .offset-image[data-side='right'] .offset-image-area {
     grid-column: 5 / full-end;

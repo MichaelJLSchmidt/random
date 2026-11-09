@@ -12,7 +12,8 @@ import { readTier } from './use-tier'
  * Full tier, ms:
  *      0–600   1. the name: its words turn up and settle (opsz / wght)
  *    250–600   2. the label above the name ("label")
- *    450–950   3. the role line, then the intro ("copy"), lines 60 apart
+ *    450–950   3. the role line, then the intro ("copy"), lines 60 apart (closer
+ *              when there are more lines than fit the window)
  *   850–1150   4. the divider draws left to right like a link underline ("divider")
  *  1000–1250   5. "What I bring to the table", its items 80 apart, the hint ("items", "hint")
  *  1250–2000   6. the hand: the four cards dealt one after the other (330 ms, 140 apart)
@@ -86,11 +87,18 @@ export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[], sta
   if (h1) schedule(h1, t(F.title.at), (ctx) => title(ctx, h1, { dur: d(F.title.dur) }))
   // 2. The label above it.
   for (const b of part('label')) startAt(b.el, t(F.label.at), { dur: d(F.label.dur) })
-  // 3. The role line, then the intro: the intro's lines follow the role's, all in by copy.end.
+  // 3. The role line, then the intro: the intro's lines follow the role's, all in by copy.end. The
+  // lines are stagger.lines apart and take the rest of the window (at least dur.s each); with more
+  // lines than fit (phones), the stagger narrows so the last line still lands by copy.end.
+  const copy = part('copy').map((b) => ({ b, n: lineCount(b.el) }))
+  const lines = copy.reduce((sum, c) => sum + c.n, 0)
+  const room = F.copy.end - F.copy.at
+  const gap = Math.min(stagger.lines, (room - dur.s) / Math.max(1, lines - 1))
+  const each = room - (lines - 1) * gap
   let copyAt: number = F.copy.at
-  for (const b of part('copy')) {
-    startAt(b.el, t(copyAt), { span: d(Math.max(dur.s, F.copy.end - copyAt)) })
-    copyAt += lineCount(b.el) * stagger.lines
+  for (const { b, n } of copy) {
+    startAt(b.el, t(copyAt), { span: d(each + (n - 1) * gap), stagger: t(gap) })
+    copyAt += n * gap
   }
   // 4. The divider.
   for (const b of part('divider')) startAt(b.el, t(F.divider.at), { dur: d(F.divider.dur), underline: true })

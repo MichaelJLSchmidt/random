@@ -96,9 +96,10 @@ export function IdleHint({ note }: { note: string }) {
       const [curl, head] = [...el.querySelectorAll<SVGPathElement>('.idle-hint-arrow path')]
       const at = t + idle.gap * 1000 * k
       const arrow = idle.arrow * 1000 * k
+      const curlTime = arrow * idle.arrowCurl
       for (const [path, delay, duration] of [
-        [curl, at, arrow * 0.8],
-        [head, at + arrow * 0.8, arrow * 0.2],
+        [curl, at, curlTime],
+        [head, at + curlTime, arrow - curlTime],
       ] as const)
         anims.push(
           path.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], {

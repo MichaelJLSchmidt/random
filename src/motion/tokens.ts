@@ -173,7 +173,18 @@ export const at = {
  * (`arrow` s, after `gap`). The next click, tap or key press fades it out (`fade`). Calm: every
  * value x 0.6 except `after`; reduced: one 160 ms fade in and out.
  */
-export const idle = { after: 30, write: 1.2, gap: 0.08, arrow: 0.7, fade: 0.32 } as const
+export const idle = {
+  after: 30,
+  write: 1.2,
+  gap: 0.08,
+  arrow: 0.7,
+  /** Share of the arrow's time for its curl; the head draws in the rest. */
+  arrowCurl: 0.8,
+  fade: 0.32,
+} as const
+
+/** The header's home slot (wordmark <-> Back): how narrow the mark gets as it compresses into the left edge. */
+export const slot = { markScale: 0.12 } as const
 
 /** Pixels unless noted. */
 export const distance = {
@@ -425,6 +436,8 @@ export function motionCss(): string {
     `--angle-discard:${angle.discard}deg`,
     `--angle-tap:${angle.tap}deg`,
     `--hero-drift:${reveal.heroDrift * 100}%`,
+    `--reveal-mask:${reveal.mask * 100}%`,
+    `--slot-mark-scale:${slot.markScale}`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

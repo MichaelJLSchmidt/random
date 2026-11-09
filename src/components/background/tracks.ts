@@ -69,7 +69,8 @@ export class Track {
 
   /** Updates `value` for time `now`; true while the track is still moving. */
   sample(now: number): boolean {
-    if (now >= this.end) {
+    // A jump (no duration) is settled at once, even for a frame timestamp from before it was set.
+    if (now >= this.end || this.end <= this.start) {
       for (let i = 0; i < this.to.length; i++) this.value[i] = this.to[i]
       return false
     }

@@ -144,6 +144,34 @@ earlier decisions each one supersedes). In short:
   About hovered, focused or touched), never on other pages.
 - `?idle` shortens the idle hint's wait to one second (like `?rare`), for checking.
 
+## Review
+
+An independent subagent reviewed the diff against every numbered item. Its findings, all fixed:
+
+| Finding | Fix |
+| --- | --- |
+| A5: on a direct load the static frame was sometimes drawn with the contours at 0 (a frame timestamp from before the jump rewound the track), then never redrawn | `Track.sample` treats a jump as settled; the engine draws once more when a track settles and whenever the contours rest at 1 but were drawn below 1 (8 of 8 direct loads correct; smoke checks the pixels) |
+| A5: hover, breaker or tier changes still requested a frame at rest on About | `go()` asks for no frame while the contours rest |
+| D2: the 72svh cap squashed the frame below 3:2 | width `min(100%, 1200px, 72svh × 3/2)`, always 3:2 |
+| H5: the arrow drew over the last card | note moved right, smaller arrow: the head stops outside the card |
+| G4: the second parts ran 420 ms after their lag (540 ms in all) | they run in the rest of the 420 ms |
+| H4: the intro's last line landed after 950 ms (and later on phones) | the stagger narrows when more lines than fit |
+| Motion literals in the slot morph and the idle arrow | `slot.markScale`, `--reveal-mask`, `idle.arrowCurl` |
+| Leftovers (ownership table, `.gitignore`, a comment) | removed |
+
+## Verification
+
+- `BASE_PATH=/random/ npm run build`: passes (type check, content count checks; routes `/`,
+  `/work/*`, `/management`, `/about`, 404).
+- `node scripts/images/check.mjs`: ok (12 photos, 13 About projects).
+- `node scripts/smoke.mjs http://localhost:4100/random/ --motion=full|calm|reduced`: all passed at
+  1440×900 and 390×844 (121 / 121 / 118 checks).
+- `node scripts/budget.mjs`: initial JS 168.8 KB gzip (advisory 170 KB).
+- Screenshots looked at: home at 1024×768, 1280×720, 1440×900, 1920×1080, 2560×1440, 390×844
+  (one screen, no scroll, content clears the hand); a case study and About at 1440×900,
+  2560×1440 and 390×844 (image caps, numerals, projects, contact, contours after the morph);
+  the idle hint at 390, 1024, 1440, 1920; the morph into and out of About; the slot morph.
+
 ## Known issues
 
 - Large headless viewports (2560×1440) sometimes capture unrastered tiles on the first

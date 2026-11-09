@@ -389,6 +389,16 @@ async function tableSuite(browser, device) {
       JSON.stringify({ ...topo, attribution: 0 }),
     )
   check('about: no frames at rest', topo.frames === 0, String(topo.frames))
+  // The contours (live or poster) are on screen: the old ground #1B1C18 with stone-grey lines.
+  const ground = await regionColour(
+    page,
+    device === 'desktop' ? { x: 900, y: 300, width: 300, height: 200 } : { x: 40, y: 300, width: 300, height: 200 },
+  )
+  check(
+    'about: the contour field is drawn (ground and lines)',
+    ground.every((v, i) => Math.abs(v - [31, 32, 28][i]) < 10),
+    `${ground}`,
+  )
   check(
     'about: swisstopo attribution in the footer',
     topo.attribution.includes('swissALTI3D') && topo.attribution.includes('swisstopo'),
