@@ -7,18 +7,24 @@
 
 /* ================= Home ================= */
 /*
- * Label, the name (display, two lines), role and intro, "On the table now"
- * under a drawn rule. Everything clears the hand and its counter at rest
- * (1440×900 and 390×844 with the real intro): from 1024 the name takes
- * columns 1–6 with its top at about 22vh and the role and intro sit beside it
- * in columns 7–12, level with its last line; on phones the hero starts just
- * under the header and the intro is set on the body size.
+ * Exactly one screen (min-height 100dvh, no footer): it scrolls only when the
+ * viewport is too small for its content. Label, the name (display, two lines),
+ * role and intro, "What I bring to the table" under a drawn divider, and the
+ * hint at the bottom, just above the hand. The bottom padding is the hand's
+ * visible height plus a margin, so everything clears the fan: checked at
+ * 1024×768, 1280×720, 1440×900, 1920×1080, 2560×1440 and 390×844. From 1024
+ * the name takes columns 1–6 and the role and intro sit beside it in columns
+ * 7–12, level with its last line; on phones the intro is set on the body size.
  */
 .home {
-  align-content: start;
+  /* The phone fan: four cards across the screen (hand.css), 85% visible, plus the arc. */
+  --home-hand: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 * 0.85 + var(--safe-bottom) + var(--space-5));
+  grid-template-rows: repeat(4, auto) minmax(0, 1fr);
+  align-content: stretch;
   min-height: 100svh;
-  padding-top: calc(var(--header-h) + var(--space-6));
-  padding-bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 + 64px);
+  min-height: 100dvh;
+  padding-top: calc(var(--header-h) + var(--space-5));
+  padding-bottom: var(--home-hand);
 }
 :where(.home > *, .home [data-first-load] > *) {
   grid-column: content-start / content-end;
@@ -47,19 +53,19 @@
 .home-lede {
   max-width: 40ch;
 }
-@media (max-width: 639.98px) {
+@media (max-width: 1023.98px) {
   .home-lede {
     font-size: var(--type-body-size);
     line-height: var(--type-body-leading);
   }
 }
-.home-now {
+.home-bring {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: var(--grid-gutter);
   margin-top: var(--space-5);
 }
-.home-now-rule {
+.home-bring-rule {
   grid-column: 1 / -1;
   height: 1px;
   margin: 0 0 var(--space-3);
@@ -67,12 +73,12 @@
   background: var(--line);
   transform-origin: 0 50%;
 }
-.home-now-label {
+.home-bring-label {
   grid-column: 1 / -1;
   margin: 0 0 var(--space-2);
   color: var(--muted);
 }
-.home-now-list {
+.home-bring-list {
   grid-column: 1 / -1;
   display: grid;
   gap: var(--space-1);
@@ -80,19 +86,28 @@
   padding: 0;
   list-style: none;
 }
-.home-now-list li {
+.home-bring-list li {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: baseline;
   gap: var(--space-2);
 }
-.home-now-number {
+.home-bring-number {
   color: var(--accent);
+}
+/* The hint: at the bottom of the screen, just above the hand (left on phones, over the fan from 1024). */
+.home-hint {
+  grid-row: -2;
+  align-self: end;
+  margin: var(--space-4) 0 0;
+  color: var(--muted);
 }
 @media (min-width: 1024px) {
   .home {
-    padding-top: calc(22svh - calc(var(--baseline) * 10));
-    padding-bottom: var(--hand-reserve);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    padding-top: max(calc(var(--header-h) + var(--space-5)), calc(22svh - calc(var(--baseline) * 10)));
+    /* The desktop fan shows 176 px (72%) plus its arc. */
+    padding-bottom: calc(var(--hand-reserve) + var(--space-5));
   }
   .home-label {
     grid-column: 2 / 8;
@@ -114,24 +129,51 @@
   .home-lede {
     max-width: none;
   }
-  .home-now {
+  .home-bring {
     grid-column: content-start / content-end;
     grid-row: 3;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     margin-top: var(--space-6);
   }
-  .home-now-label {
+  .home-bring-label {
     grid-column: 1 / 4;
     margin: 0;
   }
-  .home-now-list {
+  .home-bring-list {
     grid-column: 4 / 13;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     column-gap: var(--grid-gutter);
   }
-  .home-now-list li {
+  .home-bring-list li {
     grid-template-columns: auto minmax(0, 1fr);
     gap: var(--space-3);
+  }
+  .home-hint {
+    grid-row: 4;
+    justify-self: center;
+    text-align: center;
+  }
+}
+/*
+ * Short desktop screens (1024×768, 1280×720): the name a little smaller and the
+ * intro on the body size, so the whole screen still clears the hand.
+ */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .home {
+    padding-top: max(calc(var(--header-h) + var(--space-4)), calc(22svh - var(--space-8)));
+  }
+  .home-title {
+    font-size: min(var(--type-display-size), 18svh);
+  }
+  .home-intro {
+    padding-bottom: calc(min(var(--type-display-size), 18svh) * (var(--type-display-leading) - 0.72));
+  }
+  .home-lede {
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-leading);
+  }
+  .home-bring {
+    margin-top: var(--space-5);
   }
 }
 

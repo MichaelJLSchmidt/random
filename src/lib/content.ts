@@ -42,7 +42,7 @@ function validate() {
   count('about.timeline.items', content.about.timeline.items, 7)
   count('about.howIWork.items', content.about.howIWork.items, 4)
   count('about.onTheTable.items', content.about.onTheTable.items, 5)
-  count('home.onTheTableNow.items', content.home.onTheTableNow.items, 3)
+  count('home.bring.items', content.home.bring.items, 3)
 }
 validate()
 

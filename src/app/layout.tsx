@@ -14,7 +14,7 @@ import { absoluteUrl } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
 import { pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
-import { display, mono, text } from './fonts'
+import { display, hand, mono, text } from './fonts'
 import './globals.css'
 
 /** Default Open Graph image (about-og, 1280 px JPEG), only when the deploy passes SITE_URL. */
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${display.variable} ${text.variable} ${mono.variable}`}
+      className={`${display.variable} ${text.variable} ${mono.variable} ${hand.variable}`}
       data-motion="full"
       suppressHydrationWarning
     >

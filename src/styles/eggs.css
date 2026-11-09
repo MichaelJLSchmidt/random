@@ -283,3 +283,68 @@
 :root:not([data-motion='full']) .on-table-card[data-open] .on-table-back {
   opacity: 0;
 }
+
+/*
+ * ---------- Idle hint (home, once per session; src/eggs/idle-hint.tsx) ----------
+ * A handwritten note beside the hand with a curly arrow toward the cards, in
+ * the secondary text colour. Desktop: right of the fan, the arrow curling down
+ * and left onto the last card. Phones: above the right end of the fan, the
+ * arrow pointing down into it. Still once written; decorative (aria-hidden).
+ */
+.idle-hint {
+  position: fixed;
+  z-index: calc(var(--z-hand) + 1);
+  right: var(--grid-margin);
+  bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 * 0.85 + var(--safe-bottom) + var(--space-6));
+  color: var(--muted);
+  pointer-events: none;
+  user-select: none;
+}
+.idle-hint:not([data-ready]) {
+  opacity: 0;
+}
+.idle-hint-text {
+  max-width: 9em;
+  margin: 0;
+  font-family: var(--font-hand-face), cursive;
+  font-size: clamp(1.375rem, 1rem + 1vw, 1.875rem);
+  font-weight: 500;
+  line-height: 1.05;
+  text-align: right;
+  text-wrap: balance;
+}
+.idle-hint-word {
+  display: inline-block;
+}
+.idle-hint-arrow {
+  position: absolute;
+  top: calc(100% - 0.25rem);
+  right: 45%;
+  width: 52px;
+  height: auto;
+  overflow: visible;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.idle-hint-arrow path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+@media (min-width: 1024px) {
+  .idle-hint {
+    right: auto;
+    /* Right of the fan (four cards of --card-w, overlapping --card-overlap), with room for the arrow. */
+    left: calc(50% + (var(--card-w) * 4 - var(--card-overlap) * 3) / 2 + var(--space-7));
+    bottom: calc(var(--card-h) * 0.72 * 0.55);
+    max-width: calc(50vw - (var(--card-w) * 4 - var(--card-overlap) * 3) / 2 - var(--space-7) - var(--grid-margin));
+  }
+  .idle-hint-text {
+    text-align: left;
+  }
+  .idle-hint-arrow {
+    top: 0.2em;
+    right: calc(100% + var(--space-1));
+    width: 76px;
+  }
+}

@@ -167,9 +167,12 @@ export type Home = {
   title: string
   role: string
   intro: Paragraph
+  /** A quiet line above the hand, e.g. "Pick a card". */
   hint: string
-  /** "On the table now": three short items. */
-  onTheTableNow: { label: string; items: string[] }
+  /** "What I bring to the table": three short items. */
+  bring: { label: string; items: string[] }
+  /** The idle hint (egg): a handwritten note beside the hand after 30 s without input. */
+  idleNote: string
 }
 
 export type CaseStudyMeta = {

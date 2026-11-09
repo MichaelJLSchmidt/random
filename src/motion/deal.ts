@@ -3,9 +3,9 @@ import { deal, dur, ease, stagger } from './tokens'
 
 /*
  * Dealing hand cards from the dealer (off screen, bottom right): the
- * first-visit intro, New hand (Mulligan) and the Coffee card. Each card flies
- * face down and turns face up on the way, 420 ms outExpo, 80 ms apart, so four
- * cards are in the hand by 660 ms.
+ * first-visit intro (at.firstLoad.cards: 330 ms each, 140 ms apart), New hand
+ * (Mulligan) and the Coffee card (420 ms outExpo, 80 ms apart). Each card flies
+ * face down and turns face up on the way.
  */
 
 /** Hand cards currently laid out in the fan (not the ghost of an open card). */
@@ -23,8 +23,15 @@ export function dealOffset(card: HTMLElement) {
   ]
 }
 
-/** Deals `cards` from off screen, starting `start` seconds from now (full tier; callers check). */
-export function drawCards(cards: HTMLElement[], start: number) {
+/**
+ * Deals `cards` from off screen, starting `start` seconds from now (full tier; callers check):
+ * each takes `timing.dur` s, `timing.stagger` s apart (default: dur.m, stagger.cards).
+ */
+export function drawCards(
+  cards: HTMLElement[],
+  start: number,
+  timing: { dur: number; stagger: number } = { dur: dur.m, stagger: stagger.cards },
+) {
   return cards.map((card, i) => {
     const cs = getComputedStyle(card)
     const rest = {
@@ -40,8 +47,8 @@ export function drawCards(cards: HTMLElement[], start: number) {
         { ...rest, transform: `${p} rotateY(0deg)`, opacity: 1 },
       ],
       {
-        duration: dur.m * 1000,
-        delay: (start + i * stagger.cards) * 1000,
+        duration: timing.dur * 1000,
+        delay: (start + i * timing.stagger) * 1000,
         easing: bezier(ease.draw),
         fill: 'backwards',
       },
@@ -49,10 +56,10 @@ export function drawCards(cards: HTMLElement[], start: number) {
   })
 }
 
-/** Calm and reduced: the hand fades in instead of flying (same start, same order). */
-export function fadeCards(cards: HTMLElement[], duration: number, gap: number) {
+/** Calm and reduced: the hand fades in instead of flying (same order); all values in ms. */
+export function fadeCards(cards: HTMLElement[], duration: number, gap: number, start = 0) {
   return cards.map((card, i) => {
     card.dataset.drawn = ''
-    return card.animate([{ opacity: 0 }, { opacity: 1 }], { duration, delay: i * gap, fill: 'backwards' })
+    return card.animate([{ opacity: 0 }, { opacity: 1 }], { duration, delay: start + i * gap, fill: 'backwards' })
   })
 }

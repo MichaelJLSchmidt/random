@@ -59,6 +59,13 @@ export const eggs = {
     calm: 'shorter',
     reduced: 'at once',
   },
+  idleHint: {
+    on: true,
+    trigger: 'home only: 30 s without a click, tap or key press (pointer movement and scrolling do not count), once per session',
+    full: 'a handwritten note, "(a selection of my projects)", writes itself beside the hand, then a curly arrow draws toward the cards; the next click, tap or key press fades it out',
+    calm: 'the same, every duration x 0.6',
+    reduced: 'the note and arrow fade in and out (160 ms)',
+  },
   coffee: {
     on: true,
     trigger: 'typing "draw" on the start page',

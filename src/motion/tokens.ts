@@ -131,12 +131,49 @@ export const stagger = {
 
 /** Seconds from the start of a sequence. */
 export const at = {
-  /** Home, first visit (<FirstLoadSequence>): when each part starts (the hand is dealt at 0). */
-  firstLoad: { title: 0.52, role: 0.9, intro: 1.0, rest: 1.3 },
+  /**
+   * Home, first visit (<FirstLoadSequence>, src/motion/first-load.ts): when each part starts and
+   * how long it takes, in order. Steps 1-5 take about 1.25 s together, the hand the last 0.75 s;
+   * the chrome (header) follows the hand. Calm: every value x 0.6. Reduced: all at once, 160 ms
+   * crossfades. Revisits in the same session stay a short crossfade.
+   */
+  firstLoad: {
+    /** 1. The name: its words turn up and settle (opsz / wght), stagger.words apart. */
+    title: { at: 0, dur: 0.6 },
+    /** 2. The label above the name. */
+    label: { at: 0.25, dur: 0.35 },
+    /** 3. The role line, then the intro: lines rise stagger.lines apart, all in by `end`. */
+    copy: { at: 0.45, end: 0.95 },
+    /** 4. The divider, drawn left to right like a link underline (ease.outSoft). */
+    divider: { at: 0.85, dur: 0.3 },
+    /** 5. "What I bring to the table", its items, then the hint, top to bottom. */
+    items: { at: 1.0, dur: 0.25, stagger: 0.08 },
+    /** 6. The hand: the four cards dealt one after the other. */
+    cards: { at: 1.25, dur: 0.33, stagger: 0.14 },
+  },
+  /**
+   * Detail pages (case studies, Management), above the fold, after the card morph or on a direct
+   * load: the title and hero as before, then the summary, the top label and counter, then the
+   * meta data left to right (each pair: rule, then label, then value). Offsets from the title's
+   * start; calm x 0.6; reduced 160 ms crossfades.
+   */
+  detail: {
+    summary: 0.2,
+    label: 0.36,
+    meta: { at: 0.5, stagger: 0.1, dur: 0.3, part: 0.2, cascade: 0.05 },
+  },
   // Play: when the route change starts (press + lift)
   navigate: 0.43,
   switchNavigate: 0.4,
 } as const
+
+/**
+ * The idle hint (home, once per session): after `after` seconds without a click, tap or key press
+ * a handwritten note writes itself (a left-to-right reveal, `write` s), then its arrow draws
+ * (`arrow` s, after `gap`). The next click, tap or key press fades it out (`fade`). Calm: every
+ * value x 0.6 except `after`; reduced: one 160 ms fade in and out.
+ */
+export const idle = { after: 30, write: 1.2, gap: 0.08, arrow: 0.7, fade: 0.32 } as const
 
 /** Pixels unless noted. */
 export const distance = {
