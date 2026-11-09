@@ -20,7 +20,8 @@ export const workshopMethods: WorkshopMethods = {
     },
     {
       title: 'Lightning Decision Jam',
-      howTo: 'Probleme, Abstimmung, Umformulieren, Lösungen, Abstimmung, Aufwand und Wirkung, Massnahmen. In einer Stunde.',
+      howTo:
+        'Probleme, Abstimmung, Umformulieren, Lösungen, Abstimmung, Aufwand und Wirkung, Massnahmen. In einer Stunde.',
     },
     { title: 'Dot voting', howTo: 'Alle bekommen drei Punkte. Stimmt still ab und besprecht zuerst die Ausreisser.' },
     {
@@ -34,9 +35,13 @@ export const workshopMethods: WorkshopMethods = {
     },
     {
       title: 'Pre-mortem',
-      howTo: 'Stell dir vor, das Projekt ist gescheitert. Schreib auf, warum, und behebe die drei wichtigsten Ursachen jetzt.',
+      howTo:
+        'Stell dir vor, das Projekt ist gescheitert. Schreib auf, warum, und behebe die drei wichtigsten Ursachen jetzt.',
     },
-    { title: 'Empathy map', howTo: 'Fülle aus, was jemand sagt, denkt, tut und fühlt. Aus der Forschung, nicht aus Annahmen.' },
+    {
+      title: 'Empathy map',
+      howTo: 'Fülle aus, was jemand sagt, denkt, tut und fühlt. Aus der Forschung, nicht aus Annahmen.',
+    },
     { title: 'Fishbowl', howTo: 'Ein innerer Kreis spricht, ein äusserer hört zu. Alle können jederzeit tauschen.' },
     {
       title: 'Impromptu Networking',

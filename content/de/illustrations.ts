@@ -93,7 +93,8 @@ export const illustrations: IllustrationCopy = {
     },
     'one-two-four-all': {
       title: '1-2-4-All',
-      description: 'Workshop-Methode 1-2-4-All: eine Person, dann Paare, dann Vierergruppen, dann der ganze Raum im Kreis.',
+      description:
+        'Workshop-Methode 1-2-4-All: eine Person, dann Paare, dann Vierergruppen, dann der ganze Raum im Kreis.',
     },
     'dot-voting': {
       title: 'Dot Voting',

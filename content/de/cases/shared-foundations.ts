@@ -105,7 +105,8 @@ export const sharedFoundations: CaseStudy = {
         },
         {
           decision: 'Die Nutzung ehrlich messen',
-          chose: 'Ich habe ein Dashboard zur Nutzung pro Team veröffentlicht, auch mit den Teams, die Allmend nicht nutzen, und warum.',
+          chose:
+            'Ich habe ein Dashboard zur Nutzung pro Team veröffentlicht, auch mit den Teams, die Allmend nicht nutzen, und warum.',
           tradeOff: 'Unbequeme Gespräche. Eine Teamleitung fühlte sich blossgestellt.',
           why: 'Die Spalte «Warum nicht» wurde zu unserer Roadmap.',
         },

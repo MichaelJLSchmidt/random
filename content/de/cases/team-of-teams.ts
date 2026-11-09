@@ -10,7 +10,7 @@ export const teamOfTeams: CaseStudy = {
   statement: 'Von zwei Designern zu einer UX-Praxis.',
   heroImage: 'team-of-teams-hero',
   summary:
-    '2021 bedeutete UX bei Lindengrund zwei Designer, die an das Projekt ausgeliehen wurden, das am lautesten rief. Vier Jahre später ist es ein Team von fünf Personen mit einer klaren Anlaufstelle, gemeinsamen Ritualen und einem Karrieremodell. Und Produktteams holen uns schon zum Kick-off. So habe ich es aufgebaut, auch mit dem, was ich falsch gemacht habe.',
+    '2021 bedeutete UX bei Lindengrund zwei Designer, die an das Projekt ausgeliehen wurden, das am lautesten rief. Vier Jahre später ist es ein Team von fünf Personen mit einer klaren Anlaufstelle, gemeinsamen Ritualen und einem Karrieremodell. Und Produktteams holen uns schon zum Kick-off. So habe ich es aufgebaut, samt dem, was ich falsch gemacht habe.',
   meta: {
     client: 'Intern, für kantonale und eidgenössische Kunden',
     timeframe: '2021–2025',
@@ -101,8 +101,10 @@ export const teamOfTeams: CaseStudy = {
         },
         {
           decision: 'Breite statt Seniorität einstellen',
-          chose: 'Ich habe Leute gewählt, die moderieren und in Code prototypen können, statt reiner Spezialisten für Visuelles.',
-          tradeOff: 'Unser visueller Feinschliff hinkte ein Jahr hinterher. Für zwei Lancierungen holten wir freie Unterstützung im Visual Design dazu.',
+          chose:
+            'Ich habe Leute gewählt, die moderieren und in Code prototypen können, statt reiner Spezialisten für Visuelles.',
+          tradeOff:
+            'Unser visueller Feinschliff hinkte ein Jahr hinterher. Für zwei Lancierungen holten wir freie Unterstützung im Visual Design dazu.',
           why: 'Wer einen Workshop mit einem kantonalen Amt leiten und einen funktionierenden Prototyp liefern kann, bewirkt mehr als ein perfektes Mock-up.',
         },
         {

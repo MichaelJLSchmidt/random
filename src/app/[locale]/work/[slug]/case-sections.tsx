@@ -63,7 +63,15 @@ const space: Record<CaseStudySectionKey, 's' | 'm' | 'l'> = {
 type Drawings = { copy: IllustrationCopy; growth: Management['growth'] }
 
 /** Data for a drawing in the gallery: the career framework draws Management's levels and dimensions. */
-function ArtefactDrawing({ name, titleId, drawings }: { name: ContentIllustration; titleId: string; drawings: Drawings }) {
+function ArtefactDrawing({
+  name,
+  titleId,
+  drawings,
+}: {
+  name: ContentIllustration
+  titleId: string
+  drawings: Drawings
+}) {
   if (name === 'CareerMatrix')
     return (
       <CareerMatrix

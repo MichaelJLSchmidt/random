@@ -49,7 +49,9 @@ function readAnchor(): Anchor {
 }
 
 function restore(anchor: Anchor) {
-  const el = anchor.section ? document.querySelector<HTMLElement>(`main [data-section="${CSS.escape(anchor.section)}"]`) : null
+  const el = anchor.section
+    ? document.querySelector<HTMLElement>(`main [data-section="${CSS.escape(anchor.section)}"]`)
+    : null
   let y = anchor.section === null ? anchor.y : scrollY
   if (el && anchor.section !== null) {
     const r = el.getBoundingClientRect()
@@ -82,7 +84,9 @@ export function settleLocaleSwitch(locale: Locale) {
   if (!switched) return
   restore(switched.anchor)
   if (switched.focus)
-    document.querySelector<HTMLElement>(`[data-locale-switcher] [data-locale="${locale}"]`)?.focus({ preventScroll: true })
+    document
+      .querySelector<HTMLElement>(`[data-locale-switcher] [data-locale="${locale}"]`)
+      ?.focus({ preventScroll: true })
   afterTransition(() => {
     delete document.documentElement.dataset.localeSwitch
     const h1 = document.querySelector<HTMLElement>('main h1')

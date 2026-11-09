@@ -58,6 +58,9 @@ dividers and illustration strokes.
   numbers); Caveat (handwriting) only for the idle hint's note on home.
 - Plain labels. No job-seeking language, CV download or testimonials. No personal names in code,
   comments, docs or commits.
+- Two languages, German (Swiss Standard German, informal "du", no em-dashes or semicolons) and
+  English, the same design in both. The header's "DE · EN" switches in place with one short
+  cross-fade; the table, the field and the reading position stay.
 
 ## Constraints
 

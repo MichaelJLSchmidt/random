@@ -85,15 +85,15 @@
  * copy is written to fit (checked at 390 px).
  */
 :is(
-    .t-body,
-    .t-lead,
-    .deal-card-fields dd,
-    .margin-note-text,
-    .timeline-stop-title,
-    .project-title,
-    .project-client,
-    .project-role
-  ):lang(de) {
+  .t-body,
+  .t-lead,
+  .deal-card-fields dd,
+  .margin-note-text,
+  .timeline-stop-title,
+  .project-title,
+  .project-client,
+  .project-role
+):lang(de) {
   hyphens: auto;
 }
 :is(h1, h2, h3, .t-display, .t-h2, .t-h3, .t-label):lang(de) {

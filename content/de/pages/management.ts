@@ -31,7 +31,8 @@ export const management: Management = {
       },
       {
         title: 'Konzentrierte Arbeit schützen',
-        evidence: 'Zwei sitzungsfreie Halbtage pro Woche, seit 2022. Statusupdates gibt es schriftlich, nicht mündlich.',
+        evidence:
+          'Zwei sitzungsfreie Halbtage pro Woche, seit 2022. Statusupdates gibt es schriftlich, nicht mündlich.',
       },
       {
         title: 'Menschen fördern, nicht Abhängigkeit',
@@ -44,9 +45,19 @@ export const management: Management = {
     label: 'Team',
     title: 'Wer im Team ist',
     members: [
-      { initials: 'ML', role: 'Lead', fte: '100%', focus: 'Menschen, Prioritäten und Praxis, weiterhin rund 20% eigene Projektarbeit' },
+      {
+        initials: 'ML',
+        role: 'Lead',
+        fte: '100%',
+        focus: 'Menschen, Prioritäten und Praxis, weiterhin rund 20% eigene Projektarbeit',
+      },
       { initials: 'AK', role: 'Senior UX Designer', fte: '100%', focus: 'Fest im Bereich Steuern' },
-      { initials: 'RB', role: 'UX Researcher', fte: '80%', focus: 'Research Operations und Studien über alle Bereiche' },
+      {
+        initials: 'RB',
+        role: 'UX Researcher',
+        fte: '80%',
+        focus: 'Research Operations und Studien über alle Bereiche',
+      },
       { initials: 'SO', role: 'UX Designer & Frontend', fte: '100%', focus: 'Kernteam von Allmend' },
       { initials: 'LM', role: 'UX Designer', fte: '80%', focus: 'Register und Behördendienste' },
       { initials: 'NG', role: 'Lernende im Design', fte: '40%', focus: 'Tage im Betrieb, wechselnd über die Projekte' },
@@ -84,8 +95,16 @@ export const management: Management = {
         duration: '90 Min.',
         purpose: 'Ein echtes, anonymisiertes Problem, gemeinsam gelöst. Keine Hausaufgaben',
       },
-      { title: 'Mittag mit dem Team', duration: '60 Min.', purpose: 'Lerne die Leute kennen, mit denen du arbeiten würdest' },
-      { title: 'Entscheid', duration: 'Innert 5 Arbeitstagen', purpose: 'Schriftliches Feedback für alle in der Endrunde' },
+      {
+        title: 'Mittag mit dem Team',
+        duration: '60 Min.',
+        purpose: 'Lerne die Leute kennen, mit denen du arbeiten würdest',
+      },
+      {
+        title: 'Entscheid',
+        duration: 'Innert 5 Arbeitstagen',
+        purpose: 'Schriftliches Feedback für alle in der Endrunde',
+      },
     ],
     note: 'Strukturierte Bewertungsbögen, immer zwei Personen im Gespräch, dieselben Fragen für alle.',
   },

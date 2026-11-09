@@ -503,7 +503,9 @@ async function localeSuite(browser, device) {
     const context = await browser.newContext({ ...viewports[device], javaScriptEnabled: false })
     const page = await context.newPage()
     await page.goto(siteRoot)
-    const hrefs = await page.evaluate(() => [...document.querySelectorAll('a[hreflang]')].map((a) => a.getAttribute('href')))
+    const hrefs = await page.evaluate(() =>
+      [...document.querySelectorAll('a[hreflang]')].map((a) => a.getAttribute('href')),
+    )
     check(
       'root without JavaScript: plain links to both languages',
       locales.every((l) => hrefs.some((h) => h.endsWith(`/${l}/`))),
@@ -519,7 +521,10 @@ async function localeSuite(browser, device) {
     const page = await context.newPage()
     await page.goto(new URL('no-such-page/', siteRoot).href, { waitUntil: 'networkidle' })
     const { notFound: lost } = await load(`content/${want}/pages/not-found.ts`)
-    const seen = await page.evaluate(() => ({ lang: document.documentElement.lang, h1: document.querySelector('h1')?.textContent ?? '' }))
+    const seen = await page.evaluate(() => ({
+      lang: document.documentElement.lang,
+      h1: document.querySelector('h1')?.textContent ?? '',
+    }))
     check(
       `404 (${lang}): ${want}, the address kept`,
       seen.lang === want && seen.h1.includes(lost.title) && page.url().endsWith('/no-such-page/'),
@@ -536,7 +541,10 @@ async function localeSuite(browser, device) {
     const head = await page.evaluate(() => ({
       lang: document.documentElement.lang,
       alternates: Object.fromEntries(
-        [...document.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => [l.hreflang, new URL(l.href).pathname]),
+        [...document.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => [
+          l.hreflang,
+          new URL(l.href).pathname,
+        ]),
       ),
     }))
     const page2 = (l) => `${new URL(siteRoot).pathname}${l}${p}`
@@ -558,7 +566,12 @@ async function localeSuite(browser, device) {
       load(`content/${l}/pages/about.ts`),
       load(`content/${l}/pages/home.ts`),
     ])
-    titles[l] = { '/': hm.title, '/work/team-of-teams/': h.cards['team-of-teams'].title, '/management/': m.title, '/about/': a.title }
+    titles[l] = {
+      '/': hm.title,
+      '/work/team-of-teams/': h.cards['team-of-teams'].title,
+      '/management/': m.title,
+      '/about/': a.title,
+    }
   }
   const tap = device === 'phone' ? page.tap.bind(page) : page.click.bind(page)
   if (device === 'phone') {
@@ -568,7 +581,11 @@ async function localeSuite(browser, device) {
         return [Math.round(r.width), Math.round(r.height)]
       }),
     )
-    check('switcher: 44 px targets on phones', sizes.length === 2 && sizes.every(([w, h]) => w >= 44 && h >= 44), JSON.stringify(sizes))
+    check(
+      'switcher: 44 px targets on phones',
+      sizes.length === 2 && sizes.every(([w, h]) => w >= 44 && h >= 44),
+      JSON.stringify(sizes),
+    )
   }
   for (const p of pages) {
     await page.goto(url(p), { waitUntil: 'networkidle' })
@@ -579,7 +596,9 @@ async function localeSuite(browser, device) {
     }
     const at = () =>
       page.evaluate(() => {
-        const s = [...document.querySelectorAll('main [data-section]')].filter((e) => e.getBoundingClientRect().top <= 64).at(-1)
+        const s = [...document.querySelectorAll('main [data-section]')]
+          .filter((e) => e.getBoundingClientRect().top <= 64)
+          .at(-1)
         return s?.dataset.section ?? null
       })
     const before = await page.evaluate(() => {
@@ -610,7 +629,11 @@ async function localeSuite(browser, device) {
     const vts = (await page.evaluate(() => window.__vts)).slice(vtsBefore)
     check(
       `switch ${locale} → ${other} on ${p}: same page, "${titles[other][p]}", lang, choice stored`,
-      after.lang === other && after.h1.includes(titles[other][p]) && after.stored === other && current === 'page' && after.current === other,
+      after.lang === other &&
+        after.h1.includes(titles[other][p]) &&
+        after.stored === other &&
+        current === 'page' &&
+        after.current === other,
       JSON.stringify({ ...after, current }),
     )
     check(
@@ -620,11 +643,17 @@ async function localeSuite(browser, device) {
     )
     check(
       `switch on ${p}: field and tier kept, no intro, on screen at once`,
-      after.kept && after.motion === before.motion && after.field === before.field && after.intro !== 'first' && after.hidden === 0,
+      after.kept &&
+        after.motion === before.motion &&
+        after.field === before.field &&
+        after.intro !== 'first' &&
+        after.hidden === 0,
       JSON.stringify({ before, after }),
     )
-    if (p !== '/') check(`switch on ${p}: reading position kept (${section})`, (await at()) === section, String(await at()))
-    if (device === 'desktop') check(`switch on ${p}: focus stays on the switcher`, after.focus === other, String(after.focus))
+    if (p !== '/')
+      check(`switch on ${p}: reading position kept (${section})`, (await at()) === section, String(await at()))
+    if (device === 'desktop')
+      check(`switch on ${p}: focus stays on the switcher`, after.focus === other, String(after.focus))
     // And back, so the next page starts in this locale.
     await tap(`[data-locale-switcher] a[data-locale="${locale}"]`)
     await page.waitForURL((u) => u.pathname.endsWith(`/${locale}${p}`), { timeout: 4000 })

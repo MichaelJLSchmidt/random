@@ -93,7 +93,10 @@ ${head(locales.map((l) => copy[l].notFound.title).join(' · '))}
 </head>
 <body>
 <main>${locales
-  .map((l) => `<p lang="${l}">${escape(copy[l].notFound.title)} <a href="${base}${l}/">${escape(copy[l].notFound.back)}</a></p>`)
+  .map(
+    (l) =>
+      `<p lang="${l}">${escape(copy[l].notFound.title)} <a href="${base}${l}/">${escape(copy[l].notFound.back)}</a></p>`,
+  )
   .join('')}</main>
 </body>
 </html>

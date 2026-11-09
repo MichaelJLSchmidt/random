@@ -87,13 +87,16 @@ export const frontDoor: CaseStudy = {
       items: [
         {
           decision: 'Jede Frage nur einmal',
-          chose: 'Ich habe entschieden, jede Angabe nur einmal abzufragen und weiterzuleiten, statt das Formular jedes Amts nachzubilden.',
-          tradeOff: 'Es brauchte eine neue Datenvereinbarung zwischen Register und Steuerverwaltung und kostete vier Monate.',
+          chose:
+            'Ich habe entschieden, jede Angabe nur einmal abzufragen und weiterzuleiten, statt das Formular jedes Amts nachzubilden.',
+          tradeOff:
+            'Es brauchte eine neue Datenvereinbarung zwischen Register und Steuerverwaltung und kostete vier Monate.',
           why: 'Doppelte Fragen waren der Hauptgrund, warum Menschen aufgaben.',
         },
         {
           decision: 'Den Schalter behalten',
-          chose: 'Ich habe einen Dienst gewählt, den das Schalterpersonal für Menschen nutzt, die persönlich vorbeikommen.',
+          chose:
+            'Ich habe einen Dienst gewählt, den das Schalterpersonal für Menschen nutzt, die persönlich vorbeikommen.',
           tradeOff: 'Zusätzliche Rollen, Berechtigungen und Tests.',
           why: 'Die Gemeinden vertrauten einem Werkzeug, das ihr eigenes Personal nutzte, und es dient Menschen, die nicht online gehen können oder wollen.',
         },

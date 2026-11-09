@@ -21,7 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = asLocale(value)
   const entry = contentFor(locale).getCaseStudy(slug)
   return entry
-    ? { title: entry.study.title, description: entry.study.summary, alternates: pageAlternates(locale, `/work/${slug}`) }
+    ? {
+        title: entry.study.title,
+        description: entry.study.summary,
+        alternates: pageAlternates(locale, `/work/${slug}`),
+      }
     : {}
 }
 
