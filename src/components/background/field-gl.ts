@@ -103,22 +103,26 @@ export class GlField {
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
 
     gl.uniform1f(this.u.uGrain, F.grain)
-    this.resize()
   }
 
-  /** Extra resolution factor: 1, or 1/2 while a pinned scene holds the viewport. */
-  detail = 1
+  /** The drawing buffer's size in device pixels. */
+  get size() {
+    return { w: this.width, h: this.height }
+  }
 
-  /** Matches the drawing buffer to the canvas's CSS size. */
-  resize() {
-    const rect = this.canvas.getBoundingClientRect()
-    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale * this.detail
-    const w = Math.max(1, Math.round(rect.width * scale))
-    const h = Math.max(1, Math.round(rect.height * scale))
-    if (w === this.width && h === this.height) return
+  /**
+   * Sets the drawing buffer to `w` × `h` pixels. Resizing clears the buffer, so a caller that
+   * changes the size draws in the same frame (the field engine does: from its ResizeObserver
+   * callback, or at the start of an animation frame). Returns whether the size changed.
+   */
+  setSize(w: number, h: number) {
+    w = Math.max(1, Math.round(w))
+    h = Math.max(1, Math.round(h))
+    if (w === this.width && h === this.height) return false
     this.width = this.canvas.width = w
     this.height = this.canvas.height = h
     this.gl.viewport(0, 0, w, h)
+    return true
   }
 
   draw(f: FieldFrame) {

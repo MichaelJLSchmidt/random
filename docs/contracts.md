@@ -132,7 +132,7 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
 - **I3. Tokens only.** The values Motion kept in `choreography.ts` live in `src/motion/tokens.ts`
   (`at.firstLoad`, `duration.digits`, `duration.svgDraw`, `duration.svgDrawCalm`,
   `distance.block`, `reveal.{mask, image, digitRoll, zoomLanded, mobileJobs, heroDrift}`,
-  `deal.*`, `timeline.*`, `discard.*`, `field.pinnedDetail`, and for older literals
+  `deal.*`, `timeline.*`, `discard.*`, `field.pinnedDetail` (removed in round 3, R4), and for older literals
   `duration.gather`, `duration.liftTimeout`, `stagger.gather`, `angle.lift`, `angle.tap`;
   `deal.flipPerspective` serves every card that turns over); `choreography.ts` holds only the
   tier helpers. `stagger.metric` is `stagger.digits`. Retired: the legacy `data-reveal` presets and
@@ -590,7 +590,7 @@ src/styles/
   pages/detail.css, pages/pages.css                                     (Layout)
 src/motion/
   tokens.ts                    motion tokens (Foundation; every motion value lives here, I3)
-  scenes/deal-scene.ts         useDealScene (Motion); scenes/pin.ts
+  scenes/deal-scene.ts         useDealScene (Motion)
   table-store.ts               the table store (Foundation)
   reveal.ts                    the reveal engine; kinds.ts (the ten kinds), jobs.ts (scheduler),
                                first-load.ts, split.ts (Motion+ splitText), deal.ts, choreography.ts
@@ -770,7 +770,7 @@ strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label
 `slot.markScale` (`--slot-mark-scale`, G4); `reveal.mask` also as `--reveal-mask`;
 `duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s, B1);
 `distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
-(`--wght-<kebab>`), `opsz`, `field.*` (incl. `pinnedDetail`, `poolDrift`, `poolDriftPeriods`
+(`--wght-<kebab>`), `opsz`, `field.*` (incl. `ignoreHeight` (R4), `poolDrift`, `poolDriftPeriods`
 (G1) and `contourDrift` (B1: `x` 8 px, `y` 5 px, `scale` 1.03, `period` 120 s there and back →
 `--contour-drift-x`, `--contour-drift-y`, `--contour-drift-scale`, `--dur-contour-drift` (one
 way, 60 s))), `hand.*` (geometry mirrored in `tokens.css`).
@@ -1029,8 +1029,9 @@ function useDealScene(ref: RefObject<HTMLElement | null>, options: DealSceneOpti
 Full tier, from 1024 px, used only by the case-study `DealRow` (I9): the root becomes a
 `deal.stage` (180 svh) sticky stage, the card row pins under the header and Motion's `scroll()`
 deals the four cards face up (readable from the moment they move, D6) from a deck in five phases
-(`deal.phases`), each landing with a quarter of its hand-fan tilt, then the row squares up; the background field renders at
-`field.pinnedDetail` of its resolution while pinned. Reduced, narrow screens or a row
+(`deal.phases`), each landing with a quarter of its hand-fan tilt, then the row squares up. The
+cards carry `will-change: transform` from the scene's mount to its unmount (never toggled at the
+pin boundaries); the background field is never resized by a scene (R4). Reduced, narrow screens or a row
 taller than the space under the header: nothing is touched and the static row stays. Returns
 `{ active }` (`data-scene-active` on the root while it runs). The mobile "1 / 4" position is not
 scene state; DealRow (Layout) tracks it (D5). (The About timeline's scroll-linked drawing is gone:

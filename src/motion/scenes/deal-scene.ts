@@ -5,7 +5,6 @@ import { type RefObject, useLayoutEffect, useState } from 'react'
 import { breakpoints, headerHeight } from '@/design/layout'
 import { angle, deal as DEAL, distance, ease } from '../tokens'
 import { onTierChange, readTier } from '../use-tier'
-import { setPinned } from './pin'
 
 /*
  * The deal scene: DealRow's four decision cards dealt onto the table as the
@@ -23,8 +22,9 @@ import { setPinned } from './pin'
  *   0.6–0.8  card 4              lands with a slight tilt
  *   0.8–1.0  settle              the row squares up
  *
- * While the row is pinned the background field renders at half resolution.
- * Reduced, narrow screens, a row taller than the viewport or no
+ * The cards carry will-change: transform for as long as the scene is mounted
+ * (set once, never toggled at the pin boundaries: that re-rasterised them
+ * mid-scroll); the background field is never resized by the scene. Reduced, narrow screens, a row taller than the viewport or no
  * JavaScript: nothing is touched and Layout's static row stays (no CSS ever
  * hides the cards). Everything the scene writes is inline and removed again.
  */
@@ -96,7 +96,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
   let on = false
   let slots: Slot[] = []
   let progress = 0
-  let pinned = false
   let stopScroll: (() => void) | null = null
   let ro: ResizeObserver | null = null
 
@@ -121,12 +120,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
       // moment it starts moving.
       card.style.zIndex = String(t < 1 ? n * 2 - i : n - i)
     })
-    const nowPinned = p > 0 && p < 1
-    if (nowPinned !== pinned) {
-      pinned = nowPinned
-      setPinned(pinned)
-      for (const card of cards) card.style.willChange = pinned ? 'transform' : ''
-    }
   }
 
   const clear = () => {
@@ -134,10 +127,7 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
       card.style.translate = ''
       card.style.rotate = ''
       card.style.zIndex = ''
-      card.style.willChange = ''
     }
-    if (pinned) setPinned(false)
-    pinned = false
   }
 
   const start = () => {
@@ -182,6 +172,8 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     render(progress)
   }
 
+  // One compositor layer per card for the scene's lifetime: promoted once here, released on unmount.
+  for (const card of cards) card.style.willChange = 'transform'
   measure()
   ro = new ResizeObserver(() => measure())
   ro.observe(list)
@@ -191,5 +183,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     ro?.disconnect()
     removeEventListener('resize', measure)
     if (on) stop()
+    for (const card of cards) card.style.willChange = ''
   }
 }

@@ -41,3 +41,21 @@ One session, in this order (the background first: every other check depends on i
 - **Idle note on short phones.** At 390 × 800 and 360 × 740 the idle note (fixed above the fan)
   overlaps the last "What I bring" item; at 390 × 844 and taller it clears. Its phone placement
   predates round 2; give it a spot that follows the home layout.
+
+## Resolved
+
+- **Flicker in chapter 05 (team-of-teams deal scene)**, feedback round 3, item 4. *Cause:* when
+  the decision row pinned or unpinned, the field engine switched the canvas to half resolution
+  (`field.pinnedDetail`) and resized it from the pin callback. Resizing a WebGL canvas clears its
+  drawing buffer, and the next draw came a frame later, so one blank frame showed at each pin
+  boundary. At the same moment the deal scene toggled `will-change: transform` on the four cards,
+  which promoted and demoted their layers and re-rasterised them mid-scroll (a full-page paint
+  flash). *Fix:* `field.pinnedDetail` and `src/motion/scenes/pin.ts` are gone; the canvas is sized
+  only by its ResizeObserver (`device-pixel-content-box` where supported), which draws in the same
+  callback before paint; a size change inside the loop (About's morph) is applied at the start of
+  an animation frame and drawn in that frame. The field container is `100lvh`, and a height-only
+  change under 120 px is ignored (`field.ignoreHeight`), so mobile toolbars never resize it. The
+  deal cards get `will-change: transform` once when the scene mounts and lose it on unmount. The
+  sticky stage has no transformed ancestor and nothing uses `backdrop-filter`; the header keeps
+  one stable layer (`will-change: translate`) for hiding and showing.
+

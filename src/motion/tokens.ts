@@ -278,8 +278,11 @@ export const field = {
     [113, 151],
     [127, 103],
   ],
-  /** Resolution factor while a pinned scene holds the viewport (half of renderScale). */
-  pinnedDetail: 0.5,
+  /**
+   * Height-only changes of the canvas box smaller than this (CSS px) are ignored: a mobile toolbar
+   * showing or hiding where 100lvh is not supported. The canvas never resizes on scroll.
+   */
+  ignoreHeight: 120,
 } as const
 
 /** Reveals: trigger (Motion inView) and the kinds' fixed geometry. */

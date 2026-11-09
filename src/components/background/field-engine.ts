@@ -1,7 +1,6 @@
 import { contour, palette, type Identity } from '@/design/palette'
 import { identityOf } from '@/lib/hand-data'
 import { INTRO_DONE } from '@/motion/preferences'
-import { isPinned, onPinned } from '@/motion/scenes/pin'
 import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
@@ -169,6 +168,11 @@ export class FieldEngine {
     try {
       this.gl = new GlField(canvas, () => this.fallback())
       this.mode = 'gl'
+      // The first size, until the ResizeObserver reports the device-pixel box.
+      const rect = canvas.getBoundingClientRect()
+      const dpr = devicePixelRatio || 1
+      this.box = { w: rect.width, h: rect.height, dw: Math.round(rect.width * dpr), dh: Math.round(rect.height * dpr) }
+      this.applySize()
     } catch {
       this.mode = 'css'
     }
@@ -180,15 +184,6 @@ export class FieldEngine {
     const onIntroDone = () => this.go('fade', [1], 0, 'linear')
     addEventListener(INTRO_DONE, onIntroDone)
     this.offs.push(() => removeEventListener(INTRO_DONE, onIntroDone))
-    // A pinned scene (the decision deal) holds the viewport: half the field's resolution meanwhile.
-    const onPin = (pinned: boolean) => {
-      if (!this.gl) return
-      this.gl.detail = pinned ? F.pinnedDetail : 1
-      this.gl.resize()
-      this.kick(true)
-    }
-    if (isPinned()) onPin(true)
-    this.offs.push(onPinned(onPin))
     // A view transition can hold rendering past a short retarget (reduced: 160 ms): the
     // frames drawn meanwhile are never shown, so draw the settled state once it ends.
     const onTransitionDone = () => this.kick(true)
@@ -209,12 +204,15 @@ export class FieldEngine {
     }
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))
-    const ro = new ResizeObserver(() => {
-      this.gl?.resize()
-      this.setOrigin(this.origin)
-      this.kick(true)
-    })
-    ro.observe(canvas)
+    // The canvas is sized by this observer only (never by scrolling or a pinned scene): it reports
+    // the device-pixel box where supported, and the new size is drawn in the same callback (before
+    // paint), because resizing clears the drawing buffer.
+    const ro = new ResizeObserver((entries) => this.onResize(entries[entries.length - 1]))
+    try {
+      ro.observe(canvas, { box: 'device-pixel-content-box' })
+    } catch {
+      ro.observe(canvas)
+    }
     this.offs.push(() => ro.disconnect())
     if (this.mode === 'css') {
       this.syncCss(now)
@@ -485,6 +483,51 @@ export class FieldEngine {
     ]
   }
 
+  // ---------------------------------------------------------------- size
+
+  /** The canvas's CSS size and its device-pixel box (last accepted). */
+  private box = { w: 0, h: 0, dw: 0, dh: 0 }
+
+  private onResize(entry: ResizeObserverEntry) {
+    const css = entry.contentBoxSize?.[0]
+    const w = css ? css.inlineSize : entry.contentRect.width
+    const h = css ? css.blockSize : entry.contentRect.height
+    const dpr = devicePixelRatio || 1
+    const dev = entry.devicePixelContentBoxSize?.[0]
+    const dw = dev ? dev.inlineSize : Math.round(w * dpr)
+    const dh = dev ? dev.blockSize : Math.round(h * dpr)
+    const b = this.box
+    // The container is 100lvh, so mobile toolbars never resize it; where lvh is missing, a
+    // height-only change smaller than F.ignoreHeight (a toolbar) is ignored too.
+    if (b.w && w === b.w && dw === b.dw && Math.abs(h - b.h) < F.ignoreHeight) return
+    this.box = { w, h, dw, dh }
+    this.setOrigin(this.origin)
+    if (this.applySize()) this.drawNow()
+    else this.kick(true)
+  }
+
+  /** Drawing-buffer size for the current state: the field's low resolution at rest. */
+  private targetSize() {
+    const { w, h } = this.box
+    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale
+    return [w * scale, h * scale] as const
+  }
+
+  /** Applies the target size to the drawing buffer; true when it changed (and was cleared). */
+  private applySize() {
+    if (!this.gl || !this.box.w) return false
+    const [w, h] = this.targetSize()
+    return this.gl.setSize(w, h)
+  }
+
+  /** Draws the current state right away (after a resize cleared the buffer). */
+  private drawNow() {
+    if (this.mode !== 'gl' || this.paused) return
+    this.sampleAll(performance.now())
+    this.draw()
+    this.kick()
+  }
+
   // ---------------------------------------------------------------- loop
 
   private setPaused() {
@@ -545,7 +588,9 @@ export class FieldEngine {
     if (continuous && interval) this.monitor(now, interval)
     // The monitor may have switched to the CSS field: no WebGL frame after that.
     if (this.mode !== 'gl') return
-    if (now - this.lastDraw < 1000 / F.fps - 2) return
+    // A new buffer size is applied at the start of a frame and drawn in that same frame.
+    const resized = this.applySize()
+    if (!resized && now - this.lastDraw < 1000 / F.fps - 2) return
     const dt = this.lastDraw ? Math.min(now - this.lastDraw, 100) / 1000 : 0
     this.lastDraw = now
     if (continuous) this.time += dt

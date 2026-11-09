@@ -17,6 +17,8 @@
   /* Aligned with the Spread grid: the margin, or the centred 12 x 96 px columns from 1440. */
   padding: 0 max(var(--grid-margin), calc((100% - 1416px) / 2));
   transition: translate var(--dur-header-show) var(--ease-out-quint);
+  /* One stable compositor layer: hiding and showing never promotes / demotes (and repaints) it. */
+  will-change: translate;
 }
 .header::before {
   content: '';
@@ -34,6 +36,7 @@
 /* The hairline (the header's last child, on its bottom edge) stays in view along the top edge. */
 .header > :last-child {
   transition: translate var(--dur-header-show) var(--ease-out-quint);
+  will-change: translate;
 }
 :global(:root[data-header='hidden']) .header > :last-child {
   translate: 0 100%;
