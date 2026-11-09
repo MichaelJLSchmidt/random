@@ -89,10 +89,11 @@ export type Site = {
   header: { homeLabel: string; back: string; about: string; nav: string; language: string }
   footer: { note: string }
   /**
-   * The calm-motion switch in the header: `calmLabel` is the visible label, `calm` its accessible
-   * name (the same text when they agree); reducedHint shows while the system asks for reduced motion.
+   * The header's pause / play button for the background's ambient motion: `pause` is its accessible
+   * name (it stays the same in both states; aria-pressed carries the state), `play` the tooltip
+   * while paused.
    */
-  settings: { calm: string; calmLabel: string; calmOn: string; calmOff: string; reducedHint: string }
+  settings: { pause: string; play: string }
   /** The "?" sheet. */
   shortcuts: { title: string; close: string; items: { keys: string; label: string }[] }
   /** Egg announcements (live region): new hand, tap, rare pull, Coffee dealt, an About card flipped. */

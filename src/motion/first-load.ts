@@ -18,8 +18,7 @@ import { readTier } from './use-tier'
  *  1000–1250   5. "What I bring to the table", its items 80 apart, the hint ("items", "hint")
  *  1250–2000   6. the hand: the four cards dealt one after the other (330 ms, 140 apart)
  *  then the chrome ([data-chrome]: the header)
- * Calm: every value × 0.6 and the hand fades in. Reduced: everything at once,
- * 160 ms opacity. Any key, click, wheel or scroll completes it.
+ * Reduced: everything at once, 160 ms opacity. Any key, click, wheel or scroll completes it.
  *
  * Revisit (same session) or a client navigation back to home: every part
  * crossfades, the title at 0 and the rest 60 ms later, 240 ms each (all
@@ -77,7 +76,7 @@ export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[], sta
     // Storage blocked: the intro may play again on the next home visit.
   }
   const tier = readTier()
-  // Offsets and durations for this tier (calm × 0.6; reduced: offsets 0, durations 160 ms).
+  // Offsets and durations for this tier (reduced: offsets 0, durations 160 ms).
   const t = (s: number) => gapFor(tier, s)
   const d = (s: number) => spanFor(tier, s)
   const F = AT.firstLoad

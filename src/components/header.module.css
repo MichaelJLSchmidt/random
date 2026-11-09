@@ -84,7 +84,7 @@
  * the head and the label follow, the label rising from its mask. Back ->
  * wordmark runs the same pieces the other way. The mark is one box: it never
  * depends on its letters, so an SVG logo drops in unchanged.
- * Calm: the duration tokens are x 0.6. Reduced: a 160 ms crossfade, nothing moves.
+ * Reduced: a 160 ms crossfade, nothing moves.
  */
 .slot {
   display: inline-grid;

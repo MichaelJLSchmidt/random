@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { announce } from '@/components/live-region'
 import { fill } from '@/lib/format'
-import { deal, durFor, spring, springCss } from '@/motion/tokens'
+import { deal, spring, springCss } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { buzz } from './haptics'
 
@@ -42,8 +42,6 @@ export function WorkshopDraw({ button, again, drawn, methods }: Props) {
           easing: flip.easing,
         },
       )
-    } else if (tier === 'calm') {
-      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: durFor(tier, 'm') * 1000 })
     }
     setIndex(next)
     announce(fill(drawn, { title: method.title, howTo: method.howTo }))

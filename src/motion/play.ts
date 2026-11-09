@@ -18,7 +18,7 @@ import { LOCALE, NAV, PLAY, RETURN, SWITCH } from './transitions'
  *            430 ms navigate with type "play" (switch: 400 ms, type "switch")
  *   return   the field contracts into the slot; navigate with type "return"
  *
- * Calm and reduced skip the lift and navigate at once; so does a card that is
+ * Reduced skips the lift and navigates at once; so does a card that is
  * not on screen (the mobile rail) or one tapped in the mobile sheet.
  */
 type Navigate = (href: string, types: string[], replace?: boolean) => void
@@ -213,7 +213,7 @@ export const heroWasVisible = (id: string) => heroOnScreen === id
 /**
  * A return with the hero scrolled away: no shared-element morph. The card is
  * dealt into its own slot instead: it rises from just below with opacity
- * (dur.m, outQuint; calm: a fade x 0.6; reduced: a 160 ms fade). Nothing flies
+ * (dur.m, outQuint; reduced: a 160 ms fade). Nothing flies
  * in from off screen.
  */
 export function dealIn(card: HTMLElement) {

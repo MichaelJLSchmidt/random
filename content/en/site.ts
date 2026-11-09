@@ -21,11 +21,8 @@ export const site: Site = {
   },
   footer: { note: 'Moritz Lauber · Bern, Switzerland · Last updated November 2026' },
   settings: {
-    calm: 'Calm motion',
-    calmLabel: 'Calm',
-    calmOn: 'Calm motion on',
-    calmOff: 'Calm motion off',
-    reducedHint: 'Set by your system',
+    pause: 'Pause background motion',
+    play: 'Play background motion',
   },
   shortcuts: {
     title: 'Keyboard shortcuts',

@@ -233,7 +233,7 @@ export function revealRoute(kind: NavigationKind) {
   // delivers it, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
   const morphed = kind === 'play' || kind === 'switch'
   // The page starts revealing once the morph has mostly landed: zoomLanded of the view
-  // transition as this tier runs it (calm keeps the full-length morph; reduced has no offsets).
+  // transition as this tier runs it (reduced has no offsets).
   const morph = kind === 'switch' ? D.switchDelay + D.switchIn : D.zoom
   const base = morphed && tier !== 'reduced' ? morph * tiers[tier].vt * R.zoomLanded * 1000 : 0
   if (morphed)

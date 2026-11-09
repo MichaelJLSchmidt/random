@@ -4,7 +4,8 @@ import { INTRO_DONE } from '@/motion/preferences'
 import { isPinned, onPinned } from '@/motion/scenes/pin'
 import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
-import { type MotionTier, duration as D, field as F, motionScale, reducedCrossfade } from '@/motion/tokens'
+import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
+import { ambientPaused, onAmbientChange } from '@/motion/use-tier'
 import { CssField } from './field-css'
 import { type FieldFrame, GlField } from './field-gl'
 import { hexToLab, labCss, labToRgb } from './oklab'
@@ -18,7 +19,10 @@ import { type EaseName, Track, easeCss } from './tracks'
  * any of it.
  *
  *   rest     ink pools breathing on a 9 s sine, their centres drifting on slow
- *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier)
+ *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier).
+ *            This is the ambient motion the header's pause button stops: the
+ *            field's clock freezes where it is (html[data-ambient="paused"]);
+ *            hover, bloom, switch and About's morph still run.
  *   hover    A's mid/glow blend to the card's, intensity up, pools lean to its slot
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
@@ -93,6 +97,8 @@ export class FieldEngine {
   private lastFrame = 0
   private lastDraw = 0
   private paused = false
+  /** The visitor paused ambient motion: the clock stands still (transitions still run). */
+  private held = false
   private saveData = false
   private samples: number[] = []
   private slowWindows = 0
@@ -143,7 +149,8 @@ export class FieldEngine {
       line: srgb(contour.line),
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
-    this.tracks.motion.jump([this.continuous() ? 1 : 0], performance.now())
+    this.held = ambientPaused()
+    this.tracks.motion.jump([this.animated() ? 1 : 0], performance.now())
 
     const now = performance.now()
     // Hydration and the first navigation are busy: judge frame times after that.
@@ -151,7 +158,7 @@ export class FieldEngine {
     if (document.documentElement.dataset.intro === 'first') {
       // First visit: the field fades in from black.
       this.tracks.fade.jump([0], now)
-      this.tracks.fade.set([1], this.dur(D.fieldIn, D.fieldIn * motionScale.calm), 'outSoft', now)
+      this.tracks.fade.set([1], this.dur(D.fieldIn), 'outSoft', now)
     }
 
     try {
@@ -182,6 +189,14 @@ export class FieldEngine {
     const onTransitionDone = () => this.kick(true)
     addEventListener(VT_DONE, onTransitionDone)
     this.offs.push(() => removeEventListener(VT_DONE, onTransitionDone))
+    // Pause / play (the header's button): freeze or restart the clock in place.
+    this.offs.push(
+      onAmbientChange((paused) => {
+        this.held = paused
+        this.samples = []
+        this.kick(true)
+      }),
+    )
     const onVisibility = () => this.setPaused()
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))
@@ -289,14 +304,14 @@ export class FieldEngine {
     if (s.sheetOpen !== p.sheetOpen) this.setPaused()
   }
 
-  /** Tier-scaled duration: full as given, calm as given or `calm`, reduced one 160 ms crossfade. */
-  private dur(full: number, calm = full) {
-    return this.tier === 'reduced' ? reducedCrossfade : this.tier === 'calm' ? calm : full
+  /** Tier-scaled duration: full as given, reduced one 160 ms crossfade. */
+  private dur(full: number) {
+    return this.tier === 'reduced' ? reducedCrossfade : full
   }
 
   private setTier(tier: MotionTier) {
     this.tier = tier
-    this.go('motion', [this.continuous() ? 1 : 0], D.crossfade, 'outSoft')
+    this.go('motion', [this.animated() ? 1 : 0], D.crossfade, 'outSoft')
     // Reduced shows the poster on About instead of the contours; leaving reduced brings them back.
     const topo = table.get().field.topo && tier !== 'reduced' ? 1 : 0
     if (topo !== this.wantTopo) this.toTopo(topo, reducedCrossfade, 'linear')
@@ -318,7 +333,7 @@ export class FieldEngine {
     const iTo = t.spread ? F.intensityPage : F.intensityRest
     // Reduced shows the region's poster on About instead of the contours.
     const topo = t.topo && this.tier !== 'reduced' ? 1 : 0
-    const topoDur = this.dur(D.topo, D.calmBloom)
+    const topoDur = this.dur(D.topo)
     const spreadNow = tr.spread.value[0]
     const settled = tr.spread.remaining(now) === 0
 
@@ -374,8 +389,8 @@ export class FieldEngine {
         break
 
       case 'crossfade': {
-        // Calm turns bloom / unbloom / switch into a 500 ms crossfade; reduced swaps in 200 ms.
-        const dur = this.dur(D.crossfade, t.kind === 'crossfade' ? D.crossfade : D.calmBloom)
+        // Reduced turns bloom / unbloom / switch into a 160 ms crossfade.
+        const dur = this.dur(D.crossfade)
         if (settled && spreadNow > 0.99 && !t.spread) {
           // Flatten B into A (invisible), then fade A.
           this.jump('a', tr.b.value)
@@ -503,9 +518,14 @@ export class FieldEngine {
     }
   }
 
-  /** The loop runs while something moves; full tier breathes, so it keeps running. */
-  private continuous() {
+  /** Breath and drift may move at all (full tier, no data saver); `motion` eases toward this. */
+  private animated() {
     return this.tier === 'full' && !this.saveData
+  }
+
+  /** The loop runs while something moves; the breathing field keeps it running unless paused. */
+  private continuous() {
+    return this.animated() && !this.held
   }
 
   private dirty = true
@@ -598,7 +618,7 @@ export class FieldEngine {
     f.pull = t.pull.value as [number, number]
     f.pullAmt = hover * 0.5 * motion
     // Drift: each pool's centre loops a slow Lissajous figure, 2.5% of the viewport (full tier;
-    // the field's clock stops in calm and reduced, and `motion` eases the offset back to 0).
+    // the clock stops in reduced, where `motion` eases the offset back to 0, and while paused).
     const aspect = innerWidth / Math.max(1, innerHeight)
     const reach = F.poolDrift * motion
     F.poolDriftPeriods.forEach(([px, py], i) => {

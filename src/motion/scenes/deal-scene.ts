@@ -24,7 +24,7 @@ import { setPinned } from './pin'
  *   0.8–1.0  settle              the row squares up
  *
  * While the row is pinned the background field renders at half resolution.
- * Calm, reduced, narrow screens, a row taller than the viewport or no
+ * Reduced, narrow screens, a row taller than the viewport or no
  * JavaScript: nothing is touched and Layout's static row stays (no CSS ever
  * hides the cards). Everything the scene writes is inline and removed again.
  */

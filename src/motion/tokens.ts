@@ -16,26 +16,26 @@ import { type as typeScale } from '@/design/type'
  *   ease     outExpo, outQuint, inOut                       --ease-out-expo, --ease-out-quint, --ease-in-out
  *   stagger  words 70, lines 60, items 50, cards 80, svgGroups 120 ms
  *                                                           --stagger-words ... --stagger-svg-groups
- *   tiers    full x1, calm x0.6, reduced: 160 ms crossfades only
+ *   tiers    full x1; reduced (prefers-reduced-motion): 160 ms crossfades only
  *                                                           --motion-scale, --dur-reduced
  * Everything below the scale (duration.*, ease.outSoft, ...) is the table's
  * vocabulary (hand, play, field, eggs) plus the reveal choreography's fixed
  * values (reveal, deal, timeline, discard). Nothing here is unreferenced.
  */
 
-export type MotionTier = 'full' | 'calm' | 'reduced'
+export type MotionTier = 'full' | 'reduced'
 
 /** The duration scale, in seconds (CSS: --dur-xs ... --dur-xl, tier-scaled). */
 export const dur = { xs: 0.16, s: 0.24, m: 0.42, l: 0.64, xl: 0.9 } as const
 export type DurationStep = keyof typeof dur
 
 /** Tier multipliers for the scale. Reduced replaces every duration with one 160 ms crossfade. */
-export const motionScale = { full: 1, calm: 0.6, reduced: 0 } as const satisfies Record<MotionTier, number>
+export const motionScale = { full: 1, reduced: 0 } as const satisfies Record<MotionTier, number>
 export const reducedCrossfade = 0.16
 
-/** A scale duration (s) for a tier: full as is, calm x0.6, reduced always 160 ms. */
+/** A scale duration (s) for a tier: full as is, reduced always 160 ms. */
 export function durFor(tier: MotionTier, step: DurationStep) {
-  return tier === 'reduced' ? reducedCrossfade : dur[step] * motionScale[tier]
+  return tier === 'reduced' ? reducedCrossfade : dur[step]
 }
 
 const outExpo = [0.16, 1, 0.3, 1] as const
@@ -89,15 +89,16 @@ export const duration = {
   hoverIntent: 0.08,
   breath: 9,
   fieldIn: 1.2,
-  /** About: the gradient's colour bands narrow into the contour lines (and back on leaving). */
+  /**
+   * About: the gradient's pools contract and fade into the contour field's ground while the contour
+   * layer reveals through a radial mask from the centre (and back on leaving).
+   */
   topo: 1.6,
-  calmBloom: 0.5,
   // Reveals (the rest use the scale, dur.*)
   /** Digits: one value's strips, from the first strip's start to the last strip's end. */
   digits: 0.7,
-  /** SVG strokes (draw kind): full, and calm's own value (not × 0.6). */
+  /** SVG strokes (draw kind). */
   svgDraw: 1.2,
-  svgDrawCalm: 0.5,
   /** New hand: each card flies off to the dealer. */
   gather: 0.44,
   /** Play: a lift whose route never changed (offline, error) settles back after this. */
@@ -134,8 +135,8 @@ export const at = {
   /**
    * Home, first visit (<FirstLoadSequence>, src/motion/first-load.ts): when each part starts and
    * how long it takes, in order. Steps 1-5 take about 1.25 s together, the hand the last 0.75 s;
-   * the chrome (header) follows the hand. Calm: every value x 0.6. Reduced: all at once, 160 ms
-   * crossfades. Revisits in the same session stay a short crossfade.
+   * the chrome (header) follows the hand. Reduced: all at once, 160 ms crossfades. Revisits in the
+   * same session stay a short crossfade.
    */
   firstLoad: {
     /** 1. The name: its words turn up and settle (opsz / wght), stagger.words apart. */
@@ -155,7 +156,7 @@ export const at = {
    * Detail pages (case studies, Management), above the fold, after the card morph or on a direct
    * load: the title and hero as before, then the summary, the top label and counter, then the
    * meta data left to right (each pair: rule, then label, then value). Offsets from the title's
-   * start; calm x 0.6; reduced 160 ms crossfades.
+   * start; reduced 160 ms crossfades.
    */
   detail: {
     summary: 0.2,
@@ -170,11 +171,11 @@ export const at = {
 /**
  * The idle hint (home, once per session): after `after` seconds without a click, tap or key press
  * a handwritten note writes itself (a left-to-right reveal, `write` s), then its arrow draws
- * (`arrow` s, after `gap`). The next click, tap or key press fades it out (`fade`). Calm: every
- * value x 0.6 except `after`; reduced: one 160 ms fade in and out.
+ * (`arrow` s, after `gap`). The next click, tap or key press fades it out (`fade`). Reduced: one
+ * 160 ms fade in and out.
  */
 export const idle = {
-  after: 30,
+  after: 10,
   write: 1.2,
   gap: 0.08,
   arrow: 0.7,
@@ -357,14 +358,13 @@ export const hand = {
 } as const
 
 /*
- * Tiers. full (default), calm (site toggle), reduced (prefers-reduced-motion,
- * overrides calm). For the table vocabulary: `vt` scales view-transition
- * timings (reduced: near-instant), `ui` scales hover/fill/underline timings,
- * `travel` scales distances. The scale (dur) uses motionScale instead.
+ * Tiers. full (default) and reduced (prefers-reduced-motion). For the table
+ * vocabulary: `vt` scales view-transition timings (reduced: near-instant), `ui`
+ * scales hover/fill/underline timings, `travel` scales distances. The scale
+ * (dur) uses motionScale instead.
  */
 export const tiers = {
   full: { vt: 1, ui: 1, travel: 1 },
-  calm: { vt: 1, ui: motionScale.calm, travel: 0 },
   reduced: { vt: 0.1, ui: 0, travel: 0 },
 } as const satisfies Record<MotionTier, unknown>
 
@@ -441,7 +441,6 @@ export function motionCss(): string {
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,
-    `:root[data-motion="calm"]{${vars('calm')}}`,
     `:root[data-motion="reduced"]{${vars('reduced')}}`,
     // No-JS fallback: the pre-paint script normally sets data-motion="reduced".
     `@media (prefers-reduced-motion:reduce){:root{${vars('reduced')}}}`,

@@ -25,7 +25,7 @@ precision highp float;
 
 uniform vec2 uRes;          // drawing-buffer size in pixels
 uniform float uAspect;      // width / height
-uniform float uTime;        // field time in seconds (frozen in calm / reduced)
+uniform float uTime;        // field time in seconds (frozen in reduced and while paused)
 uniform vec3 uA[3];         // field, mid, glow (sRGB)
 uniform vec3 uB[3];
 uniform vec2 uI;            // pool intensity of A and B

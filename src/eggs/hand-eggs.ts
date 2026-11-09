@@ -2,7 +2,7 @@ import { announce } from '@/components/live-region'
 import { activeChrome } from '@/lib/chrome'
 import { dealOffset, drawCards, fanCards } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
-import { duration as D, deal, durFor, ease, stagger } from '@/motion/tokens'
+import { duration as D, deal, ease, stagger } from '@/motion/tokens'
 import { buzz } from './haptics'
 import { eggOn } from './registry'
 
@@ -43,18 +43,6 @@ export async function mulligan() {
     )
     for (const card of cards) for (const a of card.getAnimations()) a.cancel()
     drawCards(cards, 0)
-  } else if (tier === 'calm') {
-    await Promise.all(
-      cards.map(
-        (c) =>
-          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' })
-            .finished,
-      ),
-    )
-    for (const card of cards) {
-      for (const a of card.getAnimations()) a.cancel()
-      card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: durFor(tier, 'm') * 1000 })
-    }
   }
   announce(activeChrome().site.eggs.dealt)
   dealing = false

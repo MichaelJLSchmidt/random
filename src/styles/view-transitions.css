@@ -2,8 +2,8 @@
  * View transitions for play / return / switch / nav. Classes come from the
  * React <ViewTransition> maps in src/motion/transitions.ts; every map has a
  * default, so browser back / forward (no transition type) gets the same
- * morphs. Durations are tier-scaled custom properties (reduced: near-instant;
- * calm: travel distances are 0, so exits become fades). Nothing here wipes
+ * morphs. Durations are tier-scaled custom properties (reduced: near-instant,
+ * travel distances 0, so exits become fades). Nothing here wipes
  * across the page: colour changes happen in the background field.
  */
 
@@ -192,8 +192,8 @@
 
 /*
  * Language switch (type "locale", :root[data-locale-switch] while it runs): the same page in the
- * other language. Everything with words cross-fades once, in place, over --dur-s (calm x 0.6,
- * reduced 160 ms): the page and the card faces (.locale-fade, from the React maps in
+ * other language. Everything with words cross-fades once, in place, over --dur-s (reduced
+ * 160 ms): the page and the card faces (.locale-fade, from the React maps in
  * transitions.ts), the header, the hand, the rail and the footer. Nothing moves or resizes; the
  * field (root) stays live. Never the card morph.
  */

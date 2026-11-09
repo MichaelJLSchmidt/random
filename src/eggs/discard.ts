@@ -7,9 +7,9 @@ import { duration as D, angle, discard as DISCARD, distance, ease } from '@/moti
  * 404 discard (egg, see registry.ts): the .lost-card (a draw reveal around
  * DiscardedCard) falls face down into the discard zone and comes to rest at
  * its own pose (the page tilts it with --angle-discard and nudges it off the
- * pile). Full: from above, rotation 0 → rest, 700 ms; calm: a short rise and
- * fade (× 0.6); reduced: a fade. Every animation ends on the element's own
- * style, so nothing jumps when the job cancels it.
+ * pile). Full: from above, rotation 0 → rest, 700 ms; reduced: a fade. Every
+ * animation ends on the element's own style, so nothing jumps when the job
+ * cancels it.
  */
 export function discard(ctx: JobContext, card: HTMLElement) {
   if (ctx.tier === 'reduced') return fade(ctx, card)
@@ -18,18 +18,6 @@ export function discard(ctx: JobContext, card: HTMLElement) {
   const [x = '0px', y = '0px'] = cs.translate === 'none' ? [] : cs.translate.split(' ')
   const rest = { translate: `${x} ${y}`, rotate: cs.rotate === 'none' ? '0deg' : cs.rotate }
   const above = (px: number) => `${x} calc(${y} - ${px}px)`
-  if (ctx.tier === 'calm') {
-    ctx.animate(
-      card,
-      [
-        { opacity: 0, translate: above(-distance.reveal) },
-        { opacity: 1, ...rest },
-      ],
-      { duration, easing: bezier(ease.outQuint), fill: 'backwards' },
-      'transform, opacity',
-    )
-    return
-  }
   // A card with no resting angle of its own turns in from the discard angle.
   const from = cs.rotate === 'none' ? `${-angle.discard}deg` : '0deg'
   ctx.animate(

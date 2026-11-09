@@ -11,8 +11,6 @@ import { type DurationStep, angle, at, distance, duration, ease, hand, opsz, rev
  * styles; the job cancels the animations when they finish.
  *
  * Reduced motion: every kind is one opacity crossfade (160 ms), no transform.
- * Calm: durations and staggers × 0.6 (choreography.ts); `lines` splits only
- * h1 / h2, the rest of `lines` reveals as `block`; SVG strokes take 500 ms.
  */
 export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair'
 
@@ -96,7 +94,6 @@ export async function lines(ctx: JobContext, el: HTMLElement, opts: KindOptions 
     )
     return
   }
-  if (ctx.tier === 'calm' && !/^H[12]$/.test(el.tagName)) return block(ctx, el, 0, { dur: opts.span })
   const plus = await splitReady(el)
   if (ctx.done) return
   const split = splitLines(el, plus)

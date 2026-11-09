@@ -23,11 +23,8 @@ export const site: Site = {
   },
   footer: { note: 'Moritz Lauber · Bern, Schweiz · Zuletzt aktualisiert im November 2026' },
   settings: {
-    calm: 'Ruhigere Animationen',
-    calmLabel: 'Ruhig',
-    calmOn: 'Ruhigere Animationen an',
-    calmOff: 'Ruhigere Animationen aus',
-    reducedHint: 'Vom System vorgegeben',
+    pause: 'Hintergrundbewegung anhalten',
+    play: 'Hintergrundbewegung abspielen',
   },
   shortcuts: {
     title: 'Tastenkürzel',

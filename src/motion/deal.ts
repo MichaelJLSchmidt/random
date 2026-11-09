@@ -56,7 +56,7 @@ export function drawCards(
   })
 }
 
-/** Calm and reduced: the hand fades in instead of flying (same order); all values in ms. */
+/** Reduced: the hand fades in instead of flying (same order); all values in ms. */
 export function fadeCards(cards: HTMLElement[], duration: number, gap: number, start = 0) {
   return cards.map((card, i) => {
     card.dataset.drawn = ''

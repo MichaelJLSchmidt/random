@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ease, idle, motionScale, reducedCrossfade } from '@/motion/tokens'
+import { ease, idle, reducedCrossfade } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { eggOn } from './registry'
 
@@ -15,7 +15,7 @@ const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
  * handwritten note appears beside the hand: the text writes itself word by
  * word, each word revealed left to right, then a curly arrow draws toward the
  * cards. The next click, tap or key press fades it out. Once per session.
- * Decorative: aria-hidden. Calm: every duration x 0.6; reduced: a 160 ms fade.
+ * Decorative: aria-hidden. Reduced: a 160 ms fade.
  * Mounted by the home page, so it never shows anywhere else. The handwriting
  * font (Caveat) is fetched only when the note renders.
  */
@@ -23,7 +23,7 @@ export function IdleHint({ note }: { note: string }) {
   const [state, setState] = useState<'waiting' | 'shown' | 'gone'>('waiting')
   const ref = useRef<HTMLDivElement>(null)
 
-  // Wait for 30 s without input (every click, tap or key press starts the wait again).
+  // Wait for idle.after (10 s) without input (every click, tap or key press starts the wait again).
   useEffect(() => {
     if (state !== 'waiting' || !eggOn('idleHint')) return
     try {
@@ -56,7 +56,6 @@ export function IdleHint({ note }: { note: string }) {
       sessionStorage.setItem(SHOWN_KEY, '1')
     } catch {}
     const tier = readTier()
-    const k = tier === 'calm' ? motionScale.calm : 1
     const anims: Animation[] = []
     let live = true
     let leaving = false
@@ -79,7 +78,7 @@ export function IdleHint({ note }: { note: string }) {
       const words = [...el.querySelectorAll<HTMLElement>('.idle-hint-word')]
       const widths = words.map((w) => w.offsetWidth)
       const total = widths.reduce((a, b) => a + b, 0) || 1
-      const write = idle.write * 1000 * k
+      const write = idle.write * 1000
       let t = 0
       words.forEach((w, i) => {
         const d = (widths[i] / total) * write
@@ -94,8 +93,8 @@ export function IdleHint({ note }: { note: string }) {
       })
       // Then the arrow: the curl, then its head.
       const [curl, head] = [...el.querySelectorAll<SVGPathElement>('.idle-hint-arrow path')]
-      const at = t + idle.gap * 1000 * k
-      const arrow = idle.arrow * 1000 * k
+      const at = t + idle.gap * 1000
+      const arrow = idle.arrow * 1000
       const curlTime = arrow * idle.arrowCurl
       for (const [path, delay, duration] of [
         [curl, at, curlTime],
@@ -117,7 +116,7 @@ export function IdleHint({ note }: { note: string }) {
       removeEventListener('pointerdown', leave, true)
       removeEventListener('keydown', leave, true)
       for (const a of anims) a.finish()
-      const fade = (tier === 'reduced' ? reducedCrossfade : idle.fade * k) * 1000
+      const fade = (tier === 'reduced' ? reducedCrossfade : idle.fade) * 1000
       el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: bezier(ease.outQuint), fill: 'forwards' })
         .finished.catch(() => {})
         .then(() => live && setState('gone'))

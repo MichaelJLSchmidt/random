@@ -165,7 +165,8 @@
   --l-intensity: var(--fb-i);
   clip-path: circle(calc(var(--fs) * var(--fr, 150vmax)) at var(--fx, 50%) var(--fy, 100%));
 }
-/* Breathing (full tier only): pool scale 1.00-1.06 on a 9 s sine; half when bloomed. */
+/* Breathing (full tier only): pool scale 1.00-1.06 on a 9 s sine; half when bloomed. Paused (the
+   header's pause button): the breath stops where it is. */
 @keyframes field-breath {
   to {
     transform: scale(1.06);
@@ -181,6 +182,9 @@
 }
 :root[data-motion='full'] .field-layer[data-layer='b']::before {
   animation-name: field-breath-half;
+}
+:root[data-ambient='paused'] .field-layer::before {
+  animation-play-state: paused;
 }
 
 /*
