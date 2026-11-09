@@ -123,7 +123,7 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246 cards, 72%
   visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows. Mobile: the fan
   on home, elsewhere a 48px peek rail that opens a bottom sheet (a native popover) with the
-  cards. One tab stop (arrows, Home/End). The header holds the home slot (the wordmark, or Back on
+  cards. One tab stop (arrows, Home/End). The header holds the home slot (the logo, or Back on
   detail pages), About and the calm-motion switch.
 - **Detail pages**: the played card continues as the hero: its media frame slides off the right
   edge (the hero photo, or Management's drawing), the display H1 runs onto it, then the facts,
@@ -132,7 +132,7 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   next card.
 - **Play / return / switch**: stage 1 lifts the card to where it will lie while the field blooms;
   stage 2 is React's view transition (`card-<slug>` and `card-title-<slug>` shared between the hand
-  card and the hero / H1), a same-shape zoom. Return: Back, Escape, the wordmark, browser back, or
+  card and the hero / H1), a same-shape zoom. Return: Back, Escape, the logo, browser back, or
   leaving a card page. Browser back / forward are replayed as typed navigations, so they morph
   too.
 
