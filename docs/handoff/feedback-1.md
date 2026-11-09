@@ -93,3 +93,60 @@ Production build (with count checks), `scripts/smoke.mjs` per tier at 1440×900 
 (updated for the removed routes, the removed counter and the new intro order), screenshots of
 home at six sizes and of a case study and About at three sizes, an independent review subagent
 against the numbered items, then merge, push `main` once and confirm the Pages deploy.
+
+## What shipped
+
+Every numbered item, as recorded in `docs/contracts.md#feedback-round-1` (which also lists the
+earlier decisions each one supersedes). In short:
+
+| Item | Where |
+| --- | --- |
+| Housekeeping | `CLAUDE.md` (parallel rule removed), `docs/backlog.md`, contracts, art direction, README, schema, content modules, count checks (`src/lib/content.ts`, `scripts/images/check.mjs`) |
+| G1 | `shader.ts` (`uDrift[3]`), `field-gl.ts`, `field-engine.ts`, `field.poolDrift*` |
+| G2 | `calm-switch.tsx` + `.module.css`; DisplaySettings deleted; `site.settings.reducedHint` |
+| G3 | `header.tsx` (About only), `hand.tsx` (sheet links gone) |
+| G4 | `header.tsx` / `header.module.css` (home slot morph), `duration.slotMorph`, `slotLag` |
+| G5 | `footer-shell.tsx`, `site-footer.tsx` |
+| H1 | `pages.css` (home), `page.tsx` |
+| H2 | `hand-counter.tsx` deleted; `attachTableLongPress` in `hand-eggs.ts`, wired in `eggs.tsx` |
+| H3 | `content/pages/home.ts` `bring` |
+| H4 | `at.firstLoad`, `first-load.ts` (rewritten), `kinds.ts` (`KindOptions`), `deal.ts` (timing), `data-reveal-step` |
+| H5 | `src/eggs/idle-hint.tsx`, `eggs.css`, `src/fonts/Caveat-wght.latin.woff2` (+ OFL), registry `idleHint` |
+| D1 | `at.detail`, `reveal.ts` (detail sequence), `kinds.ts` (`pair`), `meta-pairs.tsx`, `case-hero.tsx` |
+| D2 | `offset-image.tsx` (Spread deleted), `layout.css`, case / Management / About pages, `detail.css` (hero cap) |
+| D3 | `case-hero.tsx` (mini card gone, names only in view), `play.ts` (`heroVisible`, `dealIn`), `hand.tsx`, `route-focus.tsx` |
+| D4 | `case-sections.tsx` (`breaker` on 01–08, space l), `layout.css` (phone order) |
+| D5 | `closing-contact.tsx` deleted, `site.labels.contact*` gone |
+| D6 | `deal-scene.ts` (face up), `deal.stage` 180 |
+| D7 | `detail.css` (workshop subgrid) |
+| D8 | `team-of-teams.ts` (CareerMatrix), `case-sections.tsx` (`ArtefactDrawing`, text card), `detail.css` |
+| A1–A3 | `about.ts` (`projects`, `contact`), `about/page.tsx`, `pages.css`; routes and modules deleted; Coffee → `/about#contact` |
+| A4 | manifest, `content/images.ts`, files deleted (12 photos) |
+| A5 | `terrain.ts`, `field-gl.ts`, `shader.ts`, `field-engine.ts`, `background-field.tsx` (poster), `field.css`, `palette.ts` `contour`, `field.contours`; `public/terrain/`; `public/topo`, `scripts/topo`, `about-topo.tsx`, the `topo` script and `geotiff` deleted |
+
+## Decisions
+
+- The hint ("Pick a card", already in the content but not shown) is rendered: centred above the
+  fan from 1024, left on phones; H4 reveals it with the last item.
+- H4's step 5 window: the label at 1000 ms, the three items 80 ms apart (1080–1240), the hint with
+  the last item; the chrome (header) follows the hand at 2000 ms as before.
+- The `pair` reveal is a ninth reveal kind (rule, then parts): MetaPairs and the project rows.
+- D3's "plain deal-in": the card rises 24 px into its slot with opacity (no travel from off
+  screen); the title's view-transition name is dropped with the frame's, so nothing morphs.
+- D4: every chapter gets the large space; below 1024 the index label leads the numeral.
+- Offset images start on the left on every page (the hero runs right) and keep `data-breaker`.
+- A1's column header row ("Project, Year, Client, What I did") is shown from 1024 (aria-hidden;
+  rows carry sr-only labels). Rows are `li` elements without links or tab stops.
+- A5: quiet zones of the old field (lines dimmed behind text) are not used: they need per-frame
+  layout tracking and the brief asks for one still frame. Its top and bottom edge fade is kept as
+  a CSS layer. On a direct visit the poster shows until the heightmap is on the GPU, then the
+  identical live frame takes over (160 ms). The heightmap loads on About or on intent (a link to
+  About hovered, focused or touched), never on other pages.
+- `?idle` shortens the idle hint's wait to one second (like `?rare`), for checking.
+
+## Known issues
+
+- Large headless viewports (2560×1440) sometimes capture unrastered tiles on the first
+  screenshot (transparent or black boxes); a second capture of the same page is complete. Not
+  seen in the page itself.
+- Lighthouse, axe and cross-browser runs were out of scope.
