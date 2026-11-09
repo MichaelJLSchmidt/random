@@ -3,9 +3,10 @@
 A hidden page for comparing monogram concepts (M and F fused into one glyph):
 `/de/logo-lab/` or `/en/logo-lab/` under the base path, e.g. `/random/en/logo-lab/` (the lab
 itself is in English in both), and `?c=<id>` for a concept's detail
-view. Round 2 keeps 1 (hinted F), 3, 3B, 5 (open F) and 8 (Diagonal Cut); ids are stable, so deep
-links and stored scores survive, and a concept whose geometry changes gets a new `scoreKey`
-(old scores are pruned on load). It is not linked from the header, the hand, the footer or any page, and none of the marks
+view. Round 3 keeps the card fan (3, 3B) and the diagonal cut: 8 and its stemless versions 8B
+(floating arm), 8C (arm cut along the channel) and 8D (a proposal on 8C); 1 and 5 are gone. Ids
+are stable, so deep links and stored scores survive, and a concept whose geometry changes gets a
+new `scoreKey` (old scores are pruned on load). It is not linked from the header, the hand, the footer or any page, and none of the marks
 is used anywhere else on the site.
 
 **Delete the lab in one step:** remove `src/app/[locale]/logo-lab/` and `src/lab/logo/`. Nothing else
@@ -18,6 +19,8 @@ references them. No shared file was changed for the lab.
   lists them. `two-cards.ts` builds 3 and 3B (only the F differs); `diagonal-cut.ts` rebuilds the
   hand-drawn concept 8 from its outer edges and stroke weights (master, matched angles, thin
   master for the weight morph, favicon) and keeps the drawing itself as the "As drawn" variant.
+  `diagonal-cut-stemless.ts` uses the same generator for 8B–8D (the M plus one middle arm, same
+  parts and motion as 8).
 - Wide marks (8) have their own viewBox (`Variant.box`); `tree.ts` fits them by width into square
   and card containers.
 - `model.ts` (types), `geometry.ts` (grid constants, stroke outlines, valley solver),
@@ -31,7 +34,7 @@ references them. No shared file was changed for the lab.
   changes only).
 - `colours.ts`: identity, ground, colour mode and container → stage CSS and file colours.
 - `glyphs.ts` is generated: the M and F of Bricolage Grotesque at wght 800 and 200 (opsz 96) and
-  the H stem at the axis corners (for the lockup's weight match).
+  the H stem at the axis corners (for the lockup's weight match). Only the H stem is used now (the M and F outlines belonged to the removed concept 5).
 - `ui/`: the page (overview, line-up, tiles, detail views, scorecard, downloads) and `lab.css`.
   Scores, notes and the lockup wordmark live in `localStorage` (`logo-lab:*`) only.
 
