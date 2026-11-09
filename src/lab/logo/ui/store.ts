@@ -85,19 +85,33 @@ export function parseScore(raw: string | null): Score {
   }
 }
 
-export function useScore(n: number): [Score, (s: Score) => void] {
-  const [raw, set] = useStored(`score-${n}`, '')
+export function useScore(key: string): [Score, (s: Score) => void] {
+  const [raw, set] = useStored(key, '')
   return [parseScore(raw || null), (s) => set(JSON.stringify(s))]
 }
 
 /** Every concept's score at once (summary table). */
-export function useScores(ns: number[]): Score[] {
+export function useScores(keys: string[]): Score[] {
   const joined = useSyncExternalStore(
     subscribe,
-    () => ns.map((n) => read(`score-${n}`) ?? '').join('\u0000'),
-    () => ns.map(() => '').join('\u0000'),
+    () => keys.map((k) => read(k) ?? '').join('\u0000'),
+    () => keys.map(() => '').join('\u0000'),
   )
   return joined.split('\u0000').map((raw) => parseScore(raw || null))
+}
+
+/**
+ * Drops stored scores that no concept uses any more: removed concepts and the
+ * previous geometry of reworked ones (their scoreKey changed), so they start blank.
+ */
+export function pruneScores(keep: string[]) {
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith(`${PREFIX}score-`) && !keep.includes(k.slice(PREFIX.length))) localStorage.removeItem(k)
+    }
+  } catch {
+    // Storage blocked: nothing stored, nothing to prune.
+  }
 }
 
 export const total = (s: Score) => s.ratings.reduce((a, b) => a + b, 0)

@@ -1,21 +1,10 @@
 import type { Concept } from '../model'
-import { dealtModules } from './dealt-modules'
+import { diagonalCut } from './diagonal-cut'
 import { ligature } from './ligature'
-import { portraitStack } from './portrait-stack'
-import { ridgeConcept } from './ridge'
 import { sharedStem } from './shared-stem'
-import { twoCards } from './two-cards'
-import { umlautDots } from './umlaut-dots'
+import { twoCards, twoCardsDynamic } from './two-cards'
 
-/** The seven concepts, in brief order. */
-export const concepts: Concept[] = [
-  sharedStem,
-  portraitStack,
-  twoCards,
-  dealtModules,
-  ligature,
-  ridgeConcept,
-  umlautDots,
-]
+/** The concepts in the lab, in order. Ids are stable (deep links, stored scores). */
+export const concepts: Concept[] = [sharedStem, twoCards, twoCardsDynamic, ligature, diagonalCut]
 
-export const conceptByN = (n: number) => concepts.find((c) => c.n === n) ?? null
+export const conceptById = (id: string | null) => concepts.find((c) => c.id === id) ?? null

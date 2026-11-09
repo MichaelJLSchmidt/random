@@ -41,17 +41,12 @@ export function seqFor(moment: Moment | undefined, tier: LabTier): Seq | null {
   )
 }
 
-/** Total length of a sequence in ms. */
-export const lengthOf = (seq: Seq) => Math.max(0, ...seq.map((t) => t.at + ('dur' in t ? t.dur : 0)))
-
-export type Cue = 'next-identity'
 export type RunOptions = {
   speed?: number
   /** Build everything at its start pose but wait for play(). */
   paused?: boolean
   /** Keep the end state (hover): the run is released by reverse() or cancel(). */
   hold?: boolean
-  onCue?: (cue: Cue) => void
 }
 
 export type Run = {
@@ -69,7 +64,27 @@ export type Run = {
 type Controls = { speed: number; play(): void; pause(): void; cancel(): void; then(resolve: () => void): unknown }
 
 const partOf = (svg: SVGSVGElement, part: string): Element | null =>
-  part === ':root' ? svg : svg.querySelector(`[data-part="${CSS.escape(part)}"]`)
+  svg.querySelector(`[data-part="${CSS.escape(part)}"]`)
+
+/** A part's box in its own user space. Shapes inside masks are not rendered, so rects use their attributes. */
+function localBox(el: Element) {
+  if (el instanceof SVGRectElement) {
+    const n = (a: string) => Number(el.getAttribute(a) ?? 0)
+    return { x: n('x'), y: n('y'), width: n('width'), height: n('height') }
+  }
+  return (el as SVGGraphicsElement).getBBox()
+}
+
+/** "50% 100%" of the part's box → "x y" in user units. */
+function originIn(el: Element, origin: string) {
+  const b = localBox(el)
+  const [ox, oy] = origin.split(/\s+/).map((v, i) => {
+    const size = i === 0 ? b.width : b.height
+    const start = i === 0 ? b.x : b.y
+    return v.endsWith('%') ? start + (parseFloat(v) / 100) * size : start + parseFloat(v)
+  })
+  return `${ox}px ${oy}px`
+}
 
 /** The static colours the @neutral / @accent placeholders resolve to. */
 function paints(svg: SVGSVGElement) {
@@ -131,18 +146,12 @@ export function run(svg: SVGSVGElement, seq: Seq, opts: RunOptions = {}): Run {
 
   const ordered = [...seq].sort((a, b) => a.at - b.at)
   for (const track of ordered) {
-    if (track.kind === 'cue') {
-      // An empty animation as a clock, so cues follow speed and pause.
-      const clock = svg.animate([], { duration: track.at })
-      clock.playbackRate = speed
-      clock.finished.then(() => !done && opts.onCue?.(track.cue)).catch(() => {})
-      waapi.push(clock)
-      continue
-    }
     const el = partOf(svg, track.part)
     if (!el) continue
     if (track.kind === 'morph') {
       const original = el.getAttribute(track.attr)
+      // A morph belongs to one geometry (the master): on another variant it would jump, so it is skipped.
+      if (original !== track.values[0] && original !== track.values[track.values.length - 1]) continue
       if (!morphs.some((m) => m.el === el && m.track.attr === track.attr)) el.setAttribute(track.attr, track.values[0])
       morphs.push({ track, el, original: morphs.find((m) => m.el === el)?.original ?? original })
       continue
@@ -151,8 +160,11 @@ export function run(svg: SVGSVGElement, seq: Seq, opts: RunOptions = {}): Run {
     if (t.origin || t.box) {
       remember(el)
       const s = (el as SVGElement).style
-      s.transformBox = t.box ?? 'view-box'
-      if (t.origin) s.transformOrigin = t.origin
+      // Always view-box with the origin in user units: Firefox resolves fill-box
+      // wrongly for mask content (concept 3's knock-out), so box percentages are
+      // turned into coordinates here, from the part's own box.
+      s.transformBox = 'view-box'
+      if (t.origin) s.transformOrigin = t.box === 'fill-box' ? originIn(el, t.origin) : t.origin
     }
     const first = !seen.has(el)
     seen.add(el)
@@ -267,7 +279,16 @@ export function glint(svg: SVGSVGElement, speed = 1): Run {
     }
     mask.append(copy)
   }
-  const grad = el('linearGradient', { id: `${id}-g`, gradientUnits: 'userSpaceOnUse', x1: -10, y1: 0, x2: 10, y2: 0 })
+  // Band sizes are in 48ths of the viewBox width, so wide marks (concept 8) get the same glint.
+  const k = vb.w / 48
+  const grad = el('linearGradient', {
+    id: `${id}-g`,
+    gradientUnits: 'userSpaceOnUse',
+    x1: -10 * k,
+    y1: 0,
+    x2: 10 * k,
+    y2: 0,
+  })
   const stops: [number, string, number][] = [
     [0, 'var(--accent, currentColor)', 0],
     [0.32, 'var(--accent, currentColor)', 0.45],
@@ -280,13 +301,13 @@ export function glint(svg: SVGSVGElement, speed = 1): Run {
   }
   defs.append(mask, grad)
   const layer = el('g', { mask: `url(#${id}-m)`, 'data-fx': 'glint', 'aria-hidden': 'true' })
-  const band = el('rect', { x: -10, y: vb.y - vb.h, width: 20, height: vb.h * 3, fill: `url(#${id}-g)` })
+  const band = el('rect', { x: -10 * k, y: vb.y - vb.h, width: 20 * k, height: vb.h * 3, fill: `url(#${id}-g)` })
   layer.append(band)
   svg.append(defs, layer)
   const anim = band.animate(
     [
-      { transform: `translate(${vb.x - 14}px, 0px) skewX(-18deg)` },
-      { transform: `translate(${vb.x + vb.w + 14}px, 0px) skewX(-18deg)` },
+      { transform: `translate(${vb.x - 14 * k}px, 0px) skewX(-18deg)` },
+      { transform: `translate(${vb.x + vb.w + 14 * k}px, 0px) skewX(-18deg)` },
     ],
     { duration: 1400, easing: EASE.move, fill: 'both' },
   )

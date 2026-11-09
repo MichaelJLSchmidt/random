@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useLayoutEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import type { Identity } from '@/design/palette'
 import {
@@ -14,7 +14,6 @@ import {
   stageStyle,
 } from '../colours'
 import { concepts } from '../concepts'
-import type { Cue } from '../engine'
 import type { Concept, VariantKey } from '../model'
 import { Button, Segmented, Toggle } from './controls'
 import { go, hrefFor, useLabSettings } from './logo-lab'
@@ -43,10 +42,7 @@ export function Detail({ concept }: { concept: Concept }) {
   const [loadingOn, setLoadingOn] = useState(false)
   const [status, setStatus] = useState('')
 
-  const onCue = useCallback((cue: Cue) => {
-    if (cue === 'next-identity') setLook((l) => ({ ...l, identity: nextIdentity(l.identity) }))
-  }, [])
-  const player = usePlayer(concept, { tier, speed, onCue })
+  const player = usePlayer(concept, { tier, speed })
 
   /** Every look change crossfades the colours that follow it (450 ms). */
   const applyLook = (next: Look) => {
@@ -71,7 +67,7 @@ export function Detail({ concept }: { concept: Concept }) {
     setLoadingOn(false)
   }, [tier])
 
-  const index = concepts.findIndex((c) => c.n === concept.n)
+  const index = concepts.findIndex((c) => c.id === concept.id)
   const prev = concepts[(index - 1 + concepts.length) % concepts.length]
   const next = concepts[(index + 1) % concepts.length]
   const variants = Object.entries(concept.variants) as [VariantKey, { label: string }][]
@@ -84,18 +80,18 @@ export function Detail({ concept }: { concept: Concept }) {
           ← All concepts
         </a>
         <span className="lab-row">
-          <a className="link t-label" href={hrefFor(prev.n)} onClick={(e) => (e.preventDefault(), go(prev.n))}>
-            ← {prev.n} {prev.name}
+          <a className="link t-label" href={hrefFor(prev.id)} onClick={(e) => (e.preventDefault(), go(prev.id))}>
+            ← {prev.label} {prev.name}
           </a>
-          <a className="link t-label" href={hrefFor(next.n)} onClick={(e) => (e.preventDefault(), go(next.n))}>
-            {next.n} {next.name} →
+          <a className="link t-label" href={hrefFor(next.id)} onClick={(e) => (e.preventDefault(), go(next.id))}>
+            {next.label} {next.name} →
           </a>
         </span>
       </nav>
 
       <section className="lab-section lab-detail-head" aria-labelledby="concept-title">
         <h2 id="concept-title" className="t-h2">
-          <span className="lab-num">{concept.n}</span> {concept.name}
+          <span className="lab-num">{concept.label}</span> {concept.name}
         </h2>
         <p className="t-lead lab-idea">{concept.idea}</p>
         <details className="lab-notes-list">

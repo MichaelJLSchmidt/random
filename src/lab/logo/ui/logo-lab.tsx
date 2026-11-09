@@ -1,12 +1,22 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { useMotionTier } from '@/motion/use-tier'
-import { concepts, conceptByN } from '../concepts'
+import { conceptById, concepts } from '../concepts'
 import type { LabTier } from '../engine'
 import { Detail } from './detail'
 import { Overview } from './overview'
 import { Segmented } from './controls'
+import { pruneScores } from './store'
+import { DEEP_LINK_ATTR } from '../deep-link'
 
 /*
  * The lab's client root. The route is the query string (?c=3 opens concept
@@ -15,9 +25,8 @@ import { Segmented } from './controls'
  */
 const ROUTE_EVENT = 'logo-lab:route'
 
-function readRoute(): number | null {
-  const c = Number(new URLSearchParams(location.search).get('c'))
-  return conceptByN(c) ? c : null
+function readRoute(): string | null {
+  return conceptById((new URLSearchParams(location.search).get('c') ?? '').toLowerCase())?.id ?? null
 }
 function subscribeRoute(fn: () => void) {
   addEventListener('popstate', fn)
@@ -28,16 +37,16 @@ function subscribeRoute(fn: () => void) {
   }
 }
 
-export function go(n: number | null) {
+export function go(id: string | null) {
   const url = new URL(location.href)
-  if (n === null) url.searchParams.delete('c')
-  else url.searchParams.set('c', String(n))
+  if (id === null) url.searchParams.delete('c')
+  else url.searchParams.set('c', id)
   history.pushState(history.state, '', url)
   dispatchEvent(new Event(ROUTE_EVENT))
   scrollTo({ top: 0 })
 }
 
-export const hrefFor = (n: number | null) => (n === null ? '?' : `?c=${n}`)
+export const hrefFor = (id: string | null) => (id === null ? '?' : `?c=${id}`)
 
 type Settings = { tier: LabTier; speed: number; siteTier: LabTier }
 const LabSettings = createContext<Settings>({ tier: 'full', speed: 1, siteTier: 'full' })
@@ -51,17 +60,25 @@ export function LogoLab() {
   const [override, setOverride] = useState<LabTier | null>(null)
   const [speed, setSpeed] = useState<number>(1)
   const tier = override ?? siteTier
-  const concept = route === null ? null : conceptByN(route)
+  const concept = conceptById(route)
 
   // The document title names the open concept.
   useEffect(() => {
     if (!concept) return
     const base = document.title
-    document.title = `${concept.n} ${concept.name} · ${base}`
+    document.title = `${concept.label} ${concept.name} · ${base}`
     return () => {
       document.title = base
     }
   }, [concept])
+
+  useEffect(() => pruneScores(concepts.map((c) => c.scoreKey)), [])
+
+  // A deep link (?c=…) hides the server-rendered overview from first paint
+  // (DEEP_LINK_SCRIPT); release it once the view matches the address.
+  useLayoutEffect(() => {
+    if (route === readRoute()) document.documentElement.removeAttribute(DEEP_LINK_ATTR)
+  }, [route])
 
   const onTier = useCallback((v: string) => setOverride(v === siteTier ? null : (v as LabTier)), [siteTier])
 
@@ -84,7 +101,7 @@ export function LogoLab() {
           onChange={(v) => setSpeed(Number(v))}
         />
       </div>
-      {concept ? <Detail key={concept.n} concept={concept} /> : <Overview concepts={concepts} />}
+      {concept ? <Detail key={concept.id} concept={concept} /> : <Overview concepts={concepts} />}
     </LabSettings.Provider>
   )
 }

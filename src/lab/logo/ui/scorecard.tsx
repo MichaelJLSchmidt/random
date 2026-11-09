@@ -8,7 +8,7 @@ const rated = (s: Score) => s.ratings.filter((r) => r > 0).length
 
 /** One concept's scorecard: ten criteria rated 1–5 and notes, kept in this browser. */
 export function Scorecard({ concept }: { concept: Concept }) {
-  const [score, setScore] = useScore(concept.n)
+  const [score, setScore] = useScore(concept.scoreKey)
   const setRating = (i: number, r: number) =>
     setScore({ ...score, ratings: score.ratings.map((v, j) => (j === i ? r : v)) })
   const flags = flagged(score)
@@ -39,7 +39,7 @@ export function Scorecard({ concept }: { concept: Concept }) {
                   <label key={r} className="lab-seg-option">
                     <input
                       type="radio"
-                      name={`c${concept.n}-k${i}`}
+                      name={`c${concept.id}-k${i}`}
                       value={r}
                       checked={score.ratings[i] === r}
                       onChange={() => setRating(i, r)}
@@ -71,8 +71,10 @@ export function Scorecard({ concept }: { concept: Concept }) {
 
 /** All concepts, sorted by total; flags any concept under 3 on criteria 1, 2 or 10. */
 export function ScoreSummary({ concepts }: { concepts: Concept[] }) {
-  const scores = useScores(concepts.map((c) => c.n))
-  const rows = concepts.map((c, i) => ({ c, s: scores[i] })).sort((a, b) => total(b.s) - total(a.s) || a.c.n - b.c.n)
+  const scores = useScores(concepts.map((c) => c.scoreKey))
+  const rows = concepts
+    .map((c, i) => ({ c, s: scores[i] }))
+    .sort((a, b) => total(b.s) - total(a.s) || concepts.indexOf(a.c) - concepts.indexOf(b.c))
   return (
     <section className="lab-section" aria-labelledby="summary-title">
       <h2 id="summary-title" className="lab-h2 t-h3">
@@ -103,10 +105,10 @@ export function ScoreSummary({ concepts }: { concepts: Concept[] }) {
             {rows.map(({ c, s }) => {
               const flags = flagged(s)
               return (
-                <tr key={c.n} data-flagged={flags.length > 0 || undefined}>
+                <tr key={c.id} data-flagged={flags.length > 0 || undefined}>
                   <th scope="row">
-                    <a className="link" href={hrefFor(c.n)} onClick={(e) => (e.preventDefault(), go(c.n))}>
-                      {c.n} · {c.name}
+                    <a className="link" href={hrefFor(c.id)} onClick={(e) => (e.preventDefault(), go(c.id))}>
+                      {c.label} · {c.name}
                     </a>
                   </th>
                   <td className="lab-total">{total(s)}</td>

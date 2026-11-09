@@ -42,6 +42,23 @@
   letter-spacing: 0;
 }
 
+/* ---------- Site chrome on the lab page ---------- */
+/*
+ * The site's hand of cards covers the stage on short desktop windows, so the
+ * lab hides it. :has(.lab) only matches while the lab is on the page, so the
+ * hand is back on every other route without the lab touching shared code.
+ */
+html:has(.lab) .hand {
+  display: none;
+}
+html:root:has(.lab) {
+  --hand-reserve: var(--space-6);
+}
+/* Deep links (?c=…): the static overview stays hidden until the detail view has rendered. */
+:root[data-lab-deep-link] .lab-overview {
+  visibility: hidden;
+}
+
 /* ---------- Playback bar (tier, speed): sticky under the header from 1024 px ---------- */
 .lab-bar {
   z-index: 5;
