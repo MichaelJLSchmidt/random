@@ -24,6 +24,7 @@ import { management } from './pages/management'
 import { notFound } from './pages/not-found'
 import { workshopMethods } from './pages/workshop-methods'
 import { site } from './site'
+import { thesis } from './thesis'
 
 export const content = {
   site,
@@ -32,6 +33,7 @@ export const content = {
   caseStudies: [teamOfTeams, sharedFoundations, frontDoor],
   management,
   about,
+  thesis,
   notFound,
   coffeeEgg,
   workshopMethods,

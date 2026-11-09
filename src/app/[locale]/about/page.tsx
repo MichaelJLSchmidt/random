@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { CareerTimeline } from '@/components/about/career-timeline'
 import { OffsetImage, Section, SectionIndex, imageSides } from '@/components/layout'
@@ -10,6 +11,7 @@ import { OnTheTable } from '@/eggs/on-the-table'
 import { type AboutSectionKey, aboutSectionKeys, contentFor, getContent, pad2 } from '@/lib/content'
 import { pageAlternates } from '@/lib/metadata'
 import { asLocale, setRequestLocale } from '@/lib/request-locale'
+import { NAV } from '@/motion/transitions'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -44,7 +46,7 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
  */
 export default async function AboutPage({ params }: Props) {
   setRequestLocale((await params).locale)
-  const { about: a, site } = await getContent()
+  const { about: a, site, href } = await getContent()
   const head = (key: AboutSectionKey) => ({
     id: key,
     number: aboutSectionKeys.indexOf(key) + 1,
@@ -184,6 +186,11 @@ export default async function AboutPage({ params }: Props) {
           <Reveal as="p" kind="lines" className="projects-end t-lead col-content">
             {p.end}
           </Reveal>
+          <p className="projects-thesis col-content">
+            <Link className="link" href={href('/about/thesis')} transitionTypes={[NAV]}>
+              {p.thesis} →
+            </Link>
+          </p>
         </Section>
 
         {/* 08 Contact: the end point (Coffee, the egg, leads here: /about#contact). */}

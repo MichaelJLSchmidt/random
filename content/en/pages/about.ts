@@ -200,6 +200,7 @@ export const about: About = {
       },
     ],
     end: "That's the whole deck.",
+    thesis: "Master's thesis overview: LLMs for burnout prevention",
   },
   contact: {
     label: 'Contact',

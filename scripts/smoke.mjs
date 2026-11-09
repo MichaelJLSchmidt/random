@@ -627,13 +627,54 @@ async function tableSuite(browser, device) {
   )
   const about = await page.evaluate(() => ({
     projects: document.querySelectorAll('#projects .project').length,
-    interactive: document.querySelectorAll('#projects a, #projects button, #projects [tabindex]').length,
+    interactive: document.querySelectorAll('#projects .project :is(a, button, [tabindex])').length,
+    thesis: [...document.querySelectorAll('#projects a')].map((a) => a.getAttribute('href')),
     contact: Boolean(document.querySelector('#contact a[href^="mailto:"]')),
   }))
   check(
-    'about: 13 projects, nothing interactive, contact chapter',
-    about.projects === 13 && about.interactive === 0 && about.contact,
+    'about: 13 projects (rows not interactive), one link to the thesis below them, contact chapter',
+    about.projects === 13 &&
+      about.interactive === 0 &&
+      about.thesis.length === 1 &&
+      /\/about\/thesis\/$/.test(about.thesis[0]) &&
+      about.contact,
     JSON.stringify(about),
+  )
+
+  // R8: the master's thesis overview: glacier table field (not the contour map), the case-study
+  // template (hero, the answer, five meta pairs, four values, chapters 01–08 with drawn numerals,
+  // five drawings, three marked screenshot slots, four insight cards), the way back to the timeline.
+  await page.goto(url('/about/thesis/'), { waitUntil: 'networkidle' })
+  await wait(page, 1200)
+  const thesis = await page.evaluate(() => ({
+    h1: document.querySelectorAll('h1').length,
+    field: document.documentElement.dataset.field ?? null,
+    map: document.querySelector('.field')?.dataset.contours ?? 'none',
+    meta: document.querySelectorAll('.meta-pair').length,
+    values: document.querySelectorAll('.scoreboard-item').length,
+    chapters: document.querySelectorAll('.thesis-page [data-section]').length,
+    numerals: document.querySelectorAll('.thesis-page svg.chapter-numeral').length,
+    drawings: document.querySelectorAll('.thesis-figure svg.illustration[role="img"]').length,
+    slots: document.querySelectorAll('.image-slot').length,
+    insights: document.querySelectorAll('.thesis-insights [data-deal-item]').length,
+    back: document.querySelector('.thesis-back a')?.getAttribute('href') ?? '',
+    wide: document.documentElement.scrollWidth > innerWidth,
+  }))
+  check(
+    'thesis: glacier field, hero, 5 meta pairs, 4 values, chapters 01–08 with drawn numerals, 5 drawings, 3 slots, 4 insights, back to the timeline',
+    thesis.h1 === 1 &&
+      thesis.field === 'glacier' &&
+      thesis.map !== 'shown' &&
+      thesis.meta === 5 &&
+      thesis.values === 4 &&
+      thesis.chapters === 8 &&
+      thesis.numerals === 8 &&
+      thesis.drawings === 5 &&
+      thesis.slots === 3 &&
+      thesis.insights === 4 &&
+      /\/about\/#timeline$/.test(thesis.back) &&
+      !thesis.wide,
+    JSON.stringify(thesis),
   )
 
   // Removed routes are gone (the 404 page answers).

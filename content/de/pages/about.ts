@@ -200,6 +200,7 @@ export const about: About = {
       },
     ],
     end: 'Das ist das ganze Deck.',
+    thesis: 'Übersicht der Masterarbeit: LLMs für Burnout-Prävention',
   },
   contact: {
     label: 'Kontakt',

@@ -200,7 +200,7 @@
  * is near (data-contours-primed: rasterised at opacity 0 before any crossfade).
  * Opacity and the drift's translate are the only things that change (WAAPI,
  * compositor). Before the engine runs (first paint of a direct visit) the
- * pre-paint data-field shows them whole over a covered canvas.
+ * pre-paint data-about-map shows them whole over a covered canvas.
  */
 .contour-bg,
 .contour-vignette {
@@ -233,14 +233,14 @@
     radial-gradient(130% 85% at 0% 55%, rgb(27 28 24 / 0.88) 0, rgb(27 28 24 / 0.6) 45%, rgb(27 28 24 / 0) 80%);
 }
 .field:is([data-contours='morph'], [data-contours='shown'], [data-contours-primed]) :is(.contour-bg, .contour-vignette),
-:root[data-field='glacier'] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
+:root[data-about-map] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
   display: block;
 }
-:root[data-field='glacier'] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
+:root[data-about-map] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
   opacity: 1;
 }
 /* At rest on About the SVG layer covers the canvas: it is not composited at all. */
 .field[data-canvas-covered] .field-canvas,
-:root[data-field='glacier'] .field:not([data-contours]) .field-canvas {
+:root[data-about-map] .field:not([data-contours]) .field-canvas {
   visibility: hidden;
 }

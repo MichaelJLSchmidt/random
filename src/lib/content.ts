@@ -16,7 +16,7 @@ import { type Locale, localeHref, locales } from './i18n'
 import { requestLocale } from './request-locale'
 
 export type * from '@content/schema'
-export { aboutSectionKeys, caseStudySectionKeys, managementSectionKeys } from '@content/schema'
+export { aboutSectionKeys, caseStudySectionKeys, managementSectionKeys, thesisChapterKeys } from '@content/schema'
 export { images } from '@content/index'
 export { cardNumber, fill, pad2 } from './format'
 
@@ -80,6 +80,13 @@ function validate(locale: Locale, content: Content, chrome: Chrome) {
     expect(Boolean(s.parts) === (s.lane === 'both'), at(`about.timeline.items[${i}]: parts only on the shared card.`))
   })
   count('about.howIWork.items', content.about.howIWork.items, 4)
+  const t = content.thesis
+  count('thesis.meta', t.meta, 5)
+  count('thesis.scoreboard', t.scoreboard, 4)
+  count('thesis.chapters.question.questions', t.chapters.question.questions, 2)
+  count('thesis.chapters.insights.cards', t.chapters.insights.cards, 4)
+  count('thesis.chapters.conclusions.answers', t.chapters.conclusions.answers, 2)
+  count('thesis.chapters.conclusions.next', t.chapters.conclusions.next, 3)
   count('about.onTheTable.items', content.about.onTheTable.items, 5)
   const projects = content.about.projects.items
   count('about.projects.items', projects, 13)

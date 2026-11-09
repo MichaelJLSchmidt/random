@@ -4,7 +4,7 @@ import { fieldInitialCss } from '@/components/background/field-css'
 import { RouterBridge } from '@/components/router-bridge'
 import { identityCss, palette } from '@/design/palette'
 import { prefsScript } from '@/motion/preferences'
-import { pathFields } from '@/motion/table-store'
+import { mapPaths, pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
 import { display, hand, mono, text } from './fonts'
 import './globals.css'
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         {/* Motion tier, first-visit flag and reveal arming, before first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: prefsScript(pathFields()) }} />
+        <script dangerouslySetInnerHTML={{ __html: prefsScript(pathFields(), mapPaths) }} />
         <style dangerouslySetInnerHTML={{ __html: identityCss() + fieldInitialCss() + motionCss() }} />
       </head>
       <body>

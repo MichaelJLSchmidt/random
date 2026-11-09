@@ -704,6 +704,10 @@
   margin: var(--space-6) 0 0;
   color: var(--muted);
 }
+/* The one link in the chapter (R8): the thesis overview, below the closing line. */
+.projects-thesis {
+  margin: var(--space-4) 0 0;
+}
 @media (min-width: 1024px) {
   .projects-head,
   .project {

@@ -27,6 +27,7 @@ nothing reacts to the pointer. Leaving About runs the morph back.
 | Case 3, Front Door | grove green |
 | Management | saffron gold |
 | About | glacier teal (accents), over the contour field's ground |
+| Master's thesis overview | glacier, over the table field in the glacier tint |
 | Home, 404 | ink |
 
 Values: `src/design/palette.ts`. Body text stays `--text`; accents are for links, focus, metrics,
@@ -62,6 +63,11 @@ dividers and illustration strokes.
   are dealt in order from a deck at the start of the axis; the Master's card opens the thesis
   overview with the card-to-hero morph. "How I work" is dealt with a slight fan that settles
   straight.
+
+- **Thesis overview**: the case-study template in glacier, reached from the Master's card in the
+  timeline (the card grows into the hero). It reads in three layers: the hero, the one-line answer
+  and the figures; each chapter's lead and four dealt insight cards; the chapters in full, with
+  five line drawings. Anonymous: no author, no employer.
 
 ## Tone
 

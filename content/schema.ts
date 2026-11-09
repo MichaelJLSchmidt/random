@@ -383,6 +383,8 @@ export type About = {
     columns: Record<keyof Project, string>
     items: Project[]
     end: string
+    /** A link to the master's thesis overview below the list (R8). */
+    thesis: string
   }
   /** The final chapter: "Let's talk.", the body, the email (drawn underline), the links and a note. */
   contact: SectionHead & { title: string; body: Paragraph; email: string; links: ContactLink[]; note: string }
@@ -440,6 +442,70 @@ export type IllustrationCopy = {
 }
 
 /** Everything one locale's content/<locale>/index.ts exports. */
+// ---------------------------------------------------------------------------
+// The master's thesis overview (R8): /about/thesis, glacier, the case-study template
+
+/** Its chapters 01–08 in reading order. */
+export const thesisChapterKeys = [
+  'question',
+  'context',
+  'approach',
+  'survey',
+  'insights',
+  'prototype',
+  'testing',
+  'conclusions',
+] as const
+export type ThesisChapterKey = (typeof thesisChapterKeys)[number]
+
+/** A chapter: its short label (index, Minimap), h2, a one-paragraph lead and the full text. */
+export type ThesisChapter = { label: string; title: string; lead: Paragraph; body: Paragraph[] }
+
+/** A drawing's accessible title and description plus the words inside it. */
+export type ThesisDrawing<L extends string> = { title: string; description: string; labels: Record<L, string> }
+
+export type Thesis = {
+  eyebrow: string
+  title: string
+  subtitle: Paragraph
+  /** The one-line answer (the 30-second layer), with its label. */
+  answer: { label: string; text: Paragraph }
+  /** Exactly five: programme, submitted, method, scope, setting. */
+  meta: { label: string; value: string }[]
+  /** Exactly four. */
+  scoreboard: Metric[]
+  chapters: {
+    question: ThesisChapter & { questions: { label: string; text: string }[] }
+    context: ThesisChapter
+    approach: ThesisChapter
+    survey: ThesisChapter
+    /** Exactly four insight cards (the dealt row). */
+    insights: ThesisChapter & { cards: { title: string; body: string }[] }
+    prototype: ThesisChapter
+    testing: ThesisChapter
+    conclusions: ThesisChapter & {
+      answers: { label: string; body: Paragraph }[]
+      nextLabel: string
+      next: string[]
+      reflectionLabel: string
+      reflection: Paragraph
+    }
+  }
+  /** The three screenshot placeholders' labels (the owner replaces them with images). */
+  slots: { knowledgeBase: string; checkIn: string; sources: string }
+  drawings: {
+    sequence: ThesisDrawing<'survey' | 'interviews' | 'prototype' | 'test1' | 'test2' | 'explains'>
+    burnout: ThesisDrawing<'causes' | 'symptoms' | 'signal' | 'dialogue' | 'hr' | 'intervention' | 'gap' | 'only'>
+    stakeholders: ThesisDrawing<'tool' | 'individuals' | 'managers' | 'hr' | 'leadership'>
+    functions: ThesisDrawing<
+      'knowledge' | 'sources' | 'handover' | 'checkIn' | 'monthly' | 'mbi' | 'exhaustion' | 'cynicism' | 'inefficacy'
+    >
+    tests: ThesisDrawing<'round1' | 'round2' | 'people1' | 'people2' | 'changed' | 'found1' | 'found2'>
+  }
+  /** The link back to About's timeline. */
+  back: string
+}
+
 export type Content = {
   site: Site
   hand: HandContent
@@ -447,6 +513,7 @@ export type Content = {
   caseStudies: CaseStudy[]
   management: Management
   about: About
+  thesis: Thesis
   notFound: NotFound
   coffeeEgg: CoffeeEgg
   workshopMethods: WorkshopMethods

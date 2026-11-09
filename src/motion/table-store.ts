@@ -171,6 +171,11 @@ export const table = {
       field({ identity: 'glacier', spread: 0, origin: state.field.origin, topo: 1, kind: kind('crossfade') })
       return
     }
+    // The thesis overview (R8): the table field in the glacier tint, not the contour map.
+    if (path === '/about/thesis') {
+      field({ identity: 'glacier', spread: 0, origin: state.field.origin, topo: 0, kind: kind('crossfade') })
+      return
+    }
     // Home and 404: back to the ink field.
     if (state.field.spread === 1 && prevActive) {
       const origin = slotCenter(prevActive) ?? [0.5, 1]
@@ -182,10 +187,14 @@ export const table = {
 }
 
 /**
- * Identity per page path (without the locale) for the pre-paint script (card pages and About), so
- * direct loads paint their colour.
+ * Identity per page path (without the locale) for the pre-paint script (card pages, About and the
+ * thesis overview), so direct loads paint their colour.
  */
 export const pathFields = (): Record<string, Identity> => ({
   ...Object.fromEntries(cardIds.map((id) => [cardPath(id), identityOf(id)!])),
   '/about': 'glacier',
+  '/about/thesis': 'glacier',
 })
+
+/** Paths that show About's contour map (the pre-paint script marks them with data-about-map). */
+export const mapPaths = ['/about']

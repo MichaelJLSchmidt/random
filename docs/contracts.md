@@ -649,6 +649,28 @@ its target) to `/about/thesis` with type `play`, sharing the view-transition nam
 with the thesis hero (R8). Removed: the dealt line and its stack, the scroll-snap strip, the
 `left` deal mode, `deal.line`, `deal.left`.
 
+**R8. The master's thesis overview** (first draft): `/<locale>/about/thesis` (static, both
+locales; there is no sitemap). Glacier: the table store gives it the table field in the glacier
+tint (`identity: 'glacier', spread: 0, topo: 0`), never the contour map; the pre-paint script marks
+About alone with `data-about-map` (the contour layer's first paint), so `data-field="glacier"` is
+just a colour. Content in `content/<locale>/thesis.ts` (typed `Thesis`, counts checked: five meta
+pairs, four values, two questions, four insights, two answers, three next steps), with the
+consent note in both files: publishing internal survey figures and naming the employer needs the
+employer's consent, so it stays anonymous ("a Swiss software company") and the author is not named.
+German: Swiss Standard German (the sentence about the letter itself says "Eszett", since German
+strings may not contain it). Template: the case study's (`ThesisHero` in the case hero's layout,
+`detail-facts`, `Section` chapters with `NumeralBreaker`s, `Minimap`). Reading layers: hero, the
+one-line answer and the facts (30 s); each chapter's lead and the dealt row of four insight cards
+(the How I work cards' `deal` reveal, no pinning; 3 min); the chapters in full (7 min). Drawings
+(the site's line style, drawn by the `draw` reveal, horizontal and vertical layouts):
+`ResearchSequence` (a), `BurnoutProcess` (b, the data gap tinted before the only signal),
+`StakeholderMap` (c), `PrototypeFunctions` (d), `TestIterations` (e). Three `ImageSlot`s (the
+offset image's frame, 3:2 / 4:3, a faint outline and their label, a `TODO(owner)` comment in the
+page): the knowledge base and the check-in in 06, the round-2 source labels in 07. Reached from
+the Master's card in About's timeline (type `play`; the card and the hero frame share
+`thesis-card`, the hero only while in view) and from a link below About's projects
+(`about.projects.thesis`); it ends with "Back to About" to `/about#timeline` (type `return`).
+
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
 (`device-pixel-content-box`), which draws in the same callback; height-only changes under
@@ -1321,7 +1343,7 @@ slim (type-only imports, plus the text-free deck).
 ```ts
 type Content = {
   site: Site; hand: HandContent; home: Home; caseStudies: CaseStudy[]; management: Management;
-  about: About; notFound: NotFound; coffeeEgg: CoffeeEgg; workshopMethods: WorkshopMethods;
+  about: About; thesis: Thesis; notFound: NotFound; coffeeEgg: CoffeeEgg; workshopMethods: WorkshopMethods;
   illustrations: IllustrationCopy; imageAlt: Record<ImageId, string>
 }
 ```
@@ -1350,6 +1372,7 @@ optional image with an optional `caption` (I16).
 | `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, portrait: ImageId` (the hero's 4:5 photo, A1)`, timeline: SectionHead & { lanes: Record<CareerLane,string>, both, today, alongside, thesisLink, items: CareerStop[] }` (R7: `CareerStop { lane: 'work'\|'education'\|'both', from, to: number\|'today', title, place?, parts?: Record<CareerLane,{ title, place? }>, alongside?, thesis? }`, seven, oldest first)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards)`, projects: SectionHead & { title, intro` (the count line, "13 projects · 2014–2025")`, columns: Record<keyof Project,string>, items: Project[]` (13)`, end` (the closing line) `}, contact: SectionHead & { title` ("Let's talk.")`, body, email, links: ContactLink[]` (LinkedIn, location)`, note }, creditsTitle, topo { label, attribution, href }` (the credit "Terrain data © swisstopo" and its link, B1)` — order `aboutSectionKeys` (story, timeline, howIWork, tcg, roots, onTheTable, projects, contact) |
 | `Project` | `title, year, client, role` (what I did) |
 | `ContactLink` | `label, value, href?` |
+| `Thesis` (`content/<locale>/thesis.ts`, R8) | `eyebrow, title, subtitle, answer { label, text }, meta: { label, value }[]` (5)`, scoreboard: Metric[]` (4)`, chapters: Record<ThesisChapterKey, ThesisChapter { label, title, lead, body }>` (+ `question.questions` (2), `insights.cards` (4), `conclusions { answers (2), nextLabel, next (3), reflectionLabel, reflection }`)`, slots { knowledgeBase, checkIn, sources }, drawings` (each `{ title, description, labels }`)`, back` — order `thesisChapterKeys` (question, context, approach, survey, insights, prototype, testing, conclusions) |
 | `NotFound` | `title, body, back` |
 | `WorkshopMethods` | `again, drawn: Template, methods[{ title, howTo }]` (the button label is `management.workshops.drawButton`) |
 | `IllustrationCopy` | per drawing (component name): `{ title, description }` plus its labels (`labels`, `steps`, `lanes`, `offers`, `layers`, `badges`, `squads`, `lead`, `days`, `rituals`); `WorkshopGlyph` per method |
@@ -1388,6 +1411,7 @@ Spread grid (D9).
 | `/<locale>/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/[locale]/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero (`[data-hero-target]` frame with the priority hero picture + `.hero-drift`, display h1, summary) + MetaPairs + Scoreboard; sections 01–09 via `Section` (01 context + OffsetImage with caption; 02 problem opens with the statement (`data-breaker`); 03 owned / not owned; 04 four steps + sticky vertical drawing; 05 DealRow (deal scene, face up); 06 artefact gallery (drawings, photos, text cards); 07 outcomes; 08 differently; 09 NextProject); a NumeralBreaker on 01–08; Minimap |
 | `/<locale>/management` | `src/app/[locale]/management/page.tsx` | saffron | `DetailPage`: hero (TeamConstellation) + "How I lead" + lead + card facts; 01 principles (+ OffsetImage), 02 team (structure pinned), 03 rituals (WeekRing), 04 hiring (drawn connector), 05 growth (CareerMatrix + HTML axes), 06 workshops (WorkshopRow with a WorkshopGlyph per format on a subgrid, workshop draw, + OffsetImage), 07 metrics (Scoreboard); NextProject; Minimap |
 | `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour layer (B1) | hero (title, lead, the portrait photo, A1); 01 story (+ OffsetImage), 02 timeline (two lanes on one year axis, the Master's card links to the thesis, R7), 03 how I work (four face-up cards, A3), 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain credit (a link; also along the left edge from 1024) |
+| `/<locale>/about/thesis` | `src/app/[locale]/about/thesis/page.tsx` | glacier, over the table field in the glacier tint (not the contour map; R8) | the case-study template: `ThesisHero` (eyebrow, the Master's card grown in the `[data-hero-target]` frame, display h1, subtitle), the one-line answer, five MetaPairs, a four-value Scoreboard; chapters 01–08 (`thesisChapterKeys`) with drawn numerals, leads, five drawings (`src/components/illustrations/thesis/`), three marked screenshot slots (`ImageSlot`), a dealt row of four insights; Q1 / Q2 answers, next steps, reflection; a link back to About's `#timeline`; Minimap |
 | 404 | `src/app/[locale]/404/page.tsx` (`/<locale>/404/`), served for any unknown address by `dist/404.html` (L4) | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link (home in its locale) |
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
@@ -1431,7 +1455,8 @@ pages), About, the language switcher (L6); it leaves on a scroll down (N1). Ever
 | `data-image="<id>"` | `<picture>` | image id |
 | `data-reading-hairline` (+ `--reading-progress`) | hairline | reading progress 0–1 |
 | `data-identity="<identity>"` | page roots, cards | colour scope (`--id-*`) |
-| `data-detail="<id>"`, `data-home` | page roots / hand nav | page hooks |
+| `data-detail="<id>"`, `data-home` | page roots / hand nav | page hooks (`thesis` on the thesis overview, R8) |
+| `data-about-map` | `<html>` | About's contour map shows whole before the engine runs (pre-paint script, About only; R8) |
 | `data-play="<id>"`, `data-roving`, `data-slot`, `data-slot-anchor`, `data-play-link` | hand, Next project | play / roving / slot geometry |
 | `data-tapped`, `data-inspect`, `data-rare`, `data-drawn`, `data-lifting`, `data-closing` | hand cards / slots / row | egg and play states |
 | `data-sheet-moving` | `nav.hand` | the mobile sheet moving |
