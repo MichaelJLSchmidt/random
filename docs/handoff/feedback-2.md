@@ -181,3 +181,12 @@ no page overflow). Nothing else was missing or wrong.
   rail in step); the timeline and How I work cards at 390, 1024, 1280 and 1440 px and mid-deal;
   the home baseline and the centred hint at 1440 and 390; the idle note (10 s; `?idle` 1 s) at
   360–430 px.
+
+## Merge and deploy
+
+`main` had moved during the session (logo lab round 3 and "Logo: the two-card mark replaces the
+wordmark and the favicon"). It was merged into the branch (conflicts in the header and the docs:
+the logo and the pause button both kept), the build and all four smoke runs passed again
+(208 / 197 / 208 / 197 ok), and `main` was fast-forwarded to `d60e8b7` and pushed once. Deploy run
+19 ("Deploy to GitHub Pages") succeeded; https://michaeljlschmidt.github.io/random/ serves the new
+build. This note was added on the branch after the deploy and reaches `main` with the next push.
