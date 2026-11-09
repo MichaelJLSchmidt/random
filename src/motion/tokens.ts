@@ -108,7 +108,9 @@ export const duration = {
   /** Header home slot: wordmark <-> Back morph, and the beat before its second part. */
   slotMorph: 0.42,
   slotLag: 0.12,
-  rail: 0.2,
+  /** The header (and the mobile rail with it) leaving on a scroll down (ease.in) and returning (outQuint). */
+  headerHide: 0.2,
+  headerShow: 0.24,
   sheet: 0.32,
   discard: 0.7,
   glint: 1.2,
@@ -183,6 +185,13 @@ export const idle = {
   arrowCurl: 0.8,
   fade: 0.32,
 } as const
+
+/**
+ * The header on scrolling pages (src/motion/header-scroll.ts): it leaves after a deliberate scroll
+ * down and returns after a deliberate scroll up, "deliberate" meaning more than `threshold` px in
+ * one direction (overscroll bounce and scroll changes during a view transition never count).
+ */
+export const header = { threshold: 8 } as const
 
 /** The header's home slot (wordmark <-> Back): how narrow the mark gets as it compresses into the left edge. */
 export const slot = { markScale: 0.12 } as const
@@ -349,7 +358,6 @@ export const hand = {
   rail: 48,
   sheet: 0.4,
   scrim: 0.4,
-  railHideAfter: 120,
   liftScale: 1.5,
   pressScale: 0.97,
   hoverScale: 1.06,

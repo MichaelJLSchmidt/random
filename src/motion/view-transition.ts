@@ -21,6 +21,9 @@ if (typeof document !== 'undefined' && 'startViewTransition' in document) {
   }) as typeof document.startViewTransition
 }
 
+/** True while a view transition runs (from its start until it has finished). */
+export const transitionRunning = () => current !== null
+
 /** Runs `fn` after the running view transition (if any) has finished, on the next frame. */
 export function afterTransition(fn: () => void) {
   const transition = current

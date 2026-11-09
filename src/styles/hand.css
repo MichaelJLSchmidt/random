@@ -359,10 +359,20 @@
     font: inherit;
     cursor: pointer;
     touch-action: none;
-    transition: translate var(--dur-rail) var(--ease-out-soft);
+    transition: translate var(--dur-header-show) var(--ease-out-quint);
   }
-  .hand[data-rail='hidden'] .hand-rail {
+  /* In step with the header (html[data-header], src/motion/header-scroll.ts); reduced: a crossfade. */
+  :root[data-header='hidden'] .hand:not([data-home]) .hand-rail {
     translate: 0 100%;
+    pointer-events: none;
+    transition: translate var(--dur-header-hide) var(--ease-in);
+  }
+  :root[data-motion='reduced'] .hand:not([data-home]) .hand-rail {
+    translate: none;
+    transition: opacity var(--dur-reduced) linear;
+  }
+  :root[data-motion='reduced'][data-header='hidden'] .hand:not([data-home]) .hand-rail {
+    opacity: 0;
   }
   .rail-card {
     flex: 1;

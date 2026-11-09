@@ -213,30 +213,12 @@ export function Hand() {
     }
   }, [])
 
-  // Mobile: the rail hides on scroll down past 120 px and returns on scroll up;
-  // a swipe up opens the sheet; the open sheet pauses the background field.
+  // Mobile: a swipe up on the rail opens the sheet; the open sheet pauses the background field.
+  // The rail hides and returns with the header (html[data-header], src/motion/header-scroll.ts).
   useEffect(() => {
     const nav = root.current!
     const pop = sheet.current!
     const rail = nav.querySelector<HTMLElement>('.hand-rail')!
-
-    let lastY = scrollY
-    let ticking = false
-    const onScroll = () => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        ticking = false
-        const y = scrollY
-        if (Math.abs(y - lastY) < 4) return
-        const hide = y > H.railHideAfter && y > lastY
-        if (hide !== (nav.dataset.rail === 'hidden')) {
-          if (hide) nav.dataset.rail = 'hidden'
-          else delete nav.dataset.rail
-        }
-        lastY = y
-      })
-    }
 
     let startY: number | null = null
     let swallow = false
@@ -282,7 +264,6 @@ export function Hand() {
     const wide = matchMedia(`(min-width: ${H.breakpoint}px)`)
     const onWide = () => wide.matches && pop.matches(':popover-open') && pop.hidePopover()
 
-    addEventListener('scroll', onScroll, { passive: true })
     rail.addEventListener('pointerdown', onDown)
     rail.addEventListener('pointermove', onMove)
     rail.addEventListener('pointerup', onUp)
@@ -292,7 +273,6 @@ export function Hand() {
     pop.addEventListener('toggle', onToggle)
     wide.addEventListener('change', onWide)
     return () => {
-      removeEventListener('scroll', onScroll)
       rail.removeEventListener('pointerdown', onDown)
       rail.removeEventListener('pointermove', onMove)
       rail.removeEventListener('pointerup', onUp)
@@ -305,11 +285,10 @@ export function Hand() {
     }
   }, [])
 
-  // Playing a card from the sheet closes it; every route change shows the rail again.
+  // Playing a card from the sheet closes it (the header's watch shows the rail again on every route).
   useEffect(() => {
     const pop = sheet.current!
     if (pop.matches(':popover-open')) pop.hidePopover()
-    delete root.current!.dataset.rail
   }, [path])
 
   const railName = `${handLabels.nav}: ${handCards.map((c) => c.railLabel).join(', ')}`

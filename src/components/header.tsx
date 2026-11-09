@@ -2,10 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname, useSelectedLayoutSegment } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import { useChrome } from '@/lib/chrome'
 import { cardIdForPath } from '@/lib/hand-data'
 import { localeHref, localeNames, locales, pagePath } from '@/lib/i18n'
 import { withBase } from '@/lib/site'
+import { showHeader, watchHeader } from '@/motion/header-scroll'
 import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
 import { table } from '@/motion/table-store'
 import { LOCALE, NAV, RETURN } from '@/motion/transitions'
@@ -32,6 +34,10 @@ import styles from './header.module.css'
  * switches in place (src/motion/locale-switch.ts: a short cross-fade, the
  * scroll position kept). On the 404 page there is no such page, so the link
  * reloads the address and the 404 page picks the stored language.
+ *
+ * On pages that scroll, the header leaves after a deliberate scroll down and
+ * returns on a scroll up (src/motion/header-scroll.ts); every route change
+ * shows it again and starts the watch afresh.
  */
 export function Header() {
   const { locale, site, href } = useChrome()
@@ -41,8 +47,13 @@ export function Header() {
   const back = Boolean(cardIdForPath(path))
   const current = (page: string) => (path === page ? 'page' : undefined)
   const home = href('/')
+  const ref = useRef<HTMLElement>(null)
+  useEffect(() => {
+    showHeader()
+    return watchHeader(ref.current!)
+  }, [pathname])
   return (
-    <header className={styles.header} style={{ viewTransitionName: 'site-header' }} data-chrome="">
+    <header ref={ref} className={styles.header} style={{ viewTransitionName: 'site-header' }} data-chrome="">
       <Link
         href={home}
         className={styles.slot}

@@ -1,3 +1,10 @@
+/*
+ * On scrolling pages the header leaves after a deliberate scroll down and comes
+ * back on a scroll up (html[data-header="hidden"], src/motion/header-scroll.ts):
+ * translate only, 200 ms ease-in out and 240 ms outQuint back. The reading
+ * hairline stays on screen meanwhile, along the top edge. Reduced: the
+ * header's content and backdrop crossfade (160 ms); nothing slides.
+ */
 .header {
   position: fixed;
   inset: 0 0 auto;
@@ -9,7 +16,41 @@
   height: var(--header-h);
   /* Aligned with the Spread grid: the margin, or the centred 12 x 96 px columns from 1440. */
   padding: 0 max(var(--grid-margin), calc((100% - 1416px) / 2));
+  transition: translate var(--dur-header-show) var(--ease-out-quint);
+}
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--ink-field) 70%, transparent), transparent);
+  pointer-events: none;
+}
+:global(:root[data-header='hidden']) .header {
+  translate: 0 -100%;
+  pointer-events: none;
+  transition: translate var(--dur-header-hide) var(--ease-in);
+}
+/* The hairline (the header's last child, on its bottom edge) stays in view along the top edge. */
+.header > :last-child {
+  transition: translate var(--dur-header-show) var(--ease-out-quint);
+}
+:global(:root[data-header='hidden']) .header > :last-child {
+  translate: 0 100%;
+  transition: translate var(--dur-header-hide) var(--ease-in);
+}
+:global(:root[data-motion='reduced']) .header,
+:global(:root[data-motion='reduced']) .header > :last-child {
+  translate: none;
+  transition: none;
+}
+:global(:root[data-motion='reduced']) .header::before,
+:global(:root[data-motion='reduced']) .header > :not(:last-child) {
+  transition: opacity var(--dur-reduced) linear;
+}
+:global(:root[data-motion='reduced'][data-header='hidden']) .header::before,
+:global(:root[data-motion='reduced'][data-header='hidden']) .header > :not(:last-child) {
+  opacity: 0;
 }
 
 .end {
