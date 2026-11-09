@@ -3,8 +3,9 @@
 The shared surface of the redesign. Four Wave 1 sessions (Layout & Pages, Motion, Illustrations,
 Content & Images) worked in parallel against it; the Integration session merged them, applied the
 [integration decisions](#integration-decisions-i1i27) and updated this file to match the code.
-[Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there, and
-[Locales](#locales-l1l11) made the site bilingual (German and English); every reference section
+[Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there,
+[Locales](#locales-l1l11) made the site bilingual (German and English), and
+[Feedback round 2](#feedback-round-2) changed the decisions listed there; every reference section
 below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
@@ -32,6 +33,7 @@ below were written for Wave 1 and apply again only if a future wave runs in para
 
 Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisions-i1i27) ·
 [Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
+[Feedback round 2](#feedback-round-2) ·
 [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
@@ -69,7 +71,7 @@ playing from home, where no hero is mounted yet).
 **D4. Reveals.** After Wave 1, `<Reveal>` kinds are the only reveal system. Layout uses only
 `<Reveal>` (and `<FirstLoadSequence>` on home) in page markup, never the legacy `data-reveal`
 presets or `data-order`. Motion implements the eight kinds on the new tier scale (calm: durations
-× 0.6; reduced: 160 ms opacity crossfades) and removes the legacy kinds (`headline`, `paragraph`,
+× 0.6, removed by M1; reduced: 160 ms opacity crossfades) and removes the legacy kinds (`headline`, `paragraph`,
 `line`, `tags`, …), `data-order` and the 300 / 200 ms `--reveal-calm` / `--reveal-reduced`
 timings once nothing references them. Integration deletes any leftovers.
 
@@ -157,7 +159,7 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
   case-study `DealRow`.
 - **I10. Reading hairline exception.** The rule "at most one scroll-linked effect per viewport"
   does not count the reading hairline: it is a 1 px progress indicator and may run next to one
-  other scroll-linked effect (hero drift, the pinned deal, the About timeline).
+  other scroll-linked effect (hero drift, the pinned deal; the About timeline until A2).
 
 **Illustrations**
 
@@ -170,12 +172,12 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
   shows the vertical one there, capped by the viewport height so it stays in view while pinned;
   below 1024 it spans the reading column with the default layouts. Every placement was checked
   in the browser.
-- **I13. Alignment with the page's HTML.** `AboutTimeline` places its stops at
+- **I13. Alignment with the page's HTML.** (`AboutTimeline` removed by A2.) `AboutTimeline` places its stops at
   `x = (i + 0.5) × 960 / n` (with `labels={false}` it is line and dots only, 960×120);
   `CareerMatrix` with `axes={false}` spreads its levels and tracks evenly edge to edge, so HTML
   axis labels in equal columns and rows line up; `DiscardedCard` is one upright card (the page
   tilts it with `--angle-discard` and lays it on its pile).
-- **I14. Content in data props.** About passes `about.timeline.items` to `AboutTimeline`.
+- **I14. Content in data props.** About passed `about.timeline.items` to `AboutTimeline` (removed by A2).
   Each Management workshop format names its `WorkshopGlyph` (`glyph`): Kick-off canvas →
   `one-two-four-all`, Service blueprint jam → `fishbowl`, Design studio → `crazy-eights`, Retro
   with a twist → `dot-voting`. `CareerMatrix` takes `growth.levels` / `growth.dimensions`;
@@ -234,7 +236,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   Lissajous loops: 2.5% of the viewport (`field.poolDrift`), loops of 97–151 s
   (`field.poolDriftPeriods`), full tier only (scaled by the `motion` track; calm and reduced keep
   the pools still). Uniform `uDrift[3]` in `shader.ts`.
-- **G2. Calm switch.** The footer's DisplaySettings is gone. `CalmSwitch`
+- **G2. Calm switch** (superseded by M1 and M2: the calm tier and its switch are gone). The footer's DisplaySettings is gone. `CalmSwitch`
   (`src/components/calm-switch.tsx`, `button[role="switch"][data-calm-switch]`) sits in the
   header. One source of truth: the stored preference that the pre-paint script applies as
   `html[data-motion]`; the switch's look (thumb, track, on, disabled) is CSS on that attribute,
@@ -263,7 +265,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   padding; it scrolls only when the viewport is too small. Short desktop screens (max-height
   820 px) set the name at most 18svh and the intro on the body size. Checked to clear the hand at
   1024×768, 1280×720, 1440×900, 1920×1080, 2560×1440 and 390×844. The hint ("Pick a card") sits
-  just above the hand (centred from 1024, left on phones).
+  just above the hand (centred from 1024, left on phones; centred at every width since H2 of round 2).
 - **H2. No card counter.** `HandCounter`, `hand.labels.counter` and its announcements are gone.
   New hand: M on home; by touch a long press (800 ms) on the empty table, never on a card, link,
   control or text (`attachTableLongPress` in `src/eggs/hand-eggs.ts`).
@@ -276,7 +278,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   right like a link underline), "What I bring" label and items from 1000 (80 apart) with the hint
   on the last item, the four cards 1250–2000 (330 ms each, 140 apart), then the chrome. The parts
   carry `data-reveal-step`. Calm × 0.6; reduced: everything at once, 160 ms. Revisits: unchanged.
-- **H5. Idle hint** (egg, `src/eggs/idle-hint.tsx`, home only): after `idle.after` (30 s)
+- **H5. Idle hint** (egg, `src/eggs/idle-hint.tsx`, home only): after `idle.after` (30 s; 10 s since M3)
   without a click, tap or key press, a Caveat note (`home.idleNote`, "(a selection of my
   projects)", self-hosted OFL latin subset with umlauts, not preloaded) writes itself word by
   word, then a curly SVG arrow draws toward the cards. Once per session (sessionStorage), fades on
@@ -324,7 +326,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   to `/about#contact`.
 - **A4. Images.** About uses offset images; `about-mountain` and `about-tcg2` are deleted
   (manifest, registry, files, credits): 12 photos.
-- **A5. Contours** (supersedes the noise placeholder, I18's placeholder note and the
+- **A5. Contours** (superseded by B1: the SVG contour layer; the heightmap and its posters are gone) (supersedes the noise placeholder, I18's placeholder note and the
   `public/topo` elevation): About shows the old portfolio's password-page field, drawn by the one
   background canvas: the Interlaken region heightmap (`public/terrain/region.webp`, its exact
   fallback `region.bin`, `src/components/background/terrain.ts`), its focus crop and zoom 1.06,
@@ -379,11 +381,12 @@ motion and the three tiers are unchanged.
   labels) and `imageAlt` (German alt text; English: the registry's). The build-time checks run
   for both locales and check that they tell the same story (slugs, card order); German strings
   may not contain "ß", em-dashes or semicolons.
-- **L6. Switcher.** `nav[data-locale-switcher]` in the header between About and the calm switch:
+- **L6. Switcher.** `nav[data-locale-switcher]` in the header between About and the pause button (the calm switch until M2):
   "DE · EN", one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
   language, the active one `aria-current="page"` (its `.link` underline drawn, like the current
   page link); each a 44 × 44 px target. On the 404 page the other language's link reloads the
-  address (the 404 page then picks the stored language).
+  address (the 404 page then picks the stored language; since F1 it opens the same address under the
+  other language's prefix, and the address's locale decides).
 - **L7. The switch** (`src/motion/locale-switch.ts`): stores the choice, finishes running
   reveals, remembers the reading position (the section under the header and how far into it) and
   whether the switcher had focus, sets `html[data-locale-switch]` and navigates with type
@@ -391,7 +394,7 @@ motion and the three tiers are unchanged.
   (`LocaleSync`, a layout effect before `Reveals`) the position is restored, focus returns to
   the switcher and the new title is announced. Browser back / forward across languages replays
   the same way (no stored choice).
-- **L8. Cross-fade.** Every part with words cross-fades once in place over `--dur-s` (calm × 0.6,
+- **L8. Cross-fade.** Every part with words cross-fades once in place over `--dur-s` (calm × 0.6 until M1,
   reduced 160 ms linear): the page and the card faces get the class `locale-fade` from the
   `[LOCALE]` entries of the React maps (`pageEnter`, `pageExit`, `heroShare`, `heroTitleShare`,
   `handShare`, `handTitleShare`), the header, hand, rail and footer through
@@ -403,10 +406,113 @@ motion and the three tiers are unchanged.
   kept, and the rare pull does not roll.
 - **L10. Labels.** `site.header.nav` and `site.header.language` name the two header navs;
   `site.settings.calmLabel` is the calm switch's visible label, `site.settings.calm` its
-  accessible name ("Ruhig" / "Ruhigere Animationen"; "Calm" / "Calm motion").
+  accessible name ("Ruhig" / "Ruhigere Animationen"; "Calm" / "Calm motion"). Since M2:
+  `site.settings.pause` / `play` (the pause button's name and its tooltip while paused).
 - **L11. German type.** Running text hyphenates under `:lang(de)` (`.t-body`, `.t-lead`, the
   decision cards' fields, margin notes, timeline stops, project rows; `type.css`); display type,
   headings and labels never do, their copy is written to fit at 390 px.
+
+---
+
+## Feedback round 2
+
+A second round of design feedback, applied by one session (plan and report:
+`docs/handoff/feedback-2.md`). Item numbers are the feedback's (M, N, H, A, B, F); its H1–H2 and
+A1–A3 are not round 1's. Earlier decisions it changes are marked above; the reference sections
+below describe the new state.
+
+**Motion settings**
+
+- **M1. Two tiers** (supersedes G2, the calm parts of D4, I3, G1, H4, H5, L8, L10): `full`, and
+  `reduced` from `prefers-reduced-motion`, which every animation honours. `MotionTier` is
+  `'full' | 'reduced'`; `motionScale.calm`, `tiers.calm`, `duration.svgDrawCalm`,
+  `duration.calmBloom`, the stored `motion` preference, `CalmSwitch` and `site.settings.calm*` are
+  gone. `durFor` / `msFor` / `spanFor` / `gapFor` / `drawFor` know the two tiers only.
+- **M2. Ambient pause** (WCAG 2.2.2): `AmbientToggle` (`src/components/ambient-toggle.tsx`,
+  `button[data-ambient-toggle][aria-pressed]`) in the header where the calm switch was: a 16 px
+  pause / play glyph in a 44 px target. The stored choice (localStorage `ambient` = `paused`) is
+  applied before first paint by the pre-paint script as `html[data-ambient="paused"]` (its single
+  writer, `savePreference(AMBIENT_KEY, …)`); the glyph is CSS on that attribute; React reads it
+  (`useAmbientPaused`, `ambientPaused()`, `onAmbientChange()` in `src/motion/use-tier.ts`). Paused
+  stops ambient background motion only: the field's clock (breath and pool drift freeze where they
+  are; hover, bloom, switch and About's morph still run), the CSS fallback's breath and the About
+  contour drift. Never transitions or reveals. Hidden under reduced motion. The accessible name
+  stays `site.settings.pause` in both states (a toggle button's name never changes; aria-pressed
+  carries the state); `site.settings.play` is the tooltip while paused.
+- **M3. Idle hint** after `idle.after` = 10 s (supersedes H5's 30 s); `?idle` stays 1 s.
+
+**Navigation**
+
+- **N1. Header on scroll** (`src/motion/header-scroll.ts`, started by `header.tsx` on every route):
+  one passive scroll listener, rAF-throttled, writes `html[data-header="hidden"]`. Hidden after
+  more than `header.threshold` (8 px) of scrolling down in one direction past the header's height;
+  shown after 8 px up, near the top (within the header's height), on pages that do not scroll, on
+  focus inside the header, while the mobile sheet is open and after every route change. Overscroll
+  bounce and scroll changes during a view transition (`transitionRunning()` in
+  `view-transition.ts`) are ignored. CSS: `translate: 0 -100%`, `duration.headerHide` 200 ms
+  `ease.in`, `duration.headerShow` 240 ms outQuint; the reading hairline stays on screen at the top
+  edge; reduced: the header's content and backdrop crossfade (160 ms), nothing slides. The mobile
+  rail follows the same attribute and timings (`data-rail` and `hand.railHideAfter` are gone).
+  `scroll-padding-top: var(--header-h)` keeps anchors clear.
+
+**Home**
+
+- **H1. Baseline.** From 1024 the "What I bring to the table" label and the three items share one
+  baseline (`align-items: baseline` on `.home-bring`); below, the label stays above the items.
+- **H2. Hint centred** at every width (supersedes H1 of round 1's "left on phones").
+
+**About**
+
+- **A1. Portrait** (supersedes `ContourPortrait`, removed with its copy): `about.portrait`
+  (`about-portrait`, "Man's face in profile, black and white" by Nik Bagherzadegan, Unsplash
+  License, `crop: [4, 5]`) in the hero, an `image` reveal; alt text in both languages. 13 photos.
+- **A2. Timeline cards** (supersedes I13, I14 and `AboutTimeline`, removed with its copy and
+  `scenes/timeline-scene.ts`): `about.timeline.items` are `{ years, title, place }`; seven face-up
+  cards (`.career-card.about-card`, the latest `[data-latest]` with the page accent on its edge) in
+  the card family of "What's on the table" (`.about-card`, `.about-card-back`, `.about-card-label`
+  in `eggs.css`: 132 × 184, 10 px corners, the accent edge, mono labels). From 1280 a line across
+  the content width (`[data-deal-line]`) with the cards on it, dealt from a small face-down stack at
+  its left end (`[data-deal-stack]`); 1024–1279 a scroll-snap strip with the line through it;
+  below 1024 a vertical line on the left and the cards at reading width, each dealt in from the
+  left as it enters. Reduced: static. Not interactive.
+- **A3. How I work cards**: four face-up cards (`.how-card.about-card`: number, title, body at the
+  body size): from 1024 a row dealt with a slight fan that settles straight; 640–1023 2×2; below
+  640 one column. No flip, no hover lift.
+- **Deal reveal.** A tenth reveal kind, `deal`, runs both: the block's `[data-deal-item]` cards; the
+  mode comes from the CSS custom property `--deal-mode` (`stack`, `fan`, `left`, `list`, else a
+  `block` rise), timings `deal.line`, `deal.fan`, `deal.left` in `tokens.ts`. Mode `left` keeps its
+  job open until every card has entered (`ctx.stop()` in `jobs.ts` ends the wait on a skip or route
+  change).
+
+**Background**
+
+- **B1. Contour layer** (supersedes A5): `.contour-bg` > `.contour-bg__poster` inside the
+  background field, above the canvas and below the content, with the old password page's CSS
+  reproduced exactly (`src/styles/field.css`); its two SVGs (`public/contour-bg/contours.svg`,
+  `contours-200.svg`, added by hand, unchanged) come in as `--contour-poster` / `--contour-full`
+  through `withBase()` (`background-field.tsx`). Ground `#1B1C18` (`contour.ground`; the line colour
+  lives in the SVGs). No headlamp, no pointer. The poster drifts (`field.contourDrift`: ±8 / ±5 px,
+  one 120 s loop there and back, scale 1.03; `--contour-drift-*`), transform only, full tier; it
+  stops when paused, under reduced motion and while the tab is hidden (`.field[data-tab-hidden]`).
+  The morph (`duration.topo` 1.6 s, inOut): the shader's `uTopo` contracts the pools and fades the
+  field into the ground while the layer reveals through a radial mask from the centre
+  (`--contour-reveal`, written by the engine with the same duration and curve); at rest the
+  canvas draws no frames until About is left; leaving reverses it; reduced: a 160 ms crossfade.
+  `.field[data-contours="off|morph|shown"]`; before the engine runs, the pre-paint `data-field`
+  shows it whole on a direct visit. The SVG is fetched when a link to About is hovered, focused or
+  touched (and on About). Removed: the heightmap shader code, `terrain.ts`, `public/terrain/`,
+  `field.contours`, `contour.line`, the posters and `data-poster` / `data-topo`. Credit:
+  `about.topo.attribution` "Terrain data © swisstopo" / "Geländedaten © swisstopo", a link to
+  `about.topo.href` (swisstopo's terms of use) in the footer's small print and along the left edge
+  from 1024.
+
+**Fixes**
+
+- **F1. 404 language** (amends L4, L6): `dist/404.html` takes the locale from the address when it
+  has `/de/` or `/en/`; the stored and browser language decide only for addresses without one.
+- **F2.** German copy writes "Design-System".
+- **F3.** The smoke check of the home intro compares each part's start from its animations' own
+  timing (start time + delay), not when it crosses an opacity threshold.
 
 ---
 
@@ -432,9 +538,9 @@ Paths the table does not name, and how to read the short names in it:
 | `src/lib/**` (`content.ts`, `hand-data.ts`, `format.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
 | `content/<locale>/hand.ts`, `content/<locale>/site.ts` (slim modules, D7), `content/deck.ts` | Content & Images, under one rule: they import no page text |
 | `src/app/**` (all of it: `layout.tsx`, `globals.css`, `fonts.ts`, routes) | Layout & Pages |
-| `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx`, `calm-switch.*` | Layout & Pages |
+| `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx`, `ambient-toggle.*` | Layout & Pages |
 | `src/components/weight-text.tsx`, `play-link.tsx`, `route-focus.tsx`, `live-region.tsx`, `reading-hairline.module.css`, `src/styles/view-transitions.css`, `field.css`, `eggs.css` | Motion |
-| `src/components/picture.css`, `public/terrain/**` (copied from the old portfolio, unchanged) | Content & Images |
+| `src/components/picture.css`, `public/contour-bg/**` (the old password page's SVGs, added by hand, unchanged) | Content & Images |
 | `docs/handoff/<agent>.md` | that agent |
 | `README.md`, `package.json`, `package-lock.json`, `scripts/{budget,audit,vitals,lighthouse,serve-static}.mjs` | Integration (Wave 1 may run them, not change them) |
 
@@ -484,34 +590,35 @@ src/styles/
   pages/detail.css, pages/pages.css                                     (Layout)
 src/motion/
   tokens.ts                    motion tokens (Foundation; every motion value lives here, I3)
-  scenes/deal-scene.ts         useDealScene (Motion); scenes/timeline-scene.ts, scenes/pin.ts
+  scenes/deal-scene.ts         useDealScene (Motion); scenes/pin.ts
   table-store.ts               the table store (Foundation)
-  reveal.ts                    the reveal engine; kinds.ts (the eight kinds), jobs.ts (scheduler),
+  reveal.ts                    the reveal engine; kinds.ts (the ten kinds), jobs.ts (scheduler),
                                first-load.ts, split.ts (Motion+ splitText), deal.ts, choreography.ts
                                (tier helpers only)
   play.ts, transitions.ts, preferences.ts, use-tier.ts, view-transition.ts (Motion)
+  header-scroll.ts             the header leaving on a scroll down, returning on a scroll up (N1)
   locale-switch.ts             the language switch: store, reading position, focus, settle (L7)
 src/components/
   hand/                        hand.tsx, card-face.tsx (Foundation)
   layout/                      SectionIndex, NumeralBreaker, OffsetImage, MetaPairs, Scoreboard,
                                DealRow, WorkshopRow, MarginNote, Minimap (+ MinimapObserver),
                                Section, use-deal-position.ts, layout.css, index.ts (Layout)
-  illustrations/               15 drawings, frame.tsx (kit), geometry.ts, badges.tsx, types.ts,
+  illustrations/               13 drawings, frame.tsx (kit), geometry.ts, badges.tsx, types.ts,
                                illustration.tsx, index.ts, illustrations.css, README.md (Illustrations)
   reveals.tsx                  <Reveals/>, <Reveal>, <FirstLoadSequence> (Motion)
   reading-hairline.tsx         <ReadingHairline/> (Motion), mounted in header.tsx
   picture.tsx                  <Picture> (Content & Images)
-  header.tsx                   header: home slot (wordmark / Back morph), About, language switcher, CalmSwitch, hairline
+  header.tsx                   header: home slot (wordmark / Back morph), About, language switcher, AmbientToggle, hairline
   locale-sync.tsx              <html lang> on the client; settles a language switch (L3, L7)
   router-bridge.tsx            root layout: registerNavigate + the back / forward replay (L2)
-  calm-switch.tsx              the calm-motion switch (look from html[data-motion])
+  ambient-toggle.tsx           pause / play for the background's ambient motion (look from html[data-ambient], M2)
   site-footer.tsx, footer-shell.tsx, about-small-print.tsx   footer (none on home; About's small print)
-  background/                  background-field.tsx, field-engine.ts, field-gl.ts, shader.ts, terrain.ts
-                               (About's region heightmap: loader, probe check, raw fallback), field-css.ts
+  background/                  background-field.tsx (with About's contour layer), field-engine.ts, field-gl.ts,
+                               shader.ts, field-css.ts, tracks.ts, oklab.ts
   detail-page.tsx, case-hero.tsx, next-project.tsx (Layout)
 src/eggs/                      registry.ts, eggs.tsx, hand-eggs.ts, idle-hint.tsx, workshop-draw.tsx,
                                on-the-table.tsx, discard.ts, haptics.ts
-public/terrain/                region.webp, region.bin (heightmap), region-l.avif, region-p.avif (posters)
+public/contour-bg/             contours.svg, contours-200.svg (About's contour background, B1)
 src/lib/
   i18n.ts                      locales, Locale, splitPath, pagePath, localeHref, LOCALE_KEY, pickLocaleScript (L1)
   content.ts                   server: getContent() / contentFor(locale) with hand cards and getCaseStudy,
@@ -621,7 +728,7 @@ components and may be retired by Layout as pages move to the scale.
 ## Motion tokens
 
 Source: `src/motion/tokens.ts` (TypeScript constants, seconds), emitted as CSS custom properties
-by `motionCss()` into `<head>` (per tier under `:root[data-motion="calm|reduced"]` and
+by `motionCss()` into `<head>` (the reduced tier under `:root[data-motion="reduced"]` and
 `@media (prefers-reduced-motion: reduce)`). Springs are converted to CSS `linear()` by
 `springCss()`. No bounce, elastic or overshoot anywhere: the béziers stay in [0, 1] and every
 spring is critically damped.
@@ -639,41 +746,44 @@ spring is critically damped.
 | `stagger.items` | `--stagger-items` | 50 ms |
 | `stagger.cards` | `--stagger-cards` | 80 ms |
 | `stagger.svgGroups` | `--stagger-svg-groups` | 120 ms |
-| `motionScale` | `--motion-scale` | full 1, calm 0.6, reduced 0 |
+| `motionScale` | `--motion-scale` | full 1, reduced 0 |
 | `reducedCrossfade` | `--dur-reduced` | 160 ms |
-| `durFor(tier, step)` | – | full: as is; calm: × 0.6; reduced: always 160 ms |
+| `durFor(tier, step)` | – | full: as is; reduced: always 160 ms |
 
-Tier behaviour of the scale: **full** as listed; **calm** (site toggle) every `--dur-*` × 0.6
-(96 / 144 / 252 / 384 / 540 ms); **reduced** (`prefers-reduced-motion`, always wins over calm)
-every `--dur-*` = 160 ms and the only allowed change is an opacity crossfade (travel distances
-are 0). Read the tier with `useMotionTier()` / `readTier()` / `onTierChange()` from
-`src/motion/use-tier.ts`; the root carries `data-motion="full|calm|reduced"`.
+Two tiers (M1): **full** as listed; **reduced** (`prefers-reduced-motion`) every `--dur-*` =
+160 ms and the only allowed change is an opacity crossfade (travel distances are 0). Read the tier
+with `useMotionTier()` / `readTier()` / `onTierChange()` from `src/motion/use-tier.ts`; the root
+carries `data-motion="full|reduced"`. Separately, `html[data-ambient="paused"]` (M2) stops the
+background's ambient motion only (`useAmbientPaused()`, `ambientPaused()`, `onAmbientChange()`).
 
 **Table vocabulary**: `ease.outSoft` (= outQuint), `draw` (= outExpo), `bloom` (= inOut),
 `zoom`, `return`, `in` → `--ease-out-soft`, `--ease-draw`, `--ease-bloom`, `--ease-zoom`,
 `--ease-return`, `--ease-in`; springs `play`, `hover`, `land` → `--spring-play`,
 `--spring-hover`, `--spring-land` and `--spring-*-dur`; `duration.*` → `--dur-<kebab>` (e.g.
 `--dur-zoom`, `--dur-sheet`, `--dur-fast`), tier-scaled by `tiers.{vt,ui}`; `distance.*` →
-`--travel-<kebab>` (0 in calm and reduced); `stagger.digits` (40 ms between a Scoreboard value's
+`--travel-<kebab>` (0 in reduced); `stagger.digits` (40 ms between a Scoreboard value's
 strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label, copy
 `{ at, end }`, divider, items `{ at, dur, stagger }`, cards `{ at, dur, stagger }`; H4),
 `at.detail` (summary, label, meta `{ at, stagger, dur, part, cascade }`; D1), `at.navigate`,
-`at.switchNavigate`; `idle` (`after` 30 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5);
+`at.switchNavigate`; `idle` (`after` 10 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5, M3);
+`header.threshold` (8 px) and `duration.headerHide` / `headerShow` (200 / 240 ms; N1);
 `slot.markScale` (`--slot-mark-scale`, G4); `reveal.mask` also as `--reveal-mask`;
-`duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s);
+`duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s, B1);
 `distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `pinnedDetail`, `poolDrift`, `poolDriftPeriods`
-(G1) and `contours` (A5): line / index alpha 0.28 / 0.42, widths 1 / 1.5 px, every fifth an index
-line, zoom 1.06, DPR cap and minimum spacing per desktop / mobile, `bandPx` of the morph)),
-`hand.*` (geometry mirrored in `tokens.css`).
+(G1) and `contourDrift` (B1: `x` 8 px, `y` 5 px, `scale` 1.03, `period` 120 s there and back →
+`--contour-drift-x`, `--contour-drift-y`, `--contour-drift-scale`, `--dur-contour-drift` (one
+way, 60 s))), `hand.*` (geometry mirrored in `tokens.css`).
 
-**Reveal choreography** (I3): `duration.digits` 700 ms, `duration.svgDraw` 1200 ms /
-`svgDrawCalm` 500 ms, `distance.block` 12 px; `reveal` = trigger (`amount` 0.25, `margin`), `mask`
+**Reveal choreography** (I3): `duration.digits` 700 ms, `duration.svgDraw` 1200 ms,
+`distance.block` 12 px; `reveal` = trigger (`amount` 0.25, `margin`), `mask`
 1.1 (lines rise from 110%), `image` (`inset` 0.1, `scale` 1.12), `digitRoll` 5, `zoomLanded` 0.6
 (after a play or switch the page reveals once 60% of the zoom has run), `mobileJobs` 8,
 `heroDrift` 0.06 (`--hero-drift`); `deal` = `stage` 180 svh, `phases`, `landTilt`,
-`flipPerspective`, `toss`, `below`; `timeline` = `start` / `end` range, `groupSpan`; `discard` =
-`drop`, `fade`. `src/motion/choreography.ts` only applies the tiers (`msFor`, `spanFor`, `gapFor`,
+`flipPerspective`, `toss`, `below`, and the About cards' `deal` reveal (A2, A3): `line` (`dur`
+420 ms, `stagger` 120 ms, `lead` 160 ms, `appear` 0.25), `fan` (`dur` 420 ms, `stagger` 80 ms,
+`rise` 32 px, `tilt` 0.5 of `angle.hand`, `settle` 420 ms), `left` (`from` 24 px, `dur` 420 ms);
+`discard` = `drop`, `fade`. `src/motion/choreography.ts` only applies the tiers (`msFor`, `spanFor`, `gapFor`,
 `drawFor`).
 
 ---
@@ -686,9 +796,9 @@ line, zoom 1.06, DPR cap and minimum spacing per desktop / mobile, `bandPx` of t
 the current identity is `--id-field`, `--id-mid`, `--id-glow`, `--id-accent`, `--id-ink`, and
 `--accent` follows `--id-accent` (each scope re-declares it, I1). Body text is always `--text`; accents only for links, focus,
 metrics, dividers, illustration strokes; text on a glow surface uses the identity's `ink`.
-Other: `--text`, `--muted`, `--line`, `--glacier-text`, and About's contour field: `contour.ground`
-`#1B1C18` and `contour.line` `#8A8C80` (`--contour-ground`, `--contour-line`; the old portfolio's
-values, A5). On About the hand's scrim takes the contour ground.
+Other: `--text`, `--muted`, `--line`, `--glacier-text`, and About's contour ground:
+`contour.ground` `#1B1C18` (`--contour-ground`; the old password page's; its line colour `#8A8C80`
+lives in the SVGs, B1). On About the hand's scrim takes the contour ground.
 
 ---
 
@@ -712,7 +822,7 @@ values, A5). On About the hand's scrim takes the contour ground.
   The open card shows `.hand-ghost` ("Viewing").
 - Desktop (≥ 1024): fan at the bottom centre. Mobile: fan on home; elsewhere a 48 px peek rail
   (`button.hand-rail`) that opens the list as a bottom sheet (`#hand-sheet`, native popover) with
-  the four cards only (G3).
+  the four cards only (G3). The rail leaves and returns with the header (`html[data-header]`, N1).
 - No card counter (H2). New hand by touch: a long press on the empty table on home.
 - A return with the hero scrolled away deals the card into its slot (`dealIn()`, D3); a return
   with the hero in view morphs it back as before.
@@ -794,7 +904,7 @@ Five across from 1024, two below. Renders nothing for an empty list.
 `li.deal-card[data-deal-card="1..4"]` (`.deal-card-index.t-label`, `h3.deal-card-title.t-h3`,
 `dl.deal-card-fields`) and `p.deal-row-position.t-label[data-deal-position]` ("1 / 4",
 `aria-hidden`). Desktop: a row of four that the deal scene pins and deals in the full tier
-(static in calm and reduced). Mobile: horizontal scroll-snap row; `useDealPosition` updates the
+(static in reduced). Mobile: horizontal scroll-snap row; `useDealPosition` updates the
 "1 / 4" label from the snapped card with an IntersectionObserver (D5).
 
 ### WorkshopRow
@@ -846,11 +956,11 @@ After Wave 1 the kinds below are the only reveal system (D4).
 <FirstLoadSequence>{home hero}</FirstLoadSequence>
 ```
 
-- `type RevealKind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair'`
+- `type RevealKind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair' | 'deal'`
   (`revealKinds`). `as?: RevealTag` (div, section, article, aside, header, footer, figure,
   figcaption, p, span, h1, h2, h3, ul, ol, dl, li, blockquote, hr; default div). Other HTML
-  attributes pass through. These nine kinds are the only reveal system (D4, I3; `pair` since
-  feedback round 1).
+  attributes pass through. These ten kinds are the only reveal system (D4, I3; `pair` since
+  feedback round 1, `deal` since round 2).
 - Renders `data-reveal="<kind>"`, `data-reveal-order="<order>"` (position in the first-viewport
   sequence; equal orders start together; omitted = reveal on scroll), `data-reveal-delay="<ms>"`
   and `data-reveal-step="<step>"` (`step` prop: the block's part of a timed sequence: on home
@@ -884,16 +994,21 @@ After Wave 1 the kinds below are the only reveal system (D4).
   (`[data-draw-label]`) fade in as their group starts and tints (`[data-draw-fill]`) once it is
   drawn (I4); `note` fades in after its paragraph; `pair` a ruled row: its `[data-pair-rule]`
   draws from the left, then each `[data-pair-part]` rises in turn (`at.detail.meta`: 300 ms,
-  parts 50 ms apart; MetaPairs, About's projects). Reduced: one 160 ms opacity crossfade, digits
-  static, drawings shown. Calm: durations × 0.6, `lines` split only on h1 / h2, strokes 500 ms.
+  parts 50 ms apart; MetaPairs, About's projects); `deal` About's face-up cards
+  (`[data-deal-item]`), by the block's `--deal-mode`: `stack` (the `[data-deal-line]` draws, the
+  `[data-deal-stack]` fades in, each card flies from the stack onto its place, `deal.line`), `fan`
+  (each card rises into a slight fan, then the row settles straight, `deal.fan`), `left` (each card
+  from the left as it enters, `deal.left`; the job stays open until every card is in, `ctx.stop()`
+  ends the wait on a skip or route change), `list`, otherwise a `block` rise. Reduced: one 160 ms
+  opacity crossfade, digits static, drawings shown, nothing dealt.
   Kinds take optional timing from a sequence (`KindOptions`: `dur`, `span`, `stagger`,
   `underline`).
 - `<FirstLoadSequence className?>`: wraps the home hero; renders `div[data-first-load]` with
   `display: contents`. First visit in the session (H4, `at.firstLoad`): the name (0–600 ms),
   the label (250–600), the role and intro lines (450–950), the divider (850–1150, drawn like a
   link underline), "What I bring to the table", its items and the hint (from 1000, 80 apart),
-  the four cards (1250–2000, 330 ms each, 140 apart), then `[data-chrome]` (the header). Calm
-  × 0.6; reduced all at once, 160 ms. Revisits and client navigations to home: one 300 ms
+  the four cards (1250–2000, 330 ms each, 140 apart), then `[data-chrome]` (the header).
+  Reduced: all at once, 160 ms. Revisits and client navigations to home: one 300 ms
   crossfade. Any key, click, wheel or scroll completes it.
 - `<Reveals />` (mounted once in `layout.tsx`) runs the engine for each route
   (`revealRoute(kind: NavigationKind)`, `NavigationKind = 'first' | 'repeat' | 'load' | 'nav' |
@@ -915,11 +1030,11 @@ Full tier, from 1024 px, used only by the case-study `DealRow` (I9): the root be
 `deal.stage` (180 svh) sticky stage, the card row pins under the header and Motion's `scroll()`
 deals the four cards face up (readable from the moment they move, D6) from a deck in five phases
 (`deal.phases`), each landing with a quarter of its hand-fan tilt, then the row squares up; the background field renders at
-`field.pinnedDetail` of its resolution while pinned. Calm, reduced, narrow screens or a row
+`field.pinnedDetail` of its resolution while pinned. Reduced, narrow screens or a row
 taller than the space under the header: nothing is touched and the static row stays. Returns
 `{ active }` (`data-scene-active` on the root while it runs). The mobile "1 / 4" position is not
-scene state; DealRow (Layout) tracks it (D5). The About timeline is linked to its view progress
-(`scenes/timeline-scene.ts`, full tier, native `ViewTimeline`; otherwise the normal draw reveal).
+scene state; DealRow (Layout) tracks it (D5). (The About timeline's scroll-linked drawing is gone:
+its cards use the `deal` reveal, A2.)
 New scenes live in `src/motion/scenes/<name>-scene.ts` and target `[data-scene="<name>"]`.
 
 ---
@@ -947,7 +1062,7 @@ type IllustrationProps = { className?: string; titleId?: string; title?: string;
 type WorkshopMethod = 'crazy-eights' | 'one-two-four-all' | 'dot-voting' | 'fishbowl'
 type ProjectType = 'form' | 'map' | 'dashboard' | 'portal' | 'calendar' | 'checklist'
 type ProjectTypeGlyphProps = IllustrationProps & { type: ProjectType }
-type IllustrationName = (typeof illustrationNames)[number]           // all 15
+type IllustrationName = (typeof illustrationNames)[number]           // all 13
 type ContentIllustration = Exclude<IllustrationName, 'ProjectTypeGlyph'>
 const illustrations: Record<ContentIllustration, ComponentType<IllustrationProps>>
 function Illustration(props: IllustrationProps & { name: ContentIllustration })
@@ -972,8 +1087,6 @@ section, I15) and the pages.
 | `CareerMatrix` | 960×600 / 360×540 | Management, 05 Growth (`axes={false}`, HTML axis labels); Building the team, 06 Artefacts ("Career framework", Management's levels and dimensions, D8) |
 | `WorkshopGlyph` (`method`) | 64×64 | Management, 06 Workshops: one per format card (I14) |
 | `WorkshopGlyphs` | 960×160 / 360×320 | not placed (the per-card glyphs replace the strip) |
-| `ContourPortrait` | 480×600 | About, hero |
-| `AboutTimeline` | 960×240 / 360×560; 960×120 with `labels={false}` | About, 02 Timeline (`labels={false}`, seven HTML stops, I13) |
 | `ProjectTypeGlyph` (`type`) | 48×48 | not placed (About's projects are a plain list, A1) |
 | `DiscardedCard` | 132×184 | 404, `.lost-card` on the discard pile (drawn upright, I13) |
 
@@ -984,7 +1097,7 @@ Markup contract (every illustration; conventions in `src/components/illustration
   first. Ids are unique per instance (`useId`); `titleId` sets the title id (the desc id is
   `<titleId>-desc`). Where a visible label already names it, the caller wraps it in
   `aria-hidden="true"`.
-- **Plain drawings** (ContourPortrait, DiscardedCard, ProjectTypeGlyph, WorkshopGlyph) keep a root
+- **Plain drawings** (DiscardedCard, ProjectTypeGlyph, WorkshopGlyph) keep a root
   `viewBox`. **Labelled drawings** have no root `viewBox` (I11): the root keeps its proportions
   with CSS `aspect-ratio` (`--il-ratio-h` / `--il-ratio-v`), geometry sits in nested
   `<svg class="il-plate" viewBox>` plates and labels in CSS px, so 11 px labels stay 11 px. The
@@ -1028,7 +1141,7 @@ Markup contract (every illustration; conventions in `src/components/illustration
   `sizes`, `decoding="async"`, the placeholder colour as background, and
   `loading="lazy"` — or with `priority`: `loading="eager"` + `fetchpriority="high"` (one per page:
   the case hero, I23, never inside an image reveal).
-- Photos: 12 self-hosted Unsplash photos (`kind: 'photo'`, credited in the footer's small print on
+- Photos: 13 self-hosted Unsplash photos (`kind: 'photo'`, credited in the footer's small print on
   About), AVIF,
   WebP and JPEG at 640 / 1280 / 2048 px in `public/images/`. `content/images.ts` is generated by
   `node scripts/images/fetch-and-build.mjs` from `scripts/images/manifest.mjs` (alt text, credits,
@@ -1067,7 +1180,7 @@ optional image with an optional `caption` (I16).
 
 | Type | Fields |
 | --- | --- |
-| `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, settings { calm, calmLabel, calmOn, calmOff, reducedHint }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
+| `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, settings { pause, play }` (the pause button's name and its tooltip while paused, M2)`, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
 | `HandContent` (`content/<locale>/hand.ts`; `order` and `identity` from `content/deck.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing }` |
 | `HandCardCopy` | `title` (equals the page title; "Management" for the fourth card)`, type, year, inspect, tapLine, facts: Fact[]` (the card's own facts, each with its label; two in the final content) |
 | `CoffeeEgg` (`content/<locale>/hand.ts`) | `title, body, cta` |
@@ -1079,12 +1192,12 @@ optional image with an optional `caption` (I16).
 | `Decision` / `Decisions` | `{ decision, chose, tradeOff, why }`, exactly four |
 | `Artefact` | `title, caption?, image?, illustration?` |
 | `Management` | `slug: 'management', identity, title` (hero, "How I lead")`, lead, heroImage?, principles: SectionHead & { items: { title, evidence }[] }` (5)`, team: SectionHead & { members: { initials, role, fte, focus }[]; note }, rituals: SectionHead & { items: { name, cadence, purpose }[] }, hiring: SectionHead & { steps: { title, duration, purpose }[]; note }, growth: SectionHead & { body, levels: string[], dimensions: string[] }, workshops: SectionHead & { formats: { name, duration, who, outcome, glyph: WorkshopMethod }[]; drawButton }, metrics: SectionHead & { items: Metric[] }` (5) — order `managementSectionKeys`. Team members appear as initials only. The card's title, type and facts live in `hand.cards.management`. |
-| `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, timeline: SectionHead & { items: { years, title }[] }` (7)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards)`, projects: SectionHead & { title, intro` (the count line, "13 projects · 2014–2025")`, columns: Record<keyof Project,string>, items: Project[]` (13)`, end` (the closing line) `}, contact: SectionHead & { title` ("Let's talk.")`, body, email, links: ContactLink[]` (LinkedIn, location)`, note }, creditsTitle, topo { label, attribution }` — order `aboutSectionKeys` (story, timeline, howIWork, tcg, roots, onTheTable, projects, contact) |
+| `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, portrait: ImageId` (the hero's 4:5 photo, A1)`, timeline: SectionHead & { items: { years, title, place }[] }` (7 cards, oldest first, A2)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards)`, projects: SectionHead & { title, intro` (the count line, "13 projects · 2014–2025")`, columns: Record<keyof Project,string>, items: Project[]` (13)`, end` (the closing line) `}, contact: SectionHead & { title` ("Let's talk.")`, body, email, links: ContactLink[]` (LinkedIn, location)`, note }, creditsTitle, topo { label, attribution, href }` (the credit "Terrain data © swisstopo" and its link, B1)` — order `aboutSectionKeys` (story, timeline, howIWork, tcg, roots, onTheTable, projects, contact) |
 | `Project` | `title, year, client, role` (what I did) |
 | `ContactLink` | `label, value, href?` |
 | `NotFound` | `title, body, back` |
 | `WorkshopMethods` | `again, drawn: Template, methods[{ title, howTo }]` (the button label is `management.workshops.drawButton`) |
-| `IllustrationCopy` | per drawing (component name): `{ title, description }` plus its labels (`labels`, `steps`, `lanes`, `offers`, `layers`, `badges`, `squads`, `lead`, `days`, `rituals`); `WorkshopGlyph` per method; `AboutTimeline.description` is a template (`{count}`, `{from}`, `{to}`, `{stops}`) |
+| `IllustrationCopy` | per drawing (component name): `{ title, description }` plus its labels (`labels`, `steps`, `lanes`, `offers`, `layers`, `badges`, `squads`, `lead`, `days`, `rituals`); `WorkshopGlyph` per method |
 | `ImageEntry` | see [Picture](#picture) |
 
 Build-time checks (`src/lib/content.ts`, for every locale; the build fails with a pointer to this
@@ -1117,12 +1230,12 @@ Spread grid (D9).
 | `/<locale>/` | `src/app/[locale]/page.tsx` | ink | one screen (H1): `FirstLoadSequence` around label, title, role, intro, "What I bring to the table", hint; IdleHint egg; no footer; clears the fan |
 | `/<locale>/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/[locale]/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero (`[data-hero-target]` frame with the priority hero picture + `.hero-drift`, display h1, summary) + MetaPairs + Scoreboard; sections 01–09 via `Section` (01 context + OffsetImage with caption; 02 problem opens with the statement (`data-breaker`); 03 owned / not owned; 04 four steps + sticky vertical drawing; 05 DealRow (deal scene, face up); 06 artefact gallery (drawings, photos, text cards); 07 outcomes; 08 differently; 09 NextProject); a NumeralBreaker on 01–08; Minimap |
 | `/<locale>/management` | `src/app/[locale]/management/page.tsx` | saffron | `DetailPage`: hero (TeamConstellation) + "How I lead" + lead + card facts; 01 principles (+ OffsetImage), 02 team (structure pinned), 03 rituals (WeekRing), 04 hiring (drawn connector), 05 growth (CareerMatrix + HTML axes), 06 workshops (WorkshopRow with a WorkshopGlyph per format on a subgrid, workshop draw, + OffsetImage), 07 metrics (Scoreboard); NextProject; Minimap |
-| `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour field (A5) | hero (title, lead, ContourPortrait); 01 story (+ OffsetImage), 02 timeline (AboutTimeline + seven HTML stops), 03 how I work, 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain attribution |
+| `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour layer (B1) | hero (title, lead, the portrait photo, A1); 01 story (+ OffsetImage), 02 timeline (seven face-up cards dealt onto a line, A2), 03 how I work (four face-up cards, A3), 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain credit (a link; also along the left edge from 1024) |
 | 404 | `src/app/[locale]/404/page.tsx` (`/<locale>/404/`), served for any unknown address by `dist/404.html` (L4) | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link (home in its locale) |
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
 unlinked logo lab (English, `lang="en"`). Header: the home slot (wordmark, or Back on card
-pages), About, the language switcher (L6), the calm switch. Every page has one `h1` (`PageTitle`,
+pages), About, the language switcher (L6), the pause button (M2); it leaves on a scroll down (N1). Every page has one `h1` (`PageTitle`,
 `id="page-heading"`, focus target after navigation).
 
 ---
@@ -1131,7 +1244,7 @@ pages), About, the language switcher (L6), the calm switch. Every page has one `
 
 | Attribute | On | Meaning / set by |
 | --- | --- | --- |
-| `data-reveal="<kind>"` | any block | one of the eight reveal kinds, via `<Reveal>` (see [Reveal](#reveal)) |
+| `data-reveal="<kind>"` | any block | one of the ten reveal kinds, via `<Reveal>` (see [Reveal](#reveal)) |
 | `data-revealed` | revealed blocks | set by the engine: `""` (animated) or `instant` (final at once) |
 | `data-reveal-order`, `data-reveal-delay` | `<Reveal>` | sequence position; extra delay (ms) |
 | `data-reveal-step` | `<Reveal step>` | part of a timed sequence (home `at.firstLoad`, detail hero `at.detail`) |
@@ -1139,11 +1252,12 @@ pages), About, the language switcher (L6), the calm switch. Every page has one `
 | `data-breaker` | OffsetImage, the problem statement section | the field lifts 10% while in view (I5) |
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
 | `data-slot-mode="mark\|back"` | the header's home slot | wordmark or Back (G4) |
-| `data-calm-switch` | the calm switch | its look follows `html[data-motion]` (G2) |
+| `data-ambient-toggle` (+ `aria-pressed`) | the pause / play button | its glyph follows `html[data-ambient]` (M2) |
 | `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
-| `data-poster`, `data-topo` | `.field` | About's poster shows; About's contours (and edge fade) are the target |
+| `data-contours="off\|morph\|shown"`, `data-tab-hidden` | `.field` | About's contour layer: hidden, morphing in or out, at rest; the tab is hidden (the drift stops) (B1) |
+| `data-deal-item`, `data-deal-line`, `data-deal-stack`, `data-latest` | About's cards (the `deal` reveal) | the cards, the timeline's line and stack, its latest card (A2, A3) |
 | `data-first-load` | `<FirstLoadSequence>` | home hero wrapper |
 | `data-chrome` | header | revealed last in the first-visit intro |
 | `data-draw` | SVG stroke elements (with `pathLength="1"`) | drawn on by the `draw` reveal |
@@ -1162,8 +1276,10 @@ pages), About, the language switcher (L6), the calm switch. Every page has one `
 | `data-detail="<id>"`, `data-home` | page roots / hand nav | page hooks |
 | `data-play="<id>"`, `data-roving`, `data-slot`, `data-slot-anchor`, `data-play-link` | hand, Next project | play / roving / slot geometry |
 | `data-tapped`, `data-inspect`, `data-rare`, `data-drawn`, `data-lifting`, `data-closing` | hand cards / slots / row | egg and play states |
-| `data-rail="hidden"`, `data-sheet-moving` | `nav.hand` | mobile rail and sheet states |
-| `data-motion="full|calm|reduced"` | `<html>` | motion tier (pre-paint script) |
+| `data-sheet-moving` | `nav.hand` | the mobile sheet moving |
+| `data-motion="full\|reduced"` | `<html>` | motion tier (pre-paint script, M1) |
+| `data-ambient="paused"` | `<html>` | the background's ambient motion is paused (pre-paint script, M2) |
+| `data-header="hidden"` | `<html>` | the header (and the mobile rail) has left on a scroll down (N1) |
 | `data-intro="first|repeat"`, `data-reveal="armed|live"`, `data-reveal-skip` | `<html>` | intro and reveal arming |
 | `data-field="<identity>"`, `data-renderer="gl|css"` | `<html>` | background field |
 | `data-hand="collapsed"` | `<html>` | every route except home (hand component + pre-paint script); switches `--hand-reserve` to 120 px from 1024 (D1) |
@@ -1173,7 +1289,7 @@ pages), About, the language switcher (L6), the calm switch. Every page has one `
 
 ## Eggs
 
-`src/eggs/registry.ts` lists each egg's trigger and full / calm / reduced behaviour; all work
+`src/eggs/registry.ts` lists each egg's trigger and full / reduced behaviour; all work
 with the four-card hand:
 
 | Egg | Trigger |
@@ -1185,7 +1301,7 @@ with the four-card hand:
 | Inspect | hold Space on a focused card, or a long press (mobile) |
 | Shortcut sheet | `?` |
 | Coffee | type "draw" on home: a fifth card (`coffeeEgg`: title, body, cta) dealt from off screen, opens About's contact chapter (`/about#contact`); announced with `site.eggs.coffeeDealt` |
-| Idle hint | home only, 30 s without a click, tap or key press, once per session: a handwritten note writes itself beside the hand and a curly arrow draws toward the cards; fades on the next input (H5) |
+| Idle hint | home only, 10 s without a click, tap or key press, once per session: a handwritten note writes itself beside the hand and a curly arrow draws toward the cards; fades on the next input (H5) |
 | 404 discard | any unknown address: `.lost-card` falls onto the pile (I7) |
 | What's on the table | About: five face-down mini cards (`about.onTheTable.items`), each flipping to its value; `<OnTheTable title items flipped>` gets its copy as props (D7) |
 
@@ -1196,17 +1312,20 @@ with the four-card hand:
 - `npm run build` (static export to `dist/`, type check and the content checks for both locales
   included, then `scripts/i18n-pages.mjs`: `<html lang>`, root, 404). Must pass before every push.
 - `npm run preview` then, once per locale,
-  `node scripts/smoke.mjs http://localhost:4100/random/<locale>/ [--motion=full|calm|reduced]`
-  (behaviour at 1440×900 and 390×844: intro order and length, home on one screen, header and calm
-  switch, play / switch / return, the detail hero order, a return with the hero scrolled away,
-  the idle hint, About's contours or poster with no frames at rest, removed routes, reveals,
+  `node scripts/smoke.mjs http://localhost:4100/random/<locale>/ [--motion=full|reduced]`
+  (behaviour at 1440×900 and 390×844: intro order (from the animations' own start times, F3) and
+  length, home on one screen, header links and the pause button (pauses the field, stored, before
+  first paint, hidden in reduced), the header leaving and returning on a case study with the rail,
+  play / switch / return, the detail hero order, a return with the hero scrolled away, the idle
+  hint (after 10 s), About's contour layer (base path, no frames at rest, drift and pause, no
+  pointer reaction, the swisstopo credit), its cards and portrait, removed routes, reveals,
   motion per tier; the root's language choice (de-CH, en-US, fr-FR, no language, a stored
-  choice, no JavaScript), the 404 page's language, `<html lang>` and hreflang, the switcher on
+  choice, no JavaScript), the 404 page's language (the address's locale wins, F1), `<html lang>` and hreflang, the switcher on
   home, a case study, Management and About, back across a switch; card and page titles and
   labels read from the locale's content modules, I27)
   and `node scripts/budget.mjs http://localhost:4100/random/` (initial JS, 170 KB gzip target).
   The budget is advisory for this playground (D7): report the number in your handoff; going over
   does not block a push.
-- `node scripts/images/check.mjs` (image registry (12 photos), renditions, content counts per
+- `node scripts/images/check.mjs` (image registry (13 photos), renditions, content counts per
   locale incl. About's 13 projects, alt text in every locale, slim modules, deleted files stay
   deleted).

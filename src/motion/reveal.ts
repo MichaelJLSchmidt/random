@@ -48,7 +48,7 @@ export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'swi
 
 const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair', 'deal'])
 
-/** The kind a block reveals with (data-reveal), or null when it is not one of the eight. */
+/** The kind a block reveals with (data-reveal), or null when it is not one of the ten. */
 export function kindOf(el: HTMLElement): Kind | null {
   const k = el.dataset.reveal
   return k && kinds.has(k) ? (k as Kind) : null

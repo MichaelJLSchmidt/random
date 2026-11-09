@@ -8,7 +8,7 @@ import { type as typeScale } from '@/design/type'
  * generates (injected in the root layout). No bounce, elastic or overshoot:
  * every bézier stays within [0, 1] and every spring is critically damped.
  * Contract: docs/contracts.md#motion-tokens. Foundation-owned; the reveal,
- * deal, timeline and discard values below were moved in from the Motion
+ * deal and discard values below were moved in from the Motion
  * session's choreography at integration.
  *
  * The scale (use these for new work):
@@ -20,7 +20,7 @@ import { type as typeScale } from '@/design/type'
  *                                                           --motion-scale, --dur-reduced
  * Everything below the scale (duration.*, ease.outSoft, ...) is the table's
  * vocabulary (hand, play, field, eggs) plus the reveal choreography's fixed
- * values (reveal, deal, timeline, discard). Nothing here is unreferenced.
+ * values (reveal, deal, discard). Nothing here is unreferenced.
  */
 
 export type MotionTier = 'full' | 'reduced'
@@ -328,14 +328,6 @@ export const deal = {
   fan: { dur: 0.42, stagger: 0.08, rise: 32, tilt: 0.5, settle: 0.42 },
   /** Below 1024 px (mode "left"): each card comes in from `from` px to the left as it enters the viewport. */
   left: { from: 24, dur: 0.42 },
-} as const
-
-/** About timeline (full tier): strokes linked to the drawing's view progress. */
-export const timeline = {
-  start: 'entry 100%',
-  end: 'cover 60%',
-  /** Each group draws over this share of the range. */
-  groupSpan: 0.5,
 } as const
 
 /** 404 discard: drop height (× distance.exitPlay) and the share of the fall in which the card fades in. */
