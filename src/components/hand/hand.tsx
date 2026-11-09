@@ -7,7 +7,16 @@ import { palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
 import { cardForPath, coffeeEgg, handCards, handLabels } from '@/lib/hand-data'
 import { drawCards } from '@/motion/reveal'
-import { cancelPlay, interceptHistory, play, registerNavigate, returnHome, settleLift } from '@/motion/play'
+import {
+  cancelPlay,
+  dealIn,
+  heroWasVisible,
+  interceptHistory,
+  play,
+  registerNavigate,
+  returnHome,
+  settleLift,
+} from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
@@ -81,9 +90,18 @@ export function Hand() {
   }, [home])
 
   // Inside the view transition's update: the lifted card drops back as the ghost; tapped cards untap.
+  // Leaving a card page whose hero had scrolled away: no morph carries the card back, so it is
+  // dealt into its slot (a short rise, never from off screen).
+  const prevPath = useRef(path)
   useLayoutEffect(() => {
     settleLift()
     untapAll()
+    const from = prevPath.current
+    prevPath.current = path
+    const left = from !== path ? cardForPath(from) : undefined
+    if (!left || heroWasVisible(left.id)) return
+    const card = root.current?.querySelector<HTMLElement>(`.hand-fan .hand-card[data-play="${CSS.escape(left.id)}"]`)
+    if (card && card.getClientRects().length) dealIn(card)
   }, [path])
 
   // Eggs on the hand: inspect, tap (T, or a double tap while a card lifts), new hand (long press on the table).

@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import type { Metadata } from 'next'
 import { DetailPage } from '@/components/detail-page'
 import { CareerMatrix, TeamConstellation, WeekRing, WorkshopGlyph } from '@/components/illustrations'
-import { Scoreboard, Section, SectionIndex, Spread, WorkshopRow } from '@/components/layout'
+import { OffsetImage, Scoreboard, Section, SectionIndex, WorkshopRow, imageSides } from '@/components/layout'
 import { NextProject } from '@/components/next-project'
 import { Picture } from '@/components/picture'
 import { Reveal } from '@/components/reveals'
@@ -36,8 +36,8 @@ const space: Record<ManagementSectionKey, 's' | 'm' | 'l'> = {
  * structure pinned while the member rows scroll), 03 rituals (WeekRing),
  * 04 hiring (a path with a drawn connector), 05 growth (CareerMatrix),
  * 06 workshops (a static row of format cards, each with its WorkshopGlyph,
- * + the workshop draw), 07 metrics (Scoreboard), the next card and the
- * closing contact line. Section images (principles, workshops) as Spreads.
+ * + the workshop draw), 07 metrics (Scoreboard) and the next card. Section
+ * images (principles, workshops) as offset images on alternating sides.
  * Minimap at the right edge.
  */
 export default function ManagementPage() {
@@ -51,6 +51,7 @@ export default function ManagementPage() {
     space: space[key],
   })
   const sections = managementSectionKeys.map((key) => ({ id: key, label: m[key].label }))
+  const side = imageSides()
   return (
     <DetailPage
       card={card}
@@ -84,7 +85,12 @@ export default function ManagementPage() {
           ))}
         </Reveal>
         {m.principles.image && (
-          <Spread image={m.principles.image} caption={m.principles.caption} className="section-spread" />
+          <OffsetImage
+            image={m.principles.image}
+            side={side()}
+            caption={m.principles.caption}
+            className="section-image"
+          />
         )}
       </Section>
 
@@ -222,7 +228,12 @@ export default function ManagementPage() {
           />
         </div>
         {m.workshops.image && (
-          <Spread image={m.workshops.image} caption={m.workshops.caption} className="section-spread" />
+          <OffsetImage
+            image={m.workshops.image}
+            side={side()}
+            caption={m.workshops.caption}
+            className="section-image"
+          />
         )}
       </Section>
 

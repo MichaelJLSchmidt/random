@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { cardForPath } from '@/lib/hand-data'
-import { land } from '@/motion/play'
+import { heroWasVisible, land } from '@/motion/play'
 import { afterTransition } from '@/motion/view-transition'
 import { announce } from './live-region'
 
@@ -11,7 +11,9 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
 
 /*
  * After every client navigation, once the view transition has finished:
- *   back on the table from a card page: the card lands in its slot and takes focus
+ *   back on the table from a card page: the card takes focus (and, when it
+ *   morphed back from its hero, lands in its slot; otherwise the hand has
+ *   already dealt it in)
  *   anywhere else: focus the page's <h1> (tabIndex -1)
  * and announce the page title in the polite live region.
  */
@@ -31,7 +33,7 @@ export function RouteFocus() {
       if (left && path === '/') {
         const card = document.querySelector<HTMLElement>(`.hand-card[data-play="${CSS.escape(left.id)}"]`)
         if (card && card.getClientRects().length) {
-          land(card)
+          if (heroWasVisible(left.id)) land(card)
           card.focus({ preventScroll: true })
           announce(title)
           return

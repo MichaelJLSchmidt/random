@@ -1,13 +1,13 @@
 import { inView } from 'motion'
 import { discard } from '@/eggs/discard'
-import { gapFor } from './choreography'
+import { gapFor, spanFor } from './choreography'
 import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
 import { completeAll, revealNow, revealed, schedule } from './jobs'
 import { type Kind, type KindOptions, isHeroImage, runKind } from './kinds'
 import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
 import { loadSplit } from './split'
 import { table } from './table-store'
-import { reveal as R, duration as D, stagger, tiers } from './tokens'
+import { at as AT, reveal as R, duration as D, stagger, tiers } from './tokens'
 import { readTier } from './use-tier'
 
 export { dealOffset, drawCards, fanCards } from './deal'
@@ -24,6 +24,9 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *   order      blocks with data-reveal-order in the first viewport play in
  *              sequence: base + 80 ms × (order + 1) + delay, where base is 0,
  *              or the moment the card morph has mostly landed after a play
+ *   detail     the detail hero's data-reveal-step blocks in the first viewport
+ *              follow its title by at.detail: summary, label and counter, then
+ *              the meta pairs left to right (each a `pair`: rule, label, value)
  *   on scroll  everything else reveals once 25% is in view (Motion inView,
  *              once); blocks entering in the same frame start 50 ms apart in
  *              document order
@@ -227,6 +230,24 @@ export function revealRoute(kind: NavigationKind) {
       handled.add(el)
       revealNow(el)
     }
+
+  // Detail pages (case studies, Management): the hero's sequence after its title (at.detail): the
+  // summary, the top label and counter, then the meta pairs left to right. Only blocks in the
+  // viewport now join it (measured once, here); the rest reveal on scroll like any other block.
+  const titleAt = base + gapFor(tier, stagger.cards)
+  let pairs = 0
+  for (const el of all) {
+    const step = el.dataset.revealStep
+    if (!step || handled.has(el) || seq?.contains(el) || !kindOf(el) || !inFirstViewport(el)) continue
+    handled.add(el)
+    if (step === 'meta') {
+      const at = AT.detail.meta.at + pairs++ * AT.detail.meta.stagger
+      start(el, titleAt + gapFor(tier, at), r, { dur: spanFor(tier, AT.detail.meta.dur) })
+    } else {
+      const at = step === 'summary' ? AT.detail.summary : AT.detail.label
+      start(el, titleAt + gapFor(tier, at), r, {})
+    }
+  }
 
   // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
   const ordered = all

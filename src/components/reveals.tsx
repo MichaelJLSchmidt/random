@@ -56,6 +56,7 @@ export type RevealTag =
   | 'header'
   | 'footer'
   | 'figure'
+  | 'figcaption'
   | 'p'
   | 'span'
   | 'h1'

@@ -14,12 +14,12 @@ import { setPinned } from './pin'
  *   const { active } = useDealScene(ref, { cards: 4 })
  *
  * Full tier, from 1024 px, only. The root ([data-scene="deal"]) becomes a
- * sticky stage 250svh tall; the card row pins below the header while Motion's
- * scroll() follows the stage (offset ["start start", "end end"]):
+ * sticky stage 180svh tall (deal.stage); the card row pins below the header
+ * while Motion's scroll() follows the stage (offset ["start start", "end end"]):
  *
- *   0.0–0.2  card 1 is dealt     cards wait face down as a deck in the last
+ *   0.0–0.2  card 1 is dealt     cards wait face up as a deck in the last
  *   0.2–0.4  card 2              slot; each one travels to its slot on a
- *   0.4–0.6  card 3              shallow arc, turning face up on the way, and
+ *   0.4–0.6  card 3              shallow arc, readable all the way, and
  *   0.6–0.8  card 4              lands with a slight tilt
  *   0.8–1.0  settle              the row squares up
  *
@@ -100,8 +100,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
   let stopScroll: (() => void) | null = null
   let ro: ResizeObserver | null = null
 
-  const faces = (card: HTMLElement) => [...card.children] as HTMLElement[]
-
   const render = (p: number) => {
     progress = p
     const last = slots[n - 1]
@@ -119,10 +117,9 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
       const r = t < 1 ? deckTilt[i] + (tilt[i] - deckTilt[i]) * e : tilt[i] * (1 - settle)
       card.style.translate = `${x.toFixed(2)}px ${y.toFixed(2)}px`
       card.style.rotate = `${r.toFixed(3)}deg`
-      // Undealt cards lie face down on the deck, the top card first.
+      // Undealt cards lie face up on the deck, the next card on top: its text is readable from the
+      // moment it starts moving.
       card.style.zIndex = String(t < 1 ? n * 2 - i : n - i)
-      const face = String(clamp01(t * 2 - 1))
-      for (const child of faces(card)) child.style.opacity = face
     })
     const nowPinned = p > 0 && p < 1
     if (nowPinned !== pinned) {
@@ -138,7 +135,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
       card.style.rotate = ''
       card.style.zIndex = ''
       card.style.willChange = ''
-      for (const child of faces(card)) child.style.opacity = ''
     }
     if (pinned) setPinned(false)
     pinned = false

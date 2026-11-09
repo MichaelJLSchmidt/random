@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { type Metric, site } from '@/lib/content'
 import type { HandCard } from '@/lib/cards'
 import { CaseHero } from './case-hero'
-import { ClosingContact } from './closing-contact'
 import { type MetaPair, MetaPairs, Minimap, type MinimapSection, Scoreboard } from './layout'
 import { PageTransition } from './page-transition'
 
@@ -32,7 +31,6 @@ type Props = {
  *   hero      the played card, continued (CaseHero, 72vh / 64vh)
  *   facts     MetaPairs, then the Scoreboard, across all twelve columns
  *   sections  numbered Spread-grid sections (children), ending with Next
- *   contact   one closing line with the email link (ClosingContact)
  *   Minimap   fixed at the right edge from 1024 px
  */
 export function DetailPage({
@@ -58,7 +56,6 @@ export function DetailPage({
           </div>
         )}
         {children}
-        <ClosingContact />
         {sections && sections.length > 0 && <Minimap sections={sections} />}
       </article>
     </PageTransition>

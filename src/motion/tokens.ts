@@ -188,6 +188,8 @@ export const distance = {
   hoverLift: 28,
   spread: 12,
   landY: 10,
+  /** A return with the hero scrolled away: the card rises this far into its slot (no morph). */
+  returnDeal: 24,
 } as const
 
 /** Degrees. */
@@ -274,8 +276,8 @@ export const reveal = {
 
 /** The deal: the pinned decisions scene (stage, phases, tilt) and dealing hand cards from off screen. */
 export const deal = {
-  /** Pinned stage height (svh). */
-  stage: 250,
+  /** Pinned stage height (svh): short, so all four cards land soon. */
+  stage: 180,
   /** Scroll progress where each phase ends: four cards, then the settle. */
   phases: [0.2, 0.4, 0.6, 0.8, 1],
   /** A dealt card lands with this share of its hand-fan angle (removed in the settle). */

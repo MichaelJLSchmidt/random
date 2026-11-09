@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 import topo from '../../../public/topo/meta.json'
 import { AboutTopo } from '@/components/about-topo'
 import { AboutTimeline, ContourPortrait } from '@/components/illustrations'
-import { Section, SectionIndex, Spread } from '@/components/layout'
+import { OffsetImage, Section, SectionIndex, imageSides } from '@/components/layout'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 import { Reveal } from '@/components/reveals'
@@ -45,6 +45,7 @@ export default function AboutPage() {
     space: space[key],
   })
   const attribution = `${a.topo.label}. ${a.topo.attribution}.`
+  const side = imageSides()
   return (
     <PageTransition>
       <div className="about-page" data-identity="glacier">
@@ -67,7 +68,9 @@ export default function AboutPage() {
               </Reveal>
             ))}
           </div>
-          {a.story.image && <Spread image={a.story.image} caption={a.story.caption} className="section-spread" />}
+          {a.story.image && (
+            <OffsetImage image={a.story.image} side={side()} caption={a.story.caption} className="section-image" />
+          )}
         </Section>
 
         {/* 02 Timeline: seven stops; the drawing runs along them. */}
@@ -115,7 +118,9 @@ export default function AboutPage() {
             ))}
           </Reveal>
           <p className="tcg-stats t-label col-content">{a.tcg.stats}</p>
-          {a.tcg.image && <Spread image={a.tcg.image} caption={a.tcg.caption} className="section-spread" />}
+          {a.tcg.image && (
+            <OffsetImage image={a.tcg.image} side={side()} caption={a.tcg.caption} className="section-image" />
+          )}
         </Section>
 
         {/* 05 Roots: set to the right, lead size. */}
@@ -123,7 +128,9 @@ export default function AboutPage() {
           <Reveal as="p" kind="lines" className="roots-body t-lead cols-6-11">
             {a.roots.body}
           </Reveal>
-          {a.roots.image && <Spread image={a.roots.image} caption={a.roots.caption} className="section-spread" />}
+          {a.roots.image && (
+            <OffsetImage image={a.roots.image} side={side()} caption={a.roots.caption} className="section-image" />
+          )}
         </Section>
 
         {/* 06 What's on the table: the egg brings its own h2. */}

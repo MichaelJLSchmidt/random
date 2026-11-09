@@ -128,6 +128,7 @@ export const teamOfTeams: CaseStudy = {
         {
           title: 'Career framework',
           caption: 'Four levels, three dimensions, written with the team in four workshops.',
+          illustration: 'CareerMatrix',
         },
       ],
     },
