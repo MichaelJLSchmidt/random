@@ -4,8 +4,9 @@ The shared surface of the redesign. Four Wave 1 sessions (Layout & Pages, Motion
 Content & Images) worked in parallel against it; the Integration session merged them, applied the
 [integration decisions](#integration-decisions-i1i27) and updated this file to match the code.
 [Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there,
-[Locales](#locales-l1l11) made the site bilingual (German and English), and
-[Feedback round 2](#feedback-round-2) changed the decisions listed there; every reference section
+[Locales](#locales-l1l11) made the site bilingual (German and English),
+[Feedback round 2](#feedback-round-2) and [Feedback round 3](#feedback-round-3) changed the
+decisions listed there; every reference section
 below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
@@ -33,7 +34,7 @@ below were written for Wave 1 and apply again only if a future wave runs in para
 
 Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisions-i1i27) ·
 [Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
-[Feedback round 2](#feedback-round-2) ·
+[Feedback round 2](#feedback-round-2) · [Feedback round 3](#feedback-round-3) ·
 [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
@@ -486,7 +487,7 @@ below describe the new state.
 
 **Background**
 
-- **B1. Contour layer** (supersedes A5): `.contour-bg` > `.contour-bg__poster` inside the
+- **B1. Contour layer** (supersedes A5; its reveal and drift superseded by R1): `.contour-bg` > `.contour-bg__poster` inside the
   background field, above the canvas and below the content, with the old password page's CSS
   reproduced exactly (`src/styles/field.css`); its two SVGs (`public/contour-bg/contours.svg`,
   `contours-200.svg`, added by hand, unchanged) come in as `--contour-poster` / `--contour-full`
@@ -513,6 +514,69 @@ below describe the new state.
 - **F2.** German copy writes "Design-System".
 - **F3.** The smoke check of the home intro compares each part's start from its animations' own
   timing (start time + delay), not when it crosses an opacity threshold.
+
+---
+
+## Feedback round 3
+
+A third round of design feedback, applied by one session (plan and report:
+`docs/handoff/feedback-3.md`, the plan also in `docs/backlog.md`). Items keep the feedback's
+numbers as R1–R9. Earlier decisions it changes are marked above; the reference sections below
+describe the new state.
+
+**R1. About's morph** (supersedes B1's reveal and drift). The shader morph is back, cheap and
+sharp, and hands over to the SVG with opacity only:
+
+- *Heightmap*: `public/terrain/field.webp` (768 × 528, lossless WebP, 147 KB; R, G heights
+  `h = offset + (R·65280 + G·255)·scale` with offset 536.25 and scale 4 m, B the lake coverage),
+  described by the generated `src/components/background/terrain.ts` (size, encoding, range, sha,
+  reference texels). Built by `scripts/terrain/build-field.py <portfolio checkout>` from the
+  portfolio repository's 1536 × 1056 master (`terrain/heightmap-1536.webp`, offset from its
+  `terrain.json`; the master's sha checked): averaged 2 × 2, blurred σ 0.6 texel, rounded to 4 m;
+  the lake mask is the SVG's lake path rasterised (nonzero, 4 × 4 samples per texel). Its contours
+  lie a median 0.09 viewBox units from the SVG's vertices. Loaded (and its reference texels checked
+  once a session) when a link to About is hovered, focused or touched, and on About.
+- *Shader* (`shader.ts`): `h = mix(noise relief, elevation, smoothstep(0.15, 0.95, uTopo))`, the
+  heights bicubic (Catmull-Rom) over exact `texelFetch` texels; regular lines on every interval
+  except the index levels, index lines on those; anti-aliased by the level's screen-space
+  derivative (fwidth's Euclidean form); lines fade in over the first 40% of `uTopo`, lakes from
+  30%; the gradient's pools contract and the field fades into the ground. At `uTopo = 1` it draws
+  what the SVG layer shows (`contours.ts`): cover crop centred (`xMidYMid slice`) and the layer's
+  1.03 scale (`uMap`); 200 m with an index line every 1000 m, or 100 m with one every 500 m while
+  `contourQuery` matches (the one copy of the old media query: the `<picture>` source and the
+  shader read it, no CSS repeats it); line `#8A8C80`, 1 CSS px at 0.55 and 1.5 CSS px at 0.9,
+  lakes `#8FC7E8` at 0.08, all × 0.42 over `#1B1C18`, line widths × DPR of the buffer.
+- *Resolution*: the resting field keeps half its CSS size (DPR capped at 1); only while a morph
+  runs the buffer is the device's (DPR capped at 2, `field.morph.dprMax`), applied at the start of
+  a frame and drawn in it. If the median of the first 10 morph frame intervals is above 20 ms, the
+  rest of that morph renders at 0.75× (`field.morph`). The morph draws every frame (the resting
+  field 30 fps).
+- *Handoff*: `.contour-bg` (the ground with a `<picture>`/`<img class="contour-bg__img">`, cover,
+  opacity 0.42, static `scale(1.03)`, `will-change`) and `.contour-vignette` (the old `::after`
+  gradients as a static overlay) change only by opacity (WAAPI). They render on About, during a
+  morph and once a link to About is near (`data-contours-primed`: the SVG loaded, decoded and
+  rasterised at opacity 0). Entering: `uTopo` 0 → 1 over `duration.topo` (1.6 s, inOut) while the
+  vignette fades in; in the last `duration.contourHandoff` (0.3 s), once `img.decode()` has
+  resolved (else as soon as it does), the SVG layer crossfades over the canvas; then the canvas is
+  covered (`data-canvas-covered`, not composited), its buffer back at rest, the loop stops (zero
+  draw calls) and the drift starts. Leaving: the drift holds, one shader frame at `uTopo = 1` with
+  the drift's offset is drawn under the SVG and the canvas uncovered in that frame, the SVG fades
+  off it (0.3 s), then `uTopo` runs 1 → 0 while the colours return; the field returns to its resting
+  resolution in the frame the morph ends. A heightmap arriving mid-morph fades its lines in.
+- *Drift*: `translate` only on the `<img>` (WAAPI, compositor), from the identity offset, ±8 / ±5 px,
+  one 120 s loop with `ease.inOut`, alternating; never the scale; paused while the tab is hidden;
+  never on the pointer. Reduced motion: no morph and no drift, the SVG layer crossfades (160 ms).
+  The CSS fallback (`field-css.ts`, no WebGL2) and a missing heightmap: the SVG layer crossfades in
+  over `duration.topo`.
+- Removed: the `mask-image` reveal, `--contour-reveal` and its transition, the CSS background
+  images (`--contour-poster`, `--contour-full`), the CSS drift keyframes, `data-tab-hidden`.
+
+**R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
+`src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
+(`device-pixel-content-box`), which draws in the same callback; height-only changes under
+`field.ignoreHeight` (120 px) are ignored (the container is `100lvh`); the deal cards carry
+`will-change: transform` from the scene's mount to its unmount; the header keeps one layer
+(`will-change: translate`).
 
 ---
 
@@ -613,12 +677,16 @@ src/components/
   router-bridge.tsx            root layout: registerNavigate + the back / forward replay (L2)
   ambient-toggle.tsx           pause / play for the background's ambient motion (look from html[data-ambient], M2)
   site-footer.tsx, footer-shell.tsx, about-small-print.tsx   footer (none on home; About's small print)
-  background/                  background-field.tsx (with About's contour layer), field-engine.ts, field-gl.ts,
-                               shader.ts, field-css.ts, tracks.ts, oklab.ts
+  background/                  background-field.tsx (with About's SVG layer and vignette), field-engine.ts,
+                               field-gl.ts, shader.ts, field-css.ts, tracks.ts, oklab.ts, contours.ts (the
+                               SVGs' drawing and contourQuery), contour-layer.ts (the SVG layer's opacity
+                               and drift), terrain.ts (generated: the heightmap's metadata, R1)
   detail-page.tsx, case-hero.tsx, next-project.tsx (Layout)
 src/eggs/                      registry.ts, eggs.tsx, hand-eggs.ts, idle-hint.tsx, workshop-draw.tsx,
                                on-the-table.tsx, discard.ts, haptics.ts
 public/contour-bg/             contours.svg, contours-200.svg (About's contour background, B1)
+public/terrain/field.webp      About's region heightmap for the shader morph (R1)
+scripts/terrain/build-field.py builds it (and terrain.ts) from the portfolio repository's master (R1)
 src/lib/
   i18n.ts                      locales, Locale, splitPath, pagePath, localeHref, LOCALE_KEY, pickLocaleScript (L1)
   content.ts                   server: getContent() / contentFor(locale) with hand cards and getCaseStudy,
@@ -768,12 +836,13 @@ strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label
 `at.switchNavigate`; `idle` (`after` 10 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5, M3);
 `header.threshold` (8 px) and `duration.headerHide` / `headerShow` (200 / 240 ms; N1);
 `slot.markScale` (`--slot-mark-scale`, G4); `reveal.mask` also as `--reveal-mask`;
-`duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s, B1);
+`duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s) and
+`duration.contourHandoff` (the SVG's crossfade, 0.3 s; R1);
 `distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `ignoreHeight` (R4), `poolDrift`, `poolDriftPeriods`
-(G1) and `contourDrift` (B1: `x` 8 px, `y` 5 px, `scale` 1.03, `period` 120 s there and back →
-`--contour-drift-x`, `--contour-drift-y`, `--contour-drift-scale`, `--dur-contour-drift` (one
-way, 60 s))), `hand.*` (geometry mirrored in `tokens.css`).
+(G1), `contourDrift` (R1: `x` 8 px, `y` 5 px, one `period` 120 s loop from the identity
+offset, `scale` 1.03 static → `--contour-drift-scale`) and `morph` (R1: `dprMax` 2, `slowScale`
+0.75, `guardFrames` 10, `guardMs` 20)), `hand.*` (geometry mirrored in `tokens.css`).
 
 **Reveal choreography** (I3): `duration.digits` 700 ms, `duration.svgDraw` 1200 ms,
 `distance.block` 12 px; `reveal` = trigger (`amount` 0.25, `margin`), `mask`
@@ -1257,7 +1326,7 @@ pages), About, the language switcher (L6), the pause button (M2); it leaves on a
 | `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
-| `data-contours="off\|morph\|shown"`, `data-tab-hidden` | `.field` | About's contour layer: hidden, morphing in or out, at rest; the tab is hidden (the drift stops) (B1) |
+| `data-contours="off\|morph\|shown"`, `data-contours-primed`, `data-canvas-covered` | `.field` | About's SVG layer: hidden, morphing in or out, at rest; rendered at opacity 0 because About is near; the SVG layer covers the canvas, which is not composited (R1) |
 | `data-deal-item`, `data-deal-line`, `data-deal-stack`, `data-latest` | About's cards (the `deal` reveal) | the cards, the timeline's line and stack, its latest card (A2, A3) |
 | `data-first-load` | `<FirstLoadSequence>` | home hero wrapper |
 | `data-chrome` | header | revealed last in the first-visit intro |

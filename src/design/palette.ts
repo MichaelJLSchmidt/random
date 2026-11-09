@@ -29,10 +29,11 @@ export const palette: Record<Identity, Swatch> = {
 export const glacierText = '#DCE8E6'
 
 /**
- * About's contour field: the old password page's ground. Its lines (#8A8C80)
- * live in the SVGs themselves (public/contour-bg/).
+ * About's contour field: the old password page's ground, and the colours its
+ * SVGs draw with (public/contour-bg/: lines #8A8C80, lakes #8FC7E8). The WebGL
+ * morph draws the same lines and lakes (src/components/background/contours.ts).
  */
-export const contour = { ground: '#1B1C18' } as const
+export const contour = { ground: '#1B1C18', line: '#8A8C80', lake: '#8FC7E8' } as const
 
 export const identities = Object.keys(palette) as Identity[]
 

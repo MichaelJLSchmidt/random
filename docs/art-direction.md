@@ -11,11 +11,12 @@ with a slowly breathing WebGL gradient behind everything; its colour pools drift
 **hand of four cards** is the main navigation: three case studies (`/work/[slug]`) and Management
 (`/management`). About is the one plain link; it holds the project list and the contact chapter.
 
-On About the gradient's colour pools contract and fade into a dark ground (`#1B1C18`) while the
-old password page's contour background of Interlaken opens from the centre through a soft radial
-mask (1.6 s): real swisstopo terrain, the lakes as an 8% fill, stone-grey lines (`#8A8C80`, 1 px
-and 1.5 px index lines) under the old page's vignette. At rest only its lines move, a very slow
-drift of a few pixels; nothing reacts to the pointer. Leaving About reverses the morph.
+On About the gradient's colour pools contract and fade into a dark ground (`#1B1C18`) while
+contour lines rise out of a soft noise relief and settle onto the real swisstopo terrain of
+Interlaken (1.6 s): the lakes fill in at 8%, stone-grey lines (`#8A8C80`, 1 px and 1.5 px index
+lines) under the old password page's vignette. The last moment hands over, unseen, to the old
+page's contour drawing itself. At rest only its lines move, a very slow drift of a few pixels;
+nothing reacts to the pointer. Leaving About runs the morph back.
 
 ## Colour identities
 

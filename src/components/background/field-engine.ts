@@ -5,9 +5,12 @@ import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
 import { ambientPaused, onAmbientChange } from '@/motion/use-tier'
+import { ContourLayer } from './contour-layer'
+import { contourLevels, contourQuery, contourStyle } from './contours'
 import { CssField } from './field-css'
 import { type FieldFrame, GlField } from './field-gl'
 import { hexToLab, labCss, labToRgb } from './oklab'
+import { terrain } from './terrain'
 import { type EaseName, Track, easeCss } from './tracks'
 
 /*
@@ -27,9 +30,12 @@ import { type EaseName, Track, easeCss } from './tracks'
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
  *   switch   B crossfades in OKLab with a 6% luminance dip at the midpoint
  *   About    the pools contract and fade into the contour ground while the
- *            contour layer (background-field.tsx) reveals through a radial
- *            mask from the centre, 1.6 s inOut (reduced: 160 ms crossfade);
- *            at rest the canvas draws no frames until About is left
+ *            contour lines rise from a noise relief onto the region's heights
+ *            (1.6 s inOut, the canvas at the device's resolution meanwhile);
+ *            the SVG layer crossfades over the last 300 ms, then covers the
+ *            canvas, which draws nothing at rest. Leaving: one shader frame
+ *            under the SVG, the SVG fades, the shader runs back. Reduced, the
+ *            CSS field or no heightmap: the SVG layer crossfades in and out.
  */
 
 type Name =
@@ -47,6 +53,7 @@ type Name =
   | 'dip'
   | 'fade'
   | 'motion'
+  | 'lines'
 
 const swatch = (id: Identity) => [
   ...hexToLab(palette[id].field),
@@ -113,8 +120,8 @@ export class FieldEngine {
     private root: HTMLElement,
     canvas: HTMLCanvasElement,
     cssLayer: HTMLElement,
-    /** About's contour layer (src/styles/field.css) and a function that fetches its SVG for this viewport. */
-    private about: { layer: HTMLElement; preload: () => void },
+    /** About's SVG layer and vignette (contour-layer.ts, src/styles/field.css). */
+    private contours: ContourLayer,
   ) {
     this.css = new CssField(cssLayer)
     this.tier = table.get().tier
@@ -134,6 +141,7 @@ export class FieldEngine {
       dip: new Track([1]),
       fade: new Track([1]),
       motion: new Track([0]),
+      lines: new Track([0]),
     }
     this.frame = {
       time: 0,
@@ -151,6 +159,16 @@ export class FieldEngine {
       fade: 1,
       topo: 0,
       ground: srgb(contour.ground),
+      contours: {
+        fade: 0,
+        view: [1, 1],
+        map: [1, 1, 0, 0],
+        levels: contourLevels(false),
+        widths: [1, 1.5],
+        alphas: [contourStyle.lineAlpha, contourStyle.indexAlpha, contourStyle.lakeAlpha, contourStyle.layerOpacity],
+        line: srgb(contourStyle.line),
+        lake: srgb(contourStyle.lake),
+      },
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
     this.held = ambientPaused()
@@ -199,8 +217,8 @@ export class FieldEngine {
     )
     const onVisibility = () => {
       this.setPaused()
-      // The contour drift (CSS) stops while the tab is hidden.
-      this.root.toggleAttribute('data-tab-hidden', document.hidden)
+      // The contour drift stands still while the tab is hidden.
+      this.contours.setHidden(document.hidden)
     }
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))
@@ -218,10 +236,11 @@ export class FieldEngine {
       this.syncCss(now)
       document.documentElement.dataset.renderer = 'css'
     }
-    // About's contour SVG: fetched when a link to About is hovered, focused or touched (or on About).
+    // About's SVG and heightmap: fetched (and the SVG decoded and rasterised at opacity 0) when a
+    // link to About is hovered, focused or touched, and on About.
     const onIntent = (e: Event) => {
       const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null
-      if (a && /\/about\/?$/.test(new URL(a.href, location.href).pathname)) this.about.preload()
+      if (a && /\/about\/?$/.test(new URL(a.href, location.href).pathname)) this.prepareContours()
     }
     for (const type of ['pointerover', 'focusin', 'touchstart'] as const) {
       document.addEventListener(type, onIntent, { passive: true })
@@ -232,7 +251,8 @@ export class FieldEngine {
 
   destroy() {
     cancelAnimationFrame(this.raf)
-    clearTimeout(this.contourTimer)
+    clearTimeout(this.outTimer)
+    this.contours.stopDrift()
     for (const off of this.offs) off()
     this.gl?.destroy()
   }
@@ -243,41 +263,227 @@ export class FieldEngine {
 
   // ---------------------------------------------------------------- About's contours
 
-  /** What the route asks for: the contours (1) or not (0). */
-  private wantTopo: 0 | 1 = 0
-  private contourTimer = 0
-
   /**
-   * Eases About's morph in or out: the shader's `topo` (pools contract and fade into the ground)
-   * and the contour layer's reveal (--contour-reveal: a radial mask from the centre, reduced an
-   * opacity crossfade; src/styles/field.css) over the same time and curve. The layer renders
-   * (data-contours) while the route asks for it or it is still fading out.
+   * About: `off` (the field), `in` (morphing in, then the SVG's crossfade), `shown` (the SVG layer
+   * covers the canvas: no frames), `out` (the SVG fades off the shader's frame, then the shader
+   * runs back).
    */
-  private toTopo(to: 0 | 1, dur: number, ease: EaseName) {
-    const from = this.tracks.topo.value[0]
-    this.wantTopo = to
-    this.go('topo', [to], dur, ease)
-    const layer = this.about.layer
-    clearTimeout(this.contourTimer)
-    if (to === 1) this.about.preload()
-    if (to === 1 || from > 0) this.root.dataset.contours = to === 1 && dur <= 0 ? 'shown' : 'morph'
-    // Commit the starting value (the layer may have just been displayed), then transition to `to`.
-    layer.style.transition = 'none'
-    layer.style.setProperty('--contour-reveal', String(dur > 0 ? from : to))
-    void getComputedStyle(layer).getPropertyValue('--contour-reveal')
-    if (dur > 0) {
-      layer.style.transition = `--contour-reveal ${dur}s ${easeCss(ease)}`
-      layer.style.setProperty('--contour-reveal', String(to))
-    }
-    const settle = () => (this.root.dataset.contours = this.wantTopo === 1 ? 'shown' : 'off')
-    if (dur > 0) this.contourTimer = window.setTimeout(settle, dur * 1000)
-    else settle()
+  private phase: 'off' | 'in' | 'shown' | 'out' = 'off'
+  /** The shader draws contour lines in this morph (WebGL, full tier, heightmap loaded). */
+  private linesOn = false
+  /** When the SVG's crossfade may start (performance.now()); 0: started or not due. */
+  private handoffAt = 0
+  /** Leaving: the next frame is the shader at uTopo = 1, then the SVG fades off it. */
+  private leaveFrame = false
+  /** The drift offset (CSS px) the shader's frame matches while the SVG fades out. */
+  private mapOffset: [number, number] = [0, 0]
+  /** The drawing buffer at the device's resolution while a morph runs (field.morph). */
+  private hiRes = false
+  private slowMorph = false
+  private morphFrames: number[] = []
+  private fullContours = typeof matchMedia === 'function' ? matchMedia(contourQuery) : null
+  private outTimer = 0
+
+  /** The heightmap (when WebGL is up) and the SVG: fetched once About is near. */
+  private prepareContours() {
+    void this.contours.prime()
+    if (this.mode !== 'gl' || !this.gl) return
+    void this.gl.loadTerrain().then((ok) => {
+      // Arriving during a morph in: the lines fade in (no pop), the morph keeps its timing.
+      if (ok && this.phase === 'in' && this.linesOn && this.tracks.lines.to[0] === 0) {
+        this.go('lines', [1], D.contourHandoff, 'outSoft')
+      }
+    })
   }
 
-  /** At rest on About only the contour layer shows: the canvas draws nothing and asks for no frames. */
-  private contoursAtRest() {
+  /** The shader's morph needs WebGL and the full tier (the heightmap may still be on its way). */
+  private canMorph() {
+    return this.mode === 'gl' && this.tier === 'full'
+  }
+
+  private setCanvasCovered(covered: boolean) {
+    this.root.toggleAttribute('data-canvas-covered', covered)
+  }
+
+  private setHiRes(on: boolean) {
+    this.hiRes = on && this.mode === 'gl'
+    this.slowMorph = false
+    this.morphFrames = []
+  }
+
+  /**
+   * About's morph in or out over `dur` s. In (WebGL, full tier): the shader eases uTopo 0 -> 1 at
+   * full resolution (the field fades into the ground, lines rise from a noise relief onto the
+   * real heights) while the vignette fades in; in its last `contourHandoff` s the SVG layer
+   * crossfades over the canvas (once decoded), then the canvas is covered, the loop stops and the
+   * drift starts. Out: one shader frame at uTopo = 1 (matching the drift's offset) under the SVG,
+   * the SVG fades off it, then uTopo runs 1 -> 0 while the colours return. Reduced motion, the CSS
+   * field, or no heightmap: the SVG layer simply crossfades in or out over `dur`.
+   */
+  private toTopo(to: 0 | 1, dur: number, ease: EaseName) {
+    const now = performance.now()
+    const L = this.contours
     const topo = this.tracks.topo
-    return topo.value[0] >= 1 && topo.to[0] >= 1
+    topo.sample(now)
+    clearTimeout(this.outTimer)
+    const H = Math.min(D.contourHandoff, dur)
+
+    if (to === 1) {
+      this.prepareContours()
+      if (dur <= 0) {
+        // A direct visit (or an instant change): the SVG at once.
+        this.jumpTopo(1)
+        this.settleShown()
+        return
+      }
+      if (this.phase === 'shown' || (this.phase === 'in' && topo.to[0] === 1)) return
+      this.phase = 'in'
+      this.root.dataset.contours = 'morph'
+      this.setCanvasCovered(false)
+      this.mapOffset = [0, 0]
+      this.leaveFrame = false
+      this.linesOn = this.canMorph()
+      this.jump('lines', [this.gl?.hasTerrain ? 1 : 0])
+      this.go('topo', [1], dur, ease)
+      void L.vignette(1, dur, easeCss(ease))
+      if (this.linesOn) {
+        this.setHiRes(true)
+        // Anything of the SVG still showing (a turn back mid-way) leaves first.
+        void L.show(0, H)
+        this.handoffAt = now + (dur - H) * 1000
+        void L.prime().then(() => this.maybeHandoff(performance.now()))
+      } else {
+        this.handoffAt = 0
+        void L.show(1, dur, easeCss(ease)).then((done) => {
+          if (done && this.phase === 'in') this.settleShown()
+        })
+      }
+      return
+    }
+
+    // Leaving (or not on About at all).
+    if (this.phase === 'off') {
+      if (topo.to[0] !== 0) this.jumpTopo(0)
+      L.unprime()
+      return
+    }
+    this.handoffAt = 0
+    const fromShown = this.phase === 'shown'
+    this.phase = 'out'
+    this.root.dataset.contours = 'morph'
+    if (dur <= 0) {
+      this.jumpTopo(0)
+      void L.show(0, 0)
+      void L.vignette(0, 0)
+      this.settleOff()
+      return
+    }
+    if (fromShown && this.canMorph() && this.gl?.hasTerrain) {
+      this.linesOn = true
+      this.jump('lines', [1])
+      this.setHiRes(true)
+      this.mapOffset = L.freezeDrift()
+      this.jumpTopo(1)
+      // The next frame draws the shader under the SVG and uncovers the canvas; then the SVG fades.
+      this.leaveFrame = true
+      this.go('topo', [0], dur, ease, H)
+      void L.vignette(0, H + dur, easeCss(ease))
+      this.kick(true)
+      return
+    }
+    // Reduced, the CSS field, no heightmap, or a turn back mid-morph: crossfade the SVG away.
+    this.linesOn = this.linesOn && this.canMorph()
+    this.setCanvasCovered(false)
+    L.stopDrift()
+    const curve = easeCss(ease)
+    void L.show(0, this.linesOn ? H : dur, curve)
+    void L.vignette(0, dur, curve)
+    this.go('topo', [0], dur, ease)
+    this.outTimer = window.setTimeout(() => this.phase === 'out' && this.settleOff(), dur * 1000 + 50)
+  }
+
+  private jumpTopo(v: number) {
+    this.tracks.topo.jump([v], performance.now())
+  }
+
+  /** Entering, near the end of the morph: the SVG crossfades over the shader's frame once decoded. */
+  private maybeHandoff(now: number) {
+    if (this.phase !== 'in' || !this.handoffAt || now < this.handoffAt || !this.contours.ready) return
+    this.handoffAt = 0
+    const left = Math.max(0, this.tracks.topo.remaining(now))
+    const dur = Math.max(D.contourHandoff, left)
+    void this.contours.show(1, dur, 'linear').then((done) => {
+      if (done && this.phase === 'in') this.settleShown()
+    })
+  }
+
+  /** At rest on About: the SVG layer covers the canvas; the loop stops; the drift starts. */
+  private settleShown() {
+    this.phase = 'shown'
+    this.handoffAt = 0
+    this.root.dataset.contours = 'shown'
+    void this.contours.show(1, 0)
+    void this.contours.vignette(1, 0)
+    this.setCanvasCovered(true)
+    this.setHiRes(false)
+    // The canvas is covered: a smaller buffer (cleared, never shown) until the next morph.
+    this.applySize()
+    if (this.tier === 'full') this.contours.startDrift()
+  }
+
+  /** Off About again: the layer leaves the rendering; the field at its resting resolution. */
+  private settleOff() {
+    this.phase = 'off'
+    this.linesOn = false
+    this.mapOffset = [0, 0]
+    this.root.dataset.contours = 'off'
+    this.setCanvasCovered(false)
+    this.contours.stopDrift()
+    this.contours.unprime()
+    if (this.hiRes) {
+      this.setHiRes(false)
+      // Applied at the start of the next frame and drawn in it.
+      this.kick(true)
+    }
+  }
+
+  /** At rest on About only the SVG layer shows: the canvas draws nothing and asks for no frames. */
+  private contoursAtRest() {
+    if (this.phase === 'shown') return true
+    // Morphed in and drawn, waiting for (or running) the SVG's crossfade: nothing changes.
+    const topo = this.tracks.topo
+    const lines = this.tracks.lines
+    return (
+      this.phase === 'in' &&
+      topo.value[0] >= 1 &&
+      topo.to[0] >= 1 &&
+      this.frame.topo >= 1 &&
+      lines.value[0] === lines.to[0]
+    )
+  }
+
+  /** The heightmap mapping and the SVG's drawing for this frame (contours.ts). */
+  private contourFrame() {
+    const c = this.frame.contours
+    const { w, h } = this.box
+    c.fade = this.linesOn ? this.tracks.lines.value[0] : 0
+    if (!c.fade || !w || !h) return
+    const [VW, VH] = contourStyle.viewBox
+    const k = F.contourDrift.scale
+    // The <img>: object-fit cover (= xMidYMid slice), scaled k about the centre, translated by the drift.
+    const s = Math.max(w / VW, h / VH)
+    const T = terrain.width / VW
+    const a = T / (k * s)
+    const [dx, dy] = this.mapOffset
+    c.view[0] = w
+    c.view[1] = h
+    c.map[0] = a
+    c.map[1] = a
+    c.map[2] = ((-w / 2 - dx) / (k * s) + VW / 2) * T
+    c.map[3] = ((-h / 2 - dy) / (k * s) + VH / 2) * T
+    c.levels = contourLevels(Boolean(this.fullContours?.matches))
+    c.widths[0] = contourStyle.lineWidth * k
+    c.widths[1] = contourStyle.indexWidth * k
   }
 
   // ---------------------------------------------------------------- input
@@ -298,6 +504,9 @@ export class FieldEngine {
   private setTier(tier: MotionTier) {
     this.tier = tier
     this.go('motion', [this.animated() ? 1 : 0], D.crossfade, 'outSoft')
+    // The contour drift is full tier only.
+    if (tier !== 'full') this.contours.stopDrift()
+    else if (this.phase === 'shown') this.contours.startDrift()
   }
 
   /** Brings every track up to date (the loop does not run in CSS mode or while idle). */
@@ -506,10 +715,20 @@ export class FieldEngine {
     else this.kick(true)
   }
 
-  /** Drawing-buffer size for the current state: the field's low resolution at rest. */
+  /**
+   * Drawing-buffer size for the current state: the field's low resolution at rest (renderScale,
+   * devicePixelRatio capped at 1); while About's morph runs, the device's pixels (DPR capped at
+   * field.morph.dprMax), or 0.75× of that once the guard found the frames too slow.
+   */
   private targetSize() {
-    const { w, h } = this.box
-    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale
+    const { w, h, dw, dh } = this.box
+    const dpr = devicePixelRatio || 1
+    if (this.hiRes) {
+      const M = F.morph
+      const k = this.slowMorph ? M.slowScale : 1
+      return dpr <= M.dprMax ? ([dw * k, dh * k] as const) : ([w * M.dprMax * k, h * M.dprMax * k] as const)
+    }
+    const scale = Math.min(dpr, 1) * F.renderScale
     return [w * scale, h * scale] as const
   }
 
@@ -568,34 +787,59 @@ export class FieldEngine {
     this.raf = 0
     if (this.mode !== 'gl' || this.paused) return
     let moving = this.sampleAll(now)
+    // About: the crossfade's moment entering; leaving, the end of the run back.
+    if (this.phase === 'in') this.maybeHandoff(now)
+    const topo = this.tracks.topo
+    if (this.phase === 'out' && this.linesOn && !this.leaveFrame && topo.value[0] <= 0 && topo.remaining(now) === 0) {
+      this.settleOff()
+    }
     // A track that has just settled: draw its final value once more (the last moving frame showed
     // a value from just before its end).
     if (this.wasMoving && !moving) this.dirty = true
     this.wasMoving = moving
-    // About at rest: one static frame (redrawn only when dirty: a resize, a view transition's end),
-    // and always the settled frame itself (topo exactly 1).
+    // About at rest: no frames (the SVG layer covers the canvas), and always the settled frame
+    // itself (topo exactly 1) before the handoff.
     const still = this.contoursAtRest()
-    if (still) {
-      moving = false
-      if (this.frame.topo < 1) this.dirty = true
-    }
+    if (still) moving = false
+    else if (this.phase === 'in' && this.frame.topo < 1 && topo.value[0] >= 1) this.dirty = true
     const continuous = !still && this.continuous()
-    if (!moving && !continuous && !this.dirty) return
+    if (!moving && !continuous && !this.dirty && !this.leaveFrame) return
     this.raf = requestAnimationFrame(this.tick)
 
     const interval = this.lastFrame ? now - this.lastFrame : 0
     this.lastFrame = now
-    if (continuous && interval) this.monitor(now, interval)
+    // The morph has its own guard (field.morph); the resting field its CSS fallback monitor.
+    if (this.hiRes && interval) this.guard(interval)
+    else if (continuous && interval) this.monitor(now, interval)
     // The monitor may have switched to the CSS field: no WebGL frame after that.
     if (this.mode !== 'gl') return
     // A new buffer size is applied at the start of a frame and drawn in that same frame.
     const resized = this.applySize()
-    if (!resized && now - this.lastDraw < 1000 / F.fps - 2) return
+    // The resting field draws at F.fps; a morph every frame.
+    if (!resized && !this.hiRes && now - this.lastDraw < 1000 / F.fps - 2) return
     const dt = this.lastDraw ? Math.min(now - this.lastDraw, 100) / 1000 : 0
     this.lastDraw = now
     if (continuous) this.time += dt
     this.dirty = false
     this.draw()
+    if (this.leaveFrame) {
+      // Leaving About: this frame (uTopo = 1, the drift's offset) is under the SVG; uncover the
+      // canvas in the same frame and fade the SVG off it.
+      this.leaveFrame = false
+      this.setCanvasCovered(false)
+      void this.contours.show(0, Math.min(D.contourHandoff, this.dur(D.topo)), 'linear')
+    }
+  }
+
+  /** The morph's frame guard: the median of its first frame intervals too slow, render at 0.75×. */
+  private guard(interval: number) {
+    const M = F.morph
+    if (this.slowMorph || this.morphFrames.length >= M.guardFrames) return
+    this.morphFrames.push(interval)
+    if (this.morphFrames.length < M.guardFrames) return
+    const sorted = [...this.morphFrames].sort((a, b) => a - b)
+    const median = (sorted[(M.guardFrames - 1) >> 1] + sorted[M.guardFrames >> 1]) / 2
+    if (median > M.guardMs) this.slowMorph = true
   }
 
   /** Average rAF interval over 60 frames above 24 ms, twice in a row: use the CSS field. */
@@ -655,6 +899,7 @@ export class FieldEngine {
     f.lum = 1 - F.switchDip * Math.sin(Math.PI * t.dip.value[0])
     f.fade = t.fade.value[0]
     f.topo = t.topo.value[0]
+    this.contourFrame()
     this.gl!.draw(f)
     if (this.root.dataset.mode !== 'gl') {
       this.root.dataset.mode = 'gl'

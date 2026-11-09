@@ -1,10 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { table } from '@/motion/table-store'
 import { onTierChange, readTier } from '@/motion/use-tier'
 import { withBase } from '@/lib/site'
+import { ContourLayer } from './contour-layer'
+import { contourQuery, contourStyle, contourSvg } from './contours'
 import { FieldEngine } from './field-engine'
 
 let engine: FieldEngine | null = null
@@ -13,49 +15,30 @@ let engine: FieldEngine | null = null
 export const fieldEngine = () => engine
 
 /**
- * About's contour background: the old password page's two SVGs (public/contour-bg/, used
- * unchanged), the 200 m version by default and the full one on large viewports. CSS cannot read
- * the base path, so every url() comes in through these custom properties; the media query is the
- * old page's, repeated in src/styles/field.css.
- */
-const contourSvg = { poster: '/contour-bg/contours-200.svg', full: '/contour-bg/contours.svg' } as const
-const fullQuery =
-  '(min-aspect-ratio: 1536/1056) and (min-width: 1783px), (max-aspect-ratio: 1536/1056) and (min-height: 1142px)'
-const contourVars = {
-  '--contour-poster': `url("${withBase(contourSvg.poster)}")`,
-  '--contour-full': `url("${withBase(contourSvg.full)}")`,
-} as CSSProperties
-
-const preloaded = new Set<string>()
-/** Fetches the SVG this viewport shows (once), so the morph into About never waits for it. */
-function preloadContours() {
-  const src = withBase(matchMedia(fullQuery).matches ? contourSvg.full : contourSvg.poster)
-  if (preloaded.has(src)) return
-  preloaded.add(src)
-  new Image().src = src
-}
-
-/**
  * Persistent background field, mounted once in the root layout. It renders no
  * React state: the engine listens to the table store and drives the canvas
- * (or the CSS fallback) directly. Above the canvas, About's contour layer
- * (.contour-bg: the old password page, its poster drifting slowly) shows on
- * About and during the morph in and out (data-contours, set by the engine);
- * it never reacts to the pointer.
+ * (or the CSS fallback) directly.
+ *
+ * Above the canvas, About's layers (contour-layer.ts, src/styles/field.css):
+ * the old password page's SVG over its ground (.contour-bg; a <picture> picks
+ * the full or the 200 m SVG with contourQuery, the same query the shader's
+ * interval reads; lazy, so nothing loads until About is near) and the page's
+ * vignette (.contour-vignette). Both change by opacity only, and the SVG's
+ * drift by translate; nothing reacts to the pointer.
  */
 export function BackgroundField() {
   const root = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const layers = useRef<HTMLDivElement>(null)
   const contours = useRef<HTMLDivElement>(null)
+  const img = useRef<HTMLImageElement>(null)
+  const vignette = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     table.setTier(readTier())
     const offTier = onTierChange((tier) => table.setTier(tier))
-    engine = new FieldEngine(root.current!, canvas.current!, layers.current!, {
-      layer: contours.current!,
-      preload: preloadContours,
-    })
+    const layer = new ContourLayer(root.current!, contours.current!, img.current!, vignette.current!)
+    engine = new FieldEngine(root.current!, canvas.current!, layers.current!, layer)
     return () => {
       offTier()
       engine?.destroy()
@@ -63,6 +46,7 @@ export function BackgroundField() {
     }
   }, [])
 
+  const [vw, vh] = contourStyle.viewBox
   return (
     <div ref={root} className="field" data-mode="css" aria-hidden="true">
       <div ref={layers} className="field-css">
@@ -70,9 +54,22 @@ export function BackgroundField() {
         <div className="field-layer" data-layer="b" />
       </div>
       <canvas ref={canvas} className="field-canvas" />
-      <div ref={contours} className="contour-bg" style={contourVars}>
-        <div className="contour-bg__poster" />
+      <div ref={contours} className="contour-bg">
+        <picture>
+          <source media={contourQuery} srcSet={withBase(contourSvg.full)} />
+          <img
+            ref={img}
+            className="contour-bg__img"
+            src={withBase(contourSvg.poster)}
+            alt=""
+            width={vw}
+            height={vh}
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
       </div>
+      <div ref={vignette} className="contour-vignette" />
       <RouteSync />
     </div>
   )

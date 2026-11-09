@@ -381,10 +381,7 @@ async function tableSuite(browser, device) {
   vts = await page.evaluate(() => window.__vts)
   check('return: "return" view transition', vts.at(-1)?.types.includes('return'), JSON.stringify(vts.at(-1)))
   check('return: focus back on the card', (await focused(page)) === 'a[front-door]', await focused(page))
-  check(
-    'return: the home slot shows the logo',
-    (await page.locator('header [data-slot-mode="mark"]').count()) === 1,
-  )
+  check('return: the home slot shows the logo', (await page.locator('header [data-slot-mode="mark"]').count()) === 1)
   // Focus on the returned card blends the field like a hover; move it away first.
   await page.evaluate(() => document.activeElement?.blur())
   if (device === 'desktop') await page.mouse.move(700, 200)
@@ -490,8 +487,58 @@ async function tableSuite(browser, device) {
   await wait(page, 400)
   check('header: shown when focus moves into it', (await chrome()).header === true)
 
-  // About (B1): the old password page's contour SVGs over the ground; the canvas draws nothing at
-  // rest; the poster drifts (full) and stops when paused; nothing reacts to the pointer.
+  // About's morph (round 3): from home the canvas renders at the device's resolution only while the
+  // shader morphs, then the SVG takes over (canvas covered, buffer back at rest); leaving uncovers
+  // the canvas, the SVG fades and the field returns at its resting resolution. Reduced: the SVG
+  // only crossfades; the buffer never grows.
+  {
+    await page.goto(url('/'), { waitUntil: 'networkidle' })
+    await wait(page, 2600)
+    const buffer = () =>
+      page.evaluate(() => {
+        const f = document.querySelector('.field')
+        return {
+          w: document.querySelector('.field-canvas').width,
+          c: f.dataset.contours ?? '',
+          cov: f.hasAttribute('data-canvas-covered'),
+        }
+      })
+    const rest = await buffer()
+    const link = page.locator('header a[href$="/about/"]').first()
+    await link.hover()
+    await link.click()
+    let peak = 0
+    let end = rest
+    for (let i = 0; i < 60; i++) {
+      end = await buffer()
+      peak = Math.max(peak, end.w)
+      if (end.c === 'shown') break
+      await wait(page, 100)
+    }
+    const wide =
+      motion === 'full' &&
+      (await page.evaluate(() => Boolean(document.querySelector('.field-canvas').getContext('webgl2'))))
+    check(
+      `about morph in: ${wide ? 'full resolution while it runs, then' : 'no larger buffer,'} the SVG covers the canvas`,
+      end.c === 'shown' && end.cov && end.w === rest.w && (wide ? peak > rest.w : peak === rest.w),
+      JSON.stringify({ rest, peak, end }),
+    )
+    await page.locator('header a[data-slot-mode]').first().click()
+    let back = await buffer()
+    for (let i = 0; i < 80 && back.c !== 'off'; i++) {
+      await wait(page, 100)
+      back = await buffer()
+    }
+    check(
+      'about morph out: the field returns at its resting resolution',
+      back.c === 'off' && !back.cov && back.w === rest.w,
+      JSON.stringify(back),
+    )
+  }
+
+  // About (B1, round 3): the old password page's contour SVG as an <img> over the ground (opacity
+  // only), the vignette a static overlay; the canvas is covered and draws nothing at rest; the SVG
+  // drifts by translate (full tier only); nothing reacts to the pointer.
   await page.goto(url('/about/'), { waitUntil: 'networkidle' })
   await wait(page, 1500)
   const topo = await page.evaluate(
@@ -499,20 +546,26 @@ async function tableSuite(browser, device) {
       new Promise((resolve) => {
         const field = document.querySelector('.field')
         const layer = document.querySelector('.contour-bg')
-        const poster = document.querySelector('.contour-bg__poster')
+        const img = document.querySelector('.contour-bg__img')
+        const vignette = document.querySelector('.contour-vignette')
         const gl = document.querySelector('.field-canvas').getContext('webgl2')
         let frames = 0
         const draw = gl.drawArrays.bind(gl)
         gl.drawArrays = (...a) => (frames++, draw(...a))
         setTimeout(() => {
           gl.drawArrays = draw
-          const cs = getComputedStyle(poster)
+          const cs = getComputedStyle(img)
           resolve({
             contours: field.dataset.contours,
+            covered: field.hasAttribute('data-canvas-covered'),
             shown: getComputedStyle(layer).display === 'block' && getComputedStyle(layer).opacity === '1',
-            svg: cs.backgroundImage,
+            vignette: getComputedStyle(vignette).opacity,
+            svg: img.currentSrc,
             opacity: cs.opacity,
-            drift: poster.getAnimations().map((a) => `${a.animationName}:${a.playState}`),
+            fit: cs.objectFit,
+            scale: cs.transform,
+            drift: img.getAnimations().map((a) => a.playState),
+            mask: getComputedStyle(layer).maskImage,
             frames,
             attribution: document.querySelector('footer')?.textContent ?? '',
             credit: document.querySelector(`footer a[href*="swisstopo.admin.ch"]`)?.textContent ?? '',
@@ -521,31 +574,24 @@ async function tableSuite(browser, device) {
       }),
   )
   check(
-    'about: the contour SVG layer (base path), lines at 42%, shown',
+    'about: the contour SVG layer (base path, cover, 42%, scale 1.03, no mask), vignette shown',
     topo.contours === 'shown' &&
+      topo.covered &&
       topo.shown &&
+      topo.vignette === '1' &&
       topo.svg.includes(`${basePath.replace(/\/[^/]+$/, '')}/contour-bg/contours`) &&
-      topo.opacity === '0.42',
+      topo.opacity === '0.42' &&
+      topo.fit === 'cover' &&
+      /matrix\(1\.03, 0, 0, 1\.03/.test(topo.scale) &&
+      topo.mask === 'none',
     JSON.stringify({ ...topo, attribution: 0 }),
   )
   check('about: no frames at rest', topo.frames === 0, String(topo.frames))
   check(
-    `about: poster drift ${motion === 'full' ? 'runs' : 'off (reduced)'}`,
-    motion === 'full' ? topo.drift.join() === 'contour-drift:running' : topo.drift.length === 0,
+    `about: drift ${motion === 'full' ? 'runs' : 'off (reduced)'}`,
+    motion === 'full' ? topo.drift.join() === 'running' : topo.drift.length === 0,
     topo.drift.join(),
   )
-  if (motion === 'full') {
-    await page.evaluate(() => (document.documentElement.dataset.ambient = 'paused'))
-    const pausedDrift = await page.evaluate(() =>
-      document
-        .querySelector('.contour-bg__poster')
-        .getAnimations()
-        .map((a) => a.playState)
-        .join(),
-    )
-    await page.evaluate(() => delete document.documentElement.dataset.ambient)
-    check('about: the drift stops while ambient motion is paused', pausedDrift === 'paused', pausedDrift)
-  }
   // The contours are on screen: the old ground #1B1C18 with stone-grey lines.
   const region =
     device === 'desktop' ? { x: 900, y: 300, width: 300, height: 200 } : { x: 40, y: 300, width: 300, height: 200 }
@@ -560,7 +606,7 @@ async function tableSuite(browser, device) {
     await page.addStyleTag({ content: 'main, header, footer, .hand { visibility: hidden !important; }' })
     await page.evaluate(() =>
       document
-        .querySelector('.contour-bg__poster')
+        .querySelector('.contour-bg__img')
         .getAnimations()
         .forEach((a) => a.pause()),
     )

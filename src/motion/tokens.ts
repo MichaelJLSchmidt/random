@@ -90,10 +90,15 @@ export const duration = {
   breath: 9,
   fieldIn: 1.2,
   /**
-   * About: the gradient's pools contract and fade into the contour field's ground while the contour
-   * layer reveals through a radial mask from the centre (and back on leaving).
+   * About: the gradient's pools contract and fade into the contour field's ground while the
+   * shader's contour lines rise from a noise relief onto the region's heights (and back on leaving).
    */
   topo: 1.6,
+  /**
+   * About: the SVG layer's crossfade over the shader's last frame (the last part of `topo`
+   * entering; before the shader runs back, leaving).
+   */
+  contourHandoff: 0.3,
   // Reveals (the rest use the scale, dur.*)
   /** Digits: one value's strips, from the first strip's start to the last strip's end. */
   digits: 0.7,
@@ -262,12 +267,19 @@ export const field = {
   frameWindow: 60,
   switchDip: 0.06,
   /**
-   * About's contour layer (the old password page's SVG poster): it drifts very slowly, transform
-   * only, `x` / `y` px either way on one loop of `period` s there and back (ease-in-out), scaled by
-   * `scale` so no edge shows. Full tier; still while paused, under reduced motion and while the
-   * tab is hidden (src/styles/field.css).
+   * About's contour layer (the old password page's SVG): it drifts very slowly, `translate` only
+   * (compositor), `x` / `y` px either way on one `period` s loop from the identity offset
+   * (ease.inOut, alternating), starting once the shader has handed over; the layer is scaled by
+   * `scale` (static) so no edge shows. Full tier; still under reduced motion and while the tab is
+   * hidden (contour-layer.ts).
    */
   contourDrift: { x: 8, y: 5, scale: 1.03, period: 120 },
+  /**
+   * About's morph renders at the device's resolution, capped at `dprMax`, only while it runs (the
+   * resting field stays at renderScale). When the median of the first `guardFrames` frame
+   * intervals is above `guardMs`, the rest of that morph renders at `slowScale` of it.
+   */
+  morph: { dprMax: 2, slowScale: 0.75, guardFrames: 10, guardMs: 20 },
   /**
    * Pool drift (full tier, on top of the breath): a slow Lissajous offset of each pool's centre,
    * `poolDrift` of the viewport, one pair of loop lengths (s) per pool, all of them >= 90 s.
@@ -440,10 +452,7 @@ export function motionCss(): string {
     `--hero-drift:${reveal.heroDrift * 100}%`,
     `--reveal-mask:${reveal.mask * 100}%`,
     `--slot-mark-scale:${slot.markScale}`,
-    `--contour-drift-x:${field.contourDrift.x}px`,
-    `--contour-drift-y:${field.contourDrift.y}px`,
     `--contour-drift-scale:${field.contourDrift.scale}`,
-    `--dur-contour-drift:${ms(field.contourDrift.period / 2)}`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

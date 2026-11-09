@@ -188,87 +188,63 @@
 }
 
 /*
- * About: the old password page's contour background, its CSS reproduced exactly
- * (only the url()s come in through custom properties, so they carry the base
- * path: background-field.tsx). Above the canvas, below the content; it never
- * reacts to the pointer (the old page's headlamp is left out). The engine shows
- * it on About and while the morph runs (data-contours) and drives
- * --contour-reveal: a soft radial mask growing from the centre, the same 1.6 s
- * inOut as the field's fade into the ground (reduced: an opacity crossfade).
- * Before the engine runs (first paint of a direct visit) the pre-paint
- * data-field shows it whole. Not displayed (so not loaded) anywhere else.
+ * About: the old password page's contour background (src/components/background:
+ * contour-layer.ts drives it, contours.ts describes it). Two layers above the
+ * canvas, below the content, never reacting to the pointer:
+ *
+ *   .contour-bg        the ground with the SVG <img> (cover, centred: the SVG's
+ *                      own xMidYMid slice; opacity 0.42; a static scale 1.03 so
+ *                      the drift never shows an edge). Its opacity crossfades
+ *                      it over the canvas, whose last morph frame is the same
+ *                      picture; at rest it covers the canvas.
+ *   .contour-vignette  the old page's gradients: a static overlay, present
+ *                      during the morph and at rest, faded with opacity only.
+ *
+ * Both are displayed only on About, during its morph, and once a link to About
+ * is near (data-contours-primed: rasterised at opacity 0 before any crossfade).
+ * Opacity and the drift's translate are the only things that change (WAAPI,
+ * compositor). Before the engine runs (first paint of a direct visit) the
+ * pre-paint data-field shows them whole over a covered canvas.
  */
-@property --contour-reveal {
-  syntax: '<number>';
-  inherits: false;
-  initial-value: 0;
+.contour-bg,
+.contour-vignette {
+  position: absolute;
+  inset: 0;
+  display: none;
+  opacity: 0;
+  will-change: opacity;
+  pointer-events: none;
 }
 .contour-bg {
-  position: fixed;
-  inset: 0;
   overflow: hidden;
-  display: none;
   background: var(--contour-ground);
-  mask-image: radial-gradient(
-    circle at 50% 50%,
-    #000 calc(var(--contour-reveal) * 140% - 40%),
-    transparent calc(var(--contour-reveal) * 140%)
-  );
 }
-.field:is([data-contours='morph'], [data-contours='shown']) .contour-bg,
-:root[data-field='glacier'] .field:not([data-contours]) .contour-bg {
-  display: block;
-}
-/* At rest, and before the engine runs on a direct visit: whole, no mask. */
-:root[data-field='glacier'] .field:not([data-contours]) .contour-bg {
-  --contour-reveal: 1;
-}
-.field[data-contours='shown'] .contour-bg,
-:root[data-field='glacier'] .field:not([data-contours]) .contour-bg {
-  mask-image: none;
-}
-:root[data-motion='reduced'] .contour-bg {
-  mask-image: none;
-  opacity: var(--contour-reveal);
-}
-.contour-bg__poster {
+.contour-bg__img {
   position: absolute;
   inset: 0;
-  background: var(--contour-poster) center / cover no-repeat;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 50%;
   opacity: 0.42;
   transform: scale(var(--contour-drift-scale));
+  will-change: transform;
 }
-@media (min-aspect-ratio: 1536/1056) and (min-width: 1783px), (max-aspect-ratio: 1536/1056) and (min-height: 1142px) {
-  .contour-bg__poster {
-    background-image: var(--contour-full);
-  }
-}
-.contour-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
+.contour-vignette {
   background:
     linear-gradient(to bottom, rgb(27 28 24 / 0.9), transparent 18%, transparent 82%, rgb(27 28 24 / 0.9)),
     radial-gradient(130% 85% at 0% 55%, rgb(27 28 24 / 0.88) 0, rgb(27 28 24 / 0.6) 45%, rgb(27 28 24 / 0) 80%);
 }
-/*
- * The poster drifts very slowly (field.contourDrift: ±8 / ±5 px, one 120 s loop there and back,
- * scaled 1.03 so no edge shows). Full tier only; it stops where it is when the visitor pauses
- * ambient motion and while the tab is hidden.
- */
-@keyframes contour-drift {
-  from {
-    transform: translate(calc(var(--contour-drift-x) * -1), calc(var(--contour-drift-y) * -1))
-      scale(var(--contour-drift-scale));
-  }
-  to {
-    transform: translate(var(--contour-drift-x), var(--contour-drift-y)) scale(var(--contour-drift-scale));
-  }
+.field:is([data-contours='morph'], [data-contours='shown'], [data-contours-primed]) :is(.contour-bg, .contour-vignette),
+:root[data-field='glacier'] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
+  display: block;
 }
-:root[data-motion='full'] .contour-bg__poster {
-  animation: contour-drift var(--dur-contour-drift) ease-in-out infinite alternate;
+:root[data-field='glacier'] .field:not([data-contours]) :is(.contour-bg, .contour-vignette) {
+  opacity: 1;
 }
-:root[data-ambient='paused'] .contour-bg__poster,
-.field[data-tab-hidden] .contour-bg__poster {
-  animation-play-state: paused;
+/* At rest on About the SVG layer covers the canvas: it is not composited at all. */
+.field[data-canvas-covered] .field-canvas,
+:root[data-field='glacier'] .field:not([data-contours]) .field-canvas {
+  visibility: hidden;
 }
