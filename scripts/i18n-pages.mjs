@@ -11,9 +11,11 @@
 //                    URL with /random/<locale>/ before anything paints; without JavaScript, plain
 //                    links to both languages
 //   dist/404.html    GitHub Pages serves it for every unknown address: the same script picks the
-//                    language, loads that locale's 404 page (/random/<locale>/404/) and writes it
-//                    into the document, so the address stays; without JavaScript, or if the page
-//                    cannot load, a short note in both languages with links home
+//                    language. An address from before the locales (no /de/ or /en/, e.g.
+//                    /random/about/) moves to the same page in that language when it exists.
+//                    Otherwise it loads that locale's 404 page (/random/<locale>/404/) and writes
+//                    it into the document, so the address stays; without JavaScript, or if the
+//                    page cannot load, a short note in both languages with links home
 //
 // The language rule is src/lib/i18n.ts (pickLocaleScript): a stored choice wins, then the first of
 // navigator.languages that starts with "de" or "en"; other languages get English, none get German.
@@ -88,7 +90,7 @@ const notFound = `<!doctype html>
 <html lang="${defaultLocale}">
 <head>
 ${head(locales.map((l) => copy[l].notFound.title).join(' · '))}
-<script>(function(){var d=document.documentElement,l=${pickLocaleScript};d.lang=l;d.setAttribute("data-js","");fetch(${JSON.stringify(base)}+l+"/404/").then(function(r){if(!r.ok)throw r;return r.text()}).then(function(h){document.open();document.write(h);document.close()}).catch(function(){d.removeAttribute("data-js")})})()</script>
+<script>(function(){var d=document.documentElement,b=${JSON.stringify(base)},l=${pickLocaleScript},p=location.pathname,rest=p.indexOf(b)===0?p.slice(b.length):"",old=rest&&!/^(${locales.join('|')})([/]|$)/.test(rest);d.lang=l;d.setAttribute("data-js","");function lost(){fetch(b+l+"/404/").then(function(r){if(!r.ok)throw r;return r.text()}).then(function(h){document.open();document.write(h);document.close()}).catch(function(){d.removeAttribute("data-js")})}if(!old)return lost();fetch(b+l+"/"+rest,{method:"HEAD"}).then(function(r){if(!r.ok)throw r;location.replace(b+l+"/"+rest+location.search+location.hash)}).catch(lost)})()</script>
 <style>[data-js] main{display:none}</style>
 </head>
 <body>

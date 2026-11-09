@@ -366,7 +366,9 @@ motion and the three tiers are unchanged.
   read there). The root runs `pickLocaleScript` inline before anything paints and replaces the
   URL with `/<locale>/`: a stored choice (localStorage `locale`) wins, then the first of
   `navigator.languages` that starts with "de" or "en"; languages but none of them: English; no
-  language: German. Without JavaScript: links to both. `dist/404.html` picks the same way, fetches
+  language: German. Without JavaScript: links to both. `dist/404.html` picks the same way; an
+  address from before the locales (no `/de/` or `/en/`: `/random/about/`, old links and bookmarks)
+  moves to the same page in that language when it exists (a HEAD request); otherwise it fetches
   `/<locale>/404/` (the localized 404 page, `src/app/[locale]/404/page.tsx`) and writes it into
   the document, so the unknown address stays; without JavaScript, a note in both languages.
 - **L5. Content per locale.** `content/de` and `content/en` are each a `Content` (one schema);

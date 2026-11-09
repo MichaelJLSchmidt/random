@@ -90,7 +90,8 @@ build time): open `/de/` or `/en/`.
 - The root (`/random/`) chooses with an inline script before anything paints and replaces the URL:
   a stored choice (localStorage `locale`) wins, then the first of `navigator.languages` that
   starts with `de` or `en`; other languages get English, none get German. Without JavaScript it
-  shows links to both. The 404 page picks the same way and keeps the unknown address.
+  shows links to both. The 404 page picks the same way and keeps the unknown address; an old
+  address without a language (`/random/about/`) moves to the same page in the picked language.
 - The header's "DE · EN" links each language to the same page in it. Switching stores the choice,
   keeps the page and the reading position, and cross-fades once (never the card transition,
   never the home intro).
