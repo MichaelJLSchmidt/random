@@ -16,16 +16,13 @@ export const site: Site = {
     homeLabel: 'MJLS, home',
     back: 'Back',
     about: 'About',
-    moreProjects: 'More projects',
-    contact: 'Contact',
   },
   footer: { note: 'Moritz Lauber · Bern, Switzerland · Last updated November 2026' },
   settings: {
-    heading: 'Display',
     calm: 'Calm motion',
-    calmHint: 'Fewer moving parts. Reduced motion in your system settings always wins.',
     calmOn: 'Calm motion on',
     calmOff: 'Calm motion off',
+    reducedHint: 'Set by your system',
   },
   shortcuts: {
     title: 'Keyboard shortcuts',

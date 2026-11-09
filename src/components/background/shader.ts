@@ -3,7 +3,8 @@
  * the hover tint already mixed in on the CPU) and B (the bloomed identity).
  * B grows from uOrigin as a soft disc (uSpread 0..1). Each palette is shaded
  * as three soft colour pools (glow bottom-left, mid top-right, a mixed pool
- * centre-left) warped by low-frequency noise, with static 2% grain. Contour
+ * centre-left) warped by low-frequency noise, with static 2% grain. The pool
+ * centres drift on slow Lissajous loops (uDrift, full tier only). Contour
  * lines (About) come from h = mix(noise, elevation, uTopo). Nothing here reads
  * the pointer.
  */
@@ -26,6 +27,7 @@ uniform vec2 uOrigin;       // bloom centre, viewport fractions (y down)
 uniform float uMaxD;        // distance from the origin to the farthest corner
 uniform vec2 uPull;         // point A's pools drift toward (y down)
 uniform float uPullAmt;
+uniform vec2 uDrift[3];     // each pool's slow Lissajous offset (aspect-scaled, full tier only)
 uniform vec2 uBreath;       // pool scale, luminance
 uniform float uLum;         // luminance dip (switch)
 uniform float uFade;        // fade in from black
@@ -73,9 +75,9 @@ float pool(vec2 q, vec2 c, float r) {
 vec3 shade(vec3 field, vec3 mid, vec3 glow, float intensity, vec2 q, float n, float pullAmt) {
   vec2 pull = vec2(uPull.x * uAspect, uPull.y);
   float s = uBreath.x;
-  vec2 c1 = mix(vec2(0.16 * uAspect, 0.88), pull, pullAmt);
-  vec2 c2 = mix(vec2(0.86 * uAspect, 0.16), pull, pullAmt * 0.45);
-  vec2 c3 = mix(vec2(0.34 * uAspect, 0.52), pull, pullAmt * 0.8);
+  vec2 c1 = mix(vec2(0.16 * uAspect, 0.88) + uDrift[0], pull, pullAmt);
+  vec2 c2 = mix(vec2(0.86 * uAspect, 0.16) + uDrift[1], pull, pullAmt * 0.45);
+  vec2 c3 = mix(vec2(0.34 * uAspect, 0.52) + uDrift[2], pull, pullAmt * 0.8);
   float g1 = pool(q, c1, 0.52 * s);
   float g2 = pool(q, c2, 0.58 * s);
   float g3 = pool(q, c3, 0.42 * s);

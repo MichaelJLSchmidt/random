@@ -80,9 +80,11 @@ export type Site = {
   wordmark: string
   skipLink: string
   introSkip: string
-  header: { homeLabel: string; back: string; about: string; moreProjects: string; contact: string }
+  /** The home slot (wordmark, or Back on detail pages) and the one page link, About. */
+  header: { homeLabel: string; back: string; about: string }
   footer: { note: string }
-  settings: { heading: string; calm: string; calmHint: string; calmOn: string; calmOff: string }
+  /** The calm-motion switch in the header; reducedHint shows while the system asks for reduced motion. */
+  settings: { calm: string; calmOn: string; calmOff: string; reducedHint: string }
   /** The "?" sheet. */
   shortcuts: { title: string; close: string; items: { keys: string; label: string }[] }
   /** Egg announcements (live region): new hand, tap, rare pull, Coffee dealt, an About card flipped. */
@@ -144,13 +146,10 @@ export type HandContent = {
   labels: {
     nav: string
     viewing: string
-    moreProjects: string
-    /** Screen-reader text of the card counter: "Card {n} of {total}: {title}". */
-    counter: Template
   }
 }
 
-/** Typing "draw" on home deals a fifth card, "Coffee?", which opens /contact (content/hand.ts). */
+/** Typing "draw" on home deals a fifth card, "Coffee?", which opens About's contact chapter (content/hand.ts). */
 export type CoffeeEgg = {
   title: string
   /** One line on the card face. */

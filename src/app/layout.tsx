@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { BackgroundField } from '@/components/background/background-field'
 import { fieldInitialCss } from '@/components/background/field-css'
-import { DisplaySettings } from '@/components/display-settings'
 import { Hand } from '@/components/hand/hand'
 import { Header } from '@/components/header'
 import { LiveRegion } from '@/components/live-region'
@@ -74,9 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main" tabIndex={-1}>
           {children}
         </main>
-        <SiteFooter>
-          <DisplaySettings labels={site.settings} />
-        </SiteFooter>
+        <SiteFooter />
         <Hand />
         <LiveRegion />
         <RouteFocus />

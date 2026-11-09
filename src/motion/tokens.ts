@@ -104,6 +104,9 @@ export const duration = {
   liftTimeout: 4,
   // UI
   underline: 0.16,
+  /** Header home slot: wordmark <-> Back morph, and the beat before its second part. */
+  slotMorph: 0.42,
+  slotLag: 0.12,
   rail: 0.2,
   sheet: 0.32,
   discard: 0.7,
@@ -200,6 +203,16 @@ export const field = {
   switchDip: 0.06,
   topoLine: 0.22,
   topoIndex: 0.38,
+  /**
+   * Pool drift (full tier, on top of the breath): a slow Lissajous offset of each pool's centre,
+   * `poolDrift` of the viewport, one pair of loop lengths (s) per pool, all of them >= 90 s.
+   */
+  poolDrift: 0.025,
+  poolDriftPeriods: [
+    [97, 131],
+    [113, 151],
+    [127, 103],
+  ],
   /** Resolution factor while a pinned scene holds the viewport (half of renderScale). */
   pinnedDetail: 0.5,
 } as const

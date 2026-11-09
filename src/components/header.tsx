@@ -5,55 +5,62 @@ import { usePathname } from 'next/navigation'
 import { cardForPath, site } from '@/lib/hand-data'
 import { table } from '@/motion/table-store'
 import { NAV, RETURN } from '@/motion/transitions'
+import { CalmSwitch } from './calm-switch'
 import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
 /*
- * Persistent header: wordmark (back to the table), Back on detail pages, About,
- * More projects, Contact, and the reading hairline on its bottom edge.
- * Structure is Foundation-owned (read-only in Wave 1); 64 px high (--header-h).
+ * Persistent header: the home slot at the top left, About and the calm-motion
+ * switch at the right, the reading hairline on its bottom edge. 64 px high
+ * (--header-h).
+ *
+ * The home slot is one link to the table. On detail pages (the three case
+ * studies and Management) it shows a back arrow and "Back" (the card returns
+ * to the hand); everywhere else the wordmark. Between the two it morphs
+ * (header.module.css): the mark compresses and fades toward the left edge
+ * while the arrow's shaft draws out of it and the label rises from a mask.
+ * The mark is treated as one box (scaleX + opacity), never by its letters, so
+ * the final SVG logo can replace the text in .mark without touching the morph.
  */
 export function Header() {
   const pathname = usePathname()
-  const onCard = Boolean(cardForPath(pathname))
+  const back = Boolean(cardForPath(pathname))
   const current = (href: string) => (pathname.replace(/\/$/, '') === href ? 'page' : undefined)
   return (
     <header className={styles.header} style={{ viewTransitionName: 'site-header' }} data-chrome="">
       <Link
         href="/"
-        className={styles.wordmark}
-        aria-label={site.header.homeLabel}
-        transitionTypes={[onCard ? RETURN : NAV]}
-        onNavigate={() => onCard && table.returnHome('/')}
+        className={styles.slot}
+        data-slot-mode={back ? 'back' : 'mark'}
+        aria-label={back ? undefined : site.header.homeLabel}
+        transitionTypes={[back ? RETURN : NAV]}
+        onNavigate={() => back && table.returnHome('/')}
       >
-        {site.wordmark}
+        <span className={styles.mark} aria-hidden={back || undefined}>
+          {site.wordmark}
+        </span>
+        <span className={styles.back} aria-hidden={!back || undefined}>
+          <svg className={styles.arrow} viewBox="0 0 20 12" fill="none" stroke="currentColor" aria-hidden="true">
+            <path className={styles.head} d="M6.5 1.5 2 6l4.5 4.5" />
+            <path className={styles.shaft} d="M2 6h16.5" />
+          </svg>
+          <span className={styles.mask}>
+            <span className={styles.label}>{site.header.back}</span>
+          </span>
+        </span>
       </Link>
-      <nav aria-label="Site" className={styles.nav}>
-        <ul>
-          {onCard && (
+      <div className={styles.end}>
+        <nav aria-label="Site" className={styles.nav}>
+          <ul>
             <li>
-              <Link href="/" transitionTypes={[RETURN]} onNavigate={() => table.returnHome('/')}>
-                <span className="link">{site.header.back}</span>
+              <Link href="/about" transitionTypes={[NAV]} aria-current={current('/about')}>
+                <span className="link">{site.header.about}</span>
               </Link>
             </li>
-          )}
-          <li>
-            <Link href="/about" transitionTypes={[NAV]} aria-current={current('/about')}>
-              <span className="link">{site.header.about}</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/more-projects" transitionTypes={[NAV]} aria-current={current('/more-projects')}>
-              <span className="link">{site.header.moreProjects}</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/contact" transitionTypes={[NAV]} aria-current={current('/contact')}>
-              <span className="link">{site.header.contact}</span>
-            </Link>
-          </li>
-        </ul>
-      </nav>
+          </ul>
+        </nav>
+        <CalmSwitch labels={site.settings} />
+      </div>
       <ReadingHairline />
     </header>
   )

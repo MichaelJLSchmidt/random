@@ -326,37 +326,6 @@
   rotate: 6deg;
 }
 
-/*
- * ---------- Card counter (home only) ----------
- * "01 / 04" and the hovered or focused card's title, in the label token.
- * Desktop: bottom left, beside the fan. Mobile home: above the fan.
- */
-.hand-counter {
-  position: fixed;
-  left: var(--grid-margin);
-  bottom: calc(24px + var(--safe-bottom));
-  display: grid;
-  gap: var(--baseline);
-  max-width: max(96px, calc(50vw - (var(--cw) * 4 - var(--overlap) * 3) / 2 - var(--grid-margin) - 40px));
-  margin: 0;
-  color: var(--muted);
-  pointer-events: auto;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.hand-counter-index {
-  color: var(--text);
-}
-.hand-counter-title {
-  text-wrap: balance;
-}
-
-/* Bottom-sheet links (More projects, About, Contact): only in the mobile sheet. */
-.hand-sheet-links {
-  display: none;
-}
-
 /* ---------- Rail (mobile, not home) ---------- */
 .hand-rail {
   display: none;
@@ -372,15 +341,6 @@
     --rot-k: 0.7;
     --visible: 0.85;
     --card-radius: 8px;
-  }
-
-  /* The counter sits above the left end of the fan. */
-  .hand-counter {
-    bottom: calc(var(--ch) * var(--visible) + 16px + var(--safe-bottom));
-    max-width: calc(100vw - 2 * var(--grid-margin));
-    grid-auto-flow: column;
-    justify-content: start;
-    gap: var(--space-3);
   }
 
   .hand:not([data-home]) .hand-rail {
@@ -494,21 +454,5 @@
     gap: var(--space-5);
     transform: none;
     translate: none;
-  }
-  /* In the sheet, under the cards: plain links to the pages that are not cards. */
-  .hand:not([data-home]) .hand-sheet-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-2) var(--space-6);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .hand:not([data-home]) .hand-sheet-links a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    color: var(--text);
   }
 }

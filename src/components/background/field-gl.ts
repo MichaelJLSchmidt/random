@@ -12,6 +12,8 @@ export type FieldFrame = {
   maxD: number
   pull: [number, number]
   pullAmt: number
+  /** Each pool's drift offset (x already scaled by the aspect), 3 x vec2. */
+  drift: Float32Array
   breath: [number, number]
   lum: number
   fade: number
@@ -35,6 +37,7 @@ const UNIFORMS = [
   'uMaxD',
   'uPull',
   'uPullAmt',
+  'uDrift',
   'uBreath',
   'uLum',
   'uFade',
@@ -160,6 +163,7 @@ export class GlField {
     gl.uniform1f(u.uMaxD, f.maxD)
     gl.uniform2f(u.uPull, f.pull[0], f.pull[1])
     gl.uniform1f(u.uPullAmt, f.pullAmt)
+    gl.uniform2fv(u.uDrift, f.drift)
     gl.uniform2f(u.uBreath, f.breath[0], f.breath[1])
     gl.uniform1f(u.uLum, f.lum)
     gl.uniform1f(u.uFade, f.fade)

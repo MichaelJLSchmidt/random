@@ -17,7 +17,8 @@ import { type EaseName, Track, easeCss } from './tracks'
  * fallback receives each change as a transition. React never re-renders for
  * any of it.
  *
- *   rest     ink pools breathing on a 9 s sine, drifting slowly
+ *   rest     ink pools breathing on a 9 s sine, their centres drifting on slow
+ *            Lissajous loops (90 s and longer, 2.5% of the viewport; full tier)
  *   hover    A's mid/glow blend to the card's, intensity up, pools lean to its slot
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
@@ -130,6 +131,7 @@ export class FieldEngine {
       maxD: 1,
       pull: [0.5, 1],
       pullAmt: 0,
+      drift: new Float32Array(6),
       breath: [1, 1],
       lum: 1,
       fade: 1,
@@ -510,6 +512,14 @@ export class FieldEngine {
     f.maxD = this.maxD
     f.pull = t.pull.value as [number, number]
     f.pullAmt = hover * 0.5 * motion
+    // Drift: each pool's centre loops a slow Lissajous figure, 2.5% of the viewport (full tier;
+    // the field's clock stops in calm and reduced, and `motion` eases the offset back to 0).
+    const aspect = innerWidth / Math.max(1, innerHeight)
+    const reach = F.poolDrift * motion
+    F.poolDriftPeriods.forEach(([px, py], i) => {
+      f.drift[i * 2] = reach * aspect * Math.sin((2 * Math.PI * this.time) / px + i * 2.1)
+      f.drift[i * 2 + 1] = reach * Math.sin((2 * Math.PI * this.time) / py + i * 1.3)
+    })
     // Breath: a 9 s sine in-out; pool scale 1.00-1.06, luminance ±4%.
     const amp = t.breath.value[0] * motion
     const b = (1 - Math.cos((2 * Math.PI * this.time) / D.breath)) / 2
