@@ -4,7 +4,6 @@ import { gapFor, spanFor } from './choreography'
 import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
 import { completeAll, revealNow, revealed, schedule } from './jobs'
 import { type Kind, type KindOptions, isHeroImage, runKind } from './kinds'
-import { linkTimeline, isLinkedTimeline } from './scenes/timeline-scene'
 import { loadSplit } from './split'
 import { table } from './table-store'
 import { at as AT, reveal as R, duration as D, stagger, tiers } from './tokens'
@@ -47,7 +46,7 @@ export { dealOffset, drawCards, fanCards } from './deal'
 /** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
 export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return' | 'locale'
 
-const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair'])
+const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair', 'deal'])
 
 /** The kind a block reveals with (data-reveal), or null when it is not one of the eight. */
 export function kindOf(el: HTMLElement): Kind | null {
@@ -127,16 +126,6 @@ function start(el: HTMLElement, wanted: number, r: Route, opts?: KindOptions) {
   r.planned.set(el, performance.now() + delay)
   if (kind === 'image' && isHeroImage(el.querySelector('img'))) return revealNow(el)
   if (kind === 'digits' && tier === 'reduced') return revealNow(el, '')
-  if (kind === 'draw' && tier === 'full') {
-    const svg = el.querySelector('svg')
-    if (isLinkedTimeline(svg)) {
-      const unlink = linkTimeline(svg)
-      if (unlink) {
-        r.stops.push(unlink)
-        return revealNow(el, '')
-      }
-    }
-  }
   if (kind === 'note') {
     const related = relatedOf(el)
     // A related paragraph that is not rendered (hidden at this width) never reveals: do not wait for it.

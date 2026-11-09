@@ -332,9 +332,11 @@ export type AboutSectionKey = (typeof aboutSectionKeys)[number]
 export type About = {
   title: string
   lead: Paragraph
+  /** The hero's portrait (a 4:5 photo; an example until the real one comes). */
+  portrait: ImageId
   story: SectionHead & { body: Paragraph[] }
-  /** Exactly seven stops. */
-  timeline: SectionHead & { items: { years: string; title: string }[] }
+  /** Exactly seven stops, oldest first: one face-up card each (years, title, place). */
+  timeline: SectionHead & { items: { years: string; title: string; place: string }[] }
   /** Exactly four. */
   howIWork: SectionHead & { items: { title: string; body: string }[] }
   tcg: SectionHead & { title: string; body: Paragraph; lessons: { title: string; body: string }[]; stats: string }
@@ -404,9 +406,6 @@ export type IllustrationCopy = {
   WorkshopGlyphs: IllustrationText
   /** One glyph per workshop format on Management. */
   WorkshopGlyph: Record<WorkshopMethod, IllustrationText>
-  ContourPortrait: IllustrationText
-  /** `description` is a template: {count}, {from}, {to} and {stops} come from about.timeline.items. */
-  AboutTimeline: { title: string; description: Template }
   DiscardedCard: IllustrationText
 }
 

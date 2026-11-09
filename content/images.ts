@@ -143,6 +143,17 @@ export const images = {
     photographerUrl: 'https://unsplash.com/@svi_designs',
     pageUrl: 'https://unsplash.com/photos/person-playing-with-cards-dttmeqFUDSU',
   },
+  'about-portrait': {
+    kind: 'photo',
+    alt: "A man's face in profile, black and white, against a dark background",
+    width: 2048,
+    height: 2560,
+    local: { widths: [640, 1280, 2048], formats: ['avif', 'webp', 'jpeg'] },
+    placeholder: '#080808',
+    photographer: 'Nik Bagherzadegan',
+    photographerUrl: 'https://unsplash.com/@nik_brz',
+    pageUrl: 'https://unsplash.com/photos/mans-face-in-profile-black-and-white--BecbFaSB9U',
+  },
 } satisfies Record<string, ImageEntry>
 
 export type ImageId = keyof typeof images

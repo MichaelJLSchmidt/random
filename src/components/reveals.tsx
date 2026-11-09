@@ -52,7 +52,18 @@ export function Reveals() {
 }
 
 /** What a block does when it reveals (data-reveal). */
-export const revealKinds = ['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair'] as const
+export const revealKinds = [
+  'lines',
+  'block',
+  'list',
+  'image',
+  'digits',
+  'rule',
+  'draw',
+  'note',
+  'pair',
+  'deal',
+] as const
 export type RevealKind = (typeof revealKinds)[number]
 
 /** Elements <Reveal> may render as. */

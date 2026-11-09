@@ -20,7 +20,7 @@ export const illustrations: IllustrationCopy = {
     labels: { before: 'Vorher', after: 'Nachher', team: 'Team', frontDoor: 'Anlaufstelle' },
   },
   DesignSystemLayers: {
-    title: 'Schichten des Design Systems',
+    title: 'Schichten des Design-Systems',
     description:
       '5 Schichten, vom Fundament aufwärts gestapelt: Tokens, Primitives, Komponenten, Muster, Produkt-Apps. Die oberste Schicht bedient 4 Arten von Produkt-Apps: Angular, React, Vue, Server-Templates.',
     layers: ['Tokens', 'Primitives', 'Komponenten', 'Muster', 'Produkt-Apps'],
@@ -104,15 +104,6 @@ export const illustrations: IllustrationCopy = {
       title: 'Fishbowl',
       description: 'Workshop-Methode Fishbowl: ein innerer Kreis aus vier Stühlen in einem Ring von Zuhörenden.',
     },
-  },
-  ContourPortrait: {
-    title: 'Porträt aus Höhenkurven',
-    description:
-      'Eine Silhouette von Kopf und Schultern aus 14 verschachtelten Höhenkurven, wie auf einer topografischen Karte. Die Linien umkreisen den Kopf und wölben sich über die Schultern. Ein Gesicht ist nicht gezeichnet.',
-  },
-  AboutTimeline: {
-    title: 'Werdegang',
-    description: 'Eine Zeitleiste mit {count} Stationen von {from} bis {to}.',
   },
   DiscardedCard: {
     title: 'Eine abgeworfene Karte',

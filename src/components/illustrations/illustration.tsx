@@ -1,9 +1,7 @@
 import type { ComponentType } from 'react'
 import type { IllustrationCopy } from '@content/schema'
-import { AboutTimeline } from './about-timeline'
 import { AdoptionBars } from './adoption-bars'
 import { CareerMatrix } from './career-matrix'
-import { ContourPortrait } from './contour-portrait'
 import { ContributionLoop } from './contribution-loop'
 import { DesignSystemLayers } from './design-system-layers'
 import { DiscardedCard } from './discarded-card'
@@ -29,8 +27,6 @@ export const illustrations: Record<ContentIllustration, ComponentType<Illustrati
   WeekRing,
   CareerMatrix,
   WorkshopGlyphs,
-  ContourPortrait,
-  AboutTimeline,
   DiscardedCard,
 }
 
@@ -48,15 +44,13 @@ export function Illustration({
 }
 
 /**
- * A drawing's words as its props. Two entries are not plain props: WeekRing's ritual labels belong to
- * Management's ring (its page places them on days), and AboutTimeline's description is a template
- * the About page fills from its stops. Placed by name, those two keep their title (and days).
+ * A drawing's words as its props. One entry is not plain props: WeekRing's ritual labels belong to
+ * Management's ring (its page places them on days). Placed by name, it keeps its title and days.
  */
 function wordsFor(name: ContentIllustration, copy: IllustrationCopy): IllustrationProps {
   if (name === 'WeekRing') {
     const { title, description, days } = copy.WeekRing
     return { title, description, days } as IllustrationProps
   }
-  if (name === 'AboutTimeline') return { title: copy.AboutTimeline.title }
   return copy[name] as IllustrationProps
 }

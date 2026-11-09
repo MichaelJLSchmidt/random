@@ -1,7 +1,21 @@
+import { inView } from 'motion'
 import { bezier, drawFor, gapFor, msFor, spanFor } from './choreography'
 import type { JobContext } from './jobs'
 import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
-import { type DurationStep, angle, at, distance, duration, ease, hand, opsz, reveal, stagger, weight } from './tokens'
+import {
+  type DurationStep,
+  angle,
+  at,
+  deal as DEAL,
+  distance,
+  duration,
+  ease,
+  hand,
+  opsz,
+  reveal,
+  stagger,
+  weight,
+} from './tokens'
 
 /*
  * The reveal kinds (docs/contracts.md#reveal). Each one runs inside a job
@@ -12,7 +26,7 @@ import { type DurationStep, angle, at, distance, duration, ease, hand, opsz, rev
  *
  * Reduced motion: every kind is one opacity crossfade (160 ms), no transform.
  */
-export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair'
+export type Kind = 'lines' | 'block' | 'list' | 'image' | 'digits' | 'rule' | 'draw' | 'note' | 'pair' | 'deal'
 
 /**
  * Timing a sequence may set for one block (ms, already scaled for the tier by the caller; the
@@ -403,6 +417,126 @@ export async function title(ctx: JobContext, el: HTMLElement, opts: KindOptions 
   })
 }
 
+/**
+ * deal: About's face-up cards (the timeline, "How I work"): the block's [data-deal-item] cards.
+ * Its layout picks the mode (the CSS custom property --deal-mode, so it follows the breakpoints):
+ *   stack  the [data-deal-line] draws from the left and the [data-deal-stack] fades in; each card
+ *          then flies from the stack (at the stack's size) to its place, deal.line timing
+ *   fan    each card rises into a slight fan, then the row settles straight together (deal.fan)
+ *   left   each card comes in from the left as it enters the viewport (deal.left); cards entering
+ *          together are a card stagger apart. The job ends once every card is in (or on a skip)
+ *   list   the cards in turn, like `list`; anything else: the block rises (`block`)
+ * Reduced: one crossfade, nothing is dealt.
+ */
+export function dealCards(ctx: JobContext, el: HTMLElement): void | Promise<void> {
+  if (ctx.tier === 'reduced') return fade(ctx, el)
+  const cards = [...el.querySelectorAll<HTMLElement>('[data-deal-item]')].filter((c) => c.getClientRects().length > 0)
+  const mode = getComputedStyle(el).getPropertyValue('--deal-mode').trim()
+  if (!cards.length) return block(ctx, el)
+  const outExpo = E.outExpo
+  if (mode === 'stack') {
+    const T = DEAL.line
+    const line = el.querySelector<HTMLElement>('[data-deal-line]')
+    const stack = el.querySelector<HTMLElement>('[data-deal-stack]')
+    if (line) rule(ctx, line, 0, { dur: T.dur * 1000, underline: true })
+    if (stack) fade(ctx, stack, 's')
+    const from = (stack ?? line ?? el).getBoundingClientRect()
+    cards.forEach((card, i) => {
+      const to = card.getBoundingClientRect()
+      const dx = from.left + from.width / 2 - (to.left + to.width / 2)
+      const dy = from.top + from.height / 2 - (to.top + to.height / 2)
+      const scale = stack ? Math.min(1, from.width / to.width) : 1
+      ctx.animate(
+        card,
+        [
+          { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+          { opacity: 1, offset: T.appear },
+          { opacity: 1, transform: 'none' },
+        ],
+        { duration: T.dur * 1000, delay: (T.lead + i * T.stagger) * 1000, easing: outExpo, fill: 'backwards' },
+        'transform, opacity',
+      )
+    })
+    return
+  }
+  if (mode === 'fan') {
+    const T = DEAL.fan
+    const n = cards.length
+    const landed = ((n - 1) * T.stagger + T.dur) * 1000
+    const end = landed + T.settle * 1000
+    cards.forEach((card, i) => {
+      const fanAngle = angle.hand[Math.round((i * (angle.hand.length - 1)) / Math.max(1, n - 1))] * T.tilt
+      const start = i * T.stagger * 1000
+      const total = end - start
+      // Landed, then held until the last card lands (rounded so the offsets never go backwards).
+      const land = Math.min(1, Math.round(((T.dur * 1000) / total) * 1e4) / 1e4)
+      const hold = Math.max(land, Math.min(1, Math.round(((landed - start) / total) * 1e4) / 1e4))
+      const tilt = `rotate(${fanAngle}deg)`
+      const origin = card.style.transformOrigin
+      card.style.transformOrigin = '50% 100%'
+      ctx.undo(() => (card.style.transformOrigin = origin))
+      ctx.animate(
+        card,
+        [
+          { opacity: 0, transform: `translateY(${T.rise}px) ${tilt}`, easing: outExpo },
+          { opacity: 1, transform: `translateY(0px) ${tilt}`, offset: land, easing: 'linear' },
+          { opacity: 1, transform: `translateY(0px) ${tilt}`, offset: hold, easing: E.inOut },
+          { opacity: 1, transform: 'translateY(0px) rotate(0deg)' },
+        ],
+        { duration: total, delay: start, fill: 'backwards' },
+        'transform, opacity',
+      )
+    })
+    return
+  }
+  if (mode === 'left') {
+    const T = DEAL.left
+    const gap = gapFor(ctx.tier, stagger.cards)
+    return new Promise<void>((resolve) => {
+      const waiting = new Set(cards)
+      const stops: (() => void)[] = []
+      let next = 0
+      const finish = () => {
+        for (const stop of stops.splice(0)) stop()
+        for (const card of waiting) card.style.removeProperty('opacity')
+        waiting.clear()
+        resolve()
+      }
+      ctx.stop(finish)
+      for (const card of cards) {
+        // Hidden until it enters (the block itself is revealed already).
+        card.style.opacity = '0'
+        ctx.undo(() => card.style.removeProperty('opacity'))
+        const stop = inView(
+          card,
+          () => {
+            stop()
+            if (!waiting.delete(card)) return
+            const now = performance.now()
+            const delay = Math.max(0, next - now)
+            next = now + delay + gap
+            card.style.removeProperty('opacity')
+            ctx.animate(
+              card,
+              [
+                { opacity: 0, translate: `${-T.from}px 0` },
+                { opacity: 1, translate: '0 0' },
+              ],
+              { duration: T.dur * 1000, delay, easing: outExpo, fill: 'backwards' },
+              'transform, opacity',
+            )
+            if (!waiting.size) finish()
+          },
+          { amount: reveal.amount, margin: reveal.margin },
+        )
+        stops.push(stop)
+      }
+    })
+  }
+  if (mode === 'list') return list(ctx, el)
+  return block(ctx, el)
+}
+
 /** Runs a kind (the dispatcher the engine and the first-load sequence share). */
 export function runKind(kind: Kind, ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
   switch (kind) {
@@ -424,5 +558,7 @@ export function runKind(kind: Kind, ctx: JobContext, el: HTMLElement, opts: Kind
       return note(ctx, el)
     case 'pair':
       return pair(ctx, el, opts)
+    case 'deal':
+      return dealCards(ctx, el)
   }
 }

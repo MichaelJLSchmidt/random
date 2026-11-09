@@ -31,8 +31,8 @@ export const hand: HandContent = {
       ],
     },
     'shared-foundations': {
-      title: 'Design System Allmend',
-      type: 'Design System',
+      title: 'Design-System Allmend',
+      type: 'Design-System',
       year: 'Seit 2022',
       inspect: 'Neun von zwölf Produktteams bauen damit, ohne dass es jemand angeordnet hat.',
       tapLine: 'Allmend ist Land, das allen gehört.',

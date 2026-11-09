@@ -103,15 +103,6 @@ export const illustrations: IllustrationCopy = {
       description: 'Workshop method Fishbowl: an inner circle of four seats inside a ring of listeners.',
     },
   },
-  ContourPortrait: {
-    title: 'Contour portrait',
-    description:
-      'A head-and-shoulders silhouette drawn as 14 nested contour lines, like a topographic map; the lines ring the head and arch over the shoulders. No face is drawn.',
-  },
-  AboutTimeline: {
-    title: 'Timeline',
-    description: 'A timeline of {count} stops from {from} to {to}: {stops}.',
-  },
   DiscardedCard: {
     title: 'A discarded card',
     description: 'A single playing card lying face down, its back showing a framed diamond.',

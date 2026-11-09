@@ -51,8 +51,6 @@ export const illustrationNames = [
   'WeekRing',
   'CareerMatrix',
   'WorkshopGlyphs',
-  'ContourPortrait',
-  'AboutTimeline',
   'ProjectTypeGlyph',
   'DiscardedCard',
 ] as const

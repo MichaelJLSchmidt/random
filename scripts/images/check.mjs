@@ -1,6 +1,6 @@
 // Checks what the Content & Images session ships, against the real modules:
 //   node scripts/images/check.mjs
-// - the image registry: 12 photos, each with alt, photographer, photographerUrl
+// - the image registry: 13 photos, each with alt, photographer, photographerUrl
 //   and pageUrl; every local rendition exists and the 2048 px JPEG matches the
 //   recorded width and height
 // - per locale (content/de, content/en): 3 case studies, 13 About projects (and
@@ -41,8 +41,8 @@ for (const [locale, content] of Object.entries(contents)) {
 // Image registry
 const entries = Object.entries(images)
 const photos = entries.filter(([, e]) => e.kind === 'photo')
-eq('images', entries.length, 12)
-eq('photos (kind "photo")', photos.length, 12)
+eq('images', entries.length, 13)
+eq('photos (kind "photo")', photos.length, 13)
 for (const [id, e] of photos) {
   check(typeof e.alt === 'string' && e.alt.trim().length > 0, `${id}: alt is empty`)
   check(Boolean(e.photographer), `${id}: no photographer`)
@@ -115,6 +115,12 @@ for (const file of [
   'src/lib/cards.ts',
   'public/topo',
   'scripts/topo',
+  'public/terrain',
+  'src/components/background/terrain.ts',
+  'src/components/illustrations/contour-portrait.tsx',
+  'src/components/illustrations/about-timeline.tsx',
+  'src/motion/scenes/timeline-scene.ts',
+  'src/components/calm-switch.tsx',
 ])
   check(!existsSync(join(root, file)), `${file} still exists`)
 

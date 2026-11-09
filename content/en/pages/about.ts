@@ -9,6 +9,7 @@ import type { About } from '../../schema'
 export const about: About = {
   title: 'About',
   lead: 'I grew up between two lakes and still think in contour lines.',
+  portrait: 'about-portrait',
   story: {
     label: 'Story',
     image: 'about-roots',
@@ -23,19 +24,17 @@ export const about: About = {
     label: 'Timeline',
     title: 'Timeline',
     items: [
-      { years: '2004–2008', title: 'Apprenticeship as Mediamatiker, Thun' },
-      { years: '2008–2013', title: 'Front-end developer, digital agency, Bern' },
+      { years: '2004–2008', title: 'Apprenticeship as Mediamatiker', place: 'Thun' },
+      { years: '2008–2013', title: 'Front-end developer', place: 'Digital agency, Bern' },
       {
         years: '2011–2014',
-        title: 'BSc in Multimedia Production (part-time), a Swiss university of applied sciences',
+        title: 'BSc in Multimedia Production (part-time)',
+        place: 'University of applied sciences',
       },
-      {
-        years: '2015',
-        title: 'Hyper Island programme, Stockholm — facilitation, team dynamics, digital experience design',
-      },
-      { years: '2015–2018', title: 'UX designer, digital agency, Zurich' },
-      { years: '2018–2021', title: 'Senior UX designer, Lindengrund Informatik, Bern' },
-      { years: '2021–today', title: 'UX Team Lead and Senior UX Designer, Lindengrund Informatik' },
+      { years: '2015', title: 'Hyper Island programme', place: 'Stockholm' },
+      { years: '2015–2018', title: 'UX designer', place: 'Digital agency, Zurich' },
+      { years: '2018–2021', title: 'Senior UX designer', place: 'Lindengrund Informatik, Bern' },
+      { years: '2021–today', title: 'UX Team Lead and Senior UX Designer', place: 'Lindengrund Informatik, Bern' },
     ],
   },
   howIWork: {

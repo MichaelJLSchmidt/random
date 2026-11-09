@@ -194,11 +194,19 @@
   max-width: 34ch;
   margin: var(--space-5) 0 0;
 }
+/* The portrait: a 4:5 photo (an example for now), right-aligned under the lead on phones. */
 .about-portrait {
   grid-column: 2 / content-end;
   justify-self: end;
   width: min(100%, 15rem);
   margin-top: var(--space-6);
+}
+.about-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
 }
 @media (min-width: 1024px) {
   .about-hero {
@@ -218,129 +226,231 @@
   .about-portrait {
     grid-column: 10 / 14;
     grid-row: 1 / 4;
+    align-self: start;
     justify-self: stretch;
     width: auto;
     margin: 0;
   }
 }
 
-/* 02 Timeline: horizontal from 1024, vertical below; the drawing runs along the seven stops. */
-.timeline {
-  --track: clamp(64px, 18vw, 88px);
-  display: grid;
-  grid-template-columns: var(--track) minmax(0, 1fr);
-  column-gap: var(--space-4);
-}
-.timeline-track {
+/*
+ * 02 Timeline: seven face-up cards in the card family (eggs.css), oldest first;
+ * the latest carries the page accent on its edge. Not interactive.
+ *   >= 1280      a thin line across the content width with the cards on it,
+ *                dealt from the small face-down stack at its left end
+ *                (the deal reveal, --deal-mode: stack)
+ *   1024–1279    the same row as a scroll-snap strip, the line running through it
+ *   < 1024       a vertical line on the left, the cards along it at reading
+ *                width, each dealt in from the left as it enters
+ */
+.career {
+  --deal-mode: left;
   position: relative;
-  grid-column: 1;
-  grid-row: 1;
-  height: calc(var(--track) * 8);
-  container-type: size;
+  padding-left: var(--space-6);
 }
-/* The 960 x 120 drawing (line and dots) turned 90° so its left end is at the top: the track is 8 × its width. */
-.timeline-track .illustration {
+.career-line {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100cqh;
-  height: 100cqw;
-  translate: -50% -50%;
-  rotate: 90deg;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 1px;
+  background: var(--line);
 }
-.timeline-stops {
-  grid-column: 2;
-  grid-row: 1;
+.career-stack {
+  display: none;
+}
+.career-cards {
   display: grid;
-  grid-template-rows: repeat(var(--stops, 7), minmax(0, 1fr));
-  height: calc(var(--track) * 8);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.timeline-stop {
+.career-card {
+  position: relative;
   display: grid;
-  align-content: center;
-  gap: 2px;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  cursor: default;
 }
-.timeline-years {
-  color: var(--accent);
+/* A short tick from the line to each card (phones and tablets). */
+.career-card::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--space-4) + 8px);
+  right: 100%;
+  width: calc(var(--space-6) - 7px);
+  height: 1px;
+  background: var(--line);
 }
-.timeline-stop-title {
-  font-family: var(--font-text);
-  font-size: var(--type-label-size);
-  line-height: var(--type-label-leading);
+.career-card[data-latest] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.career-card[data-latest]::before {
+  background: var(--accent);
+}
+.career-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--type-h3-weight);
+  font-variation-settings: 'opsz' var(--type-h3-opsz);
+  line-height: 1.2;
+  letter-spacing: var(--type-h3-tracking);
+}
+.career-place {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--muted);
 }
 @media (min-width: 1024px) {
-  /* Seven equal cells with no gap, so each stop's centre is (i + 0.5) / 7 of the width, like the dots. */
-  .timeline {
-    grid-template-columns: repeat(var(--stops, 7), minmax(0, 1fr));
-    column-gap: 0;
-    row-gap: var(--space-5);
+  .career {
+    --deal-mode: strip;
+    padding: 0;
   }
-  .timeline-track {
-    grid-column: 1 / -1;
-    height: auto;
-    container-type: normal;
+  /* The line runs through the strip at the cards' middle and scrolls with it. */
+  .career-line {
+    display: none;
   }
-  .timeline-track .illustration {
-    position: static;
-    width: 100%;
-    height: auto;
-    translate: none;
-    rotate: none;
+  .career-cards {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    padding-bottom: var(--space-4);
+    background: linear-gradient(var(--line), var(--line)) 0 calc(50% - var(--space-4) / 2) / 100% 1px no-repeat;
+    background-attachment: local;
   }
-  .timeline-stops {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    grid-template-rows: none;
-    grid-template-columns: subgrid;
-    height: auto;
+  /* Years and title at the top, the place at the foot of the card. */
+  .career-card {
+    flex: 0 0 11.5rem;
+    grid-template-rows: auto auto 1fr;
+    aspect-ratio: 132 / 184;
+    padding: var(--space-3) var(--space-3) var(--space-4);
+    container-type: inline-size;
+    scroll-snap-align: start;
   }
-  .timeline-stop {
-    align-content: start;
-    gap: var(--space-2);
-    padding: 0 var(--space-2);
-    text-align: center;
+  .career-card::before {
+    display: none;
   }
-  .timeline-stop-title {
-    font-size: var(--type-body-size);
-    line-height: var(--type-body-leading);
+  /* Set to the card's width (the row's cards are narrow): about 13 px at 1280, 17 px at 1440. */
+  .career-title {
+    font-size: clamp(0.8125rem, 9.4cqi, 1.125rem);
+  }
+  .career-place {
+    align-self: end;
+    font-size: clamp(0.75rem, 7.6cqi, 0.875rem);
+  }
+}
+@media (min-width: 1280px) {
+  .career {
+    --deal-mode: stack;
+    --stack-w: 3.5rem;
+    display: grid;
+    grid-template-columns: var(--stack-w) minmax(0, 1fr);
+    column-gap: var(--space-5);
+    align-items: center;
+  }
+  .career-line {
+    display: block;
+    top: 50%;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    height: 1px;
+  }
+  /* The small face-down stack at the line's left end: three backs, slightly squared off. */
+  .career-stack {
+    position: relative;
+    display: block;
+    width: var(--stack-w);
+    aspect-ratio: 132 / 184;
+  }
+  .career-stack .about-card-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent),
+      inset 0 0 0 3px var(--glacier-mid, var(--ink-mid)),
+      inset 0 0 0 4px color-mix(in srgb, var(--text) 9%, transparent);
+  }
+  .career-stack .about-card-back:nth-child(1) {
+    translate: -2px 3px;
+    rotate: -3deg;
+  }
+  .career-stack .about-card-back:nth-child(2) {
+    translate: 1px 1px;
+    rotate: 2deg;
+  }
+  .career-cards {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: var(--space-4);
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+  .career-card {
+    flex: none;
   }
 }
 
-/* 03 How I work: a staggered 2×2. */
-.how-grid {
+/*
+ * 03 How I work: four face-up cards in the card family (number, title, body
+ * at the body size); not interactive. From 1024 a row of four (dealt in with a
+ * slight fan that settles straight: --deal-mode: fan), 640–1023 a 2×2 grid,
+ * below 640 one column (the cards in turn).
+ */
+.how-cards {
+  --deal-mode: list;
   display: grid;
-  gap: calc(var(--baseline) * 10) var(--grid-gutter);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.how-item {
+.how-card {
   display: grid;
   align-content: start;
   gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
+  padding: var(--space-5);
+  cursor: default;
 }
-.how-item > * {
+.how-card > * {
   margin: 0;
 }
-.how-number {
-  color: var(--accent);
+.how-title {
+  font-family: var(--font-display);
+  font-size: var(--type-h3-size);
+  font-weight: var(--type-h3-weight);
+  font-variation-settings: 'opsz' var(--type-h3-opsz);
+  line-height: var(--type-h3-leading);
+  letter-spacing: var(--type-h3-tracking);
+}
+.how-body {
+  max-width: 34ch;
 }
 @media (min-width: 640px) {
-  .how-grid {
+  .how-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gutter);
   }
 }
 @media (min-width: 1024px) {
-  .how-grid {
-    row-gap: var(--space-8);
+  /* stretch: grid items with an aspect ratio would otherwise keep their own height (one card taller). */
+  .how-cards {
+    --deal-mode: fan;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
   }
-  .how-item:nth-child(even) {
-    margin-top: var(--space-9);
+  /* The card's proportions, growing only when the words need more room. */
+  .how-card {
+    aspect-ratio: 132 / 184;
+    padding: var(--space-5) var(--space-5) var(--space-6);
   }
 }
 

@@ -193,6 +193,37 @@
   color: var(--text);
 }
 
+/*
+ * ---------- About: the card family ----------
+ * "What's on the table" (face down, flipping) sets the look the timeline and
+ * "How I work" share face up (src/styles/pages/pages.css): the back
+ * (.about-card-back), the face with its accent edge (.about-card) and the
+ * mono label (.about-card-label). Proportions 132 × 184, 10 px corners.
+ */
+.on-table-back,
+.about-card-back {
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
+    var(--glacier-mid, var(--ink-mid));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent),
+    inset 0 0 0 6px var(--glacier-mid, var(--ink-mid)),
+    inset 0 0 0 7px color-mix(in srgb, var(--text) 9%, transparent);
+}
+.on-table-front,
+.about-card {
+  border-radius: 10px;
+  background: var(--glacier-field);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-accent) 45%, transparent);
+}
+.on-table-name,
+.about-card-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  color: var(--glacier-accent);
+}
+
 /* ---------- About: what's on the table ---------- */
 .on-table {
   margin-top: var(--space-8);
@@ -234,13 +265,6 @@
 .on-table-back {
   place-items: center;
   padding: var(--space-3);
-  background:
-    repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 6%, transparent) 0 1px, transparent 1px 7px),
-    var(--glacier-mid, var(--ink-mid));
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent),
-    inset 0 0 0 6px var(--glacier-mid, var(--ink-mid)),
-    inset 0 0 0 7px color-mix(in srgb, var(--text) 9%, transparent);
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: var(--wght-card);
@@ -250,15 +274,7 @@
   gap: var(--space-2);
   padding: var(--space-4);
   transform: rotateY(180deg);
-  background: var(--glacier-field);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-accent) 45%, transparent);
   text-align: left;
-}
-.on-table-name {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  color: var(--glacier-accent);
 }
 .on-table-line {
   font-size: var(--text-sm);

@@ -21,6 +21,11 @@ export type JobContext = {
   animate: (target: Element, keyframes: Keyframe[], options: KeyframeAnimationOptions, willChange?: string) => Animation
   /** Runs when the job ends (or is completed early), after the animations are cancelled. */
   undo: (fn: () => void) => void
+  /**
+   * Runs when the job is completed early (a skip or a route change), before its animations jump to
+   * their end: a kind that waits for something (the deal's cards entering one by one) stops waiting.
+   */
+  stop: (fn: () => void) => void
   /** True once the job has been completed early (skip, route change). */
   readonly done: boolean
 }
@@ -39,6 +44,7 @@ type Job = {
   finalized: boolean
   anims: Set<Animation>
   undos: (() => void)[]
+  stops: (() => void)[]
   /** will-change per target: the value to restore and how many of its animations are running. */
   wills: Map<HTMLElement | SVGElement, { rest: string; running: number }>
   timers: number[]
@@ -82,6 +88,7 @@ export function schedule(el: Element, delayMs: number, run: JobRun, variant = ''
     finalized: false,
     anims: new Set(),
     undos: [],
+    stops: [],
     wills: new Map(),
     timers: [],
     resolve,
@@ -155,6 +162,10 @@ function start(job: Job) {
       if (job.ended) fn()
       else job.undos.push(fn)
     },
+    stop: (fn) => {
+      if (job.ended) fn()
+      else job.stops.push(fn)
+    },
     get done() {
       return job.ended
     },
@@ -217,6 +228,7 @@ export function completeAll() {
             return a
           },
           undo: (fn) => job.undos.push(fn),
+          stop: (fn) => fn(),
           done: true,
         })
       } catch {
@@ -227,6 +239,7 @@ export function completeAll() {
       continue
     }
     job.ended = true
+    for (const fn of job.stops.splice(0)) fn()
     for (const a of job.anims) a.finish()
   }
 }

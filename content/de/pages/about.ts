@@ -9,6 +9,7 @@ import type { About } from '../../schema'
 export const about: About = {
   title: 'Über mich',
   lead: 'Ich bin zwischen zwei Seen aufgewachsen und denke noch heute in Höhenkurven.',
+  portrait: 'about-portrait',
   story: {
     label: 'Geschichte',
     image: 'about-roots',
@@ -23,19 +24,13 @@ export const about: About = {
     label: 'Werdegang',
     title: 'Werdegang',
     items: [
-      { years: '2004–2008', title: 'Lehre als Mediamatiker, Thun' },
-      { years: '2008–2013', title: 'Frontend-Entwickler, Digitalagentur, Bern' },
-      {
-        years: '2011–2014',
-        title: 'BSc in Multimedia Production (Teilzeit), eine Schweizer Fachhochschule',
-      },
-      {
-        years: '2015',
-        title: 'Programm bei Hyper Island, Stockholm: Moderation, Teamdynamik, Digital Experience Design',
-      },
-      { years: '2015–2018', title: 'UX Designer, Digitalagentur, Zürich' },
-      { years: '2018–2021', title: 'Senior UX Designer, Lindengrund Informatik, Bern' },
-      { years: '2021–heute', title: 'UX Team Lead und Senior UX Designer, Lindengrund Informatik' },
+      { years: '2004–2008', title: 'Lehre als Mediamatiker', place: 'Thun' },
+      { years: '2008–2013', title: 'Frontend-Entwickler', place: 'Digitalagentur, Bern' },
+      { years: '2011–2014', title: 'BSc in Multimedia Production (Teilzeit)', place: 'Fachhochschule' },
+      { years: '2015', title: 'Programm bei Hyper Island', place: 'Stockholm' },
+      { years: '2015–2018', title: 'UX Designer', place: 'Digitalagentur, Zürich' },
+      { years: '2018–2021', title: 'Senior UX Designer', place: 'Lindengrund Informatik, Bern' },
+      { years: '2021–heute', title: 'UX Team Lead und Senior UX Designer', place: 'Lindengrund Informatik, Bern' },
     ],
   },
   howIWork: {
@@ -179,7 +174,7 @@ export const about: About = {
   contact: {
     label: 'Kontakt',
     title: 'Lass uns reden.',
-    body: 'Wenn du an Behördendiensten, Design Systems oder Designführung arbeitest und dich austauschen möchtest, freue ich mich auf deine Nachricht. Ich antworte meist innert weniger Tage. Wenn du in Bern bist, geht auch ein Kaffee.',
+    body: 'Wenn du an Behördendiensten, Design-Systemen oder Designführung arbeitest und dich austauschen möchtest, freue ich mich auf deine Nachricht. Ich antworte meist innert weniger Tage. Wenn du in Bern bist, geht auch ein Kaffee.',
     email: 'moritz@mjls.example',
     links: [
       // Placeholder profile: shown as text, deliberately without a link.

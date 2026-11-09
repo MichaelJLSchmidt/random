@@ -3,10 +3,8 @@
  * Illustrations session. Drawing conventions, props and responsive layouts:
  * README.md in this folder.
  */
-import { AboutTimeline } from './about-timeline'
 import { AdoptionBars } from './adoption-bars'
 import { CareerMatrix } from './career-matrix'
-import { ContourPortrait } from './contour-portrait'
 import { ContributionLoop } from './contribution-loop'
 import { DesignSystemLayers } from './design-system-layers'
 import { DiscardedCard } from './discarded-card'
@@ -21,10 +19,8 @@ import { WorkshopGlyph, WorkshopGlyphs } from './workshop-glyphs'
 
 export * from './types'
 export {
-  AboutTimeline,
   AdoptionBars,
   CareerMatrix,
-  ContourPortrait,
   ContributionLoop,
   DesignSystemLayers,
   DiscardedCard,
@@ -41,7 +37,6 @@ export {
 
 export { Illustration, illustrations } from './illustration'
 
-export type { AboutTimelineProps, AboutTimelineStop } from './about-timeline'
 export type { AdoptionBarsProps } from './adoption-bars'
 export type { CareerMatrixProps } from './career-matrix'
 export type { ContributionLoopProps } from './contribution-loop'

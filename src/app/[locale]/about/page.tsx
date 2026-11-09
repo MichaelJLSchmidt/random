@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import type { CSSProperties } from 'react'
-import { AboutTimeline, ContourPortrait } from '@/components/illustrations'
 import { OffsetImage, Section, SectionIndex, imageSides } from '@/components/layout'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
+import { Picture } from '@/components/picture'
 import { Reveal } from '@/components/reveals'
 import { OnTheTable } from '@/eggs/on-the-table'
-import { type AboutSectionKey, aboutSectionKeys, contentFor, fill, getContent, pad2 } from '@/lib/content'
+import { type AboutSectionKey, aboutSectionKeys, contentFor, getContent, pad2 } from '@/lib/content'
 import { pageAlternates } from '@/lib/metadata'
 import { asLocale, setRequestLocale } from '@/lib/request-locale'
 
@@ -29,29 +29,22 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
 }
 
 /**
- * About (glacier, over the old portfolio's contour field of Interlaken, drawn
- * by the background field): hero (title, lead, ContourPortrait), 01 story,
- * 02 timeline (AboutTimeline, line and dots, with seven HTML stops:
- * horizontal from 1024, turned 90° below), 03 how I work (2×2), 04 "At the
- * table", 05 roots, 06 "What's on the table" (five mini cards), 07 projects
- * (a plain list: title, year, client, what I did; not interactive), 08 contact
- * ("Let's talk."). Images are offset on alternating sides. The photo credits
- * and the terrain attribution are small print in the footer
- * (AboutSmallPrint); the attribution also runs along the left edge from 1024.
+ * About (glacier, over the old password page's contour background, drawn by
+ * the background field): hero (title, lead, the portrait photo), 01 story,
+ * 02 timeline (seven face-up cards on a line, dealt from a small stack; a
+ * scroll-snap strip at 1024–1279, a vertical line below), 03 how I work (four
+ * face-up cards: a row dealt with a slight fan from 1024, 2×2, one column),
+ * 04 "At the table", 05 roots, 06 "What's on the table" (five mini cards: the
+ * card family the timeline and how I work share), 07 projects (a plain list:
+ * title, year, client, what I did; not interactive), 08 contact ("Let's
+ * talk."). Images are offset on alternating sides. The photo credits and the
+ * terrain credit are small print in the footer (AboutSmallPrint); the credit
+ * also runs along the left edge from 1024.
  */
 export default async function AboutPage({ params }: Props) {
   setRequestLocale((await params).locale)
-  const { about: a, site, illustrations: copy } = await getContent()
+  const { about: a, site } = await getContent()
   const stops = a.timeline.items
-  const timelineText = {
-    title: copy.AboutTimeline.title,
-    description: fill(copy.AboutTimeline.description, {
-      count: stops.length,
-      from: stops[0].years,
-      to: stops[stops.length - 1].years,
-      stops: stops.map((t) => `${t.years} ${t.title}`).join('; '),
-    }),
-  }
   const head = (key: AboutSectionKey) => ({
     id: key,
     number: aboutSectionKeys.indexOf(key) + 1,
@@ -70,8 +63,8 @@ export default async function AboutPage({ params }: Props) {
           <Reveal as="p" kind="lines" order={1} className="about-lead t-lead">
             {a.lead}
           </Reveal>
-          <Reveal kind="draw" order={1} className="about-portrait">
-            <ContourPortrait titleId="about-portrait-title" {...copy.ContourPortrait} />
+          <Reveal kind="image" order={1} className="about-portrait">
+            <Picture id={a.portrait} sizes="(min-width: 1024px) 25vw, 15rem" />
           </Reveal>
         </header>
 
@@ -89,37 +82,40 @@ export default async function AboutPage({ params }: Props) {
           )}
         </Section>
 
-        {/* 02 Timeline: seven stops; the drawing runs along them. */}
+        {/* 02 Timeline: seven face-up cards, oldest first; the latest carries the page accent. */}
         <Section {...head('timeline')} pin={1}>
-          <div className="timeline col-wide" style={{ '--stops': a.timeline.items.length } as CSSProperties}>
-            {/* Line and dots only: the years and titles are the HTML stops, in seven equal cells that line up with the dots. */}
-            <Reveal kind="draw" className="timeline-track">
-              <AboutTimeline
-                titleId="timeline-illustration-title"
-                items={a.timeline.items}
-                labels={false}
-                {...timelineText}
-              />
-            </Reveal>
-            <Reveal as="ol" kind="list" className="timeline-stops">
-              {a.timeline.items.map((t, i) => (
-                <li key={i} className="timeline-stop">
-                  <span className="timeline-years t-label">{t.years}</span>
-                  <span className="timeline-stop-title">{t.title}</span>
+          <Reveal kind="deal" className="career col-wide">
+            <span className="career-line" aria-hidden="true" data-deal-line="" />
+            <span className="career-stack" aria-hidden="true" data-deal-stack="">
+              <span className="about-card-back" />
+              <span className="about-card-back" />
+              <span className="about-card-back" />
+            </span>
+            <ol className="career-cards">
+              {stops.map((t, i) => (
+                <li
+                  key={i}
+                  className="career-card about-card"
+                  data-deal-item=""
+                  data-latest={i === stops.length - 1 ? '' : undefined}
+                >
+                  <span className="career-years about-card-label">{t.years}</span>
+                  <span className="career-title">{t.title}</span>
+                  <span className="career-place">{t.place}</span>
                 </li>
               ))}
-            </Reveal>
-          </div>
+            </ol>
+          </Reveal>
         </Section>
 
-        {/* 03 How I work: a staggered 2×2. */}
-        <Section {...head('howIWork')} pin={2}>
-          <Reveal as="ul" kind="list" className="how-grid cols-4-12">
+        {/* 03 How I work: four face-up cards (number, title, body); not interactive. */}
+        <Section {...head('howIWork')} pin={1}>
+          <Reveal as="ul" kind="deal" className="how-cards col-wide">
             {a.howIWork.items.map((h, i) => (
-              <li key={i} className="how-item">
-                <span className="how-number t-label">{pad2(i + 1)}</span>
-                <h3 className="t-h3">{h.title}</h3>
-                <p className="t-body">{h.body}</p>
+              <li key={i} className="how-card about-card" data-deal-item="">
+                <span className="how-number about-card-label">{pad2(i + 1)}</span>
+                <h3 className="how-title">{h.title}</h3>
+                <p className="how-body t-body">{h.body}</p>
               </li>
             ))}
           </Reveal>

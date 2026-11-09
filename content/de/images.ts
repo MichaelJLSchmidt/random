@@ -17,4 +17,5 @@ export const imageAlt: Record<ImageId, string> = {
   'about-lake': 'Ein türkisfarbener See bei Interlaken, umgeben von bewaldeten Bergen',
   'about-og': 'Die eisbedeckte Bergkette, von Interlaken aus gesehen',
   'about-tcg': 'Hände legen Karten auf einen dunklen Tisch',
+  'about-portrait': 'Das Gesicht eines Mannes im Profil, schwarz-weiss, vor dunklem Hintergrund',
 }

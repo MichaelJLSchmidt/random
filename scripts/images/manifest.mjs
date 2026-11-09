@@ -106,4 +106,14 @@ export const photos = [
     handle: 'svi_designs',
     alt: 'Hands laying cards on a dark table',
   },
+  {
+    // An example portrait (About's hero), to be replaced by a real one: low-key, on a dark ground.
+    id: 'about-portrait',
+    base: 'https://images.unsplash.com/photo-1784209348722-e103832d5f7d',
+    page: 'https://unsplash.com/photos/mans-face-in-profile-black-and-white--BecbFaSB9U',
+    photographer: 'Nik Bagherzadegan',
+    handle: 'nik_brz',
+    alt: "A man's face in profile, black and white, against a dark background",
+    crop: [4, 5],
+  },
 ]

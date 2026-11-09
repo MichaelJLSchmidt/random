@@ -1,4 +1,4 @@
-/* Case 02: Design System Allmend (shared-foundations, tide). Server-only page text. */
+/* Case 02: Design-System Allmend (shared-foundations, tide). Server-only page text. */
 import type { CaseStudy } from '../../schema'
 
 export const sharedFoundations: CaseStudy = {
@@ -6,17 +6,17 @@ export const sharedFoundations: CaseStudy = {
   number: '02',
   identity: 'tide',
   label: 'Plattform',
-  title: 'Design System Allmend',
-  statement: 'Ein Design System, das niemand nutzen musste.',
+  title: 'Design-System Allmend',
+  statement: 'Ein Design-System, das niemand nutzen musste.',
   heroImage: 'shared-foundations-hero',
   summary:
-    'Zwölf Produktteams, vier Frontend-Stacks und kein Auftrag von oben. Allmend, benannt nach dem Land, das allen gehört, ist das gemeinsame Design System, das wir aufgebaut haben, indem wir das Richtige zum Einfachen machten. Heute bauen neun von zwölf Teams damit, und 41% der Komponenten kommen von ausserhalb des Kernteams.',
+    'Zwölf Produktteams, vier Frontend-Stacks und kein Auftrag von oben. Allmend, benannt nach dem Land, das allen gehört, ist das gemeinsame Design-System, das wir aufgebaut haben, indem wir das Richtige zum Einfachen machten. Heute bauen neun von zwölf Teams damit, und 41% der Komponenten kommen von ausserhalb des Kernteams.',
   meta: {
     client: 'Interne Plattform für 12 Produktteams, die kantonale und eidgenössische Anwendungen bauen',
     timeframe: 'Seit 2022',
     role: 'Product Owner und Lead Designer, Mitarbeit an den Komponenten',
     team: '2 Personen aus meinem Team (1,2 FTE), 2 ausgeliehene Personen aus der Frontend-Entwicklung (1,0 FTE), 23 Mitwirkende aus Produktteams',
-    type: 'Design System · Plattform · Einfluss ohne Weisungsbefugnis',
+    type: 'Design-System · Plattform · Einfluss ohne Weisungsbefugnis',
   },
   metrics: [
     { value: '9 von 12', label: 'Produktteams bauen mit Allmend' },
