@@ -157,3 +157,27 @@ backlog, README where it names the calm switch.
 
 - M2: the accessible name does not switch to "Play background motion" (see Decisions); that text
   is the tooltip.
+
+## Review
+
+A subagent reviewed the diff against the numbered items. One finding, fixed: from 1024 to about
+1150 px the How I work cards took their width from the stretched row height (aspect ratio), so
+they overlapped and the page widened at 1024. A definite width keeps them in their columns
+(measured at 1024, 1100, 1180, 1280, 1440 and 1920 px in both languages: no overlap, no clipping,
+no page overflow). Nothing else was missing or wrong.
+
+## Verification
+
+- `npm run build` (BASE_PATH=/random/): passes, type check and the content checks for both
+  locales included; `node scripts/images/check.mjs`: 13 photos, ok.
+- `scripts/smoke.mjs` at 1440×900 and 390×844 on the final build: de full 208 ok, de reduced 197
+  ok, en full 208 ok, en reduced 197 ok, no failures.
+- `scripts/budget.mjs http://localhost:4100/random/de/`: 167.7 KB gzip initial JS (within 170 KB).
+  Pointed at the root (`/random/`) it fails, because the root replaces its URL with a locale
+  before the script can read the response.
+- By eye (Playwright screenshots): the About background at 1440×900 and 390×844 (lakes, line
+  weights and opacity, vignette), the morph in and out of About, 0 canvas frames at rest and no
+  change under the pointer; the header leaving and returning on a case study (full and reduced,
+  rail in step); the timeline and How I work cards at 390, 1024, 1280 and 1440 px and mid-deal;
+  the home baseline and the centred hint at 1440 and 390; the idle note (10 s; `?idle` 1 s) at
+  360–430 px.
