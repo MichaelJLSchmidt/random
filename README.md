@@ -36,12 +36,14 @@ public/contour-bg/          About's background: the old password page's contour 
 scripts/
   images/                   manifest.mjs (photos, alt, credits), fetch-and-build.mjs, check.mjs
   smoke.mjs                 Behaviour check, 1440x900 and 390x844, per language and motion tier
+  build-numerals.mjs        Before `next build`: the chapter numerals' outlines (fontkit, scripts/assets/)
+  terrain/build-field.py    About's region heightmap (public/terrain/field.webp) from the portfolio master
   i18n-pages.mjs            After `next build`: <html lang> per page, the root's language choice, the 404 page
   load-ts.mjs               Loads content and src/lib TypeScript modules from Node scripts
   budget.mjs, audit.mjs, vitals.mjs, lighthouse.mjs, serve-static.mjs
 src/
   app/                      layout.tsx (root: <html>, the field), [locale]/ (layout with the chrome; pages:
-                            home, /work/[slug], /management, /about, /404, /logo-lab)
+                            home, /work/[slug], /management, /about, /about/thesis, /404, /logo-lab)
   lib/                      i18n.ts (locales, paths, the language rule), content.ts (server),
                             chrome.tsx and hand-data.ts (client: the active language's chrome)
   design/                   palette.ts (colour identities), layout.ts and type.ts (typed token mirrors)
@@ -55,11 +57,14 @@ src/
     preferences.ts          Pre-paint script: tier, intro flag, reveal arming, initial field colour
     header-scroll.ts        The header leaving on a scroll down and returning on a scroll up
   components/
-    background/             The field: engine, WebGL2 shader, OKLab, CSS fallback, About's contour layer
+    background/             The field: engine, WebGL2 shader, OKLab, CSS fallback, About's contour morph
+                            (heightmap, SVG layer, its spec in contours.ts)
+    about/                  The two-lane career timeline
+    thesis/                 The thesis overview's hero and screenshot slots
     hand/                   The hand (fan, rail, sheet) and card faces
     layout/                 SectionIndex, NumeralBreaker, OffsetImage, MetaPairs, Scoreboard, DealRow,
                             WorkshopRow, MarginNote, Minimap, Section
-    illustrations/          13 SVG illustrations behind one registry
+    illustrations/          13 SVG illustrations behind one registry; thesis/ the thesis overview's five
     picture.tsx             <Picture id sizes priority> from content/images.ts
     case-hero.tsx           Played card as hero; header.tsx (home slot, About, language), reveals.tsx, ...
   eggs/                     registry.ts (flags + tier behaviour) and one module per egg
@@ -73,7 +78,7 @@ src/
 | Command             | What it does                                                      |
 | ------------------- | ----------------------------------------------------------------- |
 | `npm run dev`       | Development server                                                |
-| `npm run build`     | Static export to `dist/` under `BASE_PATH` (type check, content checks for both languages, then `scripts/i18n-pages.mjs`) |
+| `npm run build`     | `scripts/build-numerals.mjs`, then the static export to `dist/` under `BASE_PATH` (type check, content checks for both languages), then `scripts/i18n-pages.mjs` |
 | `npm run preview`   | Serve `dist/` like GitHub Pages (`BASE_PATH=/random/`, port 4100) |
 | `npm run typecheck` | TypeScript                                                        |
 | `npm run format`    | Prettier                                                          |

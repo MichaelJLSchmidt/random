@@ -39,6 +39,19 @@ One session, in this order (the background first: every other check depends on i
   Island description ("facilitation, team dynamics, digital experience design") was dropped for
   the card and belongs in the rewrite.
 
+- **Thesis screenshots.** `/about/thesis` has three marked slots (`ImageSlot`, a `TODO(owner)` in
+  `src/app/[locale]/about/thesis/page.tsx`): the knowledge base, the check-in, the round-2 source
+  labels. Add the screenshots through `scripts/images/manifest.mjs` and swap each slot for an
+  `OffsetImage`.
+- **Thesis consent.** Publishing the internal survey figures and naming the employer needs the
+  employer's consent; until then the page stays anonymous (both `content/<locale>/thesis.ts` say
+  so).
+- **About's morph on a real GPU.** Round 3 measured paint and raster tasks (none over 4 ms) in a
+  container without a GPU, where the shader runs in software and frames drop; check the frame
+  rate (DevTools frame rendering stats, 60 fps, also at 4× CPU throttle) on a desktop and a
+  mid-range phone. The 0.75× guard is the lever if a phone struggles.
+- **JS budget.** 180.9 KB gzip initial JS (advisory 170 KB, D7) after round 3.
+
 ## Resolved
 
 - **Flicker in chapter 05 (team-of-teams deal scene)**, feedback round 3, item 4. *Cause:* when

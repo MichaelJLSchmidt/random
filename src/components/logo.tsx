@@ -1,6 +1,8 @@
 'use client'
 
-import { animate, hover, press } from 'motion'
+import { hover, press } from 'motion'
+// WAAPI-only animate (transforms and opacity are all the logo needs): keeps the full engine off every page.
+import { animate } from 'motion/mini'
 import { type Ref, type RefObject, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 import { CHROME_IN, INTRO_DONE } from '@/motion/preferences'
 import { ease, logo as L } from '@/motion/tokens'

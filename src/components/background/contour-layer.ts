@@ -9,12 +9,16 @@ import { field as F, ease } from '@/motion/tokens'
  *   .contour-vignette  the old page's static gradients, faded with opacity
  *
  * prime() loads the SVG this viewport shows (the <picture> picks it with contourQuery) and decodes
- * it, and displays the layer at opacity 0 (will-change keeps it rasterised), so the crossfade never
- * waits for a decode or a raster. The drift (field.contourDrift) animates `translate` only, from
+ * it, and displays both layers at PRIMED, an opacity nobody can see (0.001 of a dark ground over a
+ * dark field) but above 0: the compositor skips rasterising a layer at exactly 0, so this is what
+ * makes the raster happen before the morph, never during the crossfade. The drift (field.contourDrift) animates `translate` only, from
  * the identity offset, so the shader's last frame and the SVG line up when the handoff ends.
  */
 
 type Fade = { to: number; dur: number; easing: string; delay?: number }
+
+/** Invisible, but rasterised: the layers' opacity while About is near (prime()). */
+export const PRIMED = 0.001
 
 const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 
@@ -47,9 +51,12 @@ export class ContourLayer {
     private vignetteEl: HTMLElement,
   ) {}
 
-  /** Loads and decodes the SVG and keeps the layer rasterised at opacity 0. */
+  /** Loads and decodes the SVG and keeps both layers rasterised at PRIMED (invisible). */
   prime(): Promise<void> {
     this.root.toggleAttribute('data-contours-primed', true)
+    for (const el of [this.layer, this.vignetteEl])
+      if (!el.getAnimations().length && parseFloat(getComputedStyle(el).opacity) < PRIMED)
+        el.style.opacity = String(PRIMED)
     if (this.img.loading !== 'eager') this.img.loading = 'eager'
     this.decoded ??= this.img.decode().then(
       () => void (this.ready = true),
@@ -68,6 +75,12 @@ export class ContourLayer {
   /** Not needed any more: the layer leaves the rendering (it stays loaded and decoded). */
   unprime() {
     this.root.removeAttribute('data-contours-primed')
+    for (const el of [this.layer, this.vignetteEl]) if (!el.getAnimations().length) el.style.opacity = '0'
+  }
+
+  /** The SVG layer's current opacity (mid-fade included). */
+  get opacity() {
+    return parseFloat(getComputedStyle(this.layer).opacity)
   }
 
   /** The SVG layer's opacity (0 hidden, 1 covering the canvas); `easing` a CSS timing function. */

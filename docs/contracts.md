@@ -557,7 +557,8 @@ sharp, and hands over to the SVG with opacity only:
   opacity 0.42, static `scale(1.03)`, `will-change`) and `.contour-vignette` (the old `::after`
   gradients as a static overlay) change only by opacity (WAAPI). They render on About, during a
   morph and once a link to About is near (`data-contours-primed`: the SVG loaded, decoded and
-  rasterised at opacity 0). Entering: `uTopo` 0 → 1 over `duration.topo` (1.6 s, inOut) while the
+  rasterised at `PRIMED`, 0.001: invisible, but the compositor skips rasterising a layer at exactly
+  0, so the raster happens on the intent, never during the crossfade). Entering: `uTopo` 0 → 1 over `duration.topo` (1.6 s, inOut) while the
   vignette fades in; in the last `duration.contourHandoff` (0.3 s), once `img.decode()` has
   resolved (else as soon as it does), the SVG layer crossfades over the canvas; then the canvas is
   covered (`data-canvas-covered`, not composited), its buffer back at rest, the loop stops (zero
@@ -570,6 +571,11 @@ sharp, and hands over to the SVG with opacity only:
   never on the pointer. Reduced motion: no morph and no drift, the SVG layer crossfades (160 ms).
   The CSS fallback (`field-css.ts`, no WebGL2) and a missing heightmap: the SVG layer crossfades in
   over `duration.topo`.
+- The CSS fallback layer (`.field-css`) leaves rendering once the canvas has faded in (`display:
+  none`, deferred with `allow-discrete`) and only breathes while it is the visible renderer:
+  hidden under the canvas it used to run its breath on the main thread and repaint every frame.
+  If the engine falls back to it mid-morph (slow frames, a lost context), the morph finishes by
+  opacity.
 - Removed: the `mask-image` reveal, `--contour-reveal` and its transition, the CSS background
   images (`--contour-poster`, `--contour-full`), the CSS drift keyframes, `data-tab-hidden`.
 
@@ -581,17 +587,10 @@ left), About and "DE · EN". Ambient motion follows `prefers-reduced-motion` (st
 stops while the tab is hidden; that is the only control (a visitor's stored `ambient` value is
 simply no longer read).
 
-**R5. Reveals start later**: the shared trigger is `reveal.amount` 0.35 and `reveal.margin`
-`0px 0px -18% 0px` (was 0.25 and −10%), in one place (`src/motion/reveal-trigger.ts`, used by the
-engine and the deal kind's cards). Tall blocks: `amount = min(0.35, 0.45 × innerHeight /
-offsetHeight)`. At the end of the page (within 4 px, or a page that cannot scroll) every waiting
-block reveals. Reduced motion: everything outside the home intro is visible at once, without
-animation (supersedes the 160 ms reveal crossfades of M1 for scroll reveals). The field's breaker
-lift keeps 0.25 (`reveal.breakerAmount`).
-
 **R3. The header logo moves** (`src/components/logo.tsx`, tokens `logo` and `ease.enter` /
 `move` / `exit` in `tokens.ts`; supersedes G4's mark compression). Ported from the logo lab's
-concept 3 (the lab and `/[locale]/logo-lab` untouched): Motion `animate()` on the two card groups,
+concept 3 (the lab and `/[locale]/logo-lab` untouched): Motion `animate()` (the WAAPI-only one from
+`motion/mini`, so the full engine stays off every page) on the two card groups,
 transforms and opacity only; each card has a move group (deal, exit, turn) and a fan group inside
 it (hover); the front card's knock-out in the back card moves with it.
 
@@ -613,6 +612,21 @@ it (hover); the front card's knock-out in the back card moves with it.
   the morph runs once.
 - No loading "breathe". Reduced motion: nothing moves; logo ↔ Back swap at once; the egg swaps the
   letters' opacity.
+
+**R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
+`src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
+(`device-pixel-content-box`), which draws in the same callback; height-only changes under
+`field.ignoreHeight` (120 px) are ignored (the container is `100lvh`); the deal cards carry
+`will-change: transform` from the scene's mount to its unmount; the header keeps one layer
+(`will-change: translate`).
+
+**R5. Reveals start later**: the shared trigger is `reveal.amount` 0.35 and `reveal.margin`
+`0px 0px -18% 0px` (was 0.25 and −10%), in one place (`src/motion/reveal-trigger.ts`, used by the
+engine and the deal kind's cards). Tall blocks: `amount = min(0.35, 0.45 × innerHeight /
+offsetHeight)`. At the end of the page (within 4 px, or a page that cannot scroll) every waiting
+block reveals. Reduced motion: everything outside the home intro is visible at once, without
+animation (supersedes the 160 ms reveal crossfades of M1 for scroll reveals). The field's breaker
+lift keeps 0.25 (`reveal.breakerAmount`).
 
 **R6. Chapter numerals draw themselves.** `scripts/build-numerals.mjs` (run by `npm run build`
 before `next build`) loads Bricolage Grotesque's variable TTF (`scripts/assets/`, from the Google
@@ -678,13 +692,6 @@ last "What I bring" item (`idle.clearance`, measured after the handwriting loads
 390 × 800, 360 × 740 and 390 × 844 it is skipped, from 430 × 932 and on desktop it shows). (b) Logo
 ↔ Back with the final logo: R3, checked both ways on the case studies; the thesis page keeps the
 logo (it is not a card page) and morphs with the timeline card instead.
-
-**R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
-`src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
-(`device-pixel-content-box`), which draws in the same callback; height-only changes under
-`field.ignoreHeight` (120 px) are ignored (the container is `100lvh`); the deal cards carry
-`will-change: transform` from the scene's mount to its unmount; the header keeps one layer
-(`will-change: translate`).
 
 ---
 

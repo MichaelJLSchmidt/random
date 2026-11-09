@@ -4,7 +4,7 @@ import { INTRO_DONE } from '@/motion/preferences'
 import { VT_DONE } from '@/motion/view-transition'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
 import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
-import { ContourLayer } from './contour-layer'
+import { ContourLayer, PRIMED } from './contour-layer'
 import { contourLevels, contourQuery, contourStyle } from './contours'
 import { CssField } from './field-css'
 import { type FieldFrame, GlField } from './field-gl'
@@ -222,7 +222,7 @@ export class FieldEngine {
       this.syncCss(now)
       document.documentElement.dataset.renderer = 'css'
     }
-    // About's SVG and heightmap: fetched (and the SVG decoded and rasterised at opacity 0) when a
+    // About's SVG and heightmap: fetched (and the SVG decoded and rasterised, invisible) when a
     // link to About is hovered, focused or touched, and on About.
     const onIntent = (e: Event) => {
       const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null
@@ -334,8 +334,8 @@ export class FieldEngine {
       void L.vignette(1, dur, easeCss(ease))
       if (this.linesOn) {
         this.setHiRes(true)
-        // Anything of the SVG still showing (a turn back mid-way) leaves first.
-        void L.show(0, H)
+        // Anything of the SVG still showing (a turn back mid-way) leaves first; primed stays rasterised.
+        if (L.opacity > PRIMED * 2) void L.show(PRIMED, H)
         this.handoffAt = now + (dur - H) * 1000
         void L.prime().then(() => this.maybeHandoff(performance.now()))
       } else {
@@ -847,6 +847,23 @@ export class FieldEngine {
     this.syncCss(performance.now())
     this.root.dataset.mode = 'css'
     document.documentElement.dataset.renderer = 'css'
+    // Mid-way through About's morph the canvas stops: finish it as the CSS field does, by opacity.
+    const now = performance.now()
+    const left = this.tracks.topo.remaining(now)
+    this.handoffAt = 0
+    this.leaveFrame = false
+    this.setHiRes(false)
+    if (this.phase === 'in')
+      void this.contours.show(1, left, 'linear').then((done) => done && this.phase === 'in' && this.settleShown())
+    else if (this.phase === 'out') {
+      this.setCanvasCovered(false)
+      void this.contours.show(0, Math.max(left, reducedCrossfade), 'linear')
+      clearTimeout(this.outTimer)
+      this.outTimer = window.setTimeout(
+        () => this.phase === 'out' && this.settleOff(),
+        (left + reducedCrossfade) * 1000,
+      )
+    }
   }
 
   private draw() {

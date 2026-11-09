@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type CSSProperties, type ReactNode, ViewTransition } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState, ViewTransition } from 'react'
 import { useChrome } from '@/lib/chrome'
 import { PLAY, handShare, pageEnter, pageExit, thesisName } from '@/motion/transitions'
 
@@ -21,12 +21,21 @@ type Props = {
  * and the thesis hero share a view-transition name (thesisName), so the card
  * zooms into the hero (type play) and the hero goes back into the card on the
  * way back (its share map times the return), like a hand card and its case.
+ * Only while the card is in view: from the projects link (the card scrolled
+ * away) the page simply changes, nothing flies in from off screen.
  */
 export function ThesisStop({ linkLabel, children, ...li }: Props) {
   const { href } = useChrome()
+  const ref = useRef<HTMLLIElement>(null)
+  const [inView, setInView] = useState(true)
+  useEffect(() => {
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting))
+    io.observe(ref.current!)
+    return () => io.disconnect()
+  }, [])
   return (
-    <ViewTransition name={thesisName} share={handShare} enter={pageEnter} exit={pageExit}>
-      <li {...li} data-thesis="">
+    <ViewTransition name={inView ? thesisName : undefined} share={handShare} enter={pageEnter} exit={pageExit}>
+      <li ref={ref} {...li} data-thesis="">
         {children}
         <Link className="career-thesis-link link" href={href('/about/thesis')} transitionTypes={[PLAY]}>
           {linkLabel}

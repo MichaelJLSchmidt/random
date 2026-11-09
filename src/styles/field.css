@@ -119,10 +119,13 @@
 :root[data-intro='first'] .field-css {
   --fade: 0;
 }
-/* Hidden under the canvas once it has faded in. */
+/* Out of rendering under the canvas once it has faded in (hidden, it would still be repainted). */
 .field[data-mode='gl'] .field-css {
+  display: none;
   visibility: hidden;
-  transition: visibility 0s linear var(--dur-fast);
+  transition:
+    display 0s linear var(--dur-fast) allow-discrete,
+    visibility 0s linear var(--dur-fast);
 }
 
 .field-layer {
@@ -176,10 +179,12 @@
     transform: scale(1.03);
   }
 }
-:root[data-motion='full'] .field-layer::before {
+/* Only while the fallback is the visible renderer: hidden under the WebGL canvas it would still run
+   on the main thread and repaint every frame. */
+:root[data-motion='full'] .field[data-mode='css'] .field-layer::before {
   animation: field-breath calc(var(--dur-breath) / 2) ease-in-out infinite alternate;
 }
-:root[data-motion='full'] .field-layer[data-layer='b']::before {
+:root[data-motion='full'] .field[data-mode='css'] .field-layer[data-layer='b']::before {
   animation-name: field-breath-half;
 }
 
@@ -197,7 +202,7 @@
  *                      during the morph and at rest, faded with opacity only.
  *
  * Both are displayed only on About, during its morph, and once a link to About
- * is near (data-contours-primed: rasterised at opacity 0 before any crossfade).
+ * is near (data-contours-primed: rasterised at an invisible 0.001 before any crossfade).
  * Opacity and the drift's translate are the only things that change (WAAPI,
  * compositor). Before the engine runs (first paint of a direct visit) the
  * pre-paint data-about-map shows them whole over a covered canvas.

@@ -988,7 +988,11 @@ async function motionSuite(browser, device) {
     hidden: [...document.querySelectorAll('main [data-reveal]')]
       .filter((el) => !el.hasAttribute('data-revealed') || Number(getComputedStyle(el).opacity) < 0.99)
       .map((el) => el.dataset.reveal),
-    willChange: [...document.querySelectorAll('main *')].filter((el) => el.style.willChange).length,
+    // The deal scene's cards keep their layer for the scene's lifetime (R4); nothing else may.
+    willChange: [...document.querySelectorAll('main *')].filter(
+      (el) => el.style.willChange && !el.matches('[data-scene="deal"] [data-deal-card]'),
+    ).length,
+    dealLayers: [...document.querySelectorAll('[data-scene-active] [data-deal-card]')].map((el) => el.style.willChange),
     moving: document
       .getAnimations()
       .filter(
@@ -1007,6 +1011,12 @@ async function motionSuite(browser, device) {
   }))
   check('motion: every reveal ends visible after scrolling', rest.hidden.length === 0, rest.hidden.join(','))
   check('motion: no will-change left at rest', rest.willChange === 0, String(rest.willChange))
+  if (motion === 'full' && device === 'desktop')
+    check(
+      'deal scene: its cards keep one layer while it is mounted (never toggled at the pin, R4)',
+      rest.dealLayers.length === 4 && rest.dealLayers.every((v) => v === 'transform'),
+      rest.dealLayers.join(),
+    )
   check('motion: only the background moves at rest', rest.moving.length === 0, rest.moving.join(','))
   check('hairline: follows the scroll (mid page)', rest.progress > 0.2 && rest.progress < 0.8, String(rest.progress))
   const moves = rest.props.filter((p) => /transform|translate|scale|rotate|clipPath/.test(p))
@@ -1102,11 +1112,14 @@ async function feedbackSuite(browser, device) {
       }
     )
   })
-  check(
-    'idle hint: appears on home, decorative',
-    hint?.ready && hint.hidden === 'true' && hint.opacity === '1',
-    JSON.stringify(hint),
-  )
+  // R9: only where it fits (24 px under the last What I bring item): at 390 × 844 it does not.
+  if (device === 'desktop')
+    check(
+      'idle hint: appears on home, decorative',
+      hint?.ready && hint.hidden === 'true' && hint.opacity === '1',
+      JSON.stringify(hint),
+    )
+  else check('idle hint: skipped on a phone where it does not fit (390 × 844)', hint === null, JSON.stringify(hint))
   await page.keyboard.press('Shift')
   await wait(page, 700)
   check('idle hint: the next key press fades it out', (await page.locator('.idle-hint').count()) === 0)
