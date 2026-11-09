@@ -95,3 +95,64 @@ reaction), the 404 locale rule, the timeline and how-I-work cards.
 
 **Docs**: contracts (a "Feedback round 2" section, reference sections updated), art direction,
 backlog, README where it names the calm switch.
+
+## What shipped
+
+- **M1** The calm tier is gone everywhere (`MotionTier` is `full | reduced`; tokens, tier helpers,
+  pre-paint script, CSS, eggs, field, copy, schema, smoke, audit, docs). `CalmSwitch` deleted.
+- **M2** `AmbientToggle` (`src/components/ambient-toggle.tsx`): a 16 px pause / play glyph in a
+  44 px target, `aria-pressed`, stored in localStorage (`ambient`), applied before first paint
+  (`html[data-ambient="paused"]`), hidden under reduced motion. Paused freezes the field's clock
+  (breath and pool drift stop where they are), the CSS fallback's breath and the About contour
+  drift; hover, bloom, switch, the About morph, transitions and reveals still run.
+- **M3** `idle.after` 10 s; `?idle` 1 s.
+- **N1** `src/motion/header-scroll.ts` (passive, rAF-throttled) writes `html[data-header]`;
+  translate only, 200 ms ease-in out, 240 ms outQuint back; reduced crossfades. The rail follows
+  the same attribute (its own scroll logic is gone). The reading hairline stays at the top edge.
+- **H1** `align-items: baseline` on the "What I bring" row from 1024. **H2** hint centred always.
+- **A1** `about-portrait` through `fetch-and-build.mjs` (`crop: [4, 5]`, 2048 × 2560), alt text in
+  both languages, credited in the footer. `ContourPortrait` deleted.
+- **A2** Seven face-up cards (`about.timeline.items[].place` added in both languages); the
+  `deal` reveal kind: stack deal from 1280, scroll-snap strip 1024–1279, vertical line with cards
+  dealt from the left below. `AboutTimeline`, `timeline-scene.ts` and the `timeline` tokens deleted.
+- **A3** Four face-up cards; a fan deal that settles straight from 1024; 2×2; one column.
+- **B1** `.contour-bg` in the background field with the old page's CSS (url()s via
+  `withBase()`), drift tokens `field.contourDrift`, the pools contract and fade into the ground
+  while a radial mask opens the layer (1.6 s inOut), no canvas frames at rest, reduced 160 ms
+  crossfade. `terrain.ts`, `public/terrain/`, `field.contours`, `contour.line`, the posters and
+  the heightmap shader code deleted. Credit "Terrain data © swisstopo" / "Geländedaten © swisstopo"
+  links to swisstopo's terms of use (footer, and the left edge from 1024).
+- **F1** `dist/404.html`: the address's `/de/` or `/en/` wins. **F2** "Design-System" (and
+  "Design-Systems", "Design-Systemen"). **F3** the intro check reads the animations' start times.
+
+## Decisions
+
+- **Pause button name.** The accessible name stays "Pause background motion" ("Hintergrundbewegung
+  anhalten") in both states and `aria-pressed` carries the state: a toggle button's name must not
+  change with its state (WAI-ARIA APG), otherwise screen readers announce "Play background motion,
+  pressed" for a paused background. "Play background motion" ("Hintergrundbewegung abspielen") is
+  the tooltip while paused.
+- **Pause = freeze.** Pausing stops the field's clock where it is instead of easing the breath
+  away, so pause / play never shows a jump; hover pull and blooms keep running (interaction, not
+  ambient motion).
+- **The contour layer lives in the background field** (above the canvas, below the content), so
+  the morph shares the field's state machine; the engine writes `--contour-reveal` with the same
+  duration and curve as the shader's fade. The url()s come in as custom properties set with
+  `withBase()` (CSS cannot read the base path). The SVG is preloaded on About-link intent.
+- **Drift loop.** "120 s alternating loop" read as one loop there and back in 120 s (60 s each way,
+  `--dur-contour-drift`), ease-in-out, from (−8, −5) to (+8, +5) px at scale 1.03.
+- **Timeline place.** Each stop's title was split into a title and a place (organisation and
+  city) in both languages; the Hyper Island detail line was dropped (backlog).
+- **Card proportions below 1024.** At reading width a 132 × 184 card would be far taller than its
+  three lines, so below 1024 the timeline and How I work cards keep the family's edges, corners
+  and labels but take their height from their content; from 1024 they keep the proportions (and
+  grow only when the words need it).
+- **1024–1279 strip** is not dealt (only the ≥ 1280 row is); it rises as one block.
+- **Hairline in reduced.** While the header is away it moves to the top edge at once (no slide).
+- **Idle note on phones.** With "Pick a card" centred, the note sat on top of it at 390 px; it now
+  sits a step higher with its arrow passing right of the hint.
+
+## Deviations
+
+- M2: the accessible name does not switch to "Play background motion" (see Decisions); that text
+  is the tooltip.
