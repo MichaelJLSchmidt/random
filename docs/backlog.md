@@ -19,3 +19,6 @@ Follow-ups that are known and deliberately not done yet. Take one at a time.
 - **Timeline copy.** The timeline cards split each stop into title and place; the long Hyper
   Island description ("facilitation, team dynamics, digital experience design") was dropped for
   the card and belongs in the rewrite.
+- **Idle note on short phones.** At 390 × 800 and 360 × 740 the idle note (fixed above the fan)
+  overlaps the last "What I bring" item; at 390 × 844 and taller it clears. Its phone placement
+  predates round 2; give it a spot that follows the home layout.

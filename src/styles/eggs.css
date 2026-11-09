@@ -300,23 +300,30 @@
  * ---------- Idle hint (home, once per session; src/eggs/idle-hint.tsx) ----------
  * A handwritten note beside the hand with a curly arrow toward the cards, in
  * the secondary text colour. Desktop: right of the fan, the arrow curling down
- * and left onto the last card. Phones: above the right end of the fan and
- * above the centred "Pick a card" line, the arrow passing right of it and
- * pointing down into the fan. Still once written; decorative (aria-hidden).
+ * and left onto the last card. Phones: above the right end of the fan, the
+ * arrow pointing down into it; the centred "Pick a card" says the same and
+ * would sit under the note, so it steps back while the note shows. Still once
+ * written; decorative (aria-hidden).
  */
 .idle-hint {
   position: fixed;
   z-index: calc(var(--z-hand) + 1);
   right: var(--grid-margin);
-  bottom: calc(
-    min(128px, (100vw - 48px) / 2.8) * 184 / 132 * 0.85 + var(--safe-bottom) + var(--space-6) + var(--space-5)
-  );
+  bottom: calc(min(128px, (100vw - 48px) / 2.8) * 184 / 132 * 0.85 + var(--safe-bottom) + var(--space-6));
   color: var(--muted);
   pointer-events: none;
   user-select: none;
 }
 .idle-hint:not([data-ready]) {
   opacity: 0;
+}
+@media (max-width: 1023.98px) {
+  .home-hint {
+    transition: opacity var(--dur-s) var(--ease-out-soft);
+  }
+  :root:has(.idle-hint[data-ready]) .home-hint {
+    opacity: 0;
+  }
 }
 .idle-hint-text {
   max-width: 9em;
@@ -334,7 +341,7 @@
 .idle-hint-arrow {
   position: absolute;
   top: calc(100% - 0.25rem);
-  right: 16%;
+  right: 45%;
   width: 52px;
   height: auto;
   overflow: visible;

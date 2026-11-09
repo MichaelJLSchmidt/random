@@ -149,8 +149,9 @@ backlog, README where it names the calm switch.
   grow only when the words need it).
 - **1024–1279 strip** is not dealt (only the ≥ 1280 row is); it rises as one block.
 - **Hairline in reduced.** While the header is away it moves to the top edge at once (no slide).
-- **Idle note on phones.** With "Pick a card" centred, the note sat on top of it at 390 px; it now
-  sits a step higher with its arrow passing right of the hint.
+- **Idle note on phones.** With "Pick a card" centred, the note sat on top of it at 390 px. Both
+  point at the cards, so below 1024 the hint steps back (fades out) while the note shows and
+  returns when it goes; the note keeps its place (moving it up ran into the "What I bring" items).
 
 ## Deviations
 
