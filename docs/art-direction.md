@@ -11,10 +11,11 @@ with a slowly breathing WebGL gradient behind everything; its colour pools drift
 **hand of four cards** is the main navigation: three case studies (`/work/[slug]`) and Management
 (`/management`). About is the one plain link; it holds the project list and the contact chapter.
 
-On About the gradient's colour bands narrow into contour lines (1.6 s): the old portfolio's
-survey field of Interlaken, real swisstopo contours, 1 px stone-grey lines (`#8A8C80`, every fifth
-an index line) on its own ground (`#1B1C18`). Once drawn it is a still image: no drift, no
-breath, no pointer. Leaving About widens the lines back into the gradient.
+On About the gradient's colour pools contract and fade into a dark ground (`#1B1C18`) while the
+old password page's contour background of Interlaken opens from the centre through a soft radial
+mask (1.6 s): real swisstopo terrain, the lakes as an 8% fill, stone-grey lines (`#8A8C80`, 1 px
+and 1.5 px index lines) under the old page's vignette. At rest only its lines move, a very slow
+drift of a few pixels; nothing reacts to the pointer. Leaving About reverses the morph.
 
 ## Colour identities
 
@@ -40,19 +41,26 @@ dividers and illustration strokes.
 - **Desktop**: the hand is always visible at the bottom in a perspective fan.
 - **Mobile**: the fan on home; elsewhere a 48 px peek rail that opens a bottom sheet with the four
   cards.
+- **Header**: on pages that scroll it leaves on a deliberate scroll down and returns on any
+  scroll up (the mobile rail with it); the reading hairline stays at the top edge.
 - **Home** is one screen: the name, the intro, what I bring to the table and the hand. On a first
   visit it builds up in reading order in about two seconds, the hand last.
 - **Detail pages**: chapters open with big outlined numerals; images are offset editorial frames
   that echo the hero's offset (anchored to the reading column, reaching toward one edge, sides
   alternating), never full bleed on desktop.
+- **About** keeps to the table: its timeline and "How I work" are face-up cards in the same family
+  as "What's on the table" (card proportions, edges, mono labels). The timeline is dealt from a
+  small face-down stack onto a line; "How I work" is dealt with a slight fan that settles straight.
 
 ## Tone
 
 - Calm, subtle, smooth, professional, with playful moments (the easter eggs).
 - Only the background moves at rest; everything else is still until the visitor scrolls or
   interacts. No bounce, no overshoot.
-- Three motion tiers: full; calm (the header's switch, durations × 0.6); reduced
-  (`prefers-reduced-motion`: 160 ms crossfades only; the switch shows it on and disabled).
+- Two motion tiers: full, and reduced (`prefers-reduced-motion`: 160 ms crossfades only). The
+  background's ambient motion (breath, drift) can be paused from the header (WCAG 2.2.2); the
+  pause stops nothing else, and the button is hidden when the system already asks for reduced
+  motion.
 - Dark mode first. Mobile first, with full creativity on desktop.
 - Type: Bricolage Grotesque (display, opsz + wght), Hanken Grotesk (text), Martian Mono (labels,
   numbers); Caveat (handwriting) only for the idle hint's note on home.

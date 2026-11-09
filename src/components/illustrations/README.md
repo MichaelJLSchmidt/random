@@ -40,7 +40,7 @@ every drawing renders fully drawn, and the Motion session's `draw` reveal animat
   them in with their group); labels carry `data-draw-label` (fade them with their group).
 - Groups are `<g data-draw-group="n">` in DOM order = reading order. With two layouts, each group
   holds both (`data-layout="h"` and `"v"`); the hidden one is `display: none`.
-- Plain drawings without labels (ContourPortrait, DiscardedCard, ProjectTypeGlyph, WorkshopGlyph)
+- Plain drawings without labels (DiscardedCard, ProjectTypeGlyph, WorkshopGlyph)
   keep a root `viewBox`; their groups are `<g data-draw-group class="il-plate">`.
 - Labelled drawings have no root `viewBox`: the root keeps its proportions with CSS
   `aspect-ratio`, geometry sits in `.il-plate` nested SVGs (the contract viewBox is the
@@ -78,9 +78,8 @@ is checked from 280 px wide (a 320 px screen); horizontal layouts from 576 px (a
 | JourneyEmotionCurve | 960×360, steps across | 360×640, steps down |
 | CareerMatrix | 960×600, levels across | 360×540, levels down |
 | WorkshopGlyphs | 960×160, a row of four, names under the glyphs (from 448 px) | 360×320, two by two |
-| AboutTimeline | 960×240, line across | 360×560, line down |
 | ContributionLoop, TeamConstellation, WeekRing | 560×560 / 640×640 / 560×560, one layout | – |
-| ContourPortrait, DiscardedCard | 480×600 / 132×184, plain | – |
+| DiscardedCard | 132×184, plain | – |
 | ProjectTypeGlyph, WorkshopGlyph | 48×48 / 64×64, plain, for 20–32 px | – |
 
 ## Props
@@ -102,8 +101,6 @@ props are optional; the defaults are the brief's values.
 | CareerMatrix | `levels` (4), `tracks` (3), `path` `[level, track][]` | 3 |
 | WorkshopGlyphs | `methods` (crazy-eights, one-two-four-all, dot-voting, fishbowl), `labels` | one per method |
 | WorkshopGlyph | `method` | 2 |
-| ContourPortrait | – | 7 (outline inward) |
-| AboutTimeline | `items` `{ years, title }[]` (pass `about.timeline.items`) | 1 line, then one per stop |
 | ProjectTypeGlyph | `type` | 2 |
 | DiscardedCard | – | 2 |
 

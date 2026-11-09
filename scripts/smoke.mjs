@@ -1,8 +1,9 @@
 // Quick behaviour check in Chromium at 1440x900 and 390x844 (light, not exhaustive).
-// Usage: node scripts/smoke.mjs <locale-url> [--motion=full|calm|reduced]
+// Usage: node scripts/smoke.mjs <locale-url> [--motion=full|reduced]
 //   e.g. node scripts/smoke.mjs http://localhost:4100/random/de/ --motion=full
-// Run it once per locale (de, en) and per tier: the motion suite checks what each tier must (and
-// must not) do; the locale suite checks the root's language choice, the 404 page and the switcher.
+// Run it once per locale (de, en) and per tier (full; reduced = prefers-reduced-motion): the
+// motion suite checks what each tier must (and must not) do; the locale suite checks the root's
+// language choice, the 404 page and the switcher.
 // Needs `npm run preview` (or any server for dist/ under its BASE_PATH).
 // Card and page titles and the chrome's labels come from the locale's content modules (loaded
 // with Node's type stripping, scripts/load-ts.mjs), so copy changes never break the checks.
@@ -21,6 +22,7 @@ const other = locales.find((l) => l !== locale)
 const { hand } = await load(`content/${locale}/hand.ts`)
 const { site } = await load(`content/${locale}/site.ts`)
 const { notFound } = await load(`content/${locale}/pages/not-found.ts`)
+const { about: aboutCopy } = await load(`content/${locale}/pages/about.ts`)
 const cardTitle = (id) => hand.cards[id].title
 const url = (path) => new URL(path.replace(/^\//, ''), root).href
 /** The site root (the language choice), one level above the locale. */
@@ -49,7 +51,6 @@ async function newContext(browser, device, { firstVisit = false } = {}) {
   await context.addInitScript(
     ({ motion, firstVisit, locale }) => {
       try {
-        if (motion === 'calm') localStorage.setItem('motion', 'calm')
         if (!firstVisit) sessionStorage.setItem('table-drawn', '1')
         // The 404 page picks the stored language: keep it on the locale under test.
         localStorage.setItem('locale', locale)
@@ -124,42 +125,38 @@ const focused = (page) =>
 async function introSuite(browser, device) {
   const { context, page, errors } = await newContext(browser, device, { firstVisit: true })
   await page.goto(url('/'), { waitUntil: 'commit' })
-  // When does each part of the home sequence first become visible?
+  // When does each part of the home sequence start? Read from the animations' own timing (start
+  // time + delay on the document timeline, ms since the navigation), not from when a part crosses
+  // an opacity threshold: parts with different curves cross it at different points, which made
+  // the order check flaky. Each part's first animation counts (the items: their first item).
   const times = await page.evaluate(
     () =>
       new Promise((resolve) => {
-        // performance.now() counts from the navigation.
-        const t0 = 0
         const seen = {}
         const parts = {
-          title: () => document.querySelector('h1 .wt-word > span'),
+          title: () => document.querySelector('[data-first-load] h1'),
           label: () => document.querySelector('.home-label'),
-          lines: () => document.querySelector('.home-role .rv-line') ?? document.querySelector('.home-role'),
+          lines: () => document.querySelector('.home-intro'),
           divider: () => document.querySelector('.home-bring-rule'),
-          items: () => document.querySelector('.home-bring-list li:last-child'),
-          cards: () => document.querySelector('.hand-fan .hand-card[data-drawn]'),
+          items: () => document.querySelector('.home-bring-list'),
+          cards: () => document.querySelector('.hand-fan'),
           chrome: () => document.querySelector('[data-chrome]'),
         }
-        // Effective opacity: the reveal may hide an ancestor (the h1) while its words wait.
-        const opacity = (el) => {
-          let o = 1
-          for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= Number(getComputedStyle(e).opacity)
-          return o
+        const startOf = (el) => {
+          const starts = el
+            .getAnimations({ subtree: true })
+            // The intro's own WAAPI animations (not CSS transitions or the hairline's scroll timeline).
+            .filter((a) => a.constructor === Animation && a.timeline === document.timeline && a.startTime !== null)
+            .map((a) => a.startTime + (Number(a.effect?.getTiming().delay) || 0))
+          return starts.length ? Math.round(Math.min(...starts)) : undefined
         }
         const tick = () => {
-          const t = performance.now() - t0
-          // Measure once the stylesheet applies (computed styles before it are meaningless).
-          const field = document.querySelector('.field')
-          if (!field || getComputedStyle(field).position !== 'fixed') return requestAnimationFrame(tick)
           for (const [k, get] of Object.entries(parts)) {
             const el = get()
-            if (seen[k] === undefined && el && el.getClientRects().length) {
-              const r = el.getBoundingClientRect()
-              const onScreen = r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth
-              if (onScreen && opacity(el) > 0.3) seen[k] = Math.round(t)
-            }
+            if (seen[k] === undefined && el) seen[k] = startOf(el)
           }
-          if (Object.keys(seen).length === Object.keys(parts).length || t > 6000) resolve(seen)
+          const done = Object.keys(parts).every((k) => seen[k] !== undefined)
+          if (done || performance.now() > 6000) resolve(seen)
           else requestAnimationFrame(tick)
         }
         tick()
@@ -167,19 +164,35 @@ async function introSuite(browser, device) {
   )
   const keys = ['title', 'label', 'lines', 'divider', 'items', 'cards', 'chrome']
   const order = keys.map((k) => `${k} ${times[k] ?? '-'}ms`).join(', ')
-  if (motion === 'reduced')
-    check(
-      'home first visit: everything shows (reduced)',
-      keys.every((k) => k in times),
-      order,
+  if (motion === 'reduced') {
+    // Reduced: everything at once; check the end state.
+    await page.waitForFunction(() => document.documentElement.dataset.intro === undefined, null, { timeout: 4000 })
+    const shown = await page.evaluate(() =>
+      [
+        '[data-first-load] h1',
+        '.home-label',
+        '.home-intro',
+        '.home-bring-list',
+        '.hand-fan .hand-card',
+        '[data-chrome]',
+      ]
+        .map((sel) => {
+          let o = 1
+          for (let e = document.querySelector(sel); e && e.nodeType === 1; e = e.parentElement)
+            o *= Number(getComputedStyle(e).opacity)
+          return o
+        })
+        .every((o) => o > 0.99),
     )
-  else {
-    // Name, label, role and intro, divider, items, then the hand, then the chrome (a frame of slack).
-    const inOrder = keys.every((k, i) => k in times && (i === 0 || times[keys[i - 1]] <= times[k] + 20))
+    check('home first visit: everything shows (reduced)', shown, order)
+  } else {
+    // Name, label, role and intro, divider, items, then the hand, then the chrome.
+    const inOrder = keys.every(
+      (k, i) => k in times && times[k] !== undefined && (i === 0 || times[keys[i - 1]] <= times[k]),
+    )
     check(`home first visit (${motion}): name, label, lines, divider, items, hand, chrome`, inOrder, order)
     const span = times.chrome - times.title
-    const full = motion === 'full' ? [1500, 2700] : [800, 1800]
-    check(`home first visit: about 2 s (${motion}: x0.6)`, span > full[0] && span < full[1], `${span}ms`)
+    check(`home first visit: about 2 s`, span > 1500 && span < 2700, `${span}ms`)
   }
   await wait(page, 1600)
   check(
@@ -226,19 +239,74 @@ async function tableSuite(browser, device) {
     links.length === 2 && links.includes(site.header.about),
     links.join(' | '),
   )
-  const calm = await page.evaluate(() => {
-    const sw = document.querySelector('[data-calm-switch]')
-    return {
-      checked: sw?.getAttribute('aria-checked'),
-      disabled: sw?.disabled,
-      motion: document.documentElement.dataset.motion,
-    }
-  })
-  check(
-    `calm switch: ${motion === 'full' ? 'off' : motion === 'calm' ? 'on' : 'on and disabled'}`,
-    calm.checked === String(motion !== 'full') && calm.disabled === (motion === 'reduced'),
-    JSON.stringify(calm),
-  )
+  // M2: the pause / play button for ambient background motion (hidden under reduced motion).
+  const toggle = () =>
+    page.evaluate(() => {
+      const b = document.querySelector('[data-ambient-toggle]')
+      const r = b?.getBoundingClientRect()
+      return {
+        shown: Boolean(b && b.getClientRects().length),
+        size: r ? [Math.round(r.width), Math.round(r.height)] : null,
+        pressed: b?.getAttribute('aria-pressed'),
+        name: b?.getAttribute('aria-label'),
+        ambient: document.documentElement.dataset.ambient ?? null,
+        stored: localStorage.getItem('ambient'),
+        motion: document.documentElement.dataset.motion,
+      }
+    })
+  const fieldFrames = (ms) =>
+    page.evaluate(
+      (ms) =>
+        new Promise((resolve) => {
+          const gl = document.querySelector('.field-canvas').getContext('webgl2')
+          let n = 0
+          const draw = gl.drawArrays.bind(gl)
+          gl.drawArrays = (...a) => (n++, draw(...a))
+          setTimeout(() => {
+            gl.drawArrays = draw
+            resolve(n)
+          }, ms)
+        }),
+      ms,
+    )
+  const t0 = await toggle()
+  if (motion === 'reduced') check('ambient toggle: hidden (reduced)', !t0.shown, JSON.stringify(t0))
+  else {
+    check(
+      `ambient toggle: "${site.settings.pause}", not pressed, 44 px target`,
+      t0.shown && t0.pressed === 'false' && t0.name === site.settings.pause && t0.size.every((v) => v >= 44),
+      JSON.stringify(t0),
+    )
+    const playing = await fieldFrames(1000)
+    await page.click('[data-ambient-toggle]')
+    await wait(page, 1000)
+    const t1 = await toggle()
+    const paused = await fieldFrames(1000)
+    check(
+      'ambient toggle: pauses (pressed, stored, the field stops drawing)',
+      t1.pressed === 'true' && t1.ambient === 'paused' && t1.stored === 'paused' && playing > 5 && paused === 0,
+      JSON.stringify({ ...t1, playing, paused }),
+    )
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    const early = await page.evaluate(() => document.documentElement.dataset.ambient ?? null)
+    await page.waitForLoadState('networkidle')
+    await wait(page, 600)
+    const t2 = await toggle()
+    check(
+      'ambient toggle: the choice survives a reload, applied before first paint',
+      early === 'paused' && t2.pressed === 'true',
+      JSON.stringify({ early, ...t2 }),
+    )
+    await page.click('[data-ambient-toggle]')
+    await wait(page, 600)
+    const t3 = await toggle()
+    const again = await fieldFrames(1000)
+    check(
+      'ambient toggle: plays again',
+      t3.pressed === 'false' && t3.ambient === null && t3.stored !== 'paused' && again > 5,
+      JSON.stringify({ ...t3, again }),
+    )
+  }
 
   // Hover colour blend (fine pointers).
   if (device === 'desktop' && motion !== 'reduced') {
@@ -357,73 +425,189 @@ async function tableSuite(browser, device) {
   await wait(page, 1200)
   check('browser forward still works after the replay', await page.locator('h1').isVisible())
 
-  // Mobile rail hides on scroll down and returns on scroll up.
-  if (device === 'phone') {
-    await page.goto(url('/work/shared-foundations/'), { waitUntil: 'networkidle' })
-    await wait(page, 800)
-    check('phone: peek rail visible off home', await page.locator('.hand-rail').isVisible())
-    await page.evaluate(() => scrollBy(0, 700))
-    await wait(page, 500)
-    const hidden = await page.evaluate(() => document.querySelector('.hand').dataset.rail === 'hidden')
-    await page.evaluate(() => scrollBy(0, -120))
-    await wait(page, 500)
-    const shown = await page.evaluate(() => document.querySelector('.hand').dataset.rail === undefined)
-    check('phone: rail hides on scroll down, returns on scroll up', hidden && shown)
-  }
+  // N1: on a case study the header leaves on a deliberate scroll down and returns on a scroll up;
+  // the mobile rail goes with it. Full: translate; reduced: a crossfade.
+  await page.goto(url('/work/shared-foundations/'), { waitUntil: 'networkidle' })
+  await wait(page, 800)
+  if (device === 'phone') check('phone: peek rail visible off home', await page.locator('.hand-rail').isVisible())
+  const chrome = () =>
+    page.evaluate(() => {
+      const header = document.querySelector('header')
+      const rail = document.querySelector('.hand-rail')
+      const shown = (el) => {
+        if (!el || !el.getClientRects().length) return null
+        const r = el.getBoundingClientRect()
+        // The header fades its children (reduced), the rail itself.
+        const o = Math.min(
+          Number(getComputedStyle(el).opacity),
+          Number(getComputedStyle(el.firstElementChild ?? el).opacity),
+        )
+        return r.bottom > 1 && r.top < innerHeight - 1 && o > 0.5
+      }
+      return {
+        attr: document.documentElement.dataset.header ?? null,
+        header: shown(header),
+        rail: shown(rail),
+        hairline: Math.round(document.querySelector('[data-reading-hairline]').getBoundingClientRect().top),
+      }
+    })
+  await page.evaluate(() => scrollBy(0, 4))
+  await wait(page, 400)
+  const nearTop = await chrome()
+  await page.evaluate(() => scrollBy(0, 900))
+  await wait(page, 100)
+  await page.evaluate(() => scrollBy(0, 40))
+  await wait(page, 600)
+  const down = await chrome()
+  await page.evaluate(() => scrollBy(0, -5))
+  await wait(page, 400)
+  const nudge = await chrome()
+  await page.evaluate(() => scrollBy(0, -30))
+  await wait(page, 600)
+  const up = await chrome()
+  check(
+    'header: stays near the top, leaves on a scroll down (hairline at the top edge), ignores 5 px, returns on a scroll up',
+    nearTop.header &&
+      down.attr === 'hidden' &&
+      !down.header &&
+      down.hairline === 0 &&
+      nudge.attr === 'hidden' &&
+      up.attr === null &&
+      up.header,
+    JSON.stringify({ nearTop, down, nudge, up }),
+  )
+  if (device === 'phone')
+    check(
+      'phone: the rail hides and returns with the header',
+      down.rail === false && up.rail === true,
+      JSON.stringify({ down, up }),
+    )
+  await page.evaluate(() => scrollBy(0, 900))
+  await wait(page, 100)
+  await page.evaluate(() => scrollBy(0, 40))
+  await wait(page, 600)
+  await page.evaluate(() => document.querySelector('header a').focus())
+  await wait(page, 400)
+  check('header: shown when focus moves into it', (await chrome()).header === true)
 
-  // About: the old portfolio's contour field (live), or its poster (reduced); one still frame at rest.
+  // About (B1): the old password page's contour SVGs over the ground; the canvas draws nothing at
+  // rest; the poster drifts (full) and stops when paused; nothing reacts to the pointer.
   await page.goto(url('/about/'), { waitUntil: 'networkidle' })
-  await wait(page, 2500)
+  await wait(page, 1500)
   const topo = await page.evaluate(
     () =>
       new Promise((resolve) => {
         const field = document.querySelector('.field')
+        const layer = document.querySelector('.contour-bg')
+        const poster = document.querySelector('.contour-bg__poster')
         const gl = document.querySelector('.field-canvas').getContext('webgl2')
         let frames = 0
         const draw = gl.drawArrays.bind(gl)
         gl.drawArrays = (...a) => (frames++, draw(...a))
-        setTimeout(
-          () =>
-            resolve({
-              renderer: document.documentElement.dataset.renderer,
-              topo: field.hasAttribute('data-topo'),
-              poster:
-                field.hasAttribute('data-poster') &&
-                getComputedStyle(field.querySelector('.field-poster')).opacity === '1',
-              heightmap: performance.getEntriesByType('resource').some((e) => e.name.includes('/terrain/region.webp')),
-              frames,
-              attribution: document.querySelector('footer')?.textContent ?? '',
-            }),
-          1500,
-        )
+        setTimeout(() => {
+          gl.drawArrays = draw
+          const cs = getComputedStyle(poster)
+          resolve({
+            contours: field.dataset.contours,
+            shown: getComputedStyle(layer).display === 'block' && getComputedStyle(layer).opacity === '1',
+            svg: cs.backgroundImage,
+            opacity: cs.opacity,
+            drift: poster.getAnimations().map((a) => `${a.animationName}:${a.playState}`),
+            frames,
+            attribution: document.querySelector('footer')?.textContent ?? '',
+            credit: document.querySelector(`footer a[href*="swisstopo.admin.ch"]`)?.textContent ?? '',
+          })
+        }, 1500)
       }),
   )
-  if (motion === 'reduced')
-    check(
-      'about: the region poster (reduced), no heightmap',
-      topo.poster && !topo.heightmap,
-      JSON.stringify({ ...topo, attribution: 0 }),
-    )
-  else
-    check(
-      'about: live contours from the region heightmap, no poster',
-      topo.renderer === 'gl' && topo.topo && topo.heightmap && !topo.poster,
-      JSON.stringify({ ...topo, attribution: 0 }),
-    )
-  check('about: no frames at rest', topo.frames === 0, String(topo.frames))
-  // The contours (live or poster) are on screen: the old ground #1B1C18 with stone-grey lines.
-  const ground = await regionColour(
-    page,
-    device === 'desktop' ? { x: 900, y: 300, width: 300, height: 200 } : { x: 40, y: 300, width: 300, height: 200 },
+  check(
+    'about: the contour SVG layer (base path), lines at 42%, shown',
+    topo.contours === 'shown' &&
+      topo.shown &&
+      topo.svg.includes(`${basePath.replace(/\/[^/]+$/, '')}/contour-bg/contours`) &&
+      topo.opacity === '0.42',
+    JSON.stringify({ ...topo, attribution: 0 }),
   )
+  check('about: no frames at rest', topo.frames === 0, String(topo.frames))
+  check(
+    `about: poster drift ${motion === 'full' ? 'runs' : 'off (reduced)'}`,
+    motion === 'full' ? topo.drift.join() === 'contour-drift:running' : topo.drift.length === 0,
+    topo.drift.join(),
+  )
+  if (motion === 'full') {
+    await page.evaluate(() => (document.documentElement.dataset.ambient = 'paused'))
+    const pausedDrift = await page.evaluate(() =>
+      document
+        .querySelector('.contour-bg__poster')
+        .getAnimations()
+        .map((a) => a.playState)
+        .join(),
+    )
+    await page.evaluate(() => delete document.documentElement.dataset.ambient)
+    check('about: the drift stops while ambient motion is paused', pausedDrift === 'paused', pausedDrift)
+  }
+  // The contours are on screen: the old ground #1B1C18 with stone-grey lines.
+  const region =
+    device === 'desktop' ? { x: 900, y: 300, width: 300, height: 200 } : { x: 40, y: 300, width: 300, height: 200 }
+  const ground = await regionColour(page, region)
   check(
     'about: the contour field is drawn (ground and lines)',
     ground.every((v, i) => Math.abs(v - [31, 32, 28][i]) < 10),
     `${ground}`,
   )
+  if (device === 'desktop') {
+    // No headlamp: the pointer changes nothing (the drift is held still for the comparison).
+    await page.addStyleTag({ content: 'main, header, footer, .hand { visibility: hidden !important; }' })
+    await page.evaluate(() =>
+      document
+        .querySelector('.contour-bg__poster')
+        .getAnimations()
+        .forEach((a) => a.pause()),
+    )
+    const before = await page.screenshot({ clip: region })
+    await page.mouse.move(region.x + 100, region.y + 80)
+    await page.mouse.move(region.x + 160, region.y + 120, { steps: 5 })
+    await wait(page, 300)
+    const after = await page.screenshot({ clip: region })
+    check('about: the background does not react to the pointer', before.equals(after))
+    await page.reload({ waitUntil: 'networkidle' })
+    await wait(page, 800)
+  }
   check(
-    'about: swisstopo attribution in the footer',
-    topo.attribution.includes('swissALTI3D') && topo.attribution.includes('swisstopo'),
+    `about: "${aboutCopy.topo.attribution}" credit links to swisstopo in the footer`,
+    topo.credit.includes(aboutCopy.topo.attribution) && topo.attribution.includes(aboutCopy.topo.label),
+    topo.credit,
+  )
+  // A2, A3: seven timeline cards (the latest with the accent edge), four How I work cards, all
+  // shown once scrolled through, none interactive.
+  for (let y = 0; y < 5000; y += 300) {
+    await page.mouse.wheel(0, 300)
+    await wait(page, 60)
+  }
+  await page.evaluate(() => document.getElementById('howIWork').scrollIntoView())
+  await wait(page, 1800)
+  const cards = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('.career-card, .how-card')]
+    return {
+      career: document.querySelectorAll('.career-card').length,
+      latest: document.querySelectorAll('.career-card:last-child[data-latest]').length,
+      how: document.querySelectorAll('.how-card').length,
+      hidden: all.filter((c) => Number(getComputedStyle(c).opacity) < 0.99).length,
+      interactive: document.querySelectorAll(
+        '#timeline :is(a, button, [tabindex]), #howIWork :is(a, button, [tabindex])',
+      ).length,
+      portrait: Boolean(document.querySelector('.about-portrait img[src*="about-portrait"]')),
+    }
+  })
+  check(
+    'about: 7 timeline cards (latest marked), 4 How I work cards, all shown, none interactive; the portrait photo',
+    cards.career === 7 &&
+      cards.latest === 1 &&
+      cards.how === 4 &&
+      cards.hidden === 0 &&
+      cards.interactive === 0 &&
+      cards.portrait,
+    JSON.stringify(cards),
   )
   const about = await page.evaluate(() => ({
     projects: document.querySelectorAll('#projects .project').length,
@@ -513,21 +697,25 @@ async function localeSuite(browser, device) {
     )
     await context.close()
   }
-  for (const [lang, want] of [
-    ['de-CH', 'de'],
-    ['en-US', 'en'],
+  // 404: an address without a locale speaks the browser's (or stored) language; one with /de/ or
+  // /en/ speaks that, whatever the browser says (F1).
+  for (const [lang, path, want] of [
+    ['de-CH', 'no-such-page/', 'de'],
+    ['en-US', 'no-such-page/', 'en'],
+    ['de-CH', 'en/no-such-page/', 'en'],
+    ['en-US', 'de/no-such-page/', 'de'],
   ]) {
     const context = await browser.newContext({ ...viewports[device], locale: lang })
     const page = await context.newPage()
-    await page.goto(new URL('no-such-page/', siteRoot).href, { waitUntil: 'networkidle' })
+    await page.goto(new URL(path, siteRoot).href, { waitUntil: 'networkidle' })
     const { notFound: lost } = await load(`content/${want}/pages/not-found.ts`)
     const seen = await page.evaluate(() => ({
       lang: document.documentElement.lang,
       h1: document.querySelector('h1')?.textContent ?? '',
     }))
     check(
-      `404 (${lang}): ${want}, the address kept`,
-      seen.lang === want && seen.h1.includes(lost.title) && page.url().endsWith('/no-such-page/'),
+      `404 /${path} (${lang}): ${want}, the address kept`,
+      seen.lang === want && seen.h1.includes(lost.title) && page.url().endsWith(`/${path}`),
       JSON.stringify(seen),
     )
     await context.close()
@@ -608,6 +796,9 @@ async function localeSuite(browser, device) {
     const section = await at()
     const vtsBefore = (await page.evaluate(() => window.__vts)).length
     const current = await page.getAttribute(`[data-locale-switcher] a[data-locale="${locale}"]`, 'aria-current')
+    // Scrolled down, the header has left (N1): focus brings it back, as it would for a visitor.
+    await page.focus(`[data-locale-switcher] a[data-locale="${other}"]`)
+    await wait(page, 400)
     await tap(`[data-locale-switcher] a[data-locale="${other}"]`)
     await page.waitForURL((u) => u.pathname.endsWith(`/${other}${p}`), { timeout: 4000 })
     await wait(page, 900)
@@ -655,6 +846,8 @@ async function localeSuite(browser, device) {
     if (device === 'desktop')
       check(`switch on ${p}: focus stays on the switcher`, after.focus === other, String(after.focus))
     // And back, so the next page starts in this locale.
+    await page.focus(`[data-locale-switcher] a[data-locale="${locale}"]`)
+    await wait(page, 400)
     await tap(`[data-locale-switcher] a[data-locale="${locale}"]`)
     await page.waitForURL((u) => u.pathname.endsWith(`/${locale}${p}`), { timeout: 4000 })
     await wait(page, 600)
@@ -697,7 +890,7 @@ async function motionSuite(browser, device) {
         for (const k of a.effect.getKeyframes())
           for (const [p, v] of Object.entries(k)) {
             if (['offset', 'easing', 'composite', 'computedOffset'].includes(p)) continue
-            // A transform that goes nowhere (0px travel in calm / reduced tokens) is not movement.
+            // A transform that goes nowhere (0px travel in reduced tokens) is not movement.
             if (
               /^(transform|translate|scale|rotate)$/.test(p) &&
               /^(none|0(px)?( 0(px)?)*|1( 1)*|0deg)$/.test(String(v).trim())
@@ -863,6 +1056,18 @@ async function feedbackSuite(browser, device) {
   await page.goto(url('/?idle'), { waitUntil: 'networkidle' })
   await wait(page, 2500)
   check('idle hint: once per session', (await page.locator('.idle-hint').count()) === 0)
+  // M3: without ?idle the note waits 10 s (a fresh session; desktop only, it takes a while).
+  if (device === 'desktop') {
+    const fresh = await newContext(browser, device)
+    await fresh.page.goto(url('/'), { waitUntil: 'networkidle' })
+    const t0 = Date.now()
+    await wait(fresh.page, 8000)
+    const early = await fresh.page.locator('.idle-hint').count()
+    await fresh.page.waitForSelector('.idle-hint[data-ready]', { timeout: 6000 }).catch(() => {})
+    const after = (Date.now() - t0) / 1000
+    check('idle hint: after 10 s on home', early === 0 && after < 13, `${after.toFixed(1)} s`)
+    await fresh.context.close()
+  }
   check('no page errors (feedback)', errors.length === 0, errors.slice(0, 3).join(' | '))
   await context.close()
 }

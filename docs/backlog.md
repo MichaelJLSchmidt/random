@@ -9,10 +9,13 @@ Follow-ups that are known and deliberately not done yet. Take one at a time.
   wordmark ↔ Back morph with it. The morph treats the mark as one box (scaleX + fade toward the
   left edge), so the logo drops in without changing the morph.
 - **Home intro timings.** Fine-tune the first-visit sequence (`at.firstLoad` in
-  `src/motion/tokens.ts`): offsets, durations and the hand's deal. The smoke check "home first
-  visit: … items, hand …" is marginal by design: the last "What I bring" item and the first card
-  start about 10 ms apart, and the check compares when each crosses a visibility threshold, so it
-  fails in most runs on desktop (2 of 10 runs passed on the untouched build in this environment).
-  Either separate the two in the tokens or let the check compare start times.
-- **Language detail.** German alternatives for the few kept English terms (Design System,
-  Critique, Research-Share) if the persona prefers German; a per-locale Open Graph image.
+  `src/motion/tokens.ts`): offsets, durations and the hand's deal. (The smoke check now reads each
+  part's start from its animations' own timing, so tuning no longer upsets it; feedback round 2.)
+- **Language detail.** German alternatives for the few kept English terms (Critique,
+  Research-Share) if the persona prefers German; a per-locale Open Graph image. ("Design-System"
+  is written with a hyphen since feedback round 2.)
+- **Portrait.** About's hero shows an example photo (`about-portrait`, Unsplash); replace it with
+  the real portrait (a 4:5 crop through `scripts/images`, alt text in both languages).
+- **Timeline copy.** The timeline cards split each stop into title and place; the long Hyper
+  Island description ("facilitation, team dynamics, digital experience design") was dropped for
+  the card and belongs in the rewrite.
