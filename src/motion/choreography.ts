@@ -14,8 +14,7 @@ import { type DurationStep, type MotionTier, duration, durFor, motionScale, redu
 export const msFor = (tier: MotionTier, step: DurationStep) => durFor(tier, step) * 1000
 
 /** Any other duration (s) for a tier, in ms: full as given, reduced 160. */
-export const spanFor = (tier: MotionTier, seconds: number) =>
-  (tier === 'reduced' ? reducedCrossfade : seconds) * 1000
+export const spanFor = (tier: MotionTier, seconds: number) => (tier === 'reduced' ? reducedCrossfade : seconds) * 1000
 
 /** An offset or stagger (s) for a tier, in ms: full as given, reduced 0. */
 export const gapFor = (tier: MotionTier, seconds: number) => seconds * motionScale[tier] * 1000

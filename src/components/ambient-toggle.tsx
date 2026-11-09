@@ -39,7 +39,10 @@ export function AmbientToggle({ labels }: { labels: Labels }) {
           <rect x="3.5" y="2.5" width="3" height="11" rx="0.75" />
           <rect x="9.5" y="2.5" width="3" height="11" rx="0.75" />
         </g>
-        <path className={styles.play} d="M4.5 2.9v10.2a.6.6 0 0 0 .92.5l7.9-5.1a.6.6 0 0 0 0-1L5.42 2.4a.6.6 0 0 0-.92.5Z" />
+        <path
+          className={styles.play}
+          d="M4.5 2.9v10.2a.6.6 0 0 0 .92.5l7.9-5.1a.6.6 0 0 0 0-1L5.42 2.4a.6.6 0 0 0-.92.5Z"
+        />
       </svg>
     </button>
   )
