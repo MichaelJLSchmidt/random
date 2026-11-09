@@ -52,6 +52,10 @@
 :global(:root[data-motion='reduced'][data-header='hidden']) .header > :not(:last-child) {
   opacity: 0;
 }
+/* The hairline moves to the top edge at once (no slide). */
+:global(:root[data-motion='reduced'][data-header='hidden']) .header > :last-child {
+  translate: 0 calc(1px - var(--header-h));
+}
 
 .end {
   display: flex;
