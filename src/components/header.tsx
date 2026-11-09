@@ -11,7 +11,7 @@ import { showHeader, watchHeader } from '@/motion/header-scroll'
 import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
 import { table } from '@/motion/table-store'
 import { LOCALE, NAV, RETURN } from '@/motion/transitions'
-import { Logo } from './logo'
+import { Logo, type LogoHandle } from './logo'
 import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
@@ -22,11 +22,14 @@ import styles from './header.module.css'
  *
  * The home slot is one link to the table. On detail pages (the three case
  * studies and Management) it shows a back arrow and "Back" (the card returns
- * to the hand); everywhere else the logo (./logo.tsx). Between the two it
- * morphs (header.module.css): the mark compresses and fades toward the left
- * edge while the arrow's shaft draws out of it and the label rises from a mask.
- * The mark is treated as one box (scaleX + opacity), never by its parts. The
- * link's label (site.header.homeLabel) names it; the logo itself is decorative.
+ * to the hand); everywhere else the logo (./logo.tsx). Logo -> Back: the
+ * logo's cards play their exit (Motion, 300 ms), then the arrow's shaft draws
+ * and the label rises from a mask (header.module.css). Back -> logo: Back
+ * fades and the cards are dealt again. The slot has its own view-transition
+ * name (home-slot, live and not animated by the transition, like the header),
+ * so the morph runs once, inside the page transition. The logo's hover, focus
+ * and letters egg (a click on home, a long press by touch) live in logo.tsx.
+ * The link's label (site.header.homeLabel) names it; the logo is decorative.
  *
  * The language switcher links each language to the same page in it; the
  * active one carries aria-current. Choosing the other stores the choice and
@@ -48,6 +51,8 @@ export function Header() {
   const current = (page: string) => (path === page ? 'page' : undefined)
   const home = href('/')
   const ref = useRef<HTMLElement>(null)
+  const slot = useRef<HTMLAnchorElement>(null)
+  const logo = useRef<LogoHandle>(null)
   useEffect(() => {
     showHeader()
     return watchHeader(ref.current!)
@@ -55,15 +60,19 @@ export function Header() {
   return (
     <header ref={ref} className={styles.header} style={{ viewTransitionName: 'site-header' }} data-chrome="">
       <Link
+        ref={slot}
         href={home}
         className={styles.slot}
+        style={{ viewTransitionName: 'home-slot' }}
         data-slot-mode={back ? 'back' : 'mark'}
         aria-label={back ? undefined : site.header.homeLabel}
         transitionTypes={[back ? RETURN : NAV]}
+        // On home the logo takes the click (it would only reload the table): the letters egg.
+        onClick={(e) => logo.current?.claimClick(path === '/') && e.preventDefault()}
         onNavigate={() => back && table.returnHome(home)}
       >
         <span className={styles.mark} aria-hidden={back || undefined}>
-          <Logo className={styles.logo} />
+          <Logo ref={logo} className={styles.logo} mode={back ? 'back' : 'mark'} slot={slot} />
         </span>
         <span className={styles.back} aria-hidden={!back || undefined}>
           <svg className={styles.arrow} viewBox="0 0 20 12" fill="none" stroke="currentColor" aria-hidden="true">

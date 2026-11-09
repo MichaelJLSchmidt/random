@@ -247,7 +247,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   `site.settings.reducedHint` ("Set by your system").
 - **G3. Header.** Links: the home slot and About only. More projects and Contact are pages no
   more (A1–A3); the mobile bottom sheet lists the four cards only (`ul.hand-sheet-links` gone).
-- **G4. Home slot.** One link at the top left (`a[data-slot-mode="mark|back"]` in
+- **G4. Home slot** (its morph superseded by R3). One link at the top left (`a[data-slot-mode="mark|back"]` in
   `header.tsx`): the logo (`.mark`, `src/components/logo.tsx`), or on detail
   pages (the case studies and Management) a back arrow + "Back" (`.back`: an SVG shaft and head,
   the label in a mask). Between them a CSS morph (`header.module.css`, `duration.slotMorph`
@@ -587,6 +587,31 @@ block reveals. Reduced motion: everything outside the home intro is visible at o
 animation (supersedes the 160 ms reveal crossfades of M1 for scroll reveals). The field's breaker
 lift keeps 0.25 (`reveal.breakerAmount`).
 
+**R3. The header logo moves** (`src/components/logo.tsx`, tokens `logo` and `ease.enter` /
+`move` / `exit` in `tokens.ts`; supersedes G4's mark compression). Ported from the logo lab's
+concept 3 (the lab and `/[locale]/logo-lab` untouched): Motion `animate()` on the two card groups,
+transforms and opacity only; each card has a move group (deal, exit, turn) and a fan group inside
+it (hover); the front card's knock-out in the back card moves with it.
+
+- *Deal-in*: part of the home intro, once a session (sessionStorage `table:logo-dealt`): when the
+  intro reveals the chrome (`CHROME_IN`), the back card, then the front card 120 ms later, 400 ms
+  each, from a small offset and turn (−4 / 4 units, 10 down, ∓10°) with opacity 0 (opaque at 45%),
+  `ease.enter`, no bounce. A skipped intro completes it.
+- *Hover and focus-visible*: the fan widens ±1° (240 ms, `ease.move`) and closes on leave or blur
+  (Motion `hover()`, which ignores emulated touch hovers; focus / blur listeners).
+- *Letters egg*: on home a click on the logo (it would only reload the table) is taken
+  (`claimClick()`, no navigation) and plays the 600 ms turn (scaleX 1 → 0 → 1 per card, front
+  +120 ms, the M and F cut-outs showing from the moment a card is edge-on), then turns back after
+  1.6 s. By touch, a 0.5 s long press anywhere the logo shows does the same (Motion `press()` with
+  `hold`; no callout or context menu).
+- *Logo ↔ Back*: entering a detail page the cards play their 300 ms exit (they close up, sink and
+  fade, `ease.exit`), then "← Back" draws (shaft, then head and label, as before). Returning, Back
+  fades (160 ms) and the cards are dealt again with the front card at +80 ms. The slot has its own
+  view-transition name, `home-slot`, live and not animated by the transition (like the header), so
+  the morph runs once.
+- No loading "breathe". Reduced motion: nothing moves; logo ↔ Back swap at once; the egg swaps the
+  letters' opacity.
+
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
 (`device-pixel-content-box`), which draws in the same callback; height-only changes under
@@ -850,8 +875,9 @@ strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label
 `at.detail` (summary, label, meta `{ at, stagger, dur, part, cascade }`; D1), `at.navigate`,
 `at.switchNavigate`; `idle` (`after` 10 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5, M3);
 `header.threshold` (8 px) and `duration.headerHide` / `headerShow` (200 / 240 ms; N1);
-`slot.markScale` (`--slot-mark-scale`, G4); `reveal.mask` also as `--reveal-mask`;
-`duration.slotMorph` / `slotLag` (home slot, G4), `duration.topo` (About's morph, 1.6 s) and
+`reveal.mask` also as `--reveal-mask`; `duration.slotMorph` / `slotLag` (Back's arrow and label,
+G4), `duration.logoExit` / `logoBackFade` and `logo.*` (the header logo, R3; `ease.enter`,
+`ease.move`, `ease.exit` are its curves), `duration.topo` (About's morph, 1.6 s) and
 `duration.contourHandoff` (the SVG's crossfade, 0.3 s; R1);
 `distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `ignoreHeight` (R4), `poolDrift`, `poolDriftPeriods`
@@ -920,7 +946,7 @@ lives in the SVGs, B1). On About the hand's scrim takes the contour ground.
   'locale' | null`). Subscribers write DOM / uniforms
   directly; hovering or playing never re-renders React.
 - View-transition names: `card-<id>`, `card-title-<id>` (hand card ↔ detail hero), `hand`,
-  `hand-rail`, `site-header`, `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
+  `hand-rail`, `site-header`, `home-slot` (R3), `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
   `locale` (`src/motion/transitions.ts`; `locale`: L7, L8).
 - Stage 1 of play lifts the card toward the hero; `heroTarget()` in `src/motion/play.ts`
   measures `main [data-hero-target]` at play time when it is on screen (D3) and falls back to the
@@ -1341,7 +1367,8 @@ pages), About, the language switcher (L6); it leaves on a scroll down (N1). Ever
 | `data-pair-rule`, `data-pair-part` | inside a `pair` reveal (MetaPairs, About's projects) | the rule that draws, the parts that follow |
 | `data-breaker` | OffsetImage, the problem statement section | the field lifts 10% while in view (I5) |
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
-| `data-slot-mode="mark\|back"` | the header's home slot | logo or Back (G4) |
+| `data-slot-mode="mark\|back"` | the header's home slot | logo or Back (G4, R3) |
+| `data-logo-part` | the logo's card groups (move and fan, and the front card's knock-out) | animated by logo.tsx; turn and fan about their bottom centre (R3) |
 | `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |

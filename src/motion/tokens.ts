@@ -55,6 +55,10 @@ export const ease = {
   return: [0.32, 0.72, 0, 1],
   /** Content leaving the screen: a plain ease-in. */
   in: [0.4, 0, 1, 1],
+  // The header logo's curves (the logo lab's): a card arriving, moving, leaving.
+  enter: [0.05, 0.7, 0.1, 1],
+  move: [0.2, 0, 0, 1],
+  exit: [0.3, 0, 0.8, 0.15],
 } as const
 
 /**
@@ -110,9 +114,12 @@ export const duration = {
   liftTimeout: 4,
   // UI
   underline: 0.16,
-  /** Header home slot: wordmark <-> Back morph, and the beat before its second part. */
+  /** Header home slot: Back's arrow and label appearing, and the beat before the head and label. */
   slotMorph: 0.42,
   slotLag: 0.12,
+  /** The logo's cards leave before Back appears (logo.exit), and Back fades before they return. */
+  logoExit: 0.3,
+  logoBackFade: 0.16,
   /** The header (and the mobile rail with it) leaving on a scroll down (ease.in) and returning (outQuint). */
   headerHide: 0.2,
   headerShow: 0.24,
@@ -198,8 +205,32 @@ export const idle = {
  */
 export const header = { threshold: 8 } as const
 
-/** The header's home slot (wordmark <-> Back): how narrow the mark gets as it compresses into the left edge. */
-export const slot = { markScale: 0.12 } as const
+/**
+ * The header logo (src/components/logo.tsx), ported from the logo lab's concept 3 motion: the two
+ * card groups animate transform and opacity only. Seconds, degrees, and the logo's SVG user units
+ * (about 1 CSS px). Only user input moves it at rest (hover, focus, the letters egg).
+ *   deal    part of the home intro, once a session: the back card, then the front one `front` s
+ *           later, `dur` s each (ease.enter), from a small offset and turn, opaque at `opaque` of
+ *           the way; returning from Back the front card follows `returnFront` s later
+ *   hover   hover and focus-visible: the fan widens by `deg` either way (ease.move)
+ *   turn    the letters egg: each card turns (scaleX 1 -> 0 -> 1, ease.exit then ease.enter), the
+ *           M and F cut-outs showing from the moment it is edge-on; it turns back after `hold` s;
+ *           touch: a `longPress` s hold
+ *   exit    to Back: the cards close up (`close` units) and sink (`sink`) as they fade
+ */
+export const logo = {
+  deal: {
+    dur: 0.4,
+    front: 0.12,
+    returnFront: 0.08,
+    opaque: 0.45,
+    from: { back: { x: -4, y: 10, deg: -10 }, front: { x: 4, y: 10, deg: 10 } },
+  },
+  hover: { dur: 0.24, deg: 1 },
+  turn: { dur: 0.6, front: 0.12, hold: 1.6 },
+  exit: { dur: duration.logoExit, sink: 3, close: 6 },
+  longPress: 0.5,
+} as const
 
 /** Pixels unless noted. */
 export const distance = {
@@ -459,7 +490,6 @@ export function motionCss(): string {
     `--angle-tap:${angle.tap}deg`,
     `--hero-drift:${reveal.heroDrift * 100}%`,
     `--reveal-mask:${reveal.mask * 100}%`,
-    `--slot-mark-scale:${slot.markScale}`,
     `--contour-drift-scale:${field.contourDrift.scale}`,
   ]
   return [

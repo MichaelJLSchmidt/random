@@ -42,8 +42,13 @@ dividers and illustration strokes.
 - **Desktop**: the hand is always visible at the bottom in a perspective fan.
 - **Mobile**: the fan on home; elsewhere a 48 px peek rail that opens a bottom sheet with the four
   cards.
-- **Header**: on pages that scroll it leaves on a deliberate scroll down and returns on any
-  scroll up (the mobile rail with it); the reading hairline stays at the top edge.
+- **Header**: the logo (two fanned cards with an M and an F cut out) or Back at the top left,
+  About and "DE · EN" at the right. On pages that scroll it leaves on a deliberate scroll down and
+  returns on any scroll up (the mobile rail with it); the reading hairline stays at the top edge.
+- **Logo**: on the first home visit its two cards are dealt in with the rest of the table. Hover
+  or focus widens the fan a little. A click on the logo on home (or a long press by touch) turns
+  the cards to show their letters, and back. Entering a detail page the cards close up and leave
+  before "← Back" appears; coming back they are dealt again.
 - **Home** is one screen: the name, the intro, what I bring to the table and the hand. On a first
   visit it builds up in reading order in about two seconds, the hand last.
 - **Detail pages**: chapters open with big outlined numerals; images are offset editorial frames

@@ -17,16 +17,19 @@
 
 /* Persistent chrome stays live and still. */
 ::view-transition-group(site-header),
+::view-transition-group(home-slot),
 ::view-transition-group(hand),
 ::view-transition-group(hand-rail) {
   animation: none;
 }
 ::view-transition-old(site-header),
+::view-transition-old(home-slot),
 ::view-transition-old(hand),
 ::view-transition-old(hand-rail) {
   display: none;
 }
 ::view-transition-new(site-header),
+::view-transition-new(home-slot),
 ::view-transition-new(hand),
 ::view-transition-new(hand-rail) {
   animation: none;
@@ -199,6 +202,7 @@
  */
 ::view-transition-group(.locale-fade),
 :root[data-locale-switch]::view-transition-group(site-header),
+:root[data-locale-switch]::view-transition-group(home-slot),
 :root[data-locale-switch]::view-transition-group(hand),
 :root[data-locale-switch]::view-transition-group(hand-rail),
 :root[data-locale-switch]::view-transition-group(site-footer) {
@@ -206,6 +210,7 @@
 }
 ::view-transition-old(.locale-fade),
 :root[data-locale-switch]::view-transition-old(site-header),
+:root[data-locale-switch]::view-transition-old(home-slot),
 :root[data-locale-switch]::view-transition-old(hand),
 :root[data-locale-switch]::view-transition-old(hand-rail),
 :root[data-locale-switch]::view-transition-old(site-footer) {
@@ -214,6 +219,7 @@
 }
 ::view-transition-new(.locale-fade),
 :root[data-locale-switch]::view-transition-new(site-header),
+:root[data-locale-switch]::view-transition-new(home-slot),
 :root[data-locale-switch]::view-transition-new(hand),
 :root[data-locale-switch]::view-transition-new(hand-rail),
 :root[data-locale-switch]::view-transition-new(site-footer) {

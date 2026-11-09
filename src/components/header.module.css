@@ -127,12 +127,12 @@
 
 /*
  * The home slot: the logo (.mark) and Back (.back) share one grid cell.
- * Logo -> Back (about 420 ms, outQuint): the mark compresses (scaleX) and
- * fades toward the left edge; the arrow's shaft draws out of it from the left;
- * the head and the label follow, the label rising from its mask. Back ->
- * logo runs the same pieces the other way. The mark is one box: the morph
- * never depends on what is inside it.
- * Reduced: a 160 ms crossfade, nothing moves.
+ * Logo -> Back: the logo's cards play their exit (logo.tsx, Motion, 300 ms:
+ * --dur-logo-exit), then the arrow's shaft draws from the left and the head and
+ * the label follow, the label rising from its mask (--dur-slot-morph, outQuint).
+ * Back -> logo: Back fades (--dur-logo-back-fade) while the cards are dealt
+ * again (logo.tsx). The mark box itself never scales: only its cards move.
+ * Reduced: instant swaps, nothing moves.
  */
 .slot {
   display: inline-grid;
@@ -141,6 +141,9 @@
   min-height: 44px;
   color: var(--text);
   text-decoration: none;
+  /* The long press (touch) plays the logo's egg: no callout, no selection. */
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 .mark,
 .back {
@@ -149,16 +152,18 @@
 .mark {
   display: inline-flex;
   align-items: center;
-  transform-origin: 0 50%;
-  transition:
-    scale var(--dur-slot-morph) var(--ease-out-quint),
-    opacity var(--dur-slot-morph) var(--ease-out-quint);
 }
 .logo {
   display: block;
   height: 30px;
   width: auto;
   aspect-ratio: 38 / 31;
+  overflow: visible;
+}
+/* The cards turn and fan about their bottom centre (logo.tsx sets the centre for the turn). */
+.logo [data-logo-part] {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
 .back {
   display: inline-flex;
@@ -166,6 +171,7 @@
   gap: var(--space-2);
   font-size: var(--text-sm);
   font-weight: var(--wght-label);
+  transition: opacity var(--dur-logo-back-fade) linear;
 }
 .arrow {
   display: block;
@@ -202,7 +208,10 @@
   text-underline-offset: 0.25em;
 }
 
-/* Wordmark showing: the arrow is undrawn, the label below its mask. */
+/* Logo showing: Back has faded; its arrow and label reset unseen once it has. */
+.slot[data-slot-mode='mark'] .back {
+  opacity: 0;
+}
 .slot[data-slot-mode='mark'] .shaft {
   scale: 0 1;
 }
@@ -213,35 +222,33 @@
   opacity: 0;
   translate: 0 var(--reveal-mask);
 }
-/* Back showing: the mark is compressed into the left edge. */
+.slot[data-slot-mode='mark'] :is(.shaft, .head, .label) {
+  transition-duration: 0s;
+  transition-delay: var(--dur-logo-back-fade);
+}
+/* Back showing: the logo's box hides once its cards have left; Back draws after them. */
 .slot[data-slot-mode='back'] .mark {
   opacity: 0;
-  scale: var(--slot-mark-scale) 1;
+  transition: opacity 0s linear var(--dur-logo-exit);
 }
-/* What appears second waits a beat (the head and label after the shaft, the mark after Back has
-   gone) and runs in the rest of the morph, so the whole morph takes --dur-slot-morph. */
-.slot[data-slot-mode='back'] :is(.head, .label),
-.slot[data-slot-mode='mark'] .mark {
-  transition-delay: var(--dur-slot-lag);
+.slot[data-slot-mode='back'] .back {
+  transition: none;
+}
+.slot[data-slot-mode='back'] .shaft {
+  transition-delay: var(--dur-logo-exit);
+}
+.slot[data-slot-mode='back'] :is(.head, .label) {
+  transition-delay: calc(var(--dur-logo-exit) + var(--dur-slot-lag));
   transition-duration: calc(var(--dur-slot-morph) - var(--dur-slot-lag));
 }
 
+:root[data-motion='reduced'] .slot :is(.mark, .back, .shaft, .head, .label) {
+  transition: none;
+}
 :root[data-motion='reduced'] .slot :is(.shaft, .head, .label) {
   scale: none;
   translate: none;
   opacity: 1;
-  transition: none;
-}
-:root[data-motion='reduced'] .slot .mark {
-  scale: none;
-  opacity: 1;
-}
-:root[data-motion='reduced'] .slot :is(.mark, .back) {
-  transition: opacity var(--dur-reduced) linear;
-}
-:root[data-motion='reduced'] .slot[data-slot-mode='mark'] .back,
-:root[data-motion='reduced'] .slot[data-slot-mode='back'] .mark {
-  opacity: 0;
 }
 
 /* Phones: About and the switch share the right side with the slot. */

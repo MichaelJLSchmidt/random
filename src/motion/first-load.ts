@@ -2,7 +2,7 @@ import { gapFor, msFor, spanFor } from './choreography'
 import { drawCards, fadeCards, fanCards } from './deal'
 import { completeAll, schedule } from './jobs'
 import { type Kind, type KindOptions, fade, isHeroImage, title } from './kinds'
-import { INTRO_DONE, INTRO_KEY } from './preferences'
+import { CHROME_IN, INTRO_DONE, INTRO_KEY } from './preferences'
 import { at as AT, dur, stagger } from './tokens'
 import { readTier } from './use-tier'
 
@@ -122,7 +122,12 @@ export function firstVisit(h1: HTMLElement | null, blocks: FirstLoadBlock[], sta
   else fadeCards(cards, d(F.cards.dur), t(F.cards.stagger), t(F.cards.at))
   const chromeAt = F.cards.at + Math.max(0, cards.length - 1) * F.cards.stagger + F.cards.dur
   const chrome = [...document.querySelectorAll<HTMLElement>('[data-chrome]')]
-  chrome.forEach((el, i) => schedule(el, t(chromeAt + i * stagger.items), (ctx) => fade(ctx, el, 's')))
+  chrome.forEach((el, i) =>
+    schedule(el, t(chromeAt + i * stagger.items), (ctx) => {
+      if (i === 0) dispatchEvent(new Event(CHROME_IN))
+      return fade(ctx, el, 's')
+    }),
+  )
   const total = t(chromeAt + chrome.length * stagger.items) + msFor(tier, 's')
 
   let finished = false

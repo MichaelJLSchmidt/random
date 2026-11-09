@@ -24,6 +24,8 @@ import { locales } from '@/lib/i18n'
 export const INTRO_KEY = 'table-drawn'
 /** Fired when the first-visit intro completes or is skipped (the field finishes its fade-in). */
 export const INTRO_DONE = 'table:intro-done'
+/** Fired when the first-visit intro starts revealing the chrome (the header logo deals in then). */
+export const CHROME_IN = 'table:chrome-in'
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 /** The locale prefix of a path ("/de", "/en"), dropped before the path is matched. */
 const LOCALE_PREFIX = `^/(${locales.join('|')})(?=/|$)`
