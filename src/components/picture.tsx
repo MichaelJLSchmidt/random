@@ -1,5 +1,6 @@
 import { type ImageId, images } from '@content/images'
 import type { ImageEntry, ImageFormat } from '@content/schema'
+import { getContent } from '@/lib/content'
 import { withBase } from '@/lib/site'
 
 /*
@@ -13,8 +14,9 @@ import { withBase } from '@/lib/site'
  * before the image loads, no layout shift), sizes, decoding="async" and the
  * entry's placeholder colour as its background. loading="lazy", or with
  * priority (the one hero image above the fold) loading="eager" +
- * fetchpriority="high". Reads the registry directly (not src/lib/content.ts)
- * so it never pulls page text into a bundle.
+ * fetchpriority="high". Reads the registry directly; the alt text comes from
+ * the route's locale (content/<locale>: imageAlt). A server component, so no
+ * page text reaches a bundle.
  * Owned by the Content & Images session. Contract: docs/contracts.md#picture.
  */
 type Props = {
@@ -23,7 +25,7 @@ type Props = {
   sizes: string
   priority?: boolean
   className?: string
-  /** Overrides the entry's alt (rarely: the same image in two roles). */
+  /** Overrides the locale's alt (rarely: the same image in two roles). */
   alt?: string
 }
 
@@ -42,10 +44,11 @@ export function getImage(id: ImageId): ImageEntry {
 const fallbackWidth = (widths: number[]) =>
   [...widths].sort((a, b) => a - b).find((w) => w >= 1280) ?? Math.max(...widths)
 
-export function Picture({ id, sizes, priority = false, className, alt }: Props) {
+export async function Picture({ id, sizes, priority = false, className, alt }: Props) {
   const image = getImage(id)
+  const { imageAlt } = await getContent()
   const imgProps = {
-    alt: alt ?? image.alt,
+    alt: alt ?? imageAlt[id] ?? image.alt,
     width: image.width,
     height: image.height,
     sizes,

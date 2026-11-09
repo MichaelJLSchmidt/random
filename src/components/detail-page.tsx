@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { type Metric, site } from '@/lib/content'
-import type { HandCard } from '@/lib/cards'
+import { type Metric, getContent } from '@/lib/content'
+import type { HandCard } from '@/lib/hand-data'
 import { CaseHero } from './case-hero'
 import { type MetaPair, MetaPairs, Minimap, type MinimapSection, Scoreboard } from './layout'
 import { PageTransition } from './page-transition'
@@ -33,7 +33,7 @@ type Props = {
  *   sections  numbered Spread-grid sections (children), ending with Next
  *   Minimap   fixed at the right edge from 1024 px
  */
-export function DetailPage({
+export async function DetailPage({
   card,
   title,
   label,
@@ -45,6 +45,7 @@ export function DetailPage({
   sections,
   children,
 }: Props) {
+  const { site } = await getContent()
   return (
     <PageTransition>
       <article className="detail-page" data-identity={card.identity} data-detail={card.id}>

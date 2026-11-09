@@ -2,8 +2,10 @@ import { headerHeight } from '@/design/layout'
 import { buzz } from '@/eggs/haptics'
 import { table } from './table-store'
 import { angle, at, duration as D, distance, durFor, ease, hand as H, spring, springCss } from './tokens'
-import { cardForPath } from '@/lib/hand-data'
-import { NAV, PLAY, RETURN, SWITCH } from './transitions'
+import { cardIdForPath } from '@/lib/hand-data'
+import { pagePath } from '@/lib/i18n'
+import { beginLocaleSwitch } from './locale-switch'
+import { LOCALE, NAV, PLAY, RETURN, SWITCH } from './transitions'
 
 /*
  * Play, return and switch: stage 1 runs here (WAAPI on the hand card), stage 2
@@ -177,8 +179,8 @@ export function cancelPlay() {
   return true
 }
 
-/** Back to the table: the field contracts into the open card's slot, then navigate. */
-export function returnHome(href = '/') {
+/** Back to the table (`href`: home in the current locale): the field contracts into the open card's slot, then navigate. */
+export function returnHome(href: string) {
   if (!navigate) return false
   table.returnHome(href)
   navigate(href, [RETURN])
@@ -232,7 +234,8 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
  * Browser back / forward: React does not run view transitions for popstate
  * updates, so the history step is taken over (before the router sees it) and
  * replayed as a typed navigation to the same URL: the hero flies back into its
- * slot, a card page zooms in from its slot, a switch cross-fades. Other
+ * slot, a card page zooms in from its slot, a switch cross-fades, and the same
+ * page in the other language cross-fades like the language switch. Other
  * history entries are left to the router.
  */
 export function interceptHistory(current: () => string) {
@@ -244,15 +247,19 @@ export function interceptHistory(current: () => string) {
     if (to === from) return
     e.stopImmediatePropagation()
     settleLift()
-    const fromCard = cardForPath(from)
-    const toCard = cardForPath(to)
+    const fromCard = cardIdForPath(from)
+    const toCard = cardIdForPath(to)
     let type = NAV
-    if (toCard) {
-      const [x, y] = table.slotOf(toCard.id) ?? [0.5, 1]
-      table.play(toCard.id, new DOMRect(x * innerWidth - 1, y * innerHeight - 1, 2, 2), to)
+    if (pagePath(to) === pagePath(from)) {
+      // The same page in the other language: never a card transition.
+      beginLocaleSwitch(null)
+      type = LOCALE
+    } else if (toCard) {
+      const [x, y] = table.slotOf(toCard) ?? [0.5, 1]
+      table.play(toCard, new DOMRect(x * innerWidth - 1, y * innerHeight - 1, 2, 2), to)
       type = fromCard ? SWITCH : PLAY
     } else if (fromCard) {
-      if (to === '/') table.returnHome(to)
+      if (pagePath(to) === '/') table.returnHome(to)
       type = RETURN
     }
     const href = to + location.search + location.hash

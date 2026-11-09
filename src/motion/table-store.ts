@@ -1,5 +1,7 @@
+import { cardPath } from '@content/deck'
 import type { Identity } from '@/design/palette'
-import { cardById, cardForPath, handCards } from '@/lib/hand-data'
+import { cardIdForPath, cardIds, identityOf } from '@/lib/hand-data'
+import { pagePath } from '@/lib/i18n'
 import type { MotionTier } from './tokens'
 
 /*
@@ -11,6 +13,10 @@ import type { MotionTier } from './tokens'
  *   hoverCard   the card under the pointer or focus (after the intent delay)
  *   lastPlayed  the last card played
  *   field       what the background should show, with how to get there
+ *
+ * Paths carry the locale (/de/about/); which card or page a route is, is read
+ * without it, so a language switch (the same page in the other locale) moves
+ * nothing on the table.
  */
 
 export type FieldKind = 'instant' | 'bloom' | 'unbloom' | 'switch' | 'crossfade'
@@ -53,8 +59,10 @@ const listeners = new Set<Listener>()
 let slotCenter: (id: string) => [number, number] | null = () => null
 /** A play/return/switch already set the field for this path; route sync leaves it. */
 let pendingPath: string | null = null
-/** The intent behind the next navigation (play / switch / return), read once by the reveal system. */
-let intent: 'play' | 'switch' | 'return' | null = null
+/** The intent behind the next navigation (play / switch / return / locale), read once by the reveal system. */
+let intent: 'play' | 'switch' | 'return' | 'locale' | null = null
+/** The last route the table followed: the full path and the page without its locale. */
+let lastRoute: { full: string; page: string } | null = null
 
 function set(patch: Partial<TableState>) {
   const prev = state
@@ -100,17 +108,22 @@ export const table = {
 
   /** Play: the field blooms from the card into its colour. */
   play(id: string, rect: DOMRect, href: string) {
-    const card = cardById(id)
-    if (!card) return
+    const identity = identityOf(id)
+    if (!identity) return
     pendingPath = normalise(href)
     const switching = state.field.spread === 1
     intent = state.activeCard ? 'switch' : 'play'
     set({ hoverCard: null, lastPlayed: id })
-    field({ identity: card.identity, spread: 1, origin: center(rect), topo: 0, kind: switching ? 'switch' : 'bloom' })
+    field({ identity, spread: 1, origin: center(rect), topo: 0, kind: switching ? 'switch' : 'bloom' })
   },
 
-  /** Return: the field contracts into the card's slot, then goes back to ink. */
-  returnHome(href = '/') {
+  /** Language switch: the same page in the other locale; the reveal system shows it final at once. */
+  switchLocale() {
+    intent = 'locale'
+  },
+
+  /** Return: the field contracts into the card's slot, then goes back to ink. `href`: home in the current locale. */
+  returnHome(href: string) {
     pendingPath = normalise(href)
     intent = 'return'
     const from = state.activeCard
@@ -123,21 +136,30 @@ export const table = {
    * loads): set activeCard and, unless an intent already did, the field.
    */
   route(pathname: string, initial: boolean) {
-    const path = normalise(pathname)
-    const card = cardForPath(path)
-    const activeCard = card?.id ?? null
+    const full = normalise(pathname)
+    const path = pagePath(full)
+    // The same page in the other language (the switcher, or back / forward across it): nothing moves.
+    const languageOnly = !initial && lastRoute !== null && lastRoute.page === path && lastRoute.full !== full
+    lastRoute = { full, page: path }
+    if (languageOnly) {
+      pendingPath = null
+      return
+    }
+    const cardId = cardIdForPath(path)
+    const identity = identityOf(cardId)
+    const activeCard = cardId
     const prevActive = state.activeCard
-    set({ activeCard, hoverCard: null, ...(card ? { lastPlayed: card.id } : {}) })
-    if (pendingPath === path) {
+    set({ activeCard, hoverCard: null, ...(cardId ? { lastPlayed: cardId } : {}) })
+    if (pendingPath === full) {
       pendingPath = null
       return
     }
     pendingPath = null
     const kind = (k: FieldKind): FieldKind => (initial ? 'instant' : k)
-    if (card) {
-      const origin = slotCenter(card.id) ?? [0.5, 1]
+    if (cardId && identity) {
+      const origin = slotCenter(cardId) ?? [0.5, 1]
       field({
-        identity: card.identity,
+        identity,
         spread: 1,
         origin,
         topo: 0,
@@ -159,8 +181,11 @@ export const table = {
   },
 }
 
-/** Identity per path for the pre-paint script (card pages and About), so direct loads paint their colour. */
+/**
+ * Identity per page path (without the locale) for the pre-paint script (card pages and About), so
+ * direct loads paint their colour.
+ */
 export const pathFields = (): Record<string, Identity> => ({
-  ...Object.fromEntries(handCards.map((c) => [c.href, c.identity])),
+  ...Object.fromEntries(cardIds.map((id) => [cardPath(id), identityOf(id)!])),
   '/about': 'glacier',
 })

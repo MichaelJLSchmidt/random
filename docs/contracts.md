@@ -3,8 +3,9 @@
 The shared surface of the redesign. Four Wave 1 sessions (Layout & Pages, Motion, Illustrations,
 Content & Images) worked in parallel against it; the Integration session merged them, applied the
 [integration decisions](#integration-decisions-i1i27) and updated this file to match the code.
-[Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there; every
-reference section below describes the code as it is now. Everything here exists in the repository
+[Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there, and
+[Locales](#locales-l1l11) made the site bilingual (German and English); every reference section
+below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
 
@@ -30,7 +31,7 @@ below were written for Wave 1 and apply again only if a future wave runs in para
 - Run `npm run build` before you push (it type-checks; output in `dist/`).
 
 Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisions-i1i27) ·
-[Feedback round 1](#feedback-round-1) ·
+[Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
 [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
@@ -85,10 +86,12 @@ study has exactly five metrics. The slugs stay `team-of-teams` (case 01, ember),
 checked at build time in `src/lib/content.ts`.
 
 **D7. Bundle.** The hand imports only card metadata (ids, labels, identities, card copy), not
-the whole content module, so long page text stays out of the shared client bundle. Client
-components read content only through `src/lib/hand-data.ts`, which loads the slim modules
-`content/hand.ts` (the four cards and the Coffee card) and `content/site.ts` (chrome labels);
-pure helpers are in `src/lib/format.ts`. Page text (case-study sections, Management, About) is
+the whole content module, so long page text stays out of the shared client bundle. *Amended by
+L5:* client components get the active locale's slim chrome (`content/<locale>/hand.ts`: the four
+cards and the Coffee card; `content/<locale>/site.ts`: chrome labels) from the `[locale]` layout
+through `src/lib/chrome.tsx` (`useChrome()`, `activeChrome()`); only that locale's chrome reaches a
+page. Language-free helpers (which card a route is, identities) are in `src/lib/hand-data.ts`,
+pure text helpers in `src/lib/format.ts`. Page text (case-study sections, Management, About) is
 read only by server components through `src/lib/content.ts`; client egg components that need
 page copy (workshop draw, "What's on the table") receive it as props from their server page.
 `scripts/budget.mjs` stays advisory for this playground: report its number in your handoff; a
@@ -213,7 +216,8 @@ the Wave 1 handoffs. Each one is implemented; `docs/handoff/integration.md` says
   `actions/configure-pages`) to the build; `about-og` (1280 px JPEG) becomes the default Open
   Graph image with `metadataBase` only when it is set. Never hard-coded; local builds have none.
 - **I27. Smoke** reads card and page titles from `content/hand.ts` and
-  `content/pages/not-found.ts` (Node type stripping) instead of hard-coding them.
+  `content/pages/not-found.ts` (Node type stripping) instead of hard-coding them. (Since L5:
+  from `content/<locale>/…` of the locale under test, through `scripts/load-ts.mjs`.)
 
 ---
 
@@ -337,6 +341,75 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
 
 ---
 
+## Locales (L1–L11)
+
+The site in German and English, applied by one session (report: `docs/handoff/i18n.md`). Design,
+motion and the three tiers are unchanged.
+
+- **L1. Routes.** Every page lives under `/de/` and `/en/` (`src/app/[locale]/…`, both locales
+  generated at build time, `dynamicParams = false`), with the same card slugs in both. Locales,
+  path helpers and the language rule: `src/lib/i18n.ts` (`locales`, `Locale`, `splitPath`,
+  `pagePath`, `localeHref`, `LOCALE_KEY`, `pickLocaleScript`). Everything that links internally
+  (hand, header, Back, Escape, the 404 page's link home, Next project, Coffee) stays in the
+  current locale; route logic (which card a page is, home, About) reads paths without the locale.
+- **L2. Two layouts.** `src/app/layout.tsx` is the root: `<html>`, the pre-paint script, the
+  background field and `RouterBridge` (the router for play / return and the back / forward replay).
+  It never remounts. `src/app/[locale]/layout.tsx` holds the chrome (skip links, header, main,
+  footer, hand, eggs, `ChromeProvider`) and remounts when the language changes, so the field, the
+  motion tier and everything the pre-paint script wrote on `<html>` survive a switch.
+- **L3. `<html lang>`** is the locale (`de`, `en`): written into every page's HTML after the
+  build (`scripts/i18n-pages.mjs`; the root layout cannot read the locale) and kept in step on
+  the client (`LocaleSync`). Per page: hreflang alternates for both locales and `x-default` (the
+  root), a canonical link (`src/lib/metadata.ts`, absolute with `SITE_URL`); per locale: title
+  template, description and Open Graph locale (`de_CH`, `en_GB` alternate).
+- **L4. Root and 404** are written after `next build` by `scripts/i18n-pages.mjs` (BASE_PATH
+  read there). The root runs `pickLocaleScript` inline before anything paints and replaces the
+  URL with `/<locale>/`: a stored choice (localStorage `locale`) wins, then the first of
+  `navigator.languages` that starts with "de" or "en"; languages but none of them: English; no
+  language: German. Without JavaScript: links to both. `dist/404.html` picks the same way; an
+  address from before the locales (no `/de/` or `/en/`: `/random/about/`, old links and bookmarks)
+  moves to the same page in that language when it exists (a HEAD request); otherwise it fetches
+  `/<locale>/404/` (the localized 404 page, `src/app/[locale]/404/page.tsx`) and writes it into
+  the document, so the unknown address stays; without JavaScript, a note in both languages.
+- **L5. Content per locale.** `content/de` and `content/en` are each a `Content` (one schema);
+  `content/deck.ts` holds the cards without text (ids, order, identities, `cardPath`). Server
+  components read the page's locale with `getContent()` (`src/lib/content.ts`; each `[locale]`
+  layout and page calls `setRequestLocale(params.locale)` first, `src/lib/request-locale.ts`), or
+  `contentFor(locale)`. New in `Content`: `illustrations` (each drawing's title, description and
+  labels) and `imageAlt` (German alt text; English: the registry's). The build-time checks run
+  for both locales and check that they tell the same story (slugs, card order); German strings
+  may not contain "ß", em-dashes or semicolons.
+- **L6. Switcher.** `nav[data-locale-switcher]` in the header between About and the calm switch:
+  "DE · EN", one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
+  language, the active one `aria-current="page"` (its `.link` underline drawn, like the current
+  page link); each a 44 × 44 px target. On the 404 page the other language's link reloads the
+  address (the 404 page then picks the stored language).
+- **L7. The switch** (`src/motion/locale-switch.ts`): stores the choice, finishes running
+  reveals, remembers the reading position (the section under the header and how far into it) and
+  whether the switcher had focus, sets `html[data-locale-switch]` and navigates with type
+  `locale` (`LOCALE` in `transitions.ts`, `scroll={false}`). After the new locale has rendered
+  (`LocaleSync`, a layout effect before `Reveals`) the position is restored, focus returns to
+  the switcher and the new title is announced. Browser back / forward across languages replays
+  the same way (no stored choice).
+- **L8. Cross-fade.** Every part with words cross-fades once in place over `--dur-s` (calm × 0.6,
+  reduced 160 ms linear): the page and the card faces get the class `locale-fade` from the
+  `[LOCALE]` entries of the React maps (`pageEnter`, `pageExit`, `heroShare`, `heroTitleShare`,
+  `handShare`, `handTitleShare`), the header, hand, rail and footer through
+  `:root[data-locale-switch]` (`view-transitions.css`). Groups do not move; the field stays live.
+  Never a card morph.
+- **L9. No replay.** The reveal system runs the remounted page as kind `locale` (`table`'s intent
+  `locale`): blocks on screen are final at once, the rest reveal on scroll; never the home intro.
+  The table store moves nothing when only the language changes (`route()`), the breaker lift is
+  kept, and the rare pull does not roll.
+- **L10. Labels.** `site.header.nav` and `site.header.language` name the two header navs;
+  `site.settings.calmLabel` is the calm switch's visible label, `site.settings.calm` its
+  accessible name ("Ruhig" / "Ruhigere Animationen"; "Calm" / "Calm motion").
+- **L11. German type.** Running text hyphenates under `:lang(de)` (`.t-body`, `.t-lead`, the
+  decision cards' fields, margin notes, timeline stops, project rows; `type.css`); display type,
+  headings and labels never do, their copy is written to fit at 390 px.
+
+---
+
 ## Ownership (Wave 1)
 
 Wave 1 is merged; the table is kept as the default split for future parallel waves.
@@ -357,7 +430,7 @@ Paths the table does not name, and how to read the short names in it:
 | `header.tsx structure` = the markup of `src/components/header.tsx` (links, order, the hairline mount) | Foundation |
 | `src/components/header.module.css` (header look, not markup) | Layout & Pages |
 | `src/lib/**` (`content.ts`, `hand-data.ts`, `format.ts`, `cards.ts`, `site.ts`, `cx.ts`), `src/styles/tokens.css`, `next.config.ts`, `tsconfig*.json`, `.github/**`, `docs/art-direction.md` | Foundation |
-| `content/hand.ts`, `content/site.ts` (slim modules, D7) | Content & Images, under one rule: they import no page text |
+| `content/<locale>/hand.ts`, `content/<locale>/site.ts` (slim modules, D7), `content/deck.ts` | Content & Images, under one rule: they import no page text |
 | `src/app/**` (all of it: `layout.tsx`, `globals.css`, `fonts.ts`, routes) | Layout & Pages |
 | `src/components/page-title.tsx`, `page-transition.tsx`, `site-footer.*`, `footer-shell.tsx`, `about-small-print.tsx`, `calm-switch.*` | Layout & Pages |
 | `src/components/weight-text.tsx`, `play-link.tsx`, `route-focus.tsx`, `live-region.tsx`, `reading-hairline.module.css`, `src/styles/view-transitions.css`, `field.css`, `eggs.css` | Motion |
@@ -388,16 +461,17 @@ docs/
   contracts.md                 this file
   art-direction.md             "The Table": the brief every session designs to
   backlog.md                   known follow-ups (card transition, final logo, intro timings)
-  handoff/README.md            how each Wave 1 session reports; <agent>.md per session (feedback-1.md: this round)
+  handoff/README.md            how each Wave 1 session reports; <agent>.md per session (feedback-1.md, i18n.md)
 content/
-  schema.ts                    types for all content (Foundation)
-  index.ts                     the typed entry point (server): export const content = {...} satisfies Content
-  hand.ts                      slim: the four cards + the Coffee card (client-safe, D7)
-  site.ts                      slim: chrome labels (client-safe, D7)
-  cases/*.ts                   the three case studies (server only)
-  pages/*.ts                   home, Management, workshop methods, About (incl. projects and contact), 404
+  schema.ts                    types for all content (Foundation), the same for every locale
+  index.ts                     the typed entry point (server): contents = { de, en } satisfies Record<Locale, Content>
+  deck.ts                      the four cards without text: order, identity, cardPath (L5)
+  de/, en/                     one content set per locale (L5): index.ts (Content), hand.ts and site.ts
+                               (slim, D7), cases/*.ts, pages/*.ts, illustrations.ts; de/images.ts (alt text)
   images.ts                    image registry used by <Picture> (generated by scripts/images/fetch-and-build.mjs)
 scripts/images/                manifest.mjs (photos, alt, credits, crops), fetch-and-build.mjs, check.mjs
+scripts/i18n-pages.mjs         after next build: <html lang> per page, dist/index.html (root), dist/404.html (L3, L4)
+scripts/load-ts.mjs            loads content and src/lib TypeScript from Node scripts (smoke, check, i18n-pages)
 src/design/
   palette.ts                   colour identities (ink, ember, tide, grove, saffron, glacier)
   layout.ts                    typed mirror of src/styles/layout.css
@@ -416,6 +490,7 @@ src/motion/
                                first-load.ts, split.ts (Motion+ splitText), deal.ts, choreography.ts
                                (tier helpers only)
   play.ts, transitions.ts, preferences.ts, use-tier.ts, view-transition.ts (Motion)
+  locale-switch.ts             the language switch: store, reading position, focus, settle (L7)
 src/components/
   hand/                        hand.tsx, card-face.tsx (Foundation)
   layout/                      SectionIndex, NumeralBreaker, OffsetImage, MetaPairs, Scoreboard,
@@ -426,7 +501,9 @@ src/components/
   reveals.tsx                  <Reveals/>, <Reveal>, <FirstLoadSequence> (Motion)
   reading-hairline.tsx         <ReadingHairline/> (Motion), mounted in header.tsx
   picture.tsx                  <Picture> (Content & Images)
-  header.tsx                   header: home slot (wordmark / Back morph), About, CalmSwitch, hairline
+  header.tsx                   header: home slot (wordmark / Back morph), About, language switcher, CalmSwitch, hairline
+  locale-sync.tsx              <html lang> on the client; settles a language switch (L3, L7)
+  router-bridge.tsx            root layout: registerNavigate + the back / forward replay (L2)
   calm-switch.tsx              the calm-motion switch (look from html[data-motion])
   site-footer.tsx, footer-shell.tsx, about-small-print.tsx   footer (none on home; About's small print)
   background/                  background-field.tsx, field-engine.ts, field-gl.ts, shader.ts, terrain.ts
@@ -436,11 +513,15 @@ src/eggs/                      registry.ts, eggs.tsx, hand-eggs.ts, idle-hint.ts
                                on-the-table.tsx, discard.ts, haptics.ts
 public/terrain/                region.webp, region.bin (heightmap), region-l.avif, region-p.avif (posters)
 src/lib/
-  content.ts                   server: all typed content, count checks, getCaseStudy (+ format helpers)
-  hand-data.ts                 client-safe: handCards (exactly 4), cardById, cardForPath, nextCard,
-                               handLabels, coffeeEgg, site (D7)
+  i18n.ts                      locales, Locale, splitPath, pagePath, localeHref, LOCALE_KEY, pickLocaleScript (L1)
+  content.ts                   server: getContent() / contentFor(locale) with hand cards and getCaseStudy,
+                               count and copy checks for every locale (+ format helpers)
+  request-locale.ts            server: setRequestLocale / requestLocale (the render's locale, React cache)
+  metadata.ts                  server: pageAlternates (canonical, hreflang, x-default)
+  chrome.tsx                   client: ChromeProvider, useChrome(), activeChrome() (the active locale's chrome, D7)
+  hand-data.ts                 client-safe: buildChrome (handCards, cardById, cardForPath, nextCard, href),
+                               cardIdForPath, identityOf, cardIds (language-free)
   format.ts                    pad2, cardNumber, fill (no imports)
-  cards.ts                     re-export of hand-data.ts (compatibility)
   site.ts                      basePath, withBase(); siteOrigin / absoluteUrl() (server, from SITE_URL)
   cx.ts                        class-name join
 ```
@@ -615,16 +696,18 @@ values, A5). On About the hand's scrim takes the contour ground.
 
 `src/components/hand/**` (Foundation; styles in `src/styles/hand.css`, Motion).
 
-- Exactly **four cards**: the three case studies and Management, in `content/hand.ts` order
-  (`handCards` in `src/lib/hand-data.ts` throws otherwise). No face-down deck. "New hand"
+- Exactly **four cards**: the three case studies and Management, in `content/deck.ts` order
+  (`buildChrome` in `src/lib/hand-data.ts` throws otherwise). No face-down deck. "New hand"
   re-deals these four.
-- **Data (D7)**: the hand, the header, the eggs, the table store, play, the case hero and DealRow
-  import content only from `src/lib/hand-data.ts` (`handCards`, `cardById`, `cardForPath`,
-  `nextCard`, `handLabels`, `coffeeEgg`, `site`, `type HandCard`) and helpers from
-  `src/lib/format.ts`; never `src/lib/content.ts`. `src/lib/cards.ts` re-exports `hand-data.ts`.
+- **Data (D7, L5)**: the hand, the header, the eggs, the case hero, DealRow and WorkshopRow read
+  the active locale's cards and labels with `useChrome()` (`handCards`, `cardById`,
+  `cardForPath`, `nextCard`, `handLabels`, `coffeeEgg`, `site`, `href`); code outside React
+  (hand eggs) with `activeChrome()`; the table store, play and the field use the language-free
+  `cardIdForPath` / `identityOf` from `src/lib/hand-data.ts`; never `src/lib/content.ts`. A card's
+  `path` is its page without the locale, its `href` the link in the current locale.
 - **Reserve (D1)**: the hand sets `data-hand="collapsed"` on `<html>` on every route except home
   (and the pre-paint script does the same for the first paint).
-- `<nav class="hand" aria-label="Work">`, one tab stop (roving `tabindex`, arrows, Home/End).
+- `<nav class="hand" aria-label="{hand.labels.nav}">` ("Projekte" / "Work"), one tab stop (roving `tabindex`, arrows, Home/End).
   Card links: `a.hand-card[data-play="<id>"][data-roving="<id>"]` in `li.hand-slot[data-slot="<id>"]`.
   The open card shows `.hand-ghost` ("Viewing").
 - Desktop (≥ 1024): fan at the bottom centre. Mobile: fan on home; elsewhere a 48 px peek rail
@@ -635,13 +718,15 @@ values, A5). On About the hand's scrim takes the contour ground.
   with the hero in view morphs it back as before.
 - **Table store** (`src/motion/table-store.ts`, Foundation): `table.get()` →
   `{ activeCard, hoverCard, lastPlayed, tier, sheetOpen, breaker, field }`;
-  `table.subscribe((state, prev) => …)`; `hover(id)`, `play(id, rect, href)`, `returnHome(href)`,
-  `route(path, initial)`, `setTier`, `setSheet`, `setBreaker`, `registerSlots`, `slotOf`,
-  `takeIntent()` (`'play' | 'switch' | 'return' | null`). Subscribers write DOM / uniforms
+  `table.subscribe((state, prev) => …)`; `hover(id)`, `play(id, rect, href)`, `returnHome(href)`
+  (`href`: home in the current locale), `switchLocale()`, `route(path, initial)` (paths carry the
+  locale; a route that differs only by locale changes nothing, L9), `setTier`, `setSheet`,
+  `setBreaker`, `registerSlots`, `slotOf`, `takeIntent()` (`'play' | 'switch' | 'return' |
+  'locale' | null`). Subscribers write DOM / uniforms
   directly; hovering or playing never re-renders React.
 - View-transition names: `card-<id>`, `card-title-<id>` (hand card ↔ detail hero), `hand`,
-  `hand-rail`, `site-header`, `site-footer`. Transition types: `play`, `return`, `switch`, `nav`
-  (`src/motion/transitions.ts`).
+  `hand-rail`, `site-header`, `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
+  `locale` (`src/motion/transitions.ts`; `locale`: L7, L8).
 - Stage 1 of play lifts the card toward the hero; `heroTarget()` in `src/motion/play.ts`
   measures `main [data-hero-target]` at play time when it is on screen (D3) and falls back to the
   computed geometry otherwise (playing from home, where no hero is mounted yet).
@@ -955,17 +1040,21 @@ Markup contract (every illustration; conventions in `src/components/illustration
 
 ## Content schema
 
-`content/schema.ts` (Foundation). Server components read content through `src/lib/content.ts`,
-which re-exports `content/index.ts` (`export const content = {…} satisfies Content`); client
-components read only `src/lib/hand-data.ts` (D7). Values live in typed modules:
-`content/site.ts`, `content/hand.ts` (slim), `content/cases/*.ts` and `content/pages/*.ts`
-(server only), `content/images.ts` (generated). The exports keep their names and types and the
-slim modules stay slim (type-only imports).
+`content/schema.ts` (Foundation). One content set per locale (L5): `content/<locale>/index.ts`
+exports `content = {…} satisfies Content`, `content/index.ts` collects them
+(`contents = { de, en }`). Server components read the page's locale through `src/lib/content.ts`
+(`getContent()`, `contentFor(locale)`); client components get the slim chrome through
+`src/lib/chrome.tsx` (D7). Values live in typed modules: `content/<locale>/site.ts`,
+`content/<locale>/hand.ts` (slim), `content/<locale>/cases/*.ts`, `pages/*.ts` and
+`illustrations.ts` (server only), `content/de/images.ts` (German alt text),
+`content/deck.ts` (cards without text), `content/images.ts` (generated). The slim modules stay
+slim (type-only imports, plus the text-free deck).
 
 ```ts
 type Content = {
   site: Site; hand: HandContent; home: Home; caseStudies: CaseStudy[]; management: Management;
-  about: About; notFound: NotFound; coffeeEgg: CoffeeEgg; workshopMethods: WorkshopMethods
+  about: About; notFound: NotFound; coffeeEgg: CoffeeEgg; workshopMethods: WorkshopMethods;
+  illustrations: IllustrationCopy; imageAlt: Record<ImageId, string>
 }
 ```
 
@@ -978,10 +1067,10 @@ optional image with an optional `caption` (I16).
 
 | Type | Fields |
 | --- | --- |
-| `Site` (`content/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about }, footer { note }, settings { calm, calmOn, calmOff, reducedHint }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
-| `HandContent` (`content/hand.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing }` |
+| `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, settings { calm, calmLabel, calmOn, calmOff, reducedHint }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
+| `HandContent` (`content/<locale>/hand.ts`; `order` and `identity` from `content/deck.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing }` |
 | `HandCardCopy` | `title` (equals the page title; "Management" for the fourth card)`, type, year, inspect, tapLine, facts: Fact[]` (the card's own facts, each with its label; two in the final content) |
-| `CoffeeEgg` (`content/hand.ts`) | `title, body, cta` |
+| `CoffeeEgg` (`content/<locale>/hand.ts`) | `title, body, cta` |
 | `Home` | `label` (e.g. "Bern, Switzerland — UX Team Lead")`, title, role, intro, hint` ("Pick a card", above the hand)`, bring { label, items: string[] }` ("What I bring to the table", 3 items)`, idleNote` (the idle hint egg) |
 | `CaseStudy` | `slug, number` ("01"–"03")`, identity, label, title, summary, statement?, heroImage: ImageId, meta: CaseStudyMeta, metrics: Metric[]` (exactly 5)`, sections: CaseStudySections` |
 | `CaseStudyMeta` | `client, timeframe, role, team, type` |
@@ -995,17 +1084,22 @@ optional image with an optional `caption` (I16).
 | `ContactLink` | `label, value, href?` |
 | `NotFound` | `title, body, back` |
 | `WorkshopMethods` | `again, drawn: Template, methods[{ title, howTo }]` (the button label is `management.workshops.drawButton`) |
+| `IllustrationCopy` | per drawing (component name): `{ title, description }` plus its labels (`labels`, `steps`, `lanes`, `offers`, `layers`, `badges`, `squads`, `lead`, `days`, `rituals`); `WorkshopGlyph` per method; `AboutTimeline.description` is a template (`{count}`, `{from}`, `{to}`, `{stops}`) |
 | `ImageEntry` | see [Picture](#picture) |
 
-Build-time checks (`src/lib/content.ts`; the build fails with a pointer to this section): exactly
+Build-time checks (`src/lib/content.ts`, for every locale; the build fails with a pointer to this
+section): both locales have the same case-study slugs and card order; German strings contain no
+"ß", em-dash or semicolon; and per locale exactly
 three case studies with unique slugs and `number` "01"–"03" in order; per case study five
 metrics, four decisions, four approach steps, a hand card with the same title and identity;
 Management five principles and five metrics; About seven timeline stops, four how-I-work items,
-five "on the table" items, thirteen projects with a count line that matches them; home three
+five "on the table" items, thirteen projects with a count line that matches them ("13 projects ·
+2014–2025", "13 Projekte · 2014–2025"); home three
 "What I bring to the table" items; the hand exactly four cards.
 
-Helpers: `src/lib/content.ts` (server) exports every value above, `caseStudies`,
-`getCaseStudy(slug)`, `caseStudySectionKeys`, `managementSectionKeys`, `aboutSectionKeys`,
+Helpers: `src/lib/content.ts` (server) exports `getContent()` / `contentFor(locale)` (every value
+above for that locale, with `handCards`, `cardById`, `nextCard`, `href` and `getCaseStudy(slug)`),
+`localeParams`, `caseStudySectionKeys`, `managementSectionKeys`, `aboutSectionKeys`,
 `images`, every type (`export type * from '@content/schema'`) and re-exports `pad2`,
 `cardNumber`, `fill`. `src/lib/hand-data.ts` (client-safe) is listed under [Hand](#hand).
 
@@ -1013,19 +1107,22 @@ Helpers: `src/lib/content.ts` (server) exports every value above, `caseStudies`,
 
 ## Routes
 
-All static, all under `BASE_PATH` (`/random/` on Pages), trailing slash. Every page is on the
+All static, all under `BASE_PATH` (`/random/` on Pages), trailing slash. Every page exists under
+`/de/` and `/en/` (`<locale>` below; files under `src/app/[locale]/`, L1). Every page is on the
 Spread grid (D9).
 
 | Route | File | Identity | Skeleton |
 | --- | --- | --- | --- |
-| `/` | `src/app/page.tsx` | ink | one screen (H1): `FirstLoadSequence` around label, title, role, intro, "What I bring to the table", hint; IdleHint egg; no footer; clears the fan |
-| `/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero (`[data-hero-target]` frame with the priority hero picture + `.hero-drift`, display h1, summary) + MetaPairs + Scoreboard; sections 01–09 via `Section` (01 context + OffsetImage with caption; 02 problem opens with the statement (`data-breaker`); 03 owned / not owned; 04 four steps + sticky vertical drawing; 05 DealRow (deal scene, face up); 06 artefact gallery (drawings, photos, text cards); 07 outcomes; 08 differently; 09 NextProject); a NumeralBreaker on 01–08; Minimap |
-| `/management` | `src/app/management/page.tsx` | saffron | `DetailPage`: hero (TeamConstellation) + "How I lead" + lead + card facts; 01 principles (+ OffsetImage), 02 team (structure pinned), 03 rituals (WeekRing), 04 hiring (drawn connector), 05 growth (CareerMatrix + HTML axes), 06 workshops (WorkshopRow with a WorkshopGlyph per format on a subgrid, workshop draw, + OffsetImage), 07 metrics (Scoreboard); NextProject; Minimap |
-| `/about` | `src/app/about/page.tsx` | glacier, over the contour field (A5) | hero (title, lead, ContourPortrait); 01 story (+ OffsetImage), 02 timeline (AboutTimeline + seven HTML stops), 03 how I work, 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain attribution |
-| 404 | `src/app/not-found.tsx` | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link |
+| `/` (root) | written by `scripts/i18n-pages.mjs` | ink ground | no page: an inline script picks the language and replaces the URL with `/<locale>/`; without JavaScript, links to both (L4) |
+| `/<locale>/` | `src/app/[locale]/page.tsx` | ink | one screen (H1): `FirstLoadSequence` around label, title, role, intro, "What I bring to the table", hint; IdleHint egg; no footer; clears the fan |
+| `/<locale>/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/[locale]/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero (`[data-hero-target]` frame with the priority hero picture + `.hero-drift`, display h1, summary) + MetaPairs + Scoreboard; sections 01–09 via `Section` (01 context + OffsetImage with caption; 02 problem opens with the statement (`data-breaker`); 03 owned / not owned; 04 four steps + sticky vertical drawing; 05 DealRow (deal scene, face up); 06 artefact gallery (drawings, photos, text cards); 07 outcomes; 08 differently; 09 NextProject); a NumeralBreaker on 01–08; Minimap |
+| `/<locale>/management` | `src/app/[locale]/management/page.tsx` | saffron | `DetailPage`: hero (TeamConstellation) + "How I lead" + lead + card facts; 01 principles (+ OffsetImage), 02 team (structure pinned), 03 rituals (WeekRing), 04 hiring (drawn connector), 05 growth (CareerMatrix + HTML axes), 06 workshops (WorkshopRow with a WorkshopGlyph per format on a subgrid, workshop draw, + OffsetImage), 07 metrics (Scoreboard); NextProject; Minimap |
+| `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour field (A5) | hero (title, lead, ContourPortrait); 01 story (+ OffsetImage), 02 timeline (AboutTimeline + seven HTML stops), 03 how I work, 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain attribution |
+| 404 | `src/app/[locale]/404/page.tsx` (`/<locale>/404/`), served for any unknown address by `dist/404.html` (L4) | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link (home in its locale) |
 
-`/more-projects` and `/contact` are gone (A3; the 404 page answers). Header: the home slot
-(wordmark, or Back on card pages), About, the calm switch. Every page has one `h1` (`PageTitle`,
+`/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
+unlinked logo lab (English, `lang="en"`). Header: the home slot (wordmark, or Back on card
+pages), About, the language switcher (L6), the calm switch. Every page has one `h1` (`PageTitle`,
 `id="page-heading"`, focus target after navigation).
 
 ---
@@ -1043,6 +1140,8 @@ Spread grid (D9).
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
 | `data-slot-mode="mark\|back"` | the header's home slot | wordmark or Back (G4) |
 | `data-calm-switch` | the calm switch | its look follows `html[data-motion]` (G2) |
+| `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
+| `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
 | `data-poster`, `data-topo` | `.field` | About's poster shows; About's contours (and edge fade) are the target |
 | `data-first-load` | `<FirstLoadSequence>` | home hero wrapper |
@@ -1094,14 +1193,20 @@ with the four-card hand:
 
 ## Checks
 
-- `npm run build` (static export to `dist/`, type check included). Must pass before every push.
-- `npm run preview` then `node scripts/smoke.mjs http://localhost:4100/random/ [--motion=full|calm|reduced]`
+- `npm run build` (static export to `dist/`, type check and the content checks for both locales
+  included, then `scripts/i18n-pages.mjs`: `<html lang>`, root, 404). Must pass before every push.
+- `npm run preview` then, once per locale,
+  `node scripts/smoke.mjs http://localhost:4100/random/<locale>/ [--motion=full|calm|reduced]`
   (behaviour at 1440×900 and 390×844: intro order and length, home on one screen, header and calm
   switch, play / switch / return, the detail hero order, a return with the hero scrolled away,
   the idle hint, About's contours or poster with no frames at rest, removed routes, reveals,
-  motion per tier; card and page titles read from the content modules, I27)
+  motion per tier; the root's language choice (de-CH, en-US, fr-FR, no language, a stored
+  choice, no JavaScript), the 404 page's language, `<html lang>` and hreflang, the switcher on
+  home, a case study, Management and About, back across a switch; card and page titles and
+  labels read from the locale's content modules, I27)
   and `node scripts/budget.mjs http://localhost:4100/random/` (initial JS, 170 KB gzip target).
   The budget is advisory for this playground (D7): report the number in your handoff; going over
   does not block a push.
-- `node scripts/images/check.mjs` (image registry (12 photos), renditions, content counts incl.
-  About's 13 projects, slim modules, deleted files stay deleted).
+- `node scripts/images/check.mjs` (image registry (12 photos), renditions, content counts per
+  locale incl. About's 13 projects, alt text in every locale, slim modules, deleted files stay
+  deleted).

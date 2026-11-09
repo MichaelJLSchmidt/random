@@ -1,13 +1,15 @@
 /*
  * Content schema: the types every piece of visible text and every image
- * reference must satisfy. Pages read typed content only through
- * src/lib/content.ts (which re-exports content/index.ts); client components
- * read only the slim modules through src/lib/hand-data.ts. Never import JSON
- * or MDX content directly. Foundation-owned. Contract: docs/contracts.md#content-schema.
+ * reference must satisfy. There is one content set per locale
+ * (content/de, content/en), each a `Content`. Pages read typed content only
+ * through src/lib/content.ts (which picks the set of the route's locale);
+ * client components receive the active locale's slim chrome (site labels and
+ * the hand) from the layout through src/lib/chrome.tsx. Never import JSON or
+ * MDX content directly. Foundation-owned. Contract: docs/contracts.md#content-schema.
  *
  * Shapes fit the final persona content (a fictional UX team lead). Counts
  * that the contract fixes (four decisions, five metrics, seven timeline
- * stops, ...) are checked at build time in src/lib/content.ts.
+ * stops, ...) are checked at build time for every locale in src/lib/content.ts.
  * Copy rules: plain labels, no personal names (the fictional persona is
  * fine), no job-seeking language, no CV, no testimonials.
  */
@@ -80,11 +82,17 @@ export type Site = {
   wordmark: string
   skipLink: string
   introSkip: string
-  /** The home slot (wordmark, or Back on detail pages) and the one page link, About. */
-  header: { homeLabel: string; back: string; about: string }
+  /**
+   * The home slot (wordmark, or Back on detail pages), the one page link (About), the name of
+   * the site navigation and of the language switcher ("DE · EN").
+   */
+  header: { homeLabel: string; back: string; about: string; nav: string; language: string }
   footer: { note: string }
-  /** The calm-motion switch in the header; reducedHint shows while the system asks for reduced motion. */
-  settings: { calm: string; calmOn: string; calmOff: string; reducedHint: string }
+  /**
+   * The calm-motion switch in the header: `calmLabel` is the visible label, `calm` its accessible
+   * name (the same text when they agree); reducedHint shows while the system asks for reduced motion.
+   */
+  settings: { calm: string; calmLabel: string; calmOn: string; calmOff: string; reducedHint: string }
   /** The "?" sheet. */
   shortcuts: { title: string; close: string; items: { keys: string; label: string }[] }
   /** Egg announcements (live region): new hand, tap, rare pull, Coffee dealt, an About card flipped. */
@@ -361,7 +369,44 @@ export type WorkshopMethods = {
   methods: { title: string; howTo: string }[]
 }
 
-/** Everything content/index.ts exports. */
+// ---------------------------------------------------------------------------
+// Illustration copy: each drawing's <title>, <desc> and labels, per locale
+
+/** A drawing's short name (<title>) and what it shows (<desc>, one or two sentences). */
+export type IllustrationText = { title: string; description: string }
+
+/**
+ * The words inside the illustrations, keyed by component name. Each entry spreads into the
+ * component as props (src/components/illustrations), so a locale replaces every default.
+ * Data that is not text (counts, scores, years) stays in the components.
+ */
+export type IllustrationCopy = {
+  TeamGrowthTimeline: IllustrationText & { labels: { team: string; joined: string } }
+  IntakeBeforeAfter: IllustrationText & {
+    offers: string[]
+    labels: { before: string; after: string; team: string; frontDoor: string }
+  }
+  DesignSystemLayers: IllustrationText & { layers: string[]; badges: string[] }
+  ContributionLoop: IllustrationText & { steps: string[] }
+  AdoptionBars: IllustrationText & { labels: { adopted: string; notYet: string } }
+  ServiceBlueprint: IllustrationText & { lanes: string[]; labels: { before: string; after: string } }
+  JourneyEmotionCurve: IllustrationText & { steps: string[] }
+  /** The Management hero: squads around the lead (`size` people each). */
+  TeamConstellation: IllustrationText & { squads: { label: string; size: number }[]; lead: string }
+  /** Management's week: the weekday names and the three weekly rituals on the ring (check-in, 1:1s, critique). */
+  WeekRing: IllustrationText & { days: string[]; rituals: [string, string, string] }
+  /** Levels and tracks come from management.growth; this is the drawing's title and description. */
+  CareerMatrix: IllustrationText
+  WorkshopGlyphs: IllustrationText
+  /** One glyph per workshop format on Management. */
+  WorkshopGlyph: Record<WorkshopMethod, IllustrationText>
+  ContourPortrait: IllustrationText
+  /** `description` is a template: {count}, {from}, {to} and {stops} come from about.timeline.items. */
+  AboutTimeline: { title: string; description: Template }
+  DiscardedCard: IllustrationText
+}
+
+/** Everything one locale's content/<locale>/index.ts exports. */
 export type Content = {
   site: Site
   hand: HandContent
@@ -372,4 +417,7 @@ export type Content = {
   notFound: NotFound
   coffeeEgg: CoffeeEgg
   workshopMethods: WorkshopMethods
+  illustrations: IllustrationCopy
+  /** Alt text of every image in this locale (English: the registry's own, content/images.ts). */
+  imageAlt: Record<ImageId, string>
 }

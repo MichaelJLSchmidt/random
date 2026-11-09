@@ -1,18 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { cardForPath, site } from '@/lib/hand-data'
+import { usePathname, useSelectedLayoutSegment } from 'next/navigation'
+import { useChrome } from '@/lib/chrome'
+import { cardIdForPath } from '@/lib/hand-data'
+import { localeHref, localeNames, locales, pagePath } from '@/lib/i18n'
+import { withBase } from '@/lib/site'
+import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
 import { table } from '@/motion/table-store'
-import { NAV, RETURN } from '@/motion/transitions'
+import { LOCALE, NAV, RETURN } from '@/motion/transitions'
 import { CalmSwitch } from './calm-switch'
 import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
 /*
- * Persistent header: the home slot at the top left, About and the calm-motion
- * switch at the right, the reading hairline on its bottom edge. 64 px high
- * (--header-h).
+ * Persistent header: the home slot at the top left; About, the language
+ * switcher ("DE · EN") and the calm-motion switch at the right; the reading
+ * hairline on its bottom edge. 64 px high (--header-h).
  *
  * The home slot is one link to the table. On detail pages (the three case
  * studies and Management) it shows a back arrow and "Back" (the card returns
@@ -21,20 +25,30 @@ import styles from './header.module.css'
  * while the arrow's shaft draws out of it and the label rises from a mask.
  * The mark is treated as one box (scaleX + opacity), never by its letters, so
  * the final SVG logo can replace the text in .mark without touching the morph.
+ *
+ * The language switcher links each language to the same page in it; the
+ * active one carries aria-current. Choosing the other stores the choice and
+ * switches in place (src/motion/locale-switch.ts: a short cross-fade, the
+ * scroll position kept). On the 404 page there is no such page, so the link
+ * reloads the address and the 404 page picks the stored language.
  */
 export function Header() {
+  const { locale, site, href } = useChrome()
   const pathname = usePathname()
-  const back = Boolean(cardForPath(pathname))
-  const current = (href: string) => (pathname.replace(/\/$/, '') === href ? 'page' : undefined)
+  const path = pagePath(pathname)
+  const lost = useSelectedLayoutSegment() === '404'
+  const back = Boolean(cardIdForPath(path))
+  const current = (page: string) => (path === page ? 'page' : undefined)
+  const home = href('/')
   return (
     <header className={styles.header} style={{ viewTransitionName: 'site-header' }} data-chrome="">
       <Link
-        href="/"
+        href={home}
         className={styles.slot}
         data-slot-mode={back ? 'back' : 'mark'}
         aria-label={back ? undefined : site.header.homeLabel}
         transitionTypes={[back ? RETURN : NAV]}
-        onNavigate={() => back && table.returnHome('/')}
+        onNavigate={() => back && table.returnHome(home)}
       >
         <span className={styles.mark} aria-hidden={back || undefined}>
           {site.wordmark}
@@ -50,13 +64,52 @@ export function Header() {
         </span>
       </Link>
       <div className={styles.end}>
-        <nav aria-label="Site" className={styles.nav}>
+        <nav aria-label={site.header.nav} className={styles.nav}>
           <ul>
             <li>
-              <Link href="/about" transitionTypes={[NAV]} aria-current={current('/about')}>
+              <Link href={href('/about')} transitionTypes={[NAV]} aria-current={current('/about')}>
                 <span className="link">{site.header.about}</span>
               </Link>
             </li>
+          </ul>
+        </nav>
+        <nav aria-label={site.header.language} className={styles.language} data-locale-switcher="">
+          <ul>
+            {locales.map((l, i) => (
+              <li key={l}>
+                {i > 0 && (
+                  <span className={styles.dot} aria-hidden="true">
+                    ·
+                  </span>
+                )}
+                <Link
+                  // On 404 the server knows only the 404 route, not the address: link the other
+                  // language's 404 page; a click reloads this address in that language instead.
+                  href={localeHref(l, lost ? '/404' : path)}
+                  hrefLang={l}
+                  lang={l}
+                  className={styles.locale}
+                  aria-current={l === locale ? 'page' : undefined}
+                  scroll={false}
+                  prefetch={lost ? false : undefined}
+                  transitionTypes={[LOCALE]}
+                  data-locale={l}
+                  onNavigate={(e) => {
+                    if (l === locale) return e.preventDefault()
+                    if (lost) {
+                      e.preventDefault()
+                      rememberLocale(l)
+                      location.assign(withBase(localeHref(l, path)))
+                      return
+                    }
+                    beginLocaleSwitch(l)
+                  }}
+                >
+                  <span className="link">{l.toUpperCase()}</span>
+                  <span className="sr-only"> {localeNames[l]}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
         <CalmSwitch labels={site.settings} />

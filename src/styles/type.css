@@ -79,6 +79,26 @@
   line-height: var(--type-lead-leading);
   font-weight: var(--type-lead-weight);
 }
+/*
+ * German runs longer: its running text hyphenates (<html lang="de">), in paragraphs and in the
+ * cards and lists that set text at the body size. Display type, headings and labels never do; their
+ * copy is written to fit (checked at 390 px).
+ */
+:is(
+  .t-body,
+  .t-lead,
+  .deal-card-fields dd,
+  .margin-note-text,
+  .timeline-stop-title,
+  .project-title,
+  .project-client,
+  .project-role
+):lang(de) {
+  hyphens: auto;
+}
+:is(h1, h2, h3, .t-display, .t-h2, .t-h3, .t-label):lang(de) {
+  hyphens: manual;
+}
 /* Display styles set --wght / --opsz too, so weight-animated text settles on the token. */
 .t-h3,
 .t-h2,

@@ -3,37 +3,19 @@
 // - the image registry: 12 photos, each with alt, photographer, photographerUrl
 //   and pageUrl; every local rendition exists and the 2048 px JPEG matches the
 //   recorded width and height
-// - content counts: 3 case studies, 13 About projects (and the count line
-//   agrees), 12 workshop methods; every image id the content names exists
-// - the slim modules (content/hand.ts, content/site.ts) import only types
+// - per locale (content/de, content/en): 3 case studies, 13 About projects (and
+//   the count line agrees), 12 workshop methods, alt text for every image; every
+//   image id the content names exists
+// - the slim modules (content/<locale>/hand.ts, site.ts) import only types and
+//   the text-free deck
 // - no placeholder copy ("To be written.", TODO) and no deleted legacy file
-// Loads content/*.ts with Node's built-in type stripping (Node >= 22.18); a
-// small resolve hook adds the ".ts" extensions and the @content/ and @/ aliases.
+// Loads content/*.ts with Node's built-in type stripping (scripts/load-ts.mjs: ".ts" extensions and
+// the @content/ and @/ aliases). Counts and image references are checked in every locale.
 import { existsSync, readFileSync } from 'node:fs'
-import { register } from 'node:module'
 import { join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { load, root } from '../load-ts.mjs'
 
-const root = process.cwd()
-const hooks = `
-import { existsSync } from 'node:fs'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-const root = ${JSON.stringify(root)}
-export async function resolve(specifier, context, next) {
-  let s = specifier
-  if (s.startsWith('@content/')) s = pathToFileURL(root + '/content/' + s.slice(9)).href
-  else if (s.startsWith('@/')) s = pathToFileURL(root + '/src/' + s.slice(2)).href
-  if ((s.startsWith('.') || s.startsWith('file:')) && !/\\.[cm]?[jt]sx?$/.test(s) && context.parentURL) {
-    for (const ext of ['.ts', '.tsx', '/index.ts']) {
-      const url = new URL(s + ext, context.parentURL)
-      if (existsSync(fileURLToPath(url))) return next(url.href, context)
-    }
-  }
-  return next(s, context)
-}`
-register(`data:text/javascript,${encodeURIComponent(hooks)}`, pathToFileURL(join(root, 'package.json')))
-
-const { content, images } = await import(pathToFileURL(join(root, 'content/index.ts')).href)
+const { contents, images } = await load('content/index.ts')
 const { default: sharp } = await import('sharp')
 
 const failures = []
@@ -42,16 +24,19 @@ const check = (ok, message) => {
 }
 const eq = (what, actual, expected) => check(actual === expected, `${what}: expected ${expected}, found ${actual}`)
 
-// Content counts
-eq('caseStudies', content.caseStudies.length, 3)
-eq('about.projects.items', content.about.projects.items.length, 13)
-eq('workshopMethods.methods', content.workshopMethods.methods.length, 12)
-const years = content.about.projects.items.map((p) => Number(p.year))
-eq(
-  'about.projects.intro',
-  content.about.projects.intro,
-  `${content.about.projects.items.length} projects · ${Math.min(...years)}–${Math.max(...years)}`,
-)
+// Content counts, per locale
+const projectsWord = { de: 'Projekte', en: 'projects' }
+for (const [locale, content] of Object.entries(contents)) {
+  eq(`${locale} caseStudies`, content.caseStudies.length, 3)
+  eq(`${locale} about.projects.items`, content.about.projects.items.length, 13)
+  eq(`${locale} workshopMethods.methods`, content.workshopMethods.methods.length, 12)
+  const years = content.about.projects.items.map((p) => Number(p.year))
+  eq(
+    `${locale} about.projects.intro`,
+    content.about.projects.intro,
+    `${content.about.projects.items.length} ${projectsWord[locale]} · ${Math.min(...years)}–${Math.max(...years)}`,
+  )
+}
 
 // Image registry
 const entries = Object.entries(images)
@@ -98,13 +83,18 @@ const walk = (value, path) => {
   else if (typeof value === 'string')
     check(!/To be written|\bTODO\b|\bTBD\b/.test(value), `${path}: placeholder copy "${value.slice(0, 60)}"`)
 }
-walk(content, 'content')
+for (const [locale, content] of Object.entries(contents)) {
+  walk(content, `content/${locale}`)
+  for (const id of Object.keys(images))
+    check(Boolean(content.imageAlt[id]?.trim()), `content/${locale}: no alt text for image "${id}"`)
+}
 for (const [path, id] of named) check(id in images, `${path}: unknown image "${id}"`)
 
-// Slim modules import only types (D7)
-for (const file of ['content/hand.ts', 'content/site.ts']) {
+// Slim modules import only types and the text-free deck (D7)
+for (const file of Object.keys(contents).flatMap((l) => [`content/${l}/hand.ts`, `content/${l}/site.ts`])) {
   const imports = readFileSync(join(root, file), 'utf8').match(/^import .*$/gm) ?? []
-  for (const line of imports) check(/^import type /.test(line), `${file} has a value import: ${line}`)
+  for (const line of imports)
+    check(/^import type /.test(line) || /from '\.\.\/deck'$/.test(line), `${file} has a value import: ${line}`)
 }
 
 // Deleted legacy files stay deleted
@@ -118,8 +108,11 @@ for (const file of [
   'content/work',
   'content/adapters.ts',
   'content/cards.ts',
-  'content/pages/more-projects.ts',
-  'content/pages/contact.ts',
+  'content/pages',
+  'content/cases',
+  'content/hand.ts',
+  'content/site.ts',
+  'src/lib/cards.ts',
   'public/topo',
   'scripts/topo',
 ])
@@ -130,7 +123,7 @@ if (failures.length) {
   process.exit(1)
 }
 console.log(
-  `ok: ${content.caseStudies.length} case studies, ${content.about.projects.items.length} About projects, ` +
-    `${content.workshopMethods.methods.length} workshop methods, ${photos.length} photos with credits, ` +
-    `${named.length} image references, slim modules type-only`,
+  `ok: ${Object.keys(contents).join(' + ')}: 3 case studies, 13 About projects and 12 workshop methods each, ` +
+    `${photos.length} photos with credits and alt text in every locale, ${named.length} image references, ` +
+    `slim modules type-only (+ deck)`,
 )

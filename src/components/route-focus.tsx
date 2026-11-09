@@ -2,7 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { cardForPath } from '@/lib/hand-data'
+import { cardIdForPath } from '@/lib/hand-data'
+import { pagePath } from '@/lib/i18n'
 import { heroWasVisible, land } from '@/motion/play'
 import { afterTransition } from '@/motion/view-transition'
 import { announce } from './live-region'
@@ -14,6 +15,8 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
  *   back on the table from a card page: the card takes focus (and, when it
  *   morphed back from its hero, lands in its slot; otherwise the hand has
  *   already dealt it in)
+ *   the same page in the other language: focus stays where it is (the
+ *   switcher link the visitor chose)
  *   anywhere else: focus the page's <h1> (tabIndex -1)
  * and announce the page title in the polite live region.
  */
@@ -25,15 +28,20 @@ export function RouteFocus() {
     const from = previous.current
     previous.current = path
     if (from === null || from === path) return
-    const left = cardForPath(from)
+    const left = cardIdForPath(from)
+    const languageOnly = pagePath(from) === pagePath(path)
 
     afterTransition(() => {
       const h1 = document.querySelector<HTMLElement>('main h1')
       const title = h1?.querySelector('.sr-only')?.textContent ?? h1?.textContent ?? document.title
-      if (left && path === '/') {
-        const card = document.querySelector<HTMLElement>(`.hand-card[data-play="${CSS.escape(left.id)}"]`)
+      if (languageOnly) {
+        announce(title)
+        return
+      }
+      if (left && pagePath(path) === '/') {
+        const card = document.querySelector<HTMLElement>(`.hand-card[data-play="${CSS.escape(left)}"]`)
         if (card && card.getClientRects().length) {
-          if (heroWasVisible(left.id)) land(card)
+          if (heroWasVisible(left)) land(card)
           card.focus({ preventScroll: true })
           announce(title)
           return

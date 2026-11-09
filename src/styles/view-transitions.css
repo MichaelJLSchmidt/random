@@ -191,6 +191,42 @@
 }
 
 /*
+ * Language switch (type "locale", :root[data-locale-switch] while it runs): the same page in the
+ * other language. Everything with words cross-fades once, in place, over --dur-s (calm x 0.6,
+ * reduced 160 ms): the page and the card faces (.locale-fade, from the React maps in
+ * transitions.ts), the header, the hand, the rail and the footer. Nothing moves or resizes; the
+ * field (root) stays live. Never the card morph.
+ */
+::view-transition-group(.locale-fade),
+:root[data-locale-switch]::view-transition-group(site-header),
+:root[data-locale-switch]::view-transition-group(hand),
+:root[data-locale-switch]::view-transition-group(hand-rail),
+:root[data-locale-switch]::view-transition-group(site-footer) {
+  animation: none;
+}
+::view-transition-old(.locale-fade),
+:root[data-locale-switch]::view-transition-old(site-header),
+:root[data-locale-switch]::view-transition-old(hand),
+:root[data-locale-switch]::view-transition-old(hand-rail),
+:root[data-locale-switch]::view-transition-old(site-footer) {
+  display: block;
+  animation: vt-fade-out var(--dur-s) var(--ease-in-out) both;
+}
+::view-transition-new(.locale-fade),
+:root[data-locale-switch]::view-transition-new(site-header),
+:root[data-locale-switch]::view-transition-new(hand),
+:root[data-locale-switch]::view-transition-new(hand-rail),
+:root[data-locale-switch]::view-transition-new(site-footer) {
+  animation: vt-fade-in var(--dur-s) var(--ease-in-out) both;
+}
+:root[data-motion='reduced']::view-transition-old(.locale-fade),
+:root[data-motion='reduced']::view-transition-new(.locale-fade),
+:root[data-motion='reduced'][data-locale-switch]::view-transition-old(*),
+:root[data-motion='reduced'][data-locale-switch]::view-transition-new(*) {
+  animation-timing-function: linear;
+}
+
+/*
  * Reduced motion: every view transition is a plain crossfade. The card and
  * title morphs keep their names (focus and announcements still follow them)
  * but do not move or resize: the group jumps to the new geometry and the old

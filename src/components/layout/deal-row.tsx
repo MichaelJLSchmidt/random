@@ -1,8 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
+import { useChrome } from '@/lib/chrome'
 import type { Decision, Decisions } from '@/lib/content'
-import { site } from '@/lib/hand-data'
 import { pad2 } from '@/lib/format'
 import { useDealScene } from '@/motion/scenes/deal-scene'
 import { cx } from '@/lib/cx'
@@ -24,7 +24,9 @@ type Props = {
  * full-bleed horizontal scroll-snap row with a "1 / 4" label that follows the
  * snapped card (useDealPosition, D5). Contract: docs/contracts.md#dealrow.
  */
-export function DealRow({ decisions, labels = site.labels.decision, className }: Props) {
+export function DealRow({ decisions, labels: own, className }: Props) {
+  const { site } = useChrome()
+  const labels = own ?? site.labels.decision
   const ref = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLOListElement>(null)
   const position = useRef<HTMLParagraphElement>(null)

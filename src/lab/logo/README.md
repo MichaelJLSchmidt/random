@@ -1,13 +1,14 @@
 # Logo lab (temporary)
 
 A hidden page for comparing monogram concepts (M and F fused into one glyph):
-`/logo-lab/` under the base path, e.g. `/random/logo-lab/`, and `?c=<id>` for a concept's detail
+`/de/logo-lab/` or `/en/logo-lab/` under the base path, e.g. `/random/en/logo-lab/` (the lab
+itself is in English in both), and `?c=<id>` for a concept's detail
 view. Round 2 keeps 1 (hinted F), 3, 3B, 5 (open F) and 8 (Diagonal Cut); ids are stable, so deep
 links and stored scores survive, and a concept whose geometry changes gets a new `scoreKey`
 (old scores are pruned on load). It is not linked from the header, the hand, the footer or any page, and none of the marks
 is used anywhere else on the site.
 
-**Delete the lab in one step:** remove `src/app/logo-lab/` and `src/lab/logo/`. Nothing else
+**Delete the lab in one step:** remove `src/app/[locale]/logo-lab/` and `src/lab/logo/`. Nothing else
 references them. No shared file was changed for the lab.
 
 ## How it is built
@@ -53,7 +54,7 @@ node --import ./src/lab/logo/tools/ts-register.mjs src/lab/logo/tools/render-che
 
 # Every moment ends on the static mark, in every tier (needs the built site served);
 # BROWSER=webkit or firefox runs it in those engines (Playwright's builds)
-node src/lab/logo/tools/motion-check.mjs http://localhost:4100/random/logo-lab/
+node src/lab/logo/tools/motion-check.mjs http://localhost:4100/random/en/logo-lab/
 ```
 
 The Node tools load the Playwright that ships with the machine's Chromium

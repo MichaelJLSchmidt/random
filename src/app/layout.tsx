@@ -1,46 +1,24 @@
-import type { Metadata, Viewport } from 'next'
-import { AboutSmallPrint } from '@/components/about-small-print'
+import type { Viewport } from 'next'
 import { BackgroundField } from '@/components/background/background-field'
 import { fieldInitialCss } from '@/components/background/field-css'
-import { Hand } from '@/components/hand/hand'
-import { Header } from '@/components/header'
-import { LiveRegion } from '@/components/live-region'
-import { Reveals } from '@/components/reveals'
-import { RouteFocus } from '@/components/route-focus'
-import { SiteFooter } from '@/components/site-footer'
+import { RouterBridge } from '@/components/router-bridge'
 import { identityCss, palette } from '@/design/palette'
-import { Eggs } from '@/eggs/eggs'
-import { images, site } from '@/lib/content'
-import { absoluteUrl } from '@/lib/site'
 import { prefsScript } from '@/motion/preferences'
 import { pathFields } from '@/motion/table-store'
 import { motionCss } from '@/motion/tokens'
 import { display, hand, mono, text } from './fonts'
 import './globals.css'
 
-/** Default Open Graph image (about-og, 1280 px JPEG), only when the deploy passes SITE_URL. */
-const og = images['about-og']
-const ogUrl = absoluteUrl('/images/about-og-1280.jpg')
-const homeUrl = absoluteUrl('/')
-
-export const metadata: Metadata = {
-  title: { default: site.name, template: `%s · ${site.name}` },
-  description: site.description,
-  robots: { index: false, follow: false },
-  ...(homeUrl && ogUrl
-    ? {
-        metadataBase: new URL(homeUrl),
-        openGraph: {
-          type: 'website',
-          siteName: site.name,
-          title: site.name,
-          description: site.description,
-          images: [{ url: ogUrl, width: 1280, height: Math.round((1280 * og.height) / og.width), alt: og.alt }],
-        },
-      }
-    : {}),
-}
-
+/*
+ * The root layout: <html>, the head scripts and the background field, the
+ * same for every locale. It never remounts, so switching the language keeps
+ * the field running and keeps what the pre-paint script wrote on <html>
+ * (motion tier, field, hand reserve). Everything with words is in
+ * app/[locale]/layout.tsx, which does remount on a switch. <html lang> comes
+ * from the locale: written into each page's HTML at build time
+ * (scripts/i18n-pages.mjs) and kept in step on the client (LocaleSync).
+ * Contract: docs/contracts.md#locales.
+ */
 export const viewport: Viewport = {
   themeColor: palette.ink.field,
   colorScheme: 'dark',
@@ -50,7 +28,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="en"
       className={`${display.variable} ${text.variable} ${mono.variable} ${hand.variable}`}
       data-motion="full"
       suppressHydrationWarning
@@ -61,25 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style dangerouslySetInnerHTML={{ __html: identityCss() + fieldInitialCss() + motionCss() }} />
       </head>
       <body>
-        {/* First focusable element; only shown while the first-visit intro runs. */}
-        <button type="button" className="intro-skip" data-intro-skip="">
-          {site.introSkip}
-        </button>
-        <a className="skip-link" href="#main">
-          {site.skipLink}
-        </a>
-        {/* Persistent: never remount on navigation. */}
+        {/* Persistent: never remount, not on navigation and not when the language changes. */}
         <BackgroundField />
-        <Header />
-        <main id="main" tabIndex={-1}>
-          {children}
-        </main>
-        <SiteFooter about={<AboutSmallPrint />} />
-        <Hand />
-        <LiveRegion />
-        <RouteFocus />
-        <Reveals />
-        <Eggs />
+        <RouterBridge />
+        {children}
       </body>
     </html>
   )

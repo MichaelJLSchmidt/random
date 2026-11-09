@@ -1,4 +1,4 @@
-import { pad2, site } from '@/lib/content'
+import { getContent, pad2 } from '@/lib/content'
 import { cx } from '@/lib/cx'
 import { MinimapObserver } from './minimap-observer'
 
@@ -19,9 +19,10 @@ type Props = {
  * The tick of the section in view gets aria-current="location"
  * (MinimapObserver, IntersectionObserver). Contract: docs/contracts.md#minimap.
  */
-export function Minimap({ sections, label = site.labels.sections, className }: Props) {
+export async function Minimap({ sections, label, className }: Props) {
+  const { site } = await getContent()
   return (
-    <nav className={cx('minimap', className)} aria-label={label} data-minimap="">
+    <nav className={cx('minimap', className)} aria-label={label ?? site.labels.sections} data-minimap="">
       <ol>
         {sections.map((s, i) => (
           <li key={s.id}>

@@ -37,6 +37,47 @@
 }
 
 /*
+ * The language switcher, "DE · EN": each language a 44 px target, its text set
+ * toward the dot between them. The active one draws its underline like the
+ * current page link (.link, aria-current).
+ */
+.language ul {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  font-weight: var(--wght-label);
+}
+.language li {
+  display: flex;
+  align-items: center;
+}
+.locale {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 44px;
+  min-height: 44px;
+  padding-right: var(--space-2);
+  color: var(--text);
+  text-decoration: none;
+}
+.language li + li .locale {
+  justify-content: flex-start;
+  padding-right: 0;
+  padding-left: var(--space-2);
+}
+/* The dot takes no room: the two targets meet under it. */
+.dot {
+  display: inline-flex;
+  justify-content: center;
+  width: 0;
+  color: var(--muted);
+}
+
+/*
  * The home slot: the wordmark (.mark) and Back (.back) share one grid cell.
  * Wordmark -> Back (about 420 ms, outQuint): the mark compresses (scaleX) and
  * fades toward the left edge; the arrow's shaft draws out of it from the left;

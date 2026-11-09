@@ -4,7 +4,8 @@ Each session writes one file here so the Integration session can merge the paral
 guessing. Wave 1 sessions: `layout.md` (Layout & Pages), `motion.md` (Motion),
 `illustrations.md` (Illustrations), `content.md` (Content & Images). `foundation.md` is the
 Foundation session's; `integration.md` reports the merge, the integration decisions (I1–I27 in
-`docs/contracts.md`) and the deploy.
+`docs/contracts.md`) and the deploy. Later single-session rounds report in their own file:
+`feedback-1.md` (feedback round 1), `i18n.md` (German and English, L1–L11).
 
 Create `docs/handoff/<agent>.md` at the start of your session (with the plan) and finish it
 before your last push. Edit only your own file. Use these sections:
