@@ -11,7 +11,6 @@ const { chromium } = require('playwright')
 const { hand } = await import(new URL('../content/hand.ts', import.meta.url).href)
 const { notFound } = await import(new URL('../content/pages/not-found.ts', import.meta.url).href)
 const cardTitle = (id) => hand.cards[id].title
-const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const [base = 'http://localhost:4100/random/', ...flags] = process.argv.slice(2)
 const motion = flags.find((f) => f.startsWith('--motion='))?.slice(9) ?? 'full'
 const root = base.endsWith('/') ? base : `${base}/`
@@ -64,9 +63,9 @@ async function newContext(browser, device, { firstVisit = false } = {}) {
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   page.on('console', (m) => {
-    // The deliberate 404 page logs its own status.
+    // The deliberate 404 pages (an unknown address, the removed routes) log their own status.
     if (m.type() !== 'error' || /GPU stall|GL Driver/.test(m.text())) return
-    if (m.text().includes('404') && m.location().url.includes('no-such-page')) return
+    if (m.text().includes('404') && /no-such-page|more-projects|contact/.test(m.location().url)) return
     errors.push(`${m.text()} (${m.location().url})`)
   })
   return { context, page, errors }
@@ -121,9 +120,12 @@ async function introSuite(browser, device) {
         const t0 = 0
         const seen = {}
         const parts = {
-          cards: () => document.querySelector('.hand-fan .hand-card[data-drawn]'),
           title: () => document.querySelector('h1 .wt-word > span'),
+          label: () => document.querySelector('.home-label'),
           lines: () => document.querySelector('.home-role .rv-line') ?? document.querySelector('.home-role'),
+          divider: () => document.querySelector('.home-bring-rule'),
+          items: () => document.querySelector('.home-bring-list li:last-child'),
+          cards: () => document.querySelector('.hand-fan .hand-card[data-drawn]'),
           chrome: () => document.querySelector('[data-chrome]'),
         }
         // Effective opacity: the reveal may hide an ancestor (the h1) while its words wait.
@@ -145,21 +147,29 @@ async function introSuite(browser, device) {
               if (onScreen && opacity(el) > 0.3) seen[k] = Math.round(t)
             }
           }
-          if (Object.keys(seen).length === 4 || t > 5000) resolve(seen)
+          if (Object.keys(seen).length === Object.keys(parts).length || t > 6000) resolve(seen)
           else requestAnimationFrame(tick)
         }
         tick()
       }),
   )
-  const order = ['cards', 'title', 'lines', 'chrome'].map((k) => `${k} ${times[k] ?? '-'}ms`).join(', ')
-  if (motion === 'full')
+  const keys = ['title', 'label', 'lines', 'divider', 'items', 'cards', 'chrome']
+  const order = keys.map((k) => `${k} ${times[k] ?? '-'}ms`).join(', ')
+  if (motion === 'reduced')
     check(
-      'home first visit: cards drawn, then title, lines, chrome',
-      times.cards < times.title && times.title < times.lines && times.lines <= times.chrome,
+      'home first visit: everything shows (reduced)',
+      keys.every((k) => k in times),
       order,
     )
-  else check('home first visit: everything shows without the draw', Object.keys(times).length === 4, order)
-  await wait(page, 1200)
+  else {
+    // Name, label, role and intro, divider, items, then the hand, then the chrome (a frame of slack).
+    const inOrder = keys.every((k, i) => k in times && (i === 0 || times[keys[i - 1]] <= times[k] + 20))
+    check(`home first visit (${motion}): name, label, lines, divider, items, hand, chrome`, inOrder, order)
+    const span = times.chrome - times.title
+    const full = motion === 'full' ? [1500, 2700] : [800, 1800]
+    check(`home first visit: about 2 s (${motion}: x0.6)`, span > full[0] && span < full[1], `${span}ms`)
+  }
+  await wait(page, 1600)
   check(
     'intro done: data-intro cleared',
     (await page.evaluate(() => document.documentElement.dataset.intro)) === undefined,
@@ -177,14 +187,36 @@ async function tableSuite(browser, device) {
   await wait(page, 1200)
   check('hand: four card links in nav "Work"', (await page.locator('nav[aria-label="Work"] a.hand-card').count()) === 4)
   check('hand: no face-down deck', (await page.locator('.hand-deck').count()) === 0)
-  const counter = () => page.locator('.hand-counter').textContent()
-  check(
-    'counter: "01 / 04" and the first card at rest',
-    new RegExp(`01\\s*/\\s*04\\s*${escape(cardTitle('team-of-teams'))}`).test(await counter()),
-    await counter(),
-  )
-  check('counter: polite live region', (await page.locator('.hand-counter').getAttribute('aria-live')) === 'polite')
+  check('home: no card counter', (await page.locator('.hand-counter').count()) === 0)
   check('hand: one tab stop', (await page.locator('nav[aria-label="Work"] [data-roving][tabindex="0"]').count()) === 1)
+  const screen = await page.evaluate(() => ({
+    height: document.documentElement.scrollHeight,
+    vh: innerHeight,
+    footer: document.querySelectorAll('footer').length,
+    hint: document.querySelector('.home-hint')?.getBoundingClientRect().bottom ?? 0,
+    hand: Math.min(...[...document.querySelectorAll('.hand-fan .hand-card')].map((c) => c.getBoundingClientRect().top)),
+  }))
+  check(
+    'home: one screen, no scroll, no footer',
+    screen.height <= screen.vh && screen.footer === 0,
+    JSON.stringify(screen),
+  )
+  check('home: content clears the hand', screen.hint <= screen.hand, JSON.stringify(screen))
+  const links = await page.evaluate(() => [...document.querySelectorAll('header a')].map((a) => a.textContent.trim()))
+  check('header: home slot and About only', links.length === 2 && links.includes('About'), links.join(' | '))
+  const calm = await page.evaluate(() => {
+    const sw = document.querySelector('[data-calm-switch]')
+    return {
+      checked: sw?.getAttribute('aria-checked'),
+      disabled: sw?.disabled,
+      motion: document.documentElement.dataset.motion,
+    }
+  })
+  check(
+    `calm switch: ${motion === 'full' ? 'off' : motion === 'calm' ? 'on' : 'on and disabled'}`,
+    calm.checked === String(motion !== 'full') && calm.disabled === (motion === 'reduced'),
+    JSON.stringify(calm),
+  )
 
   // Hover colour blend (fine pointers).
   if (device === 'desktop' && motion !== 'reduced') {
@@ -192,11 +224,6 @@ async function tableSuite(browser, device) {
     await page.hover('.hand-card[data-play="front-door"]', { position: { x: 60, y: 30 } })
     await wait(page, 1000)
     const after = await regionColour(page, sky)
-    check(
-      'counter: follows the hovered card',
-      new RegExp(`03\\s*/\\s*04\\s*${escape(cardTitle('front-door'))}`).test(await counter()),
-      await counter(),
-    )
     check(
       'hover: field blends toward the card colour (grove)',
       after[1] - before[1] > 2 && after[1] > after[0],
@@ -218,6 +245,11 @@ async function tableSuite(browser, device) {
     JSON.stringify(vts.at(-1)),
   )
   check('play: H1 focused', (await focused(page)) === 'h1#page-heading')
+  check(
+    'play: the home slot shows Back',
+    (await page.locator('header [data-slot-mode="back"]').count()) === 1 &&
+      (await page.locator('header [data-slot-mode="back"]').textContent()).includes('Back'),
+  )
   check('play: title announced', (await live(page)).includes(cardTitle('team-of-teams')))
   check(
     'play: ghost in the open slot',
@@ -259,6 +291,10 @@ async function tableSuite(browser, device) {
   vts = await page.evaluate(() => window.__vts)
   check('return: "return" view transition', vts.at(-1)?.types.includes('return'), JSON.stringify(vts.at(-1)))
   check('return: focus back on the card', (await focused(page)) === 'a[front-door]', await focused(page))
+  check(
+    'return: the home slot shows the wordmark',
+    (await page.locator('header [data-slot-mode="mark"]').count()) === 1,
+  )
   // Focus on the returned card blends the field like a hover; move it away first.
   await page.evaluate(() => document.activeElement?.blur())
   if (device === 'desktop') await page.mouse.move(700, 200)
@@ -313,29 +349,69 @@ async function tableSuite(browser, device) {
     check('phone: rail hides on scroll down, returns on scroll up', hidden && shown)
   }
 
-  // About topography.
+  // About: the old portfolio's contour field (live), or its poster (reduced); one still frame at rest.
   await page.goto(url('/about/'), { waitUntil: 'networkidle' })
-  await wait(page, 2000)
-  const topo = await page.evaluate(() => ({
-    renderer: document.documentElement.dataset.renderer,
-    static: getComputedStyle(document.querySelector('.topo-static')).display,
-    texture: performance.getEntriesByType('resource').some((e) => e.name.includes('/topo/elevation.png')),
-    attribution: document.querySelector('.topo-credit')?.textContent ?? '',
-  }))
-  if (motion === 'reduced') check('about: static contour SVG (reduced)', topo.static === 'block', JSON.stringify(topo))
+  await wait(page, 2500)
+  const topo = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const field = document.querySelector('.field')
+        const gl = document.querySelector('.field-canvas').getContext('webgl2')
+        let frames = 0
+        const draw = gl.drawArrays.bind(gl)
+        gl.drawArrays = (...a) => (frames++, draw(...a))
+        setTimeout(
+          () =>
+            resolve({
+              renderer: document.documentElement.dataset.renderer,
+              topo: field.hasAttribute('data-topo'),
+              poster:
+                field.hasAttribute('data-poster') &&
+                getComputedStyle(field.querySelector('.field-poster')).opacity === '1',
+              heightmap: performance.getEntriesByType('resource').some((e) => e.name.includes('/terrain/region.webp')),
+              frames,
+              attribution: document.querySelector('footer')?.textContent ?? '',
+            }),
+          1500,
+        )
+      }),
+  )
+  if (motion === 'reduced')
+    check(
+      'about: the region poster (reduced), no heightmap',
+      topo.poster && !topo.heightmap,
+      JSON.stringify({ ...topo, attribution: 0 }),
+    )
   else
     check(
-      'about: elevation texture loaded for the WebGL contours',
-      topo.renderer === 'gl' && topo.texture && topo.static === 'none',
-      JSON.stringify(topo),
+      'about: live contours from the region heightmap, no poster',
+      topo.renderer === 'gl' && topo.topo && topo.heightmap && !topo.poster,
+      JSON.stringify({ ...topo, attribution: 0 }),
     )
+  check('about: no frames at rest', topo.frames === 0, String(topo.frames))
   check(
-    'about: swisstopo attribution',
+    'about: swisstopo attribution in the footer',
     topo.attribution.includes('swissALTI3D') && topo.attribution.includes('swisstopo'),
   )
+  const about = await page.evaluate(() => ({
+    projects: document.querySelectorAll('#projects .project').length,
+    interactive: document.querySelectorAll('#projects a, #projects button, #projects [tabindex]').length,
+    contact: Boolean(document.querySelector('#contact a[href^="mailto:"]')),
+  }))
+  check(
+    'about: 13 projects, nothing interactive, contact chapter',
+    about.projects === 13 && about.interactive === 0 && about.contact,
+    JSON.stringify(about),
+  )
+
+  // Removed routes are gone (the 404 page answers).
+  for (const gone of ['/more-projects/', '/contact/']) {
+    await page.goto(url(gone), { waitUntil: 'networkidle' })
+    check(`${gone} removed`, (await page.locator('h1').textContent()).includes(notFound.title))
+  }
 
   // Pages and reveals: nothing in the first viewport stays hidden.
-  for (const p of ['/', '/work/front-door/', '/management/', '/more-projects/', '/contact/', '/no-such-page/']) {
+  for (const p of ['/', '/work/front-door/', '/management/', '/about/', '/no-such-page/']) {
     await page.goto(url(p), { waitUntil: 'networkidle' })
     await wait(page, 2400)
     const hidden = await page.evaluate(() =>
@@ -392,7 +468,7 @@ async function motionSuite(browser, device) {
   })
   if (deal) {
     if (motion === 'full' && device === 'desktop')
-      check('deal scene: pinned stage (full, desktop)', deal.active && deal.ratio > 2, JSON.stringify(deal))
+      check('deal scene: pinned 180svh stage (full, desktop)', deal.active && deal.ratio > 1.7, JSON.stringify(deal))
     else
       check(
         `deal scene: static row, cards stack (${motion}, ${device})`,
@@ -446,12 +522,108 @@ async function motionSuite(browser, device) {
   await context.close()
 }
 
+/**
+ * This round's behaviour: the detail hero's order (title, summary, label, meta pairs left to
+ * right), a return with the hero scrolled away (no morph, the card is dealt into its slot), and
+ * the idle hint (home only, once per session, fades on the next key press).
+ */
+async function feedbackSuite(browser, device) {
+  const { context, page, errors } = await newContext(browser, device)
+  await page.goto(url('/work/front-door/'), { waitUntil: 'commit' })
+  const seen = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const parts = {
+          title: () => document.querySelector('h1 .wt-word > span'),
+          summary: () => document.querySelector('.case-hero-summary'),
+          label: () => document.querySelector('.case-hero-meta'),
+          pair1: () => document.querySelectorAll('.meta-pair')[0],
+          pair2: () => document.querySelectorAll('.meta-pair')[1],
+        }
+        const opacity = (el) => {
+          let o = 1
+          for (let e = el; e && e.nodeType === 1; e = e.parentElement) o *= Number(getComputedStyle(e).opacity)
+          return o
+        }
+        const t = {}
+        const tick = () => {
+          const field = document.querySelector('.field')
+          if (field && getComputedStyle(field).position === 'fixed')
+            for (const [k, get] of Object.entries(parts)) {
+              const el = get()
+              const r = el?.getBoundingClientRect()
+              if (t[k] === undefined && r && r.top < innerHeight && opacity(el) > 0.3)
+                t[k] = Math.round(performance.now())
+            }
+          if (Object.keys(t).length === Object.keys(parts).length || performance.now() > 5000) resolve(t)
+          else requestAnimationFrame(tick)
+        }
+        tick()
+      }),
+  )
+  const keys = ['title', 'summary', 'label', 'pair1', 'pair2'].filter((k) => k in seen)
+  const order = keys.map((k) => `${k} ${seen[k]}ms`).join(', ')
+  if (motion !== 'reduced')
+    check(
+      'detail hero: title, summary, label, then the meta pairs left to right',
+      keys.length >= 3 && keys.every((k, i) => i === 0 || seen[keys[i - 1]] <= seen[k] + 20),
+      order,
+    )
+  // Return with the hero scrolled away: no card morph, the card is back in its slot.
+  await wait(page, 1500)
+  await page.evaluate(() => scrollTo(0, 2400))
+  await wait(page, 600)
+  await page.keyboard.press('Escape')
+  await page.waitForURL((u) => path({ url: () => u.href }) === '/', { timeout: 4000 })
+  await wait(page, 1600)
+  const back = await page.evaluate(() => {
+    const card = document.querySelector('.hand-fan .hand-card[data-play="front-door"]')
+    return {
+      opacity: getComputedStyle(card).opacity,
+      running: card.getAnimations().length,
+      focused: document.activeElement === card,
+    }
+  })
+  check(
+    'return (hero scrolled away): the card is dealt into its slot',
+    back.opacity === '1' && back.running === 0 && back.focused,
+    JSON.stringify(back),
+  )
+  // The idle hint: ?idle shortens the wait to a second.
+  await page.goto(url('/?idle'), { waitUntil: 'networkidle' })
+  await wait(page, 3500)
+  const hint = await page.evaluate(() => {
+    const el = document.querySelector('.idle-hint')
+    return (
+      el && {
+        ready: el.hasAttribute('data-ready'),
+        hidden: el.getAttribute('aria-hidden'),
+        opacity: getComputedStyle(el).opacity,
+      }
+    )
+  })
+  check(
+    'idle hint: appears on home, decorative',
+    hint?.ready && hint.hidden === 'true' && hint.opacity === '1',
+    JSON.stringify(hint),
+  )
+  await page.keyboard.press('Shift')
+  await wait(page, 700)
+  check('idle hint: the next key press fades it out', (await page.locator('.idle-hint').count()) === 0)
+  await page.goto(url('/?idle'), { waitUntil: 'networkidle' })
+  await wait(page, 2500)
+  check('idle hint: once per session', (await page.locator('.idle-hint').count()) === 0)
+  check('no page errors (feedback)', errors.length === 0, errors.slice(0, 3).join(' | '))
+  await context.close()
+}
+
 async function main() {
   const browser = await chromium.launch()
   for (const device of Object.keys(viewports)) {
     console.log(`\n# ${device} (${motion})`)
     await introSuite(browser, device)
     await tableSuite(browser, device)
+    await feedbackSuite(browser, device)
     await motionSuite(browser, device)
   }
   await browser.close()
