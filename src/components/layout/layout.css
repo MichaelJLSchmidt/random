@@ -169,6 +169,12 @@
   position: relative;
   z-index: 1;
 }
+/* Below 1024 the index label leads, then the numeral with the h2 over its lower third. */
+@media (max-width: 1023.98px) {
+  .page-section > .numeral-breaker + .section-index {
+    order: -1;
+  }
+}
 @media (min-width: 1024px) {
   .page-section > .numeral-breaker,
   .numeral-breaker {
@@ -202,13 +208,14 @@
   overflow: clip;
   background: color-mix(in srgb, var(--id-field) 80%, black);
 }
-.offset-image-media,
-.offset-image-media img {
+/* Fill the frame (more specific than picture.css's intrinsic height). */
+.offset-image-frame picture[data-image],
+.offset-image-frame picture[data-image] img {
   display: block;
   width: 100%;
   height: 100%;
 }
-.offset-image-media img {
+.offset-image-frame picture[data-image] img {
   object-fit: cover;
 }
 .offset-image-caption {
