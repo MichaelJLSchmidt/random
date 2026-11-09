@@ -5,7 +5,7 @@ import { MOTION_KEY, savePreference } from '@/motion/preferences'
 import { useMotionTier } from '@/motion/use-tier'
 import styles from './calm-switch.module.css'
 
-type Labels = { calm: string; calmOn: string; calmOff: string; reducedHint: string }
+type Labels = { calm: string; calmLabel: string; calmOn: string; calmOff: string; reducedHint: string }
 
 /*
  * The calm-motion switch in the header. One source of truth: the stored
@@ -14,7 +14,8 @@ type Labels = { calm: string; calmOn: string; calmOff: string; reducedHint: stri
  * pure CSS on that attribute, so it is right before hydration; React reads the
  * same attribute (useMotionTier) and syncs aria-checked and disabled on mount.
  * Reduced motion (system) always wins: the switch shows on, disabled, with a
- * short hint.
+ * short hint. The visible label may be shorter than the accessible name
+ * (German: "Ruhig", named "Ruhigere Animationen").
  */
 export function CalmSwitch({ labels }: { labels: Labels }) {
   const tier = useMotionTier()
@@ -27,6 +28,7 @@ export function CalmSwitch({ labels }: { labels: Labels }) {
         role="switch"
         className={styles.switch}
         aria-checked={on}
+        aria-label={labels.calmLabel === labels.calm ? undefined : labels.calm}
         disabled={reduced}
         aria-describedby={reduced ? 'calm-hint' : undefined}
         data-calm-switch=""
@@ -37,7 +39,7 @@ export function CalmSwitch({ labels }: { labels: Labels }) {
           announce(next === 'calm' ? labels.calmOn : labels.calmOff)
         }}
       >
-        <span className={styles.label}>{labels.calm}</span>
+        <span className={styles.label}>{labels.calmLabel}</span>
         <span className={styles.track} aria-hidden="true">
           <span className={styles.thumb} />
         </span>

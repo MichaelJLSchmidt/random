@@ -2,8 +2,9 @@
 
 import { type ReactNode, useEffect, useRef, useState, ViewTransition } from 'react'
 import { headerHeight } from '@/design/layout'
+import { useChrome } from '@/lib/chrome'
 import { cardNumber, pad2 } from '@/lib/format'
-import { type HandCard, handCards } from '@/lib/hand-data'
+import type { HandCard } from '@/lib/hand-data'
 import { heroVisible } from '@/motion/play'
 import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
 import { PageTitle } from './page-title'
@@ -48,6 +49,7 @@ type Props = {
  *             overlapping the frame's lower edge, summary
  */
 export function CaseHero({ card, title = card.title, label, summary, media, mediaKind = 'image' }: Props) {
+  const { handCards } = useChrome()
   const ref = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(true)
 

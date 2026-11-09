@@ -2,8 +2,9 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { useChrome } from '@/lib/chrome'
 import { fill } from '@/lib/format'
-import { coffeeEgg, site } from '@/lib/hand-data'
+import { pagePath } from '@/lib/i18n'
 import { at, dur } from '@/motion/tokens'
 import { readTier } from '@/motion/use-tier'
 import { attachTableLongPress } from './hand-eggs'
@@ -19,7 +20,11 @@ const typing = (el: EventTarget | null) =>
  * imported the first time it fires.
  */
 export function Eggs() {
-  const path = usePathname().replace(/\/$/, '') || '/'
+  const chrome = useChrome()
+  const { site } = chrome
+  const chromeRef = useRef(chrome)
+  chromeRef.current = chrome
+  const path = pagePath(usePathname())
   const pathRef = useRef(path)
   pathRef.current = path
   const dialog = useRef<HTMLDialogElement>(null)
@@ -45,6 +50,7 @@ export function Eggs() {
         if (buffer === 'draw' && home && eggOn('coffee')) {
           buffer = ''
           dispatchEvent(new Event('egg:coffee'))
+          const { site, coffeeEgg } = chromeRef.current
           import('@/components/live-region').then((m) =>
             m.announce(fill(site.eggs.coffeeDealt, { title: coffeeEgg.title })),
           )
@@ -54,8 +60,10 @@ export function Eggs() {
     addEventListener('keydown', onKey)
     const offLongPress = attachTableLongPress(() => pathRef.current === '/')
 
-    // Rare pull: 1 in 40 loads (or ?rare), once the hand has landed.
-    if (eggOn('rarePull') && (Math.random() < 1 / 40 || new URLSearchParams(location.search).has('rare'))) {
+    // Rare pull: 1 in 40 loads (or ?rare), once the hand has landed. A language switch remounts the
+    // eggs but is no load.
+    const load = !('localeSwitch' in document.documentElement.dataset)
+    if (load && eggOn('rarePull') && (Math.random() < 1 / 40 || new URLSearchParams(location.search).has('rare'))) {
       const first = document.documentElement.dataset.intro === 'first'
       // Once the first-visit deal has landed (at.firstLoad.cards), plus a beat.
       const C = at.firstLoad.cards
@@ -69,6 +77,7 @@ export function Eggs() {
   }, [])
 
   function openShortcuts() {
+    const { site } = chromeRef.current
     const d = dialog.current!
     const h = title.current!
     d.showModal()

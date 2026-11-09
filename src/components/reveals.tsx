@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { type CSSProperties, type HTMLAttributes, type ReactNode, createElement, useLayoutEffect, useRef } from 'react'
+import { pagePath } from '@/lib/i18n'
 import { type NavigationKind, revealRoute } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
 
@@ -22,23 +23,30 @@ import { table } from '@/motion/table-store'
 
 const normalise = (path: string) => path.replace(/\/$/, '') || '/'
 
-/** Runs the reveal system for each route (in a layout effect: before a view transition captures it). */
+/**
+ * Runs the reveal system for each route (in a layout effect: before a view transition captures it).
+ * A language switch remounts the [locale] layout, so this mounts again; the table's "locale" intent
+ * makes that run a "locale" one (the page final at once), never the home intro.
+ */
 export function Reveals() {
-  const path = normalise(usePathname())
+  const route = normalise(usePathname())
   const first = useRef(true)
 
   useLayoutEffect(() => {
+    const path = pagePath(route)
     let kind: NavigationKind
     if (first.current) {
       first.current = false
       const intro = document.documentElement.dataset.intro
-      kind = path === '/' ? (intro === 'first' ? 'first' : 'repeat') : 'load'
+      // Mounted by a language switch (the [locale] layout remounts): the same page, final at once.
+      if (table.takeIntent() === 'locale') kind = 'locale'
+      else kind = path === '/' ? (intro === 'first' ? 'first' : 'repeat') : 'load'
     } else {
       const intent = table.takeIntent()
       kind = intent === 'return' && path !== '/' ? 'nav' : (intent ?? 'nav')
     }
     return revealRoute(kind)
-  }, [path])
+  }, [route])
 
   return null
 }

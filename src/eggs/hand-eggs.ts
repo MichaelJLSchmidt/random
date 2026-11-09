@@ -1,5 +1,5 @@
 import { announce } from '@/components/live-region'
-import { cardById, site } from '@/lib/hand-data'
+import { activeChrome } from '@/lib/chrome'
 import { dealOffset, drawCards, fanCards } from '@/motion/reveal'
 import { table } from '@/motion/table-store'
 import { duration as D, deal, durFor, ease, stagger } from '@/motion/tokens'
@@ -56,7 +56,7 @@ export async function mulligan() {
       card.animate([{ opacity: 0 }, { opacity: 1 }], { duration: durFor(tier, 'm') * 1000 })
     }
   }
-  announce(site.eggs.dealt)
+  announce(activeChrome().site.eggs.dealt)
   dealing = false
 }
 
@@ -69,7 +69,7 @@ export function tap(card: HTMLElement) {
   if (tapped) return
   card.dataset.tapped = ''
   const line = card.querySelector('.card-tapline')?.textContent
-  if (line) announce(site.eggs.turned.replace('{line}', line))
+  if (line) announce(activeChrome().site.eggs.turned.replace('{line}', line))
   if (id) table.hover(null)
 }
 
@@ -87,7 +87,7 @@ export function inspect(card: HTMLElement, on: boolean) {
   if (card.hasAttribute('aria-current')) return
   card.dataset.inspect = ''
   const id = card.dataset.play
-  const line = cardById(id)?.inspect
+  const line = activeChrome().cardById(id)?.inspect
   if (line) announce(line)
 }
 
@@ -99,7 +99,7 @@ export function rarePull(delay: number) {
     const card = cards[Math.floor(Math.random() * cards.length)]
     if (!card) return
     card.dataset.rare = ''
-    announce(site.eggs.rare)
+    announce(activeChrome().site.eggs.rare)
     window.setTimeout(() => delete card.dataset.rare, D.glint * 1000 + 100)
   }, delay * 1000)
 }

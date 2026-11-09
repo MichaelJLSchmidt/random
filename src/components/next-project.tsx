@@ -1,5 +1,4 @@
-import { cardById, handCards, nextCard } from '@/lib/cards'
-import { cardNumber, pad2 } from '@/lib/content'
+import { cardNumber, getContent, pad2 } from '@/lib/content'
 import { cx } from '@/lib/cx'
 import { SWITCH } from '@/motion/transitions'
 import { CardFace } from './hand/card-face'
@@ -11,7 +10,16 @@ import { Reveal } from './reveals'
  * with its title set large beside it. It plays that card (a switch: the same
  * lift and morph as the hand). Place it as a grid item (.col-content).
  */
-export function NextProject({ current, next: nextId, className }: { current: string; next?: string; className?: string }) {
+export async function NextProject({
+  current,
+  next: nextId,
+  className,
+}: {
+  current: string
+  next?: string
+  className?: string
+}) {
+  const { cardById, handCards, nextCard } = await getContent()
   const next = cardById(nextId) ?? nextCard(current)
   return (
     <Reveal kind="block" className={cx('next-project', className)}>

@@ -5,18 +5,10 @@ import { usePathname, useRouter } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { contour, palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
-import { cardForPath, coffeeEgg, handCards, handLabels } from '@/lib/hand-data'
+import { useChrome } from '@/lib/chrome'
+import { pagePath } from '@/lib/i18n'
 import { drawCards } from '@/motion/reveal'
-import {
-  cancelPlay,
-  dealIn,
-  heroWasVisible,
-  interceptHistory,
-  play,
-  registerNavigate,
-  returnHome,
-  settleLift,
-} from '@/motion/play'
+import { cancelPlay, dealIn, heroWasVisible, play, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
 import { angle, duration, hand as H } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
@@ -25,7 +17,6 @@ import { CardBack, CardFace } from './card-face'
 
 /** Outer cards sit a little lower: the hand's arc (px at desktop size). */
 const ARC = [10, 2, 2, 10]
-const normalise = (path: string) => path.replace(/\/$/, '') || '/'
 
 /*
  * The hand: exactly four cards (three case studies and Management) as the
@@ -37,16 +28,22 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
  *                with the four cards only (About is in the header)
  * Hover and focus are pure CSS; the background hears about them through the
  * table store after an 80 ms intent delay. Nothing here re-renders React
- * except a route change. Foundation-owned (read-only in Wave 1); styles in
- * src/styles/hand.css (Motion). Contract: docs/contracts.md#hand.
+ * except a route change. Card copy and links come from the active locale
+ * (useChrome); routes are matched without their locale, so a language switch
+ * re-renders the words and moves nothing. Foundation-owned (read-only in
+ * Wave 1); styles in src/styles/hand.css (Motion). Contract: docs/contracts.md#hand.
  */
 export function Hand() {
-  const path = normalise(usePathname())
+  const chrome = useChrome()
+  const { handCards, handLabels, coffeeEgg, cardForPath } = chrome
+  const path = pagePath(usePathname())
   const home = path === '/'
   const active = cardForPath(path)?.id ?? null
   const router = useRouter()
-  const pathRef = useRef(path)
-  pathRef.current = path
+  const homeHref = chrome.href('/')
+  const homeRef = useRef(homeHref)
+  homeRef.current = homeHref
+  const hrefs = handCards.map((c) => c.href).join(' ')
   const root = useRef<HTMLElement>(null)
   const sheet = useRef<HTMLDivElement>(null)
   // Roving tabindex: one tab stop for the whole hand, on the open card if any.
@@ -58,27 +55,18 @@ export function Hand() {
   const [coffee, setCoffee] = useState(false)
   const coffeeRef = useRef<HTMLAnchorElement>(null)
 
-  // Navigation for play / return, prefetch of every card route, Escape returns.
+  // Prefetch of every card route, Escape returns. (The router for play / return and the
+  // back / forward replay live in RouterBridge, in the root layout: they outlive a language switch.)
   useEffect(() => {
-    registerNavigate((href, types, replace) =>
-      replace
-        ? router.replace(href, { transitionTypes: types, scroll: false })
-        : router.push(href, { transitionTypes: types }),
-    )
-    const offHistory = interceptHistory(() => pathRef.current)
-    for (const card of handCards) router.prefetch(card.href)
+    for (const href of hrefs.split(' ')) router.prefetch(href)
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || !table.get().activeCard) return
       if (document.querySelector(':popover-open, dialog[open]')) return
-      returnHome('/')
+      returnHome(homeRef.current)
     }
     document.addEventListener('keydown', onKey)
-    return () => {
-      registerNavigate(null)
-      offHistory()
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [router])
+    return () => document.removeEventListener('keydown', onKey)
+  }, [router, hrefs])
 
   // The hand shows 72% on home and 45% elsewhere: off home, pages keep the collapsed
   // reserve (:root[data-hand="collapsed"] -> --hand-reserve 120px in layout.css). The
@@ -384,7 +372,12 @@ export function Hand() {
             ))}
             {coffee && home && (
               <li className="hand-slot" data-slot="coffee" style={{ '--r': '15deg', '--dy': '24px' } as CSSProperties}>
-                <Link ref={coffeeRef} href="/about#contact" className="hand-card hand-coffee" transitionTypes={[NAV]}>
+                <Link
+                  ref={coffeeRef}
+                  href={chrome.href('/about#contact')}
+                  className="hand-card hand-coffee"
+                  transitionTypes={[NAV]}
+                >
                   <span className="card-face" data-identity="saffron">
                     <span className="card-band">
                       <span className="card-title">{coffeeEgg.title}</span>

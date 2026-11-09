@@ -39,11 +39,13 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *              final at once, because the card → hero morph delivers it
  *   breakers   full-bleed blocks with data-breaker lift the field while in view
  *   discard    on 404 the .lost-card (a draw reveal) falls into the zone
+ *   language   a language switch keeps the page: what is on screen is final at
+ *              once (the cross-fade shows it), the rest reveals on scroll
  *
  * The Minimap's aria-current belongs to Layout (MinimapObserver), not here.
  */
 /** How the route was reached (decides the page order). Element kinds are RevealKind in reveals.tsx. */
-export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return'
+export type NavigationKind = 'first' | 'repeat' | 'load' | 'nav' | 'play' | 'switch' | 'return' | 'locale'
 
 const kinds = new Set<string>(['lines', 'block', 'list', 'image', 'digits', 'rule', 'draw', 'note', 'pair'])
 
@@ -200,9 +202,19 @@ export function revealRoute(kind: NavigationKind) {
   // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
   if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines')) void loadSplit()
 
+  // A language switch: the same page with other words. What is revealed stays so, what is on
+  // screen is final at once (the cross-fade shows it); blocks further down reveal on scroll.
+  const language = kind === 'locale'
+  if (language)
+    for (const el of all) {
+      if (!kindOf(el) || !(el.hasAttribute('data-revealed') || inFirstViewport(el))) continue
+      handled.add(el)
+      if (!el.hasAttribute('data-revealed')) revealNow(el)
+    }
+
   // Home: the first-load sequence (the first visit also deals the hand and reveals the chrome).
   const seq = main.querySelector<HTMLElement>('[data-first-load]')
-  if (seq || kind === 'first') {
+  if (!language && (seq || kind === 'first')) {
     const h1 = seq?.querySelector<HTMLElement>('h1') ?? null
     const blocks: FirstLoadBlock[] = []
     for (const el of all) {
@@ -277,7 +289,14 @@ export function revealRoute(kind: NavigationKind) {
 
   // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while any of them
   // is in view: counted, because adjacent breakers overlap (one leaves while the next is in view).
+  // A language switch kept the lift (the page did not move): drop it only if no breaker reports in.
   const lifting = new Set<HTMLElement>()
+  if (language) {
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => lifting.size === 0 && table.setBreaker(false))
+    })
+    r.stops.push(() => cancelAnimationFrame(frame))
+  }
   for (const el of main.querySelectorAll<HTMLElement>('[data-breaker]')) {
     r.stops.push(
       inView(
@@ -298,7 +317,8 @@ export function revealRoute(kind: NavigationKind) {
   return () => {
     r.live = false
     for (const stop of r.stops) stop()
-    table.setBreaker(false)
+    // Leaving for the same page in the other language keeps the lift (see above).
+    if (!('localeSwitch' in root.dataset)) table.setBreaker(false)
     cancelAnimationFrame(r.frame)
     for (const el of r.batch) revealNow(el)
     for (const el of r.held) revealNow(el)

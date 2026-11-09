@@ -1,7 +1,7 @@
 'use client'
 
 import { type CSSProperties, type ReactNode, useRef } from 'react'
-import { site } from '@/lib/hand-data'
+import { useChrome } from '@/lib/chrome'
 import type { WorkshopFormat } from '@/lib/content'
 import { pad2 } from '@/lib/format'
 import { cx } from '@/lib/cx'
@@ -26,7 +26,7 @@ export function WorkshopRow({ formats, glyphs, className }: Props) {
   const list = useRef<HTMLOListElement>(null)
   const position = useRef<HTMLParagraphElement>(null)
   useDealPosition(list, position)
-  const labels = site.labels.workshop
+  const labels = useChrome().site.labels.workshop
   return (
     <div
       className={cx('deal-row deal-row-workshops', className)}

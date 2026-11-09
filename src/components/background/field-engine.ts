@@ -1,5 +1,5 @@
 import { contour, palette, type Identity } from '@/design/palette'
-import { cardById } from '@/lib/cards'
+import { identityOf } from '@/lib/hand-data'
 import { INTRO_DONE } from '@/motion/preferences'
 import { isPinned, onPinned } from '@/motion/scenes/pin'
 import { VT_DONE } from '@/motion/view-transition'
@@ -411,15 +411,15 @@ export class FieldEngine {
   }
 
   private applyHover(id: string | null) {
-    const card = cardById(id)
-    if (card) {
+    const identity = identityOf(id)
+    if (id && identity) {
       const now = performance.now()
       this.sampleAll(now)
-      const target = hoverSwatch(card.identity)
+      const target = hoverSwatch(identity)
       if (this.tracks.hover.value[0] < 0.02 && this.tracks.hover.remaining(now) === 0) this.jump('h', target)
       else this.go('h', target, this.dur(D.hoverIn), 'outSoft')
       this.go('hover', [1], this.dur(D.hoverIn), 'outSoft')
-      this.go('pull', table.slotOf(card.id) ?? [0.5, 1], this.dur(D.hoverIn), 'outSoft')
+      this.go('pull', table.slotOf(id) ?? [0.5, 1], this.dur(D.hoverIn), 'outSoft')
     } else {
       this.go('hover', [0], this.dur(D.hoverOut), 'outSoft')
     }

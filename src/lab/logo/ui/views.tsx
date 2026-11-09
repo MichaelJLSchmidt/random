@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
-import { site } from '@/lib/hand-data'
+import { useChrome } from '@/lib/chrome'
 import {
   type Look,
   ALL_IDENTITIES,
@@ -248,6 +248,7 @@ export function Strips({ concept, variant, look }: { concept: Concept; variant: 
 /* ---------- Browser tab mock ---------- */
 
 export function TabMock({ concept, look }: { concept: Concept; look: Look }) {
+  const { site } = useChrome()
   const scheme = (dark: boolean): Look =>
     look.container === 'none'
       ? { ...look, identity: 'ink', surface: dark ? 'field' : 'white', colour: dark ? 'mono' : 'dark' }
@@ -302,6 +303,7 @@ function wordmarkWeight(stemOverCap: number, fontSizePx: number) {
 }
 
 export function Lockup({ concept, variant, look }: { concept: Concept; variant: VariantKey; look: Look }) {
+  const { site } = useChrome()
   const [text, setText] = useStored('wordmark', site.wordmark)
   const [size, setSize] = useState(96)
   const id = useId()
