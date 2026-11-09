@@ -447,8 +447,11 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: stretch;
   }
-  /* The card's proportions, growing only when the words need more room. */
+  /* The card's proportions, growing only when the words need more room. A definite width keeps the
+     ratio from turning the stretched (tallest card's) height into a wider card. */
   .how-card {
+    width: 100%;
+    min-width: 0;
     aspect-ratio: 132 / 184;
     padding: var(--space-5) var(--space-5) var(--space-6);
   }
