@@ -27,9 +27,9 @@ export default async function LogoLabPage({ params }: { params: Promise<{ locale
           <p className="t-label lab-kicker">Temporary · not linked</p>
           <PageTitle className="lab-title t-h2">Logo lab</PageTitle>
           <p className="lab-intro t-body">
-            Five concepts for one monogram: M and F fused into a single glyph. Compare them small and large, play their
-            motion in every tier, score them and download them. Scores, notes and the lockup wordmark stay in this
-            browser.
+            Two directions for one monogram, M and F fused into a single glyph: the card fan (3, 3B) and the diagonal
+            cut (8 to 8D). Compare them small and large, play their motion in every tier, score them and download them.
+            Scores, notes and the lockup wordmark stay in this browser.
           </p>
         </header>
         {/* Before the overview is parsed: hide it on deep links until the detail view renders. */}

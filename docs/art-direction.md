@@ -36,7 +36,7 @@ dividers and illustration strokes.
 - **Hover** a card: the background blends toward the card's colour.
 - **Play** a card: it lifts, then a shared-element view transition zooms it into the detail hero
   while its colour blooms fullscreen. **Back** (the header's top-left slot on detail pages, where
-  the wordmark compresses into a back arrow) returns the card to the hand: it morphs back from
+  the logo compresses into a back arrow) returns the card to the hand: it morphs back from
   the hero, or, when the hero has scrolled away, is dealt into its slot.
 - **Desktop**: the hand is always visible at the bottom in a perspective fan.
 - **Mobile**: the fan on home; elsewhere a 48 px peek rail that opens a bottom sheet with the four

@@ -1,5 +1,16 @@
 import { type Pt, pathOf } from '../geometry'
-import { ACCENT, type Box, type Concept, NEUTRAL, type Seq, type SvgNode, type Variant, idOf, urlOf } from '../model'
+import {
+  ACCENT,
+  type Box,
+  type Concept,
+  type ConceptMotion,
+  NEUTRAL,
+  type Seq,
+  type SvgNode,
+  type Variant,
+  idOf,
+  urlOf,
+} from '../model'
 import { wave } from '../motion-kit'
 
 /*
@@ -33,15 +44,15 @@ const unit = ([x, y]: Pt): Pt => {
   return [x / l, y / l]
 }
 const along = (l: Line, n: Pt, dist: number): Line => ({ p: [l.p[0] + n[0] * dist, l.p[1] + n[1] * dist], d: l.d })
-function cross(a: Line, b: Line): Pt {
+export function cross(a: Line, b: Line): Pt {
   const den = a.d[0] * b.d[1] - a.d[1] * b.d[0]
   const t = ((b.p[0] - a.p[0]) * b.d[1] - (b.p[1] - a.p[1]) * b.d[0]) / den
   return [a.p[0] + a.d[0] * t, a.p[1] + a.d[1] * t]
 }
 const vertical = (x: number): Line => ({ p: [x, 0], d: [0, 1] })
-const horizontal = (y: number): Line => ({ p: [0, y], d: [1, 0] })
+export const horizontal = (y: number): Line => ({ p: [0, y], d: [1, 0] })
 
-type Spec = {
+export type Spec = {
   /** Cap line (top edge) and baseline. */
   y0: number
   H: number
@@ -68,10 +79,10 @@ type Spec = {
 /** The drawing's right diagonal (241,286)→(479,86) and arm-end slant 57 / 85. */
 const U = unit([238, -200])
 const CUT = -57 / 85
-const CUT_MATCHED = -238 / 200
+export const CUT_MATCHED = -238 / 200
 
 /** Outer anchors and widths of the drawing (cleaned): see `cleanSlope`. */
-function geo(p: Spec) {
+export function geo(p: Spec) {
   const lu: Line = { p: [0, p.y0], d: unit([1, p.m]) }
   const nl: Pt = [-lu.d[1], lu.d[0]]
   const ll = along(lu, nl, p.d)
@@ -116,7 +127,7 @@ function geo(p: Spec) {
     cross(rc, horizontal(p.y0 + p.h / 2)),
     [p.topEnd + (p.cut * p.h) / 2, p.y0 + p.h / 2],
   ]
-  return { m, f, spine, V, N, S1, lf, yM }
+  return { m, f, spine, V, N, S1, J, lf, yM }
 }
 
 /**
@@ -143,7 +154,7 @@ const D = (() => {
   return dot([241, 286]) - dot([436, 1])
 })()
 
-const MASTER: Spec = {
+export const MASTER: Spec = {
   y0: 1,
   H: 405,
   s: 91,
@@ -166,7 +177,7 @@ const master = geo(MASTER)
  * (same point structure as the master, no self-intersection).
  */
 const THIN_D = 30
-const THIN: Spec = {
+export const THIN: Spec = {
   ...MASTER,
   s: 30,
   h: 28,
@@ -186,8 +197,8 @@ const thin = geo(THIN)
  * below the cap line) so it starts close to the stem. Same angles and arm
  * cut as the master; the left stem sits on whole pixels.
  */
-const FAV_PX = 404 / 10
-const FAV: Spec = {
+export const FAV_PX = 404 / 10
+export const FAV: Spec = {
   ...MASTER,
   s: 3 * FAV_PX,
   h: 2.5 * FAV_PX,
@@ -198,19 +209,19 @@ const FAV: Spec = {
   midTop: 1 + 4.5 * FAV_PX,
 }
 const fav = geo(FAV)
-const FAV_BOX: Box = { x: -FAV_PX, y: 1 - 3 * FAV_PX, w: 16 * FAV_PX, h: 16 * FAV_PX }
+export const FAV_BOX: Box = { x: -FAV_PX, y: 1 - 3 * FAV_PX, w: 16 * FAV_PX, h: 16 * FAV_PX }
 
 /* ---------- Variants ---------- */
 
 const MARGIN = 81
-const boxFor = (w: number, y0 = 1, H = 405): Box => ({
+export const boxFor = (w: number, y0 = 1, H = 405): Box => ({
   x: -MARGIN,
   y: y0 - MARGIN,
   w: w + 2 * MARGIN,
   h: H - y0 + 2 * MARGIN,
 })
 
-const path = (part: string, d: string, paint: string): SvgNode => ({
+export const path = (part: string, d: string, paint: string): SvgNode => ({
   tag: 'path',
   attrs: { 'data-part': part, d, fill: paint },
 })
@@ -220,7 +231,7 @@ const path = (part: string, d: string, paint: string): SvgNode => ({
  * static, the stroke covers the whole M; for the reveal it draws along the
  * line (dash), so the filled outline appears left to right and stays exact.
  */
-function revealMask(spine: Pt[], box: Box, width: number): SvgNode {
+export function revealMask(spine: Pt[], box: Box, width: number): SvgNode {
   return {
     tag: 'mask',
     attrs: { id: idOf('m-mask'), maskUnits: 'userSpaceOnUse', x: box.x, y: box.y, width: box.w, height: box.h },
@@ -285,25 +296,16 @@ const matched = geo({ ...MASTER, cut: CUT_MATCHED })
 /* ---------- Motion ---------- */
 
 /** One lab unit (1/48 of a square mark) in the drawing's units, for distances. */
-const LU = boxFor(779).w / 48
+export const LU = boxFor(779).w / 48
 const slide = (k: number) => `translate(${(U[0] * k).toFixed(2)}px, ${(U[1] * k).toFixed(2)}px)`
 
-export const diagonalCut: Concept = {
-  id: '8',
-  label: '8',
-  scoreKey: 'score-8',
-  slug: 'diagonal-cut',
-  name: 'Diagonal Cut',
-  idea: "The M runs into the F's top arm; the F's stem and middle arm are cut off the M by a channel along its diagonal.",
-  parts: ['m-reveal', 'm-part', 'f-piece'],
-  accent: ['f-piece'],
-  variants: {
-    master: variant('Master', master, 779, ACCENT),
-    drawn,
-    matched: variant('Matched angles', matched, 779, ACCENT),
-    favicon: { ...variant('Favicon', fav, 0, NEUTRAL, 320, FAV_BOX), metrics: { cap: 1, base: 405, stem: FAV.s } },
-  },
-  motion: {
+/**
+ * The family's motion (8 and its stemless versions): the M is drawn through its mask, the F piece
+ * slides in along the channel; the thin-to-bold morph interpolates thin and full outlines of the
+ * same point structure.
+ */
+export function diagonalMotion(p: { thinM: string; masterM: string; thinF: string; masterF: string }): ConceptMotion {
+  return {
     reveal: {
       label: 'Draw, then slide in',
       full: [
@@ -337,7 +339,7 @@ export const diagonalCut: Concept = {
           dur: 600,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.m, true), pathOf(master.m, true)],
+          values: [p.thinM, p.masterM],
         },
         {
           kind: 'morph',
@@ -346,7 +348,7 @@ export const diagonalCut: Concept = {
           dur: 600,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.f, true), pathOf(master.f, true)],
+          values: [p.thinF, p.masterF],
         },
         { part: 'm-part', at: 0, dur: 300, ease: 'enter', frames: [{ opacity: 0 }, { opacity: 1 }] },
         { part: 'f-piece', at: 100, dur: 300, ease: 'enter', frames: [{ opacity: 0 }, { opacity: 1 }] },
@@ -362,7 +364,7 @@ export const diagonalCut: Concept = {
           dur: 700,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.m, true), pathOf(master.m, true)],
+          values: [p.thinM, p.masterM],
         },
         {
           kind: 'morph',
@@ -371,7 +373,7 @@ export const diagonalCut: Concept = {
           dur: 700,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.f, true), pathOf(master.f, true)],
+          values: [p.thinF, p.masterF],
         },
       ],
       calm: [
@@ -382,7 +384,7 @@ export const diagonalCut: Concept = {
           dur: 700,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.m, true), pathOf(master.m, true)],
+          values: [p.thinM, p.masterM],
         },
         {
           kind: 'morph',
@@ -391,7 +393,7 @@ export const diagonalCut: Concept = {
           dur: 700,
           ease: 'move',
           attr: 'd',
-          values: [pathOf(thin.f, true), pathOf(master.f, true)],
+          values: [p.thinF, p.masterF],
         },
       ],
     },
@@ -471,7 +473,30 @@ export const diagonalCut: Concept = {
         frames: [{ opacity: 1 }, { opacity: 0 }],
       })),
     },
+  }
+}
+
+export const diagonalCut: Concept = {
+  id: '8',
+  label: '8',
+  scoreKey: 'score-8',
+  slug: 'diagonal-cut',
+  name: 'Diagonal Cut',
+  idea: "The M runs into the F's top arm; the F's stem and middle arm are cut off the M by a channel along its diagonal.",
+  parts: ['m-reveal', 'm-part', 'f-piece'],
+  accent: ['f-piece'],
+  variants: {
+    master: variant('Master', master, 779, ACCENT),
+    drawn,
+    matched: variant('Matched angles', matched, 779, ACCENT),
+    favicon: { ...variant('Favicon', fav, 0, NEUTRAL, 320, FAV_BOX), metrics: { cap: 1, base: 405, stem: FAV.s } },
   },
+  motion: diagonalMotion({
+    thinM: pathOf(thin.m, true),
+    masterM: pathOf(master.m, true),
+    thinF: pathOf(thin.f, true),
+    masterF: pathOf(master.f, true),
+  }),
   notes: [
     'As drawn: the three original paths, only scaled (F stem and middle arm grouped as one part for motion).',
     'Master: stem and middle arm merged into one F path (no seam on the shared edge); cap line at y 1 throughout (the apex corner was at 0); the left stem’s inner edge vertical at x 91.',

@@ -382,7 +382,7 @@ async function tableSuite(browser, device) {
   check('return: "return" view transition', vts.at(-1)?.types.includes('return'), JSON.stringify(vts.at(-1)))
   check('return: focus back on the card', (await focused(page)) === 'a[front-door]', await focused(page))
   check(
-    'return: the home slot shows the wordmark',
+    'return: the home slot shows the logo',
     (await page.locator('header [data-slot-mode="mark"]').count()) === 1,
   )
   // Focus on the returned card blends the field like a hover; move it away first.

@@ -18,7 +18,7 @@ const engine = process.env.BROWSER ?? 'chromium'
 
 const base = process.argv[2] ?? 'http://localhost:4100/random/en/logo-lab/'
 const only = process.argv.slice(3).map((a) => a.toLowerCase())
-const concepts = only.length ? only : ['1', '3', '3b', '5', '8']
+const concepts = only.length ? only : ['3', '3b', '8', '8b', '8c', '8d']
 
 const PROPS = [
   'opacity',

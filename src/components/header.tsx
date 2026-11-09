@@ -12,6 +12,7 @@ import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
 import { table } from '@/motion/table-store'
 import { LOCALE, NAV, RETURN } from '@/motion/transitions'
 import { AmbientToggle } from './ambient-toggle'
+import { Logo } from './logo'
 import { ReadingHairline } from './reading-hairline'
 import styles from './header.module.css'
 
@@ -23,11 +24,11 @@ import styles from './header.module.css'
  *
  * The home slot is one link to the table. On detail pages (the three case
  * studies and Management) it shows a back arrow and "Back" (the card returns
- * to the hand); everywhere else the wordmark. Between the two it morphs
- * (header.module.css): the mark compresses and fades toward the left edge
- * while the arrow's shaft draws out of it and the label rises from a mask.
- * The mark is treated as one box (scaleX + opacity), never by its letters, so
- * the final SVG logo can replace the text in .mark without touching the morph.
+ * to the hand); everywhere else the logo (./logo.tsx). Between the two it
+ * morphs (header.module.css): the mark compresses and fades toward the left
+ * edge while the arrow's shaft draws out of it and the label rises from a mask.
+ * The mark is treated as one box (scaleX + opacity), never by its parts. The
+ * link's label (site.header.homeLabel) names it; the logo itself is decorative.
  *
  * The language switcher links each language to the same page in it; the
  * active one carries aria-current. Choosing the other stores the choice and
@@ -64,7 +65,7 @@ export function Header() {
         onNavigate={() => back && table.returnHome(home)}
       >
         <span className={styles.mark} aria-hidden={back || undefined}>
-          {site.wordmark}
+          <Logo className={styles.logo} />
         </span>
         <span className={styles.back} aria-hidden={!back || undefined}>
           <svg className={styles.arrow} viewBox="0 0 20 12" fill="none" stroke="currentColor" aria-hidden="true">

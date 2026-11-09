@@ -247,7 +247,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
 - **G3. Header.** Links: the home slot and About only. More projects and Contact are pages no
   more (A1–A3); the mobile bottom sheet lists the four cards only (`ul.hand-sheet-links` gone).
 - **G4. Home slot.** One link at the top left (`a[data-slot-mode="mark|back"]` in
-  `header.tsx`): the wordmark (`.mark`, any content: text now, the SVG logo later), or on detail
+  `header.tsx`): the logo (`.mark`, `src/components/logo.tsx`), or on detail
   pages (the case studies and Management) a back arrow + "Back" (`.back`: an SVG shaft and head,
   the label in a mask). Between them a CSS morph (`header.module.css`, `duration.slotMorph`
   420 ms in all, `duration.slotLag` 120 ms, outQuint): the mark compresses (`scale` x to
@@ -1234,7 +1234,7 @@ Spread grid (D9).
 | 404 | `src/app/[locale]/404/page.tsx` (`/<locale>/404/`), served for any unknown address by `dist/404.html` (L4) | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link (home in its locale) |
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
-unlinked logo lab (English, `lang="en"`). Header: the home slot (wordmark, or Back on card
+unlinked logo lab (English, `lang="en"`). Header: the home slot (logo, or Back on card
 pages), About, the language switcher (L6), the pause button (M2); it leaves on a scroll down (N1). Every page has one `h1` (`PageTitle`,
 `id="page-heading"`, focus target after navigation).
 
@@ -1251,7 +1251,7 @@ pages), About, the language switcher (L6), the pause button (M2); it leaves on a
 | `data-pair-rule`, `data-pair-part` | inside a `pair` reveal (MetaPairs, About's projects) | the rule that draws, the parts that follow |
 | `data-breaker` | OffsetImage, the problem statement section | the field lifts 10% while in view (I5) |
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
-| `data-slot-mode="mark\|back"` | the header's home slot | wordmark or Back (G4) |
+| `data-slot-mode="mark\|back"` | the header's home slot | logo or Back (G4) |
 | `data-ambient-toggle` (+ `aria-pressed`) | the pause / play button | its glyph follows `html[data-ambient]` (M2) |
 | `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
