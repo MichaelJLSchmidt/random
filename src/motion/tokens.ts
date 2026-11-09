@@ -262,28 +262,12 @@ export const field = {
   frameWindow: 60,
   switchDip: 0.06,
   /**
-   * About's contours: the old portfolio's password-page field, unchanged (its
-   * contour-field.json): 1 px lines and every fifth an index line at 1.5 px, at
-   * these alphas over the ground (src/design/palette.ts contour.*); a slight zoom
-   * on the region's focus; lines on steep terrain at least `minSpacingPx` CSS px
-   * apart (that picks the interval); the drawing buffer at the device pixel ratio,
-   * capped. "desktop" is a fine pointer on a screen at least 900 px on its long
-   * side, everything else "mobile". `bandPx`: how much wider than a line the
-   * colour bands are when the gradient starts to morph into the lines (CSS px,
-   * narrowing to 0 as the morph ends).
+   * About's contour layer (the old password page's SVG poster): it drifts very slowly, transform
+   * only, `x` / `y` px either way on one loop of `period` s there and back (ease-in-out), scaled by
+   * `scale` so no edge shows. Full tier; still while paused, under reduced motion and while the
+   * tab is hidden (src/styles/field.css).
    */
-  contours: {
-    lineAlpha: 0.28,
-    indexAlpha: 0.42,
-    lineWidthPx: 1,
-    indexWidthPx: 1.5,
-    indexEvery: 5,
-    zoom: 1.06,
-    desktop: { dprMax: 1.5, minSpacingPx: 3.25 },
-    mobile: { dprMax: 1.25, minSpacingPx: 3 },
-    desktopMinScreen: 900,
-    bandPx: 20,
-  },
+  contourDrift: { x: 8, y: 5, scale: 1.03, period: 120 },
   /**
    * Pool drift (full tier, on top of the breath): a slow Lissajous offset of each pool's centre,
    * `poolDrift` of the viewport, one pair of loop lengths (s) per pool, all of them >= 90 s.
@@ -446,6 +430,10 @@ export function motionCss(): string {
     `--hero-drift:${reveal.heroDrift * 100}%`,
     `--reveal-mask:${reveal.mask * 100}%`,
     `--slot-mark-scale:${slot.markScale}`,
+    `--contour-drift-x:${field.contourDrift.x}px`,
+    `--contour-drift-y:${field.contourDrift.y}px`,
+    `--contour-drift-scale:${field.contourDrift.scale}`,
+    `--dur-contour-drift:${ms(field.contourDrift.period / 2)}`,
   ]
   return [
     `:root{${constants.join(';')};${vars('full')}}`,

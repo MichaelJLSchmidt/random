@@ -412,7 +412,7 @@
   margin-top: var(--space-6);
 }
 
-/* The contour map's attribution: along the left edge while the map shows (from 1024). */
+/* The contour map's credit: a link along the left edge while the map shows (from 1024). */
 .topo-attribution {
   display: none;
 }
@@ -428,7 +428,15 @@
     writing-mode: vertical-rl;
     rotate: 180deg;
     color: color-mix(in srgb, var(--glacier-text) 60%, transparent);
-    pointer-events: none;
+  }
+  .topo-attribution a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .topo-attribution a:hover {
+    color: var(--glacier-text);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
   }
 }
 

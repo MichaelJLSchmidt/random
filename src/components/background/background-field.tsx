@@ -1,38 +1,61 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useRef } from 'react'
 import { table } from '@/motion/table-store'
 import { onTierChange, readTier } from '@/motion/use-tier'
 import { withBase } from '@/lib/site'
 import { FieldEngine } from './field-engine'
-import { region } from './terrain'
 
 let engine: FieldEngine | null = null
 
 /** The running field. */
 export const fieldEngine = () => engine
 
-/** The poster's crop: the region's focus (Interlaken), like the live field's cover crop. */
-const posterPosition = `${region.focus.u * 100}% ${region.focus.v * 100}%`
+/**
+ * About's contour background: the old password page's two SVGs (public/contour-bg/, used
+ * unchanged), the 200 m version by default and the full one on large viewports. CSS cannot read
+ * the base path, so every url() comes in through these custom properties; the media query is the
+ * old page's, repeated in src/styles/field.css.
+ */
+const contourSvg = { poster: '/contour-bg/contours-200.svg', full: '/contour-bg/contours.svg' } as const
+const fullQuery =
+  '(min-aspect-ratio: 1536/1056) and (min-width: 1783px), (max-aspect-ratio: 1536/1056) and (min-height: 1142px)'
+const contourVars = {
+  '--contour-poster': `url("${withBase(contourSvg.poster)}")`,
+  '--contour-full': `url("${withBase(contourSvg.full)}")`,
+} as CSSProperties
+
+const preloaded = new Set<string>()
+/** Fetches the SVG this viewport shows (once), so the morph into About never waits for it. */
+function preloadContours() {
+  const src = withBase(matchMedia(fullQuery).matches ? contourSvg.full : contourSvg.poster)
+  if (preloaded.has(src)) return
+  preloaded.add(src)
+  new Image().src = src
+}
 
 /**
  * Persistent background field, mounted once in the root layout. It renders no
  * React state: the engine listens to the table store and drives the canvas
- * (or the CSS fallback) directly. On About the canvas draws the contour field;
- * the region's poster (its first frame) stands in with reduced motion, without
- * WebGL2 and while the heightmap loads on a direct visit (data-poster, set by
- * the engine; the image loads only once it is shown).
+ * (or the CSS fallback) directly. Above the canvas, About's contour layer
+ * (.contour-bg: the old password page, its poster drifting slowly) shows on
+ * About and during the morph in and out (data-contours, set by the engine);
+ * it never reacts to the pointer.
  */
 export function BackgroundField() {
   const root = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const layers = useRef<HTMLDivElement>(null)
+  const contours = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     table.setTier(readTier())
     const offTier = onTierChange((tier) => table.setTier(tier))
-    engine = new FieldEngine(root.current!, canvas.current!, layers.current!)
+    engine = new FieldEngine(root.current!, canvas.current!, layers.current!, {
+      layer: contours.current!,
+      preload: preloadContours,
+    })
     return () => {
       offTier()
       engine?.destroy()
@@ -47,17 +70,9 @@ export function BackgroundField() {
         <div className="field-layer" data-layer="b" />
       </div>
       <canvas ref={canvas} className="field-canvas" />
-      <picture className="field-poster">
-        <source media="(orientation: portrait)" srcSet={withBase(region.posters.portrait)} type="image/avif" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={withBase(region.posters.landscape)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          style={{ objectPosition: posterPosition }}
-        />
-      </picture>
+      <div ref={contours} className="contour-bg" style={contourVars}>
+        <div className="contour-bg__poster" />
+      </div>
       <RouteSync />
     </div>
   )

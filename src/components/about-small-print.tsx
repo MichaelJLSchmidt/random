@@ -32,7 +32,10 @@ export async function AboutSmallPrint() {
         ))}
       </ul>
       <p className={styles.attribution}>
-        {about.topo.label}. {about.topo.attribution}.
+        {about.topo.label}.{' '}
+        <a className="link" href={about.topo.href}>
+          {about.topo.attribution}
+        </a>
       </p>
     </section>
   )

@@ -14,7 +14,7 @@ import { type EaseName, Track, easeCss } from './tracks'
 /*
  * The background field's state machine. It listens to the table store and
  * eases a handful of channels (palettes, bloom spread, intensities, breath,
- * contour lines); the WebGL renderer samples them each frame, the CSS
+ * About's morph); the WebGL renderer samples them each frame, the CSS
  * fallback receives each change as a transition. React never re-renders for
  * any of it.
  *
@@ -27,6 +27,10 @@ import { type EaseName, Track, easeCss } from './tracks'
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
  *   switch   B crossfades in OKLab with a 6% luminance dip at the midpoint
+ *   About    the pools contract and fade into the contour ground while the
+ *            contour layer (background-field.tsx) reveals through a radial
+ *            mask from the centre, 1.6 s inOut (reduced: 160 ms crossfade);
+ *            at rest the canvas draws no frames until About is left
  */
 
 type Name =
@@ -50,7 +54,7 @@ const swatch = (id: Identity) => [
   ...hexToLab(palette[id].mid),
   ...hexToLab(palette[id].glow),
 ]
-/** A hex colour as sRGB 0..1 (the contour field's ground and lines, exactly as the old field drew them). */
+/** A hex colour as sRGB 0..1 (the contour field's ground). */
 const srgb = (hex: string): [number, number, number] => {
   const n = parseInt(hex.slice(1), 16)
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
@@ -110,6 +114,8 @@ export class FieldEngine {
     private root: HTMLElement,
     canvas: HTMLCanvasElement,
     cssLayer: HTMLElement,
+    /** About's contour layer (src/styles/field.css) and a function that fetches its SVG for this viewport. */
+    private about: { layer: HTMLElement; preload: () => void },
   ) {
     this.css = new CssField(cssLayer)
     this.tier = table.get().tier
@@ -146,7 +152,6 @@ export class FieldEngine {
       fade: 1,
       topo: 0,
       ground: srgb(contour.ground),
-      line: srgb(contour.line),
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
     this.held = ambientPaused()
@@ -197,7 +202,11 @@ export class FieldEngine {
         this.kick(true)
       }),
     )
-    const onVisibility = () => this.setPaused()
+    const onVisibility = () => {
+      this.setPaused()
+      // The contour drift (CSS) stops while the tab is hidden.
+      this.root.toggleAttribute('data-tab-hidden', document.hidden)
+    }
     document.addEventListener('visibilitychange', onVisibility)
     this.offs.push(() => document.removeEventListener('visibilitychange', onVisibility))
     const ro = new ResizeObserver(() => {
@@ -211,11 +220,10 @@ export class FieldEngine {
       this.syncCss(now)
       document.documentElement.dataset.renderer = 'css'
     }
-    this.updatePoster()
-    // About's heightmap: fetched when a link to About is hovered, focused or touched (or on About).
+    // About's contour SVG: fetched when a link to About is hovered, focused or touched (or on About).
     const onIntent = (e: Event) => {
       const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null
-      if (a && /\/about\/?$/.test(new URL(a.href, location.href).pathname)) this.requestTerrain()
+      if (a && /\/about\/?$/.test(new URL(a.href, location.href).pathname)) this.about.preload()
     }
     for (const type of ['pointerover', 'focusin', 'touchstart'] as const) {
       document.addEventListener(type, onIntent, { passive: true })
@@ -226,6 +234,7 @@ export class FieldEngine {
 
   destroy() {
     cancelAnimationFrame(this.raf)
+    clearTimeout(this.contourTimer)
     for (const off of this.offs) off()
     this.gl?.destroy()
   }
@@ -238,60 +247,39 @@ export class FieldEngine {
 
   /** What the route asks for: the contours (1) or not (0). */
   private wantTopo: 0 | 1 = 0
-  /** A morph to the contours waiting for the heightmap (dur 0: a direct load, the poster shows meanwhile). */
-  private pendingTopo: { dur: number; ease: EaseName } | null = null
-  private terrainFailed = false
+  private contourTimer = 0
 
-  /** Starts loading the region heightmap (once): on About, or when a link to it is hovered or focused. */
-  requestTerrain() {
-    if (!this.gl || this.gl.hasTerrain || this.terrainFailed) return
-    void this.gl.loadTerrain().then((ok) => {
-      if (!ok) this.terrainFailed = true
-      const pending = this.pendingTopo
-      if (ok && pending && this.wantTopo === 1) this.toTopo(1, pending.dur, pending.ease)
-      else this.updatePoster()
-    })
-  }
-
-  /** Eases the contours in or out; to the contours only once the heightmap is on the GPU. */
+  /**
+   * Eases About's morph in or out: the shader's `topo` (pools contract and fade into the ground)
+   * and the contour layer's reveal (--contour-reveal: a radial mask from the centre, reduced an
+   * opacity crossfade; src/styles/field.css) over the same time and curve. The layer renders
+   * (data-contours) while the route asks for it or it is still fading out.
+   */
   private toTopo(to: 0 | 1, dur: number, ease: EaseName) {
+    const from = this.tracks.topo.value[0]
     this.wantTopo = to
-    if (to === 1 && this.gl && !this.gl.hasTerrain) {
-      this.pendingTopo = { dur, ease }
-      this.requestTerrain()
-      this.updatePoster()
-      return
-    }
-    this.pendingTopo = null
-    // Lines are drawn at the device pixel ratio (capped) from the first frame of the morph.
-    if (to === 1 && this.gl) this.gl.crisp = true
     this.go('topo', [to], dur, ease)
-    this.updatePoster()
+    const layer = this.about.layer
+    clearTimeout(this.contourTimer)
+    if (to === 1) this.about.preload()
+    if (to === 1 || from > 0) this.root.dataset.contours = to === 1 && dur <= 0 ? 'shown' : 'morph'
+    // Commit the starting value (the layer may have just been displayed), then transition to `to`.
+    layer.style.transition = 'none'
+    layer.style.setProperty('--contour-reveal', String(dur > 0 ? from : to))
+    void getComputedStyle(layer).getPropertyValue('--contour-reveal')
+    if (dur > 0) {
+      layer.style.transition = `--contour-reveal ${dur}s ${easeCss(ease)}`
+      layer.style.setProperty('--contour-reveal', String(to))
+    }
+    const settle = () => (this.root.dataset.contours = this.wantTopo === 1 ? 'shown' : 'off')
+    if (dur > 0) this.contourTimer = window.setTimeout(settle, dur * 1000)
+    else settle()
   }
 
-  /** On rest at 1 the contours are one still frame: nothing else shows, so nothing else asks for frames. */
+  /** At rest on About only the contour layer shows: the canvas draws nothing and asks for no frames. */
   private contoursAtRest() {
     const topo = this.tracks.topo
     return topo.value[0] >= 1 && topo.to[0] >= 1
-  }
-
-  /**
-   * About shows the region's poster (the old field's first frame) instead of live contours with
-   * reduced motion, without WebGL2 or the heightmap, and on a direct load until the heightmap is
-   * ready (160 ms crossfade, src/styles/field.css). data-topo dims the field's top and bottom edges.
-   */
-  private updatePoster() {
-    const about = table.get().field.topo === 1
-    const show =
-      about &&
-      (this.mode === 'css' ||
-        this.tier === 'reduced' ||
-        this.terrainFailed ||
-        (this.pendingTopo !== null && this.pendingTopo.dur === 0))
-    if (show) this.root.dataset.poster = ''
-    else delete this.root.dataset.poster
-    if (about) this.root.dataset.topo = ''
-    else delete this.root.dataset.topo
   }
 
   // ---------------------------------------------------------------- input
@@ -312,10 +300,6 @@ export class FieldEngine {
   private setTier(tier: MotionTier) {
     this.tier = tier
     this.go('motion', [this.animated() ? 1 : 0], D.crossfade, 'outSoft')
-    // Reduced shows the poster on About instead of the contours; leaving reduced brings them back.
-    const topo = table.get().field.topo && tier !== 'reduced' ? 1 : 0
-    if (topo !== this.wantTopo) this.toTopo(topo, reducedCrossfade, 'linear')
-    else this.updatePoster()
   }
 
   /** Brings every track up to date (the loop does not run in CSS mode or while idle). */
@@ -331,8 +315,7 @@ export class FieldEngine {
     this.sampleAll(now)
     const P = swatch(t.identity)
     const iTo = t.spread ? F.intensityPage : F.intensityRest
-    // Reduced shows the region's poster on About instead of the contours.
-    const topo = t.topo && this.tier !== 'reduced' ? 1 : 0
+    const topo = t.topo
     const topoDur = this.dur(D.topo)
     const spreadNow = tr.spread.value[0]
     const settled = tr.spread.remaining(now) === 0
@@ -554,11 +537,6 @@ export class FieldEngine {
       if (this.frame.topo < 1) this.dirty = true
     }
     const continuous = !still && this.continuous()
-    // Back to the gradient: its half-resolution buffer again.
-    if (this.gl?.crisp && this.tracks.topo.value[0] <= 0 && this.wantTopo === 0) {
-      this.gl.crisp = false
-      this.dirty = true
-    }
     if (!moving && !continuous && !this.dirty) return
     this.raf = requestAnimationFrame(this.tick)
 
@@ -594,7 +572,6 @@ export class FieldEngine {
     this.syncCss(performance.now())
     this.root.dataset.mode = 'css'
     document.documentElement.dataset.renderer = 'css'
-    this.updatePoster()
   }
 
   private draw() {

@@ -191,6 +191,7 @@ export const about: About = {
   creditsTitle: 'Bildnachweise',
   topo: {
     label: 'Interlaken, zwischen Thunersee und Brienzersee',
-    attribution: 'Höhenkurven abgeleitet aus swissALTI3D. Quelle: Bundesamt für Landestopografie swisstopo',
+    attribution: 'Geländedaten © swisstopo',
+    href: 'https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices',
   },
 }

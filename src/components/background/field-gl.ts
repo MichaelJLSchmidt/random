@@ -1,6 +1,5 @@
 import { field as F } from '@/motion/tokens'
 import { fragmentSource, vertexSource } from './shader'
-import { contourInterval, coverTransform, loadTerrain, region } from './terrain'
 
 /** Everything the shader needs for one frame (colours in sRGB 0..1). */
 export type FieldFrame = {
@@ -18,10 +17,9 @@ export type FieldFrame = {
   breath: [number, number]
   lum: number
   fade: number
-  /** About's contours, 0..1, eased. */
+  /** About: the pools contract and fade into the contour ground, 0..1, eased. */
   topo: number
   ground: [number, number, number]
-  line: [number, number, number]
 }
 
 const UNIFORMS = [
@@ -42,44 +40,23 @@ const UNIFORMS = [
   'uFade',
   'uGrain',
   'uTopo',
-  'uHeight',
-  'uEnc',
-  'uUv',
-  'uInterval',
-  'uLines',
-  'uIndexEvery',
-  'uBand',
   'uGround',
-  'uLine',
 ] as const
-
-const C = F.contours
-
-/** The contour tuning for this device: desktop (fine pointer, a large screen) or mobile. */
-function contourTier() {
-  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches
-  return fine && Math.max(screen.width, screen.height) >= C.desktopMinScreen ? C.desktop : C.mobile
-}
 
 /*
  * One WebGL2 context on one canvas. The gradient's drawing buffer is half the
- * CSS size with devicePixelRatio capped at 1; CSS scales it up. While About's
- * contours show or morph (`crisp`), the buffer runs at the device pixel ratio
- * capped at 1.5 (desktop) or 1.25 (mobile), so 1 px lines are 1 px. Throws
- * when WebGL2 or the shader is unavailable, so the caller can keep the CSS
- * fallback.
+ * CSS size with devicePixelRatio capped at 1; CSS scales it up. Throws when
+ * WebGL2 or the shader is unavailable, so the caller can keep the CSS
+ * fallback. About's contours are not drawn here: they are an SVG layer above
+ * the canvas (background-field.tsx); the shader only fades the pools into its
+ * ground.
  */
 export class GlField {
   private gl: WebGL2RenderingContext
   private u: Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
   private program: WebGLProgram
-  private terrain: WebGLTexture | null = null
-  private loading: Promise<boolean> | null = null
   private width = 0
   private height = 0
-  private cssW = 1
-  private cssH = 1
-  private tier = contourTier()
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -125,59 +102,23 @@ export class GlField {
     gl.enableVertexAttribArray(0)
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
 
-    gl.uniform1i(this.u.uHeight, 0)
     gl.uniform1f(this.u.uGrain, F.grain)
-    gl.uniform2f(this.u.uEnc, region.offset, region.scale)
-    gl.uniform1f(this.u.uIndexEvery, C.indexEvery)
     this.resize()
   }
 
   /** Extra resolution factor: 1, or 1/2 while a pinned scene holds the viewport. */
   detail = 1
 
-  /** Full device resolution (capped) for the contour lines. */
-  private sharp = false
-
-  get crisp() {
-    return this.sharp
-  }
-
-  set crisp(on: boolean) {
-    if (on === this.sharp) return
-    this.sharp = on
-    this.resize()
-  }
-
   /** Matches the drawing buffer to the canvas's CSS size. */
   resize() {
     const rect = this.canvas.getBoundingClientRect()
-    const dpr = devicePixelRatio || 1
-    const scale = this.sharp ? Math.min(dpr, this.tier.dprMax) : Math.min(dpr, 1) * F.renderScale * this.detail
-    this.cssW = Math.max(1, rect.width)
-    this.cssH = Math.max(1, rect.height)
+    const scale = Math.min(devicePixelRatio || 1, 1) * F.renderScale * this.detail
     const w = Math.max(1, Math.round(rect.width * scale))
     const h = Math.max(1, Math.round(rect.height * scale))
     if (w === this.width && h === this.height) return
     this.width = this.canvas.width = w
     this.height = this.canvas.height = h
     this.gl.viewport(0, 0, w, h)
-  }
-
-  /** True once the region heightmap is on the GPU. */
-  get hasTerrain() {
-    return this.terrain !== null
-  }
-
-  /** Loads the region heightmap once (resolves false when it cannot be decoded exactly). */
-  loadTerrain() {
-    this.loading ??= loadTerrain(this.gl, 0).then(
-      (tex) => {
-        this.terrain = tex
-        return true
-      },
-      () => false,
-    )
-    return this.loading
   }
 
   draw(f: FieldFrame) {
@@ -198,27 +139,13 @@ export class GlField {
     gl.uniform2f(u.uBreath, f.breath[0], f.breath[1])
     gl.uniform1f(u.uLum, f.lum)
     gl.uniform1f(u.uFade, f.fade)
-    // Contours only with the heightmap on the GPU (the engine never raises topo before).
-    const topo = this.terrain ? f.topo : 0
-    gl.uniform1f(u.uTopo, topo)
-    if (topo > 0) {
-      // Device px per CSS px of the buffer as drawn: line widths and the morph's bands in device px.
-      const px = this.width / this.cssW
-      gl.activeTexture(gl.TEXTURE0)
-      gl.bindTexture(gl.TEXTURE_2D, this.terrain)
-      gl.uniform4f(u.uUv, ...coverTransform(this.cssW, this.cssH, region, C.zoom))
-      gl.uniform1f(u.uInterval, contourInterval(region, this.cssW, this.cssH, C.zoom, this.tier.minSpacingPx))
-      gl.uniform4f(u.uLines, C.lineWidthPx * px, C.indexWidthPx * px, C.lineAlpha, C.indexAlpha)
-      gl.uniform1f(u.uBand, C.bandPx * px * (1 - topo))
-      gl.uniform3f(u.uGround, ...f.ground)
-      gl.uniform3f(u.uLine, ...f.line)
-    }
+    gl.uniform1f(u.uTopo, f.topo)
+    gl.uniform3f(u.uGround, ...f.ground)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
 
   destroy() {
     this.gl.deleteProgram(this.program)
-    if (this.terrain) this.gl.deleteTexture(this.terrain)
     this.gl.getExtension('WEBGL_lose_context')?.loseContext()
   }
 }

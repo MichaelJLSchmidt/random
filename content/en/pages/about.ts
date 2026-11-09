@@ -191,6 +191,7 @@ export const about: About = {
   creditsTitle: 'Photo credits',
   topo: {
     label: 'Interlaken, between Lake Thun and Lake Brienz',
-    attribution: 'Contours derived from swissALTI3D – Source: Federal Office of Topography swisstopo',
+    attribution: 'Terrain data © swisstopo',
+    href: 'https://www.swisstopo.admin.ch/en/terms-of-use-free-geodata-and-geoservices',
   },
 }

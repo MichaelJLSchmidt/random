@@ -356,8 +356,11 @@ export type About = {
   contact: SectionHead & { title: string; body: Paragraph; email: string; links: ContactLink[]; note: string }
   /** Heading of the small print in the footer on About that credits every photo (kind "photo"). */
   creditsTitle: string
-  /** The contour background: its place and the swisstopo attribution (shown on About). */
-  topo: { label: string; attribution: string }
+  /**
+   * The contour background: its place and the swisstopo credit ("Terrain data © swisstopo"), a
+   * link to swisstopo's terms of use (`href`), shown on About (footer, and the left edge from 1024).
+   */
+  topo: { label: string; attribution: string; href: string }
 }
 
 export type NotFound = { title: string; body: Paragraph; back: string }

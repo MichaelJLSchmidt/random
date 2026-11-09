@@ -243,9 +243,12 @@ export default async function AboutPage({ params }: Props) {
           </Reveal>
         </Section>
 
-        {/* The contour map's source, visible along the left edge while the map is behind the page. */}
+        {/* The contour map's credit along the left edge from 1024, while the map is behind the page. The
+            footer's small print carries the same link for keyboards and screen readers. */}
         <p className="topo-attribution t-label" aria-hidden="true">
-          {a.topo.attribution}
+          <a href={a.topo.href} tabIndex={-1}>
+            {a.topo.attribution}
+          </a>
         </p>
       </div>
     </PageTransition>

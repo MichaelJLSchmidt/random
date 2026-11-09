@@ -29,10 +29,10 @@ export const palette: Record<Identity, Swatch> = {
 export const glacierText = '#DCE8E6'
 
 /**
- * About's contour field: the old portfolio's ground and its stone-grey line
- * colour (drawn at low alpha, field.contours in src/motion/tokens.ts).
+ * About's contour field: the old password page's ground. Its lines (#8A8C80)
+ * live in the SVGs themselves (public/contour-bg/).
  */
-export const contour = { ground: '#1B1C18', line: '#8A8C80' } as const
+export const contour = { ground: '#1B1C18' } as const
 
 export const identities = Object.keys(palette) as Identity[]
 
@@ -47,7 +47,6 @@ export function identityCss(): string {
     `--muted:${muted}`,
     `--glacier-text:${glacierText}`,
     `--contour-ground:${contour.ground}`,
-    `--contour-line:${contour.line}`,
   ]
   for (const id of identities) {
     for (const [k, v] of Object.entries(palette[id])) root.push(`--${id}-${k}:${v}`)
