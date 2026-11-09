@@ -16,8 +16,12 @@ const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
  * word, each word revealed left to right, then a curly arrow draws toward the
  * cards. The next click, tap or key press fades it out. Once per session.
  * Decorative: aria-hidden. Reduced: a 160 ms fade.
- * Mounted by the home page, so it never shows anywhere else. The handwriting
- * font (Caveat) is fetched only when the note renders.
+ * Only where it fits: once the handwriting has loaded (and on every resize
+ * while it shows), the note's top must sit at least idle.clearance (24 px)
+ * below the last "What I bring" item; on short phones it does not, and the
+ * note is skipped (or leaves). Mounted by the home page, so it never shows
+ * anywhere else. The handwriting font (Caveat) is fetched only when the note
+ * renders.
  */
 export function IdleHint({ note }: { note: string }) {
   const [state, setState] = useState<'waiting' | 'shown' | 'gone'>('waiting')
@@ -52,13 +56,16 @@ export function IdleHint({ note }: { note: string }) {
   useEffect(() => {
     const el = ref.current
     if (state !== 'shown' || !el) return
-    try {
-      sessionStorage.setItem(SHOWN_KEY, '1')
-    } catch {}
     const tier = readTier()
     const anims: Animation[] = []
     let live = true
     let leaving = false
+    /** The note's top at least idle.clearance below the last "What I bring" item (the next thing above it). */
+    const fits = () => {
+      const last = document.querySelector('.home-bring-list > li:last-child')
+      if (!last) return true
+      return el.getBoundingClientRect().top - last.getBoundingClientRect().bottom >= idle.clearance
+    }
 
     const show = async () => {
       const text = el.querySelector<HTMLElement>('.idle-hint-text')!
@@ -69,6 +76,11 @@ export function IdleHint({ note }: { note: string }) {
         new Promise((r) => setTimeout(r, 1000)),
       ]).catch(() => {})
       if (!live || leaving) return
+      // No room on this screen (a short phone): skip the note, unseen (it may show another time).
+      if (!fits()) return setState('gone')
+      try {
+        sessionStorage.setItem(SHOWN_KEY, '1')
+      } catch {}
       el.dataset.ready = ''
       if (tier === 'reduced') {
         anims.push(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedCrossfade * 1000 }))
@@ -122,13 +134,19 @@ export function IdleHint({ note }: { note: string }) {
         .then(() => live && setState('gone'))
     }
 
+    // A resize that leaves no room (rotation, a window made shorter) takes the note away.
+    const onResize = () => {
+      if (el.hasAttribute('data-ready') && !fits()) leave()
+    }
     void show()
     addEventListener('pointerdown', leave, { capture: true, passive: true })
     addEventListener('keydown', leave, { capture: true, passive: true })
+    addEventListener('resize', onResize, { passive: true })
     return () => {
       live = false
       removeEventListener('pointerdown', leave, true)
       removeEventListener('keydown', leave, true)
+      removeEventListener('resize', onResize)
       for (const a of anims) a.cancel()
     }
   }, [state, note])

@@ -38,9 +38,6 @@ One session, in this order (the background first: every other check depends on i
 - **Timeline copy.** The timeline cards split each stop into title and place; the long Hyper
   Island description ("facilitation, team dynamics, digital experience design") was dropped for
   the card and belongs in the rewrite.
-- **Idle note on short phones.** At 390 × 800 and 360 × 740 the idle note (fixed above the fan)
-  overlaps the last "What I bring" item; at 390 × 844 and taller it clears. Its phone placement
-  predates round 2; give it a spot that follows the home layout.
 
 ## Resolved
 
@@ -58,4 +55,10 @@ One session, in this order (the background first: every other check depends on i
   deal cards get `will-change: transform` once when the scene mounts and lose it on unmount. The
   sticky stage has no transformed ancestor and nothing uses `backdrop-filter`; the header keeps
   one stable layer (`will-change: translate`) for hiding and showing.
+- **Idle note on short phones**, feedback round 3, item 9a. The note (fixed above the fan) overlapped
+  the last "What I bring" item on short phones. It now measures itself once the handwriting has
+  loaded (and on every resize while it shows): it appears only when its top sits at least
+  `idle.clearance` (24 px) below the last item, otherwise it is skipped, unseen (the session flag is
+  set only when it appears). Measured: 390 × 800 −44 px, 360 × 740 −92 px, 390 × 844 0 px (all
+  skipped), 430 × 932 101 px and 1440 × 900 170 px (shown).
 

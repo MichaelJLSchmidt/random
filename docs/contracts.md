@@ -440,7 +440,9 @@ below describe the new state.
   contour drift. Never transitions or reveals. Hidden under reduced motion. The accessible name
   stays `site.settings.pause` in both states (a toggle button's name never changes; aria-pressed
   carries the state); `site.settings.play` is the tooltip while paused.
-- **M3. Idle hint** after `idle.after` = 10 s (supersedes H5's 30 s); `?idle` stays 1 s.
+- **M3. Idle hint** after `idle.after` = 10 s (supersedes H5's 30 s); `?idle` stays 1 s. Since R9 it shows only where it fits: its top at least
+  `idle.clearance` (24 px) below the last "What I bring" item, measured once the handwriting has
+  loaded and on resize; otherwise it is skipped.
 
 **Navigation**
 
@@ -670,6 +672,12 @@ page): the knowledge base and the check-in in 06, the round-2 source labels in 0
 the Master's card in About's timeline (type `play`; the card and the hero frame share
 `thesis-card`, the hero only while in view) and from a link below About's projects
 (`about.projects.thesis`); it ends with "Back to About" to `/about#timeline` (type `return`).
+
+**R9. Carried over.** (a) The idle note renders only with at least 24 px between its top and the
+last "What I bring" item (`idle.clearance`, measured after the handwriting loads and on resize; at
+390 × 800, 360 × 740 and 390 × 844 it is skipped, from 430 × 932 and on desktop it shows). (b) Logo
+↔ Back with the final logo: R3, checked both ways on the case studies; the thesis page keeps the
+logo (it is not a card page) and morphs with the timeline card instead.
 
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver

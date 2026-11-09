@@ -198,6 +198,8 @@ export const idle = {
   /** Share of the arrow's time for its curl; the head draws in the rest. */
   arrowCurl: 0.8,
   fade: 0.32,
+  /** The note shows only with at least this much room (px) between it and the last "What I bring" item. */
+  clearance: 24,
 } as const
 
 /**
