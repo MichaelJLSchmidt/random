@@ -142,6 +142,8 @@ export const stagger = {
   gather: 0.06,
   /** Digits: between the strips of one Scoreboard value. */
   digits: 0.04,
+  /** Chapter numerals: between the contours as they draw (the left digit's first). */
+  contours: 0.06,
 } as const
 
 /** Seconds from the start of a sequence. */

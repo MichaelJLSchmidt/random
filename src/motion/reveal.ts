@@ -1,4 +1,5 @@
 import { inView } from 'motion'
+import { watchNumeralStrokes } from './numeral-stroke'
 import { whenInView } from './reveal-trigger'
 import { discard } from '@/eggs/discard'
 import { gapFor, spanFor } from './choreography'
@@ -192,6 +193,8 @@ export function revealRoute(kind: NavigationKind) {
     index: new Map(all.map((el, i) => [el, i])),
     planned: new Map(),
   }
+  // Chapter numerals keep a one-pixel stroke at any size.
+  r.stops.push(watchNumeralStrokes(main))
   // Fetch splitText now, so the first split (the role line at 900 ms) never waits for the network.
   if (tier !== 'reduced' && all.some((el) => kindOf(el) === 'lines')) void loadSplit()
 

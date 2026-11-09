@@ -19,7 +19,13 @@ type Props = {
  */
 export function MarginNote({ children, label, className }: Props) {
   return (
-    <Reveal as="aside" kind="note" className={cx('margin-note col-margin', className)} aria-label={label} data-margin-note="">
+    <Reveal
+      as="aside"
+      kind="note"
+      className={cx('margin-note col-margin', className)}
+      aria-label={label}
+      data-margin-note=""
+    >
       <p className="margin-note-text">{children}</p>
     </Reveal>
   )

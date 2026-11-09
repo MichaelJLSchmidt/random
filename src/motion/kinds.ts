@@ -316,7 +316,8 @@ export function draw(ctx: JobContext, el: HTMLElement) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
   fade(ctx, el)
   const d = drawFor(ctx.tier)
-  const gap = gapFor(ctx.tier, stagger.svgGroups)
+  // Chapter numerals draw contour by contour, closer together than an illustration's groups.
+  const gap = gapFor(ctx.tier, el.hasAttribute('data-numeral') ? stagger.contours : stagger.svgGroups)
   groups.forEach(({ strokes, tints, labels }, gi) => {
     for (const l of labels)
       ctx.animate(

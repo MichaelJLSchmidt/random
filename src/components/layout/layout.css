@@ -160,10 +160,27 @@
   pointer-events: none;
   user-select: none;
 }
-.numeral-breaker > span {
+/* The drawn numeral (ChapterNumeral): the numeral's size and line box, its outline 1 CSS px. */
+.chapter-numeral {
   display: block;
+  font-size: var(--type-numeral-size);
+  height: calc(1em * var(--type-numeral-leading));
+  width: auto;
+  overflow: visible;
   /* Optical: the outlined digits start at the column edge. */
   margin-left: -0.05em;
+}
+.chapter-numeral path {
+  fill: none;
+  stroke: currentColor;
+  /* User units for one CSS px (src/motion/numeral-stroke.ts); until measured, about right at 240 px. */
+  stroke-width: var(--numeral-stroke, 4.2);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+/* Undrawn until its chapter reveals (full tier; reduced motion and no script: drawn from the start). */
+:root[data-reveal]:not([data-motion='reduced']) .numeral-breaker:not([data-revealed]) .chapter-numeral path {
+  stroke-dashoffset: 1;
 }
 .numeral-breaker ~ * {
   position: relative;

@@ -51,7 +51,8 @@ dividers and illustration strokes.
   before "← Back" appears; coming back they are dealt again.
 - **Home** is one screen: the name, the intro, what I bring to the table and the hand. On a first
   visit it builds up in reading order in about two seconds, the hand last.
-- **Detail pages**: chapters open with big outlined numerals; images are offset editorial frames
+- **Detail pages**: chapters open with big outlined numerals that draw themselves, contour by
+  contour, as the chapter comes into view; images are offset editorial frames
   that echo the hero's offset (anchored to the reading column, reaching toward one edge, sides
   alternating), never full bleed on desktop.
 - **About** keeps to the table: its timeline and "How I work" are face-up cards in the same family
