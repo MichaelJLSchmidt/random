@@ -579,6 +579,14 @@ left), About and "DE · EN". Ambient motion follows `prefers-reduced-motion` (st
 stops while the tab is hidden; that is the only control (a visitor's stored `ambient` value is
 simply no longer read).
 
+**R5. Reveals start later**: the shared trigger is `reveal.amount` 0.35 and `reveal.margin`
+`0px 0px -18% 0px` (was 0.25 and −10%), in one place (`src/motion/reveal-trigger.ts`, used by the
+engine and the deal kind's cards). Tall blocks: `amount = min(0.35, 0.45 × innerHeight /
+offsetHeight)`. At the end of the page (within 4 px, or a page that cannot scroll) every waiting
+block reveals. Reduced motion: everything outside the home intro is visible at once, without
+animation (supersedes the 160 ms reveal crossfades of M1 for scroll reveals). The field's breaker
+lift keeps 0.25 (`reveal.breakerAmount`).
+
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
 (`device-pixel-content-box`), which draws in the same callback; height-only changes under
@@ -852,7 +860,8 @@ offset, `scale` 1.03 static → `--contour-drift-scale`) and `morph` (R1: `dprMa
 0.75, `guardFrames` 10, `guardMs` 20)), `hand.*` (geometry mirrored in `tokens.css`).
 
 **Reveal choreography** (I3): `duration.digits` 700 ms, `duration.svgDraw` 1200 ms,
-`distance.block` 12 px; `reveal` = trigger (`amount` 0.25, `margin`), `mask`
+`distance.block` 12 px; `reveal` = trigger (`amount` 0.35, `margin` −18% at the bottom,
+`tallAmount` 0.45, `endSlack` 4 px; R5), `breakerAmount` 0.25 (the field's lift), `mask`
 1.1 (lines rise from 110%), `image` (`inset` 0.1, `scale` 1.12), `digitRoll` 5, `zoomLanded` 0.6
 (after a play or switch the page reveals once 60% of the zoom has run), `mobileJobs` 8,
 `heroDrift` 0.06 (`--hero-drift`); `deal` = `stage` 180 svh, `phases`, `landTilt`,
@@ -1052,8 +1061,12 @@ After Wave 1 the kinds below are the only reveal system (D4).
 - Triggers: `data-reveal-order` blocks in the first viewport play in sequence (base + 80 ms ×
   (order + 1) + delay; base = 0, or `reveal.zoomLanded` of the morph as the tier runs it after a
   play (`duration.zoom`) or switch (`switchDelay + switchIn`), × `tiers[tier].vt`, 0 in reduced);
-  everything else reveals once 25% is in view (a block taller than the viewport: once it covers
-  25% of the viewport's height; Motion `inView`, once), blocks entering in the same
+  everything else reveals by the one shared rule (`src/motion/reveal-trigger.ts`, R5): once 35%
+  of it is inside the viewport less its bottom 18% (`reveal.amount` 0.35, `reveal.margin`
+  `0px 0px -18% 0px`; a block taller than the viewport needs `min(0.35, 0.45 × innerHeight /
+  offsetHeight)`; Motion `inView`, once), and every block still waiting reveals once the page is
+  scrolled to within 4 px of its end (or cannot scroll); reduced: every block outside the home
+  intro is final at once, nothing hidden or animated. Blocks entering in the same
   frame 50 ms apart in document order, and a block revealing with the same kind as the block
   before it at least 80 ms after it. A `note` waits for its related paragraph: the last `block` /
   `lines` reveal before it in its section.

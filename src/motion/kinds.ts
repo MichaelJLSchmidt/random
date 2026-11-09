@@ -1,6 +1,6 @@
-import { inView } from 'motion'
 import { bezier, drawFor, gapFor, msFor, spanFor } from './choreography'
 import type { JobContext } from './jobs'
+import { whenInView } from './reveal-trigger'
 import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
 import {
   type DurationStep,
@@ -507,28 +507,23 @@ export function dealCards(ctx: JobContext, el: HTMLElement): void | Promise<void
         // Hidden until it enters (the block itself is revealed already).
         card.style.opacity = '0'
         ctx.undo(() => card.style.removeProperty('opacity'))
-        const stop = inView(
-          card,
-          () => {
-            stop()
-            if (!waiting.delete(card)) return
-            const now = performance.now()
-            const delay = Math.max(0, next - now)
-            next = now + delay + gap
-            card.style.removeProperty('opacity')
-            ctx.animate(
-              card,
-              [
-                { opacity: 0, translate: `${-T.from}px 0` },
-                { opacity: 1, translate: '0 0' },
-              ],
-              { duration: T.dur * 1000, delay, easing: outExpo, fill: 'backwards' },
-              'transform, opacity',
-            )
-            if (!waiting.size) finish()
-          },
-          { amount: reveal.amount, margin: reveal.margin },
-        )
+        const stop = whenInView(card, () => {
+          if (!waiting.delete(card)) return
+          const now = performance.now()
+          const delay = Math.max(0, next - now)
+          next = now + delay + gap
+          card.style.removeProperty('opacity')
+          ctx.animate(
+            card,
+            [
+              { opacity: 0, translate: `${-T.from}px 0` },
+              { opacity: 1, translate: '0 0' },
+            ],
+            { duration: T.dur * 1000, delay, easing: outExpo, fill: 'backwards' },
+            'transform, opacity',
+          )
+          if (!waiting.size) finish()
+        })
         stops.push(stop)
       }
     })

@@ -297,10 +297,18 @@ export const field = {
   ignoreHeight: 120,
 } as const
 
-/** Reveals: trigger (Motion inView) and the kinds' fixed geometry. */
+/** Reveals: trigger (Motion inView, src/motion/reveal-trigger.ts) and the kinds' fixed geometry. */
 export const reveal = {
-  amount: 0.25,
-  margin: '0px 0px -10% 0px',
+  /** Share of a block inside the (shortened) viewport before it reveals. */
+  amount: 0.35,
+  /** The viewport's bottom 18% does not count: reveals start a little after a block appears. */
+  margin: '0px 0px -18% 0px',
+  /** A block taller than the viewport: amount = min(amount, tallAmount × innerHeight / its height). */
+  tallAmount: 0.45,
+  /** Scrolled to within this many px of the page's end: every waiting block reveals. */
+  endSlack: 4,
+  /** The field's lift while a full-bleed breaker is in view (not a reveal; unchanged). */
+  breakerAmount: 0.25,
   /** lines and title words rise from this share of their own height below the mask (110%). */
   mask: 1.1,
   /** image: clip inset at the start (share of the box) and the inner image's start scale. */

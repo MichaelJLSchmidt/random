@@ -1,4 +1,5 @@
 import { inView } from 'motion'
+import { whenInView } from './reveal-trigger'
 import { discard } from '@/eggs/discard'
 import { gapFor, spanFor } from './choreography'
 import { type FirstLoadBlock, firstVisit, revisit } from './first-load'
@@ -26,9 +27,12 @@ export { dealOffset, drawCards, fanCards } from './deal'
  *   detail     the detail hero's data-reveal-step blocks in the first viewport
  *              follow its title by at.detail: summary, label and counter, then
  *              the meta pairs left to right (each a `pair`: rule, label, value)
- *   on scroll  everything else reveals once 25% is in view (Motion inView,
- *              once); blocks entering in the same frame start 50 ms apart in
+ *   on scroll  everything else reveals once 35% is in view above the bottom
+ *              18% of the viewport (tall blocks: less, so they always trigger;
+ *              at the page's end every waiting block: reveal-trigger.ts);
+ *              blocks entering in the same frame start 50 ms apart in
  *              document order
+ *   reduced    every block is final at once: nothing hidden, nothing animated
  *   neighbours a block revealing with the same kind as the block before it
  *              starts at least 80 ms after it (spaced()), so no two
  *              neighbours share a timing
@@ -232,6 +236,14 @@ export function revealRoute(kind: NavigationKind) {
       revealNow(el)
     }
 
+  // Reduced: everything outside the home intro is final at once (nothing hidden, nothing animated).
+  if (tier === 'reduced')
+    for (const el of all) {
+      if (handled.has(el) || !kindOf(el)) continue
+      handled.add(el)
+      revealNow(el)
+    }
+
   // Detail pages (case studies, Management): the hero's sequence after its title (at.detail): the
   // summary, the top label and counter, then the meta pairs left to right. Only blocks in the
   // viewport now join it (measured once, here); the rest reveal on scroll like any other block.
@@ -259,21 +271,15 @@ export function revealRoute(kind: NavigationKind) {
     start(el, base + gapFor(tier, (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
   }
 
-  // Everything else: once 25% is in view (a block taller than the viewport: once it covers 25% of the
-  // viewport's height, so no block is ever too tall to reveal).
+  // Everything else: by the shared rule (reveal-trigger.ts).
   for (const el of all) {
     if (handled.has(el) || !kindOf(el)) continue
-    const amount = Math.min(R.amount, (innerHeight * R.amount) / Math.max(1, el.getBoundingClientRect().height))
-    const stop = inView(
-      el,
-      () => {
-        stop()
+    r.stops.push(
+      whenInView(el, () => {
         r.batch.push(el)
         if (!r.frame) r.frame = requestAnimationFrame(() => flush(r))
-      },
-      { amount, margin: R.margin as `${number}px ${number}px ${number}% ${number}px` },
+      }),
     )
-    r.stops.push(stop)
   }
 
   // Full-bleed breakers (Spread, the problem statement) lift the field's intensity while any of them
@@ -298,7 +304,7 @@ export function revealRoute(kind: NavigationKind) {
             table.setBreaker(lifting.size > 0)
           }
         },
-        { amount: R.amount },
+        { amount: R.breakerAmount },
       ),
     )
   }
