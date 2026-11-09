@@ -9,8 +9,9 @@
 /*
  * Exactly one screen (min-height 100dvh, no footer): it scrolls only when the
  * viewport is too small for its content. Label, the name (display, two lines),
- * role and intro, "What I bring to the table" under a drawn divider, and the
- * hint at the bottom, just above the hand. The bottom padding is the hand's
+ * role and intro, "What I bring to the table" under a drawn divider (its label
+ * on the items' baseline from 1024, above them below), and the hint at the
+ * bottom, centred just above the hand. The bottom padding is the hand's
  * visible height plus a margin, so everything clears the fan: checked at
  * 1024×768, 1280×720, 1440×900, 1920×1080, 2560×1440 and 390×844. From 1024
  * the name takes columns 1–6 and the role and intro sit beside it in columns
@@ -95,12 +96,14 @@
 .home-bring-number {
   color: var(--accent);
 }
-/* The hint: at the bottom of the screen, just above the hand (left on phones, over the fan from 1024). */
+/* The hint: at the bottom of the screen, just above the hand, centred over the fan at every width. */
 .home-hint {
   grid-row: -2;
   align-self: end;
+  justify-self: center;
   margin: var(--space-4) 0 0;
   color: var(--muted);
+  text-align: center;
 }
 @media (min-width: 1024px) {
   .home {
@@ -129,10 +132,12 @@
   .home-lede {
     max-width: none;
   }
+  /* The label and the three items share one baseline (the label is smaller, so it would sit higher). */
   .home-bring {
     grid-column: content-start / content-end;
     grid-row: 3;
     grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: baseline;
     margin-top: var(--space-6);
   }
   .home-bring-label {
@@ -150,8 +155,6 @@
   }
   .home-hint {
     grid-row: 4;
-    justify-self: center;
-    text-align: center;
   }
 }
 /*
