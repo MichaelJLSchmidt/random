@@ -19,6 +19,8 @@ export const LOCALE = 'locale'
 export const LOCALE_FADE = 'locale-fade'
 
 export const cardName = (id: string) => `card-${id}`
+/** About's Master's card and the thesis hero (R7, R8): one shared element, like a hand card and its case. */
+export const thesisName = 'thesis-card'
 export const titleName = (id: string) => `card-title-${id}`
 
 /** Page content enter/exit classes, keyed by transition type. */

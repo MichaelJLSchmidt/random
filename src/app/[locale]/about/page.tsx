@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { CSSProperties } from 'react'
+import { CareerTimeline } from '@/components/about/career-timeline'
 import { OffsetImage, Section, SectionIndex, imageSides } from '@/components/layout'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
@@ -31,8 +32,8 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
 /**
  * About (glacier, over the old password page's contour background, drawn by
  * the background field): hero (title, lead, the portrait photo), 01 story,
- * 02 timeline (seven face-up cards on a line, dealt from a small stack; a
- * scroll-snap strip at 1024–1279, a vertical line below), 03 how I work (four
+ * 02 timeline (two lanes, work and education, on one year axis: horizontal
+ * from 1024, vertical below; the Master's card links to the thesis), 03 how I work (four
  * face-up cards: a row dealt with a slight fan from 1024, 2×2, one column),
  * 04 "At the table", 05 roots, 06 "What's on the table" (five mini cards: the
  * card family the timeline and how I work share), 07 projects (a plain list:
@@ -44,7 +45,6 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
 export default async function AboutPage({ params }: Props) {
   setRequestLocale((await params).locale)
   const { about: a, site } = await getContent()
-  const stops = a.timeline.items
   const head = (key: AboutSectionKey) => ({
     id: key,
     number: aboutSectionKeys.indexOf(key) + 1,
@@ -82,30 +82,9 @@ export default async function AboutPage({ params }: Props) {
           )}
         </Section>
 
-        {/* 02 Timeline: seven face-up cards, oldest first; the latest carries the page accent. */}
+        {/* 02 Timeline: two lanes, work and education, on one year axis (R7). */}
         <Section {...head('timeline')} pin={1}>
-          <Reveal kind="deal" className="career col-wide">
-            <span className="career-line" aria-hidden="true" data-deal-line="" />
-            <span className="career-stack" aria-hidden="true" data-deal-stack="">
-              <span className="about-card-back" />
-              <span className="about-card-back" />
-              <span className="about-card-back" />
-            </span>
-            <ol className="career-cards">
-              {stops.map((t, i) => (
-                <li
-                  key={i}
-                  className="career-card about-card"
-                  data-deal-item=""
-                  data-latest={i === stops.length - 1 ? '' : undefined}
-                >
-                  <span className="career-years about-card-label">{t.years}</span>
-                  <span className="career-title">{t.title}</span>
-                  <span className="career-place">{t.place}</span>
-                </li>
-              ))}
-            </ol>
-          </Reveal>
+          <CareerTimeline timeline={a.timeline} label={a.timeline.title ?? a.timeline.label} />
         </Section>
 
         {/* 03 How I work: four face-up cards (number, title, body); not interactive. */}

@@ -56,8 +56,12 @@ dividers and illustration strokes.
   that echo the hero's offset (anchored to the reading column, reaching toward one edge, sides
   alternating), never full bleed on desktop.
 - **About** keeps to the table: its timeline and "How I work" are face-up cards in the same family
-  as "What's on the table" (card proportions, edges, mono labels). The timeline is dealt from a
-  small face-down stack onto a line; "How I work" is dealt with a slight fan that settles straight.
+  as "What's on the table" (edges, mono labels). The timeline is two lanes, work and education,
+  on one year axis (horizontal on desktop, vertical on phones): each card as long as its years,
+  overlaps marked by a faint shared band, the apprenticeship one card across both lanes. Its cards
+  are dealt in order from a deck at the start of the axis; the Master's card opens the thesis
+  overview with the card-to-hero morph. "How I work" is dealt with a slight fan that settles
+  straight.
 
 ## Tone
 

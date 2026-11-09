@@ -467,7 +467,7 @@ below describe the new state.
 - **A1. Portrait** (supersedes `ContourPortrait`, removed with its copy): `about.portrait`
   (`about-portrait`, "Man's face in profile, black and white" by Nik Bagherzadegan, Unsplash
   License, `crop: [4, 5]`) in the hero, an `image` reveal; alt text in both languages. 13 photos.
-- **A2. Timeline cards** (supersedes I13, I14 and `AboutTimeline`, removed with its copy and
+- **A2. Timeline cards** (superseded by R7: two lanes) (supersedes I13, I14 and `AboutTimeline`, removed with its copy and
   `scenes/timeline-scene.ts`): `about.timeline.items` are `{ years, title, place }`; seven face-up
   cards (`.career-card.about-card`, the latest `[data-latest]` with the page accent on its edge) in
   the card family of "What's on the table" (`.about-card`, `.about-card-back`, `.about-card-label`
@@ -627,6 +627,27 @@ token) and position; a 1 CSS px stroke in user units (`--numeral-stroke`, kept b
 1 → 0 over `duration.svgDraw` (1.2 s, `ease.inOut`), contours `stagger.contours` (60 ms) apart, the
 left digit first. The chapter number stays text in the section index. Reduced motion: drawn from
 the start.
+
+**R7. The timeline has two lanes** (supersedes A2): `CareerTimeline`
+(`src/components/about/career-timeline.tsx`, styles in `pages.css`). Data: `about.timeline`
+(`CareerStop`s with lane, years, title, place; the apprenticeship one stop across both lanes with
+its company and school `parts`; `alongside` sentences for the overlaps; the Master's stop
+`thesis`), checked at build time (seven stops, oldest first, 1 / 4 / 2 by lane, one thesis link,
+the same in both locales). Markup: one chronological `ol.career-stops[aria-label]`, each `li` with
+its lane as text (visually hidden "Work:" / "Education:"), its years as `<time>` (`2021–today`),
+title and place, and where it overlaps the other lane an "alongside …" sentence; lane labels, the
+overlap bands and the axis are `aria-hidden`. CSS grid on year tracks (`--track`; the list and the
+axis are subgrids): from 1024 a horizontal axis 2004 → today (Martian Mono ticks every two years),
+Work above Education, each card as wide as its years and at least its title's longest word (a
+short card reaches into the empty years after it); below 1024 a vertical axis on the left with
+two narrow lanes, each year a row of at least 28 px, each card at least 72 px, text at least
+14 px, no horizontal scroll at 360 and 390 px. The apprenticeship is one card across both lanes
+with a dashed seam; overlaps get a faint glacier band across both lanes and a small "alongside"
+label. The cards are dealt in order from a deck at the axis's start (`deal.deck`: 70 ms apart,
+the `land` spring as `linear()`). The Master's card is a link ("Thesis overview", the whole card
+its target) to `/about/thesis` with type `play`, sharing the view-transition name `thesis-card`
+with the thesis hero (R8). Removed: the dealt line and its stack, the scroll-snap strip, the
+`left` deal mode, `deal.line`, `deal.left`.
 
 **R4. Chapter 05 flicker** (cause and fix in `docs/backlog.md`): `field.pinnedDetail` and
 `src/motion/scenes/pin.ts` are gone. The canvas is sized only by its ResizeObserver
@@ -909,9 +930,9 @@ offset, `scale` 1.03 static → `--contour-drift-scale`) and `morph` (R1: `dprMa
 1.1 (lines rise from 110%), `image` (`inset` 0.1, `scale` 1.12), `digitRoll` 5, `zoomLanded` 0.6
 (after a play or switch the page reveals once 60% of the zoom has run), `mobileJobs` 8,
 `heroDrift` 0.06 (`--hero-drift`); `deal` = `stage` 180 svh, `phases`, `landTilt`,
-`flipPerspective`, `toss`, `below`, and the About cards' `deal` reveal (A2, A3): `line` (`dur`
-420 ms, `stagger` 120 ms, `lead` 160 ms, `appear` 0.25), `fan` (`dur` 420 ms, `stagger` 80 ms,
-`rise` 32 px, `tilt` 0.5 of `angle.hand`, `settle` 420 ms), `left` (`from` 24 px, `dur` 420 ms);
+`flipPerspective`, `toss`, `below`, and the About cards' `deal` reveal: `deck` (R7: `stagger`
+70 ms, `reach` 240 px, `tilt` −4°, `appear` 0.3, on the `land` spring as `linear()`), `fan` (A3:
+`dur` 420 ms, `stagger` 80 ms, `rise` 32 px, `tilt` 0.5 of `angle.hand`, `settle` 420 ms);
 `discard` = `drop`, `fade`. `src/motion/choreography.ts` only applies the tiers (`msFor`, `spanFor`, `gapFor`,
 `drawFor`).
 
@@ -1127,15 +1148,13 @@ After Wave 1 the kinds below are the only reveal system (D4).
   digit strips roll in (`[data-digit]`, stagger digits); `rule` a hairline draws (scaleX); `draw`
   SVG strokes draw by group (`[data-draw]`, `[data-draw-group]`, stagger svgGroups), labels
   (`[data-draw-label]`) fade in as their group starts and tints (`[data-draw-fill]`) once it is
-  drawn (I4); `note` fades in after its paragraph; `pair` a ruled row: its `[data-pair-rule]`
+  drawn (I4; chapter numerals' contours `stagger.contours` apart, R6); `note` fades in after its paragraph; `pair` a ruled row: its `[data-pair-rule]`
   draws from the left, then each `[data-pair-part]` rises in turn (`at.detail.meta`: 300 ms,
   parts 50 ms apart; MetaPairs, About's projects); `deal` About's face-up cards
-  (`[data-deal-item]`), by the block's `--deal-mode`: `stack` (the `[data-deal-line]` draws, the
-  `[data-deal-stack]` fades in, each card flies from the stack onto its place, `deal.line`), `fan`
-  (each card rises into a slight fan, then the row settles straight, `deal.fan`), `left` (each card
-  from the left as it enters, `deal.left`; the job stays open until every card is in, `ctx.stop()`
-  ends the wait on a skip or route change), `list`, otherwise a `block` rise. Reduced: one 160 ms
-  opacity crossfade, digits static, drawings shown, nothing dealt.
+  (`[data-deal-item]`), by the block's `--deal-mode`: `deck` (the timeline, R7: each card dealt in
+  document order from a deck at the block's start, `deal.deck`), `fan` (each card rises into a
+  slight fan, then the row settles straight, `deal.fan`), `list`, otherwise a `block` rise. (The
+  dealt line `stack` and the phone mode `left` are gone, R7.) Reduced: final at once (R5).
   Kinds take optional timing from a sequence (`KindOptions`: `dur`, `span`, `stagger`,
   `underline`).
 - `<FirstLoadSequence className?>`: wraps the home hero; renders `div[data-first-load]` with
@@ -1328,7 +1347,7 @@ optional image with an optional `caption` (I16).
 | `Decision` / `Decisions` | `{ decision, chose, tradeOff, why }`, exactly four |
 | `Artefact` | `title, caption?, image?, illustration?` |
 | `Management` | `slug: 'management', identity, title` (hero, "How I lead")`, lead, heroImage?, principles: SectionHead & { items: { title, evidence }[] }` (5)`, team: SectionHead & { members: { initials, role, fte, focus }[]; note }, rituals: SectionHead & { items: { name, cadence, purpose }[] }, hiring: SectionHead & { steps: { title, duration, purpose }[]; note }, growth: SectionHead & { body, levels: string[], dimensions: string[] }, workshops: SectionHead & { formats: { name, duration, who, outcome, glyph: WorkshopMethod }[]; drawButton }, metrics: SectionHead & { items: Metric[] }` (5) — order `managementSectionKeys`. Team members appear as initials only. The card's title, type and facts live in `hand.cards.management`. |
-| `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, portrait: ImageId` (the hero's 4:5 photo, A1)`, timeline: SectionHead & { items: { years, title, place }[] }` (7 cards, oldest first, A2)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards)`, projects: SectionHead & { title, intro` (the count line, "13 projects · 2014–2025")`, columns: Record<keyof Project,string>, items: Project[]` (13)`, end` (the closing line) `}, contact: SectionHead & { title` ("Let's talk.")`, body, email, links: ContactLink[]` (LinkedIn, location)`, note }, creditsTitle, topo { label, attribution, href }` (the credit "Terrain data © swisstopo" and its link, B1)` — order `aboutSectionKeys` (story, timeline, howIWork, tcg, roots, onTheTable, projects, contact) |
+| `About` | `title, lead, story: SectionHead & { body: Paragraph[] }, portrait: ImageId` (the hero's 4:5 photo, A1)`, timeline: SectionHead & { lanes: Record<CareerLane,string>, both, today, alongside, thesisLink, items: CareerStop[] }` (R7: `CareerStop { lane: 'work'\|'education'\|'both', from, to: number\|'today', title, place?, parts?: Record<CareerLane,{ title, place? }>, alongside?, thesis? }`, seven, oldest first)`, howIWork: SectionHead & { items: { title, body }[] }` (4)`, tcg: SectionHead & { title, body, lessons: { title, body }[], stats }, roots: SectionHead & { title, body }, onTheTable: SectionHead & { title, items: { label, value }[] }` (5 face-down mini cards)`, projects: SectionHead & { title, intro` (the count line, "13 projects · 2014–2025")`, columns: Record<keyof Project,string>, items: Project[]` (13)`, end` (the closing line) `}, contact: SectionHead & { title` ("Let's talk.")`, body, email, links: ContactLink[]` (LinkedIn, location)`, note }, creditsTitle, topo { label, attribution, href }` (the credit "Terrain data © swisstopo" and its link, B1)` — order `aboutSectionKeys` (story, timeline, howIWork, tcg, roots, onTheTable, projects, contact) |
 | `Project` | `title, year, client, role` (what I did) |
 | `ContactLink` | `label, value, href?` |
 | `NotFound` | `title, body, back` |
@@ -1341,7 +1360,9 @@ section): both locales have the same case-study slugs and card order; German str
 "ß", em-dash or semicolon; and per locale exactly
 three case studies with unique slugs and `number` "01"–"03" in order; per case study five
 metrics, four decisions, four approach steps, a hand card with the same title and identity;
-Management five principles and five metrics; About seven timeline stops, four how-I-work items,
+Management five principles and five metrics; About seven timeline stops (oldest first, one across
+both lanes with `parts`, four in work, two in education, one thesis link; the same lanes and years
+in every locale; R7), four how-I-work items,
 five "on the table" items, thirteen projects with a count line that matches them ("13 projects ·
 2014–2025", "13 Projekte · 2014–2025"); home three
 "What I bring to the table" items; the hand exactly four cards.
@@ -1366,7 +1387,7 @@ Spread grid (D9).
 | `/<locale>/` | `src/app/[locale]/page.tsx` | ink | one screen (H1): `FirstLoadSequence` around label, title, role, intro, "What I bring to the table", hint; IdleHint egg; no footer; clears the fan |
 | `/<locale>/work/[slug]` (`team-of-teams`, `shared-foundations`, `front-door`) | `src/app/[locale]/work/[slug]/page.tsx`, `case-sections.tsx` | ember / tide / grove | `DetailPage`: hero (`[data-hero-target]` frame with the priority hero picture + `.hero-drift`, display h1, summary) + MetaPairs + Scoreboard; sections 01–09 via `Section` (01 context + OffsetImage with caption; 02 problem opens with the statement (`data-breaker`); 03 owned / not owned; 04 four steps + sticky vertical drawing; 05 DealRow (deal scene, face up); 06 artefact gallery (drawings, photos, text cards); 07 outcomes; 08 differently; 09 NextProject); a NumeralBreaker on 01–08; Minimap |
 | `/<locale>/management` | `src/app/[locale]/management/page.tsx` | saffron | `DetailPage`: hero (TeamConstellation) + "How I lead" + lead + card facts; 01 principles (+ OffsetImage), 02 team (structure pinned), 03 rituals (WeekRing), 04 hiring (drawn connector), 05 growth (CareerMatrix + HTML axes), 06 workshops (WorkshopRow with a WorkshopGlyph per format on a subgrid, workshop draw, + OffsetImage), 07 metrics (Scoreboard); NextProject; Minimap |
-| `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour layer (B1) | hero (title, lead, the portrait photo, A1); 01 story (+ OffsetImage), 02 timeline (seven face-up cards dealt onto a line, A2), 03 how I work (four face-up cards, A3), 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain credit (a link; also along the left edge from 1024) |
+| `/<locale>/about` | `src/app/[locale]/about/page.tsx` | glacier, over the contour layer (B1) | hero (title, lead, the portrait photo, A1); 01 story (+ OffsetImage), 02 timeline (two lanes on one year axis, the Master's card links to the thesis, R7), 03 how I work (four face-up cards, A3), 04 tcg (+ OffsetImage), 05 roots (+ OffsetImage), 06 "What's on the table" (five cards), 07 projects (plain list, count and closing lines), 08 contact (`#contact`); the footer adds the photo credits and the terrain credit (a link; also along the left edge from 1024) |
 | 404 | `src/app/[locale]/404/page.tsx` (`/<locale>/404/`), served for any unknown address by `dist/404.html` (L4) | ink | discard zone, pile and `.lost-card` (DiscardedCard, falls in, I7), title, back link (home in its locale) |
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
@@ -1393,7 +1414,8 @@ pages), About, the language switcher (L6); it leaves on a scroll down (N1). Ever
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
 | `data-contours="off\|morph\|shown"`, `data-contours-primed`, `data-canvas-covered` | `.field` | About's SVG layer: hidden, morphing in or out, at rest; rendered at opacity 0 because About is near; the SVG layer covers the canvas, which is not composited (R1) |
-| `data-deal-item`, `data-deal-line`, `data-deal-stack`, `data-latest` | About's cards (the `deal` reveal) | the cards, the timeline's line and stack, its latest card (A2, A3) |
+| `data-deal-item`, `data-latest` | About's cards (the `deal` reveal) | the cards, the timeline's open stop (R7, A3) |
+| `data-lane="work\|education\|both"`, `data-thesis` | the timeline's stops (`li.career-stop`) | its lane; the Master's card, a link to the thesis (R7) |
 | `data-first-load` | `<FirstLoadSequence>` | home hero wrapper |
 | `data-chrome` | header | revealed last in the first-visit intro |
 | `data-draw` | SVG stroke elements (with `pathLength="1"`) | drawn on by the `draw` reveal |

@@ -1,6 +1,5 @@
 import { bezier, drawFor, gapFor, msFor, spanFor } from './choreography'
 import type { JobContext } from './jobs'
-import { whenInView } from './reveal-trigger'
 import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
 import {
   type DurationStep,
@@ -13,6 +12,8 @@ import {
   hand,
   opsz,
   reveal,
+  spring,
+  springCss,
   stagger,
   weight,
 } from './tokens'
@@ -421,11 +422,9 @@ export async function title(ctx: JobContext, el: HTMLElement, opts: KindOptions 
 /**
  * deal: About's face-up cards (the timeline, "How I work"): the block's [data-deal-item] cards.
  * Its layout picks the mode (the CSS custom property --deal-mode, so it follows the breakpoints):
- *   stack  the [data-deal-line] draws from the left and the [data-deal-stack] fades in; each card
- *          then flies from the stack (at the stack's size) to its place, deal.line timing
+ *   deck   the timeline: each card is dealt from a deck at the block's start, in order, on the
+ *          land spring (deal.deck): a short flight, a slight turn, opacity
  *   fan    each card rises into a slight fan, then the row settles straight together (deal.fan)
- *   left   each card comes in from the left as it enters the viewport (deal.left); cards entering
- *          together are a card stagger apart. The job ends once every card is in (or on a skip)
  *   list   the cards in turn, like `list`; anything else: the block rises (`block`)
  * Reduced: one crossfade, nothing is dealt.
  */
@@ -435,26 +434,34 @@ export function dealCards(ctx: JobContext, el: HTMLElement): void | Promise<void
   const mode = getComputedStyle(el).getPropertyValue('--deal-mode').trim()
   if (!cards.length) return block(ctx, el)
   const outExpo = E.outExpo
-  if (mode === 'stack') {
-    const T = DEAL.line
-    const line = el.querySelector<HTMLElement>('[data-deal-line]')
-    const stack = el.querySelector<HTMLElement>('[data-deal-stack]')
-    if (line) rule(ctx, line, 0, { dur: T.dur * 1000, underline: true })
-    if (stack) fade(ctx, stack, 's')
-    const from = (stack ?? line ?? el).getBoundingClientRect()
+  if (mode === 'deck') {
+    // From a deck at the block's start (the year axis's first year), in document (chronological)
+    // order, on the land spring; each card travels at most deal.deck.reach px.
+    const T = DEAL.deck
+    const { easing, duration: springDur } = springCss(spring.land)
+    const box = el.getBoundingClientRect()
+    const deckX = box.left
+    const deckY = box.top
     cards.forEach((card, i) => {
       const to = card.getBoundingClientRect()
-      const dx = from.left + from.width / 2 - (to.left + to.width / 2)
-      const dy = from.top + from.height / 2 - (to.top + to.height / 2)
-      const scale = stack ? Math.min(1, from.width / to.width) : 1
+      let dx = deckX - to.left
+      let dy = deckY - to.top
+      const d = Math.hypot(dx, dy)
+      if (d > T.reach) {
+        dx *= T.reach / d
+        dy *= T.reach / d
+      }
+      const origin = card.style.transformOrigin
+      card.style.transformOrigin = '0 0'
+      ctx.undo(() => (card.style.transformOrigin = origin))
       ctx.animate(
         card,
         [
-          { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+          { opacity: 0, transform: `translate(${dx}px, ${dy}px) rotate(${T.tilt}deg)` },
           { opacity: 1, offset: T.appear },
           { opacity: 1, transform: 'none' },
         ],
-        { duration: T.dur * 1000, delay: (T.lead + i * T.stagger) * 1000, easing: outExpo, fill: 'backwards' },
+        { duration: springDur * 1000, delay: i * T.stagger * 1000, easing, fill: 'backwards' },
         'transform, opacity',
       )
     })
@@ -489,45 +496,6 @@ export function dealCards(ctx: JobContext, el: HTMLElement): void | Promise<void
       )
     })
     return
-  }
-  if (mode === 'left') {
-    const T = DEAL.left
-    const gap = gapFor(ctx.tier, stagger.cards)
-    return new Promise<void>((resolve) => {
-      const waiting = new Set(cards)
-      const stops: (() => void)[] = []
-      let next = 0
-      const finish = () => {
-        for (const stop of stops.splice(0)) stop()
-        for (const card of waiting) card.style.removeProperty('opacity')
-        waiting.clear()
-        resolve()
-      }
-      ctx.stop(finish)
-      for (const card of cards) {
-        // Hidden until it enters (the block itself is revealed already).
-        card.style.opacity = '0'
-        ctx.undo(() => card.style.removeProperty('opacity'))
-        const stop = whenInView(card, () => {
-          if (!waiting.delete(card)) return
-          const now = performance.now()
-          const delay = Math.max(0, next - now)
-          next = now + delay + gap
-          card.style.removeProperty('opacity')
-          ctx.animate(
-            card,
-            [
-              { opacity: 0, translate: `${-T.from}px 0` },
-              { opacity: 1, translate: '0 0' },
-            ],
-            { duration: T.dur * 1000, delay, easing: outExpo, fill: 'backwards' },
-            'transform, opacity',
-          )
-          if (!waiting.size) finish()
-        })
-        stops.push(stop)
-      }
-    })
   }
   if (mode === 'list') return list(ctx, el)
   return block(ctx, el)

@@ -370,20 +370,17 @@ export const deal = {
   toss: 28,
   below: 0.6,
   /**
-   * About's timeline from 1280 px (the `deal` reveal, mode "stack"): the line draws, then the seven
-   * cards are dealt from the small face-down stack at its left end onto it, in order: each `dur`
-   * s (outExpo), `stagger` s apart, the first after `lead` s; each card starts at the stack's size
-   * and is fully opaque after `appear` of its flight.
+   * About's timeline (the `deal` reveal, mode "deck"): the cards are dealt in order from a deck at
+   * the start of the year axis, `stagger` s apart, on the `land` spring (linear()): each from at
+   * most `reach` px toward the deck, turned `tilt` degrees, opaque after `appear` of its way.
    */
-  line: { dur: 0.42, stagger: 0.12, lead: 0.16, appear: 0.25 },
+  deck: { stagger: 0.07, reach: 240, tilt: -4, appear: 0.3 },
   /**
    * About's "How I work" from 1024 px (mode "fan"): each card rises `rise` px into a slight fan
    * (`tilt` of its hand-fan angle, angle.hand) over `dur` s, `stagger` s apart, then the row
    * settles straight together over `settle` s (inOut).
    */
   fan: { dur: 0.42, stagger: 0.08, rise: 32, tilt: 0.5, settle: 0.42 },
-  /** Below 1024 px (mode "left"): each card comes in from `from` px to the left as it enters the viewport. */
-  left: { from: 24, dur: 0.42 },
 } as const
 
 /** 404 discard: drop height (× distance.exitPlay) and the share of the fall in which the card fades in. */

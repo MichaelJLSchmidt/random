@@ -310,6 +310,30 @@ export type Project = { title: string; year: string; client: string; role: strin
 
 export type ContactLink = { label: string; value: string; href?: string }
 
+/** About's timeline lanes. */
+export type CareerLane = 'work' | 'education'
+export type CareerPart = { title: string; place?: string }
+/**
+ * One stop of About's two-lane timeline (R7): a span of years in the work or the education lane,
+ * or (`both`) one card across both lanes, its two halves in `parts` (the apprenticeship: the
+ * company part and the vocational school).
+ */
+export type CareerStop = {
+  lane: CareerLane | 'both'
+  /** First year. */
+  from: number
+  /** Last year (the span ends there), or 'today'. */
+  to: number | 'today'
+  title: string
+  place?: string
+  /** lane 'both' only: its work half and its education half. */
+  parts?: Record<CareerLane, CareerPart>
+  /** The overlap with the other lane in words, for readers without the picture. */
+  alongside?: string
+  /** The Master's card: a link to the thesis page (/about/thesis). */
+  thesis?: boolean
+}
+
 /** About sections in reading order (after the hero). */
 export const aboutSectionKeys = [
   'story',
@@ -329,8 +353,20 @@ export type About = {
   /** The hero's portrait (a 4:5 photo; an example until the real one comes). */
   portrait: ImageId
   story: SectionHead & { body: Paragraph[] }
-  /** Exactly seven stops, oldest first: one face-up card each (years, title, place). */
-  timeline: SectionHead & { items: { years: string; title: string; place: string }[] }
+  /**
+   * Two lanes, work and education (R7): exactly seven stops, oldest first (by `from`), one of them
+   * across both lanes, four in work, two in education, one the thesis link. `lanes` names the
+   * lanes, `both` the shared card's lane, `today` the open end, `alongside` the overlap bands'
+   * label, `thesisLink` the Master's card's link.
+   */
+  timeline: SectionHead & {
+    lanes: Record<CareerLane, string>
+    both: string
+    today: string
+    alongside: string
+    thesisLink: string
+    items: CareerStop[]
+  }
   /** Exactly four. */
   howIWork: SectionHead & { items: { title: string; body: string }[] }
   tcg: SectionHead & { title: string; body: Paragraph; lessons: { title: string; body: string }[]; stats: string }

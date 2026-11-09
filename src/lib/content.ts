@@ -62,7 +62,23 @@ function validate(locale: Locale, content: Content, chrome: Chrome) {
   })
   count('management.principles.items', content.management.principles.items, 5)
   count('management.metrics.items', content.management.metrics.items, 5)
-  count('about.timeline.items', content.about.timeline.items, 7)
+  const stops = content.about.timeline.items
+  count('about.timeline.items', stops, 7)
+  const lane = (l: string) => stops.filter((s) => s.lane === l)
+  count('about.timeline.items in both lanes', lane('both'), 1)
+  count('about.timeline.items in work', lane('work'), 4)
+  count('about.timeline.items in education', lane('education'), 2)
+  count(
+    'about.timeline.items with the thesis link',
+    stops.filter((s) => s.thesis),
+    1,
+  )
+  stops.forEach((s, i) => {
+    const end = s.to === 'today' ? Infinity : s.to
+    expect(end >= s.from, at(`about.timeline.items[${i}] ends before it starts.`))
+    expect(i === 0 || s.from >= stops[i - 1].from, at('about.timeline.items must be oldest first.'))
+    expect(Boolean(s.parts) === (s.lane === 'both'), at(`about.timeline.items[${i}]: parts only on the shared card.`))
+  })
   count('about.howIWork.items', content.about.howIWork.items, 4)
   count('about.onTheTable.items', content.about.onTheTable.items, 5)
   const projects = content.about.projects.items
@@ -96,8 +112,11 @@ function validateCopy(locale: Locale, value: unknown, path: string) {
 function validateAcross(sets: Record<Locale, Content>) {
   const [first, ...rest] = locales
   const slugs = (c: Content) => c.caseStudies.map((s) => s.slug).join(',')
+  const career = (c: Content) =>
+    c.about.timeline.items.map((s) => `${s.lane}:${s.from}-${s.to}:${Boolean(s.thesis)}`).join(',')
   for (const locale of rest) {
     expect(slugs(sets[locale]) === slugs(sets[first]), `content/${locale}: case studies must match content/${first}.`)
+    expect(career(sets[locale]) === career(sets[first]), `content/${locale}: the timeline must match content/${first}.`)
     expect(
       sets[locale].hand.order.join(',') === sets[first].hand.order.join(','),
       `content/${locale}: hand.order must match content/${first}.`,

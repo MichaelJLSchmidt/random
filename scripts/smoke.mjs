@@ -582,8 +582,9 @@ async function tableSuite(browser, device) {
     topo.credit.includes(aboutCopy.topo.attribution) && topo.attribution.includes(aboutCopy.topo.label),
     topo.credit,
   )
-  // A2, A3: seven timeline cards (the latest with the accent edge), four How I work cards, all
-  // shown once scrolled through, none interactive.
+  // R7, A3: the two-lane timeline (one chronological list, seven stops with their lane as text and
+  // <time> years, one across both lanes, the latest marked, only the Master's card a link: to the
+  // thesis), four How I work cards; all shown once scrolled through; nothing wider than the screen.
   for (let y = 0; y < 5000; y += 300) {
     await page.mouse.wheel(0, 300)
     await wait(page, 60)
@@ -591,26 +592,37 @@ async function tableSuite(browser, device) {
   await page.evaluate(() => document.getElementById('howIWork').scrollIntoView())
   await wait(page, 1800)
   const cards = await page.evaluate(() => {
-    const all = [...document.querySelectorAll('.career-card, .how-card')]
+    const stops = [...document.querySelectorAll('#timeline ol.career-stops > li')]
+    const all = [...stops, ...document.querySelectorAll('.how-card')]
+    const links = [...document.querySelectorAll('#timeline a, #howIWork :is(a, button, [tabindex])')]
     return {
-      career: document.querySelectorAll('.career-card').length,
-      latest: document.querySelectorAll('.career-card:last-child[data-latest]').length,
+      label: document.querySelector('#timeline ol.career-stops')?.getAttribute('aria-label') ?? '',
+      career: stops.length,
+      lanes: stops.map((li) => li.dataset.lane).join(','),
+      laneText: stops.every((li) => li.querySelector('.sr-only')?.textContent.trim().endsWith(':')),
+      times: stops.every((li) => li.querySelector('time[datetime]')),
+      latest: document.querySelectorAll('#timeline [data-latest]').length,
       how: document.querySelectorAll('.how-card').length,
       hidden: all.filter((c) => Number(getComputedStyle(c).opacity) < 0.99).length,
-      interactive: document.querySelectorAll(
-        '#timeline :is(a, button, [tabindex]), #howIWork :is(a, button, [tabindex])',
-      ).length,
+      links: links.map((a) => a.getAttribute('href')),
       portrait: Boolean(document.querySelector('.about-portrait img[src*="about-portrait"]')),
+      wide: document.documentElement.scrollWidth > innerWidth,
     }
   })
   check(
-    'about: 7 timeline cards (latest marked), 4 How I work cards, all shown, none interactive; the portrait photo',
+    'about: the two-lane timeline (7 stops, lanes as text, <time>, one shared card, latest marked, the thesis link only), 4 How I work cards, all shown; the portrait photo',
     cards.career === 7 &&
+      cards.label.length > 0 &&
+      cards.lanes === 'both,work,education,work,work,work,education' &&
+      cards.laneText &&
+      cards.times &&
       cards.latest === 1 &&
       cards.how === 4 &&
       cards.hidden === 0 &&
-      cards.interactive === 0 &&
-      cards.portrait,
+      cards.links.length === 1 &&
+      /\/about\/thesis\/$/.test(cards.links[0]) &&
+      cards.portrait &&
+      !cards.wide,
     JSON.stringify(cards),
   )
   const about = await page.evaluate(() => ({
