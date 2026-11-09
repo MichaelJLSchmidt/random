@@ -1,21 +1,14 @@
 import type { Metadata } from 'next'
 import type { CSSProperties } from 'react'
-import topo from '../../../public/topo/meta.json'
-import { AboutTopo } from '@/components/about-topo'
 import { AboutTimeline, ContourPortrait } from '@/components/illustrations'
 import { OffsetImage, Section, SectionIndex, imageSides } from '@/components/layout'
 import { PageTitle } from '@/components/page-title'
 import { PageTransition } from '@/components/page-transition'
 import { Reveal } from '@/components/reveals'
 import { OnTheTable } from '@/eggs/on-the-table'
-import { type AboutSectionKey, type ImageEntry, about, aboutSectionKeys, images, pad2, site } from '@/lib/content'
+import { type AboutSectionKey, about, aboutSectionKeys, pad2, site } from '@/lib/content'
 
 export const metadata: Metadata = { title: about.title }
-
-/** Photos to credit in the colophon (ImageEntry kind "photo"), straight from the image manifest. */
-const photos = Object.entries(images as Record<string, ImageEntry>).filter(
-  (e): e is [string, Extract<ImageEntry, { kind: 'photo' }>] => e[1].kind === 'photo',
-)
 
 const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
   story: 'm',
@@ -24,16 +17,20 @@ const space: Record<AboutSectionKey, 's' | 'm' | 'l'> = {
   tcg: 'l',
   roots: 's',
   onTheTable: 'm',
+  projects: 'l',
+  contact: 'l',
 }
 
 /**
- * About (glacier, over the contour map): hero (title, lead, ContourPortrait),
- * 01 story (+ Spread), 02 timeline (AboutTimeline, line and dots, with seven
- * HTML stops: horizontal from 1024, turned 90° below), 03 how I work (2×2),
- * 04 "At the table" (+ Spread), 05 roots (+ Spread), 06 "What's on the
- * table" (five mini cards), then the
- * colophon (photo credits from the image manifest, the swisstopo source). The
- * topography attribution also stays visible along the left edge from 1024.
+ * About (glacier, over the old portfolio's contour field of Interlaken, drawn
+ * by the background field): hero (title, lead, ContourPortrait), 01 story,
+ * 02 timeline (AboutTimeline, line and dots, with seven HTML stops:
+ * horizontal from 1024, turned 90° below), 03 how I work (2×2), 04 "At the
+ * table", 05 roots, 06 "What's on the table" (five mini cards), 07 projects
+ * (a plain list: title, year, client, what I did; not interactive), 08 contact
+ * ("Let's talk."). Images are offset on alternating sides. The photo credits
+ * and the terrain attribution are small print in the footer
+ * (AboutSmallPrint); the attribution also runs along the left edge from 1024.
  */
 export default function AboutPage() {
   const a = about
@@ -44,8 +41,9 @@ export default function AboutPage() {
     title: a[key].title ?? a[key].label,
     space: space[key],
   })
-  const attribution = `${a.topo.label}. ${a.topo.attribution}.`
   const side = imageSides()
+  const p = a.projects
+  const c = a.contact
   return (
     <PageTransition>
       <div className="about-page" data-identity="glacier">
@@ -150,40 +148,82 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Colophon: every photo from the manifest, credited and linked; the topography's source. */}
-        <section className="colophon page-section spread-grid space-l" aria-labelledby="credits-title">
-          <h2 id="credits-title" className="colophon-title t-label col-index">
-            {a.creditsTitle}
-          </h2>
-          <div className="colophon-body col-content">
-            {photos.length > 0 && (
-              <ul className="colophon-list">
-                {photos.map(([id, p]) => (
-                  <li key={id}>
-                    <a className="link" href={p.pageUrl}>
-                      {p.alt || id}
-                    </a>
-                    <span className="colophon-by t-label">
-                      <a className="link" href={p.photographerUrl}>
-                        {p.photographer}
-                      </a>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="topo-credit t-label">
-              {attribution}
-              {topo.placeholder && <span className="topo-placeholder"> {a.topo.placeholderNote}</span>}
+        {/* 07 Projects: a plain list, not interactive (no hover or focus states); rows reveal with their rules. */}
+        <Section {...head('projects')} pin={2}>
+          <Reveal as="p" kind="block" className="projects-count t-label col-content">
+            {p.intro}
+          </Reveal>
+          <div className="projects col-wide">
+            <p className="projects-head t-label" aria-hidden="true">
+              <span>{p.columns.title}</span>
+              <span>{p.columns.year}</span>
+              <span>{p.columns.client}</span>
+              <span>{p.columns.role}</span>
             </p>
+            <ul className="projects-list">
+              {p.items.map((item) => (
+                <Reveal key={item.title} as="li" kind="pair" className="project">
+                  <span className="project-rule" aria-hidden="true" data-pair-rule="" />
+                  <span className="project-title" data-pair-part="">
+                    {item.title}
+                  </span>
+                  <span className="project-year t-label" data-pair-part="">
+                    <span className="sr-only">{p.columns.year}: </span>
+                    {item.year}
+                  </span>
+                  <span className="project-client" data-pair-part="">
+                    <span className="sr-only">{p.columns.client}: </span>
+                    {item.client}
+                  </span>
+                  <span className="project-role" data-pair-part="">
+                    <span className="sr-only">{p.columns.role}: </span>
+                    {item.role}
+                  </span>
+                </Reveal>
+              ))}
+            </ul>
           </div>
-        </section>
+          <Reveal as="p" kind="lines" className="projects-end t-lead col-content">
+            {p.end}
+          </Reveal>
+        </Section>
+
+        {/* 08 Contact: the end point (Coffee, the egg, leads here: /about#contact). */}
+        <Section {...head('contact')} pin={2} className="about-contact">
+          <Reveal as="p" kind="lines" className="contact-body t-lead col-content">
+            {c.body}
+          </Reveal>
+          <div className="contact-email-line col-content">
+            <a className="contact-email t-h2" href={`mailto:${c.email}`}>
+              {c.email}
+            </a>
+            <Reveal as="hr" kind="rule" className="contact-underline" />
+          </div>
+          <dl className="contact-pairs col-content">
+            {c.links.map((l) => (
+              <div key={l.label} className="contact-pair">
+                <dt className="t-label">{l.label}</dt>
+                <dd className="t-label">
+                  {l.href ? (
+                    <a className="link" href={l.href}>
+                      {l.value}
+                    </a>
+                  ) : (
+                    l.value
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <Reveal as="p" kind="block" className="contact-note t-body col-content">
+            {c.note}
+          </Reveal>
+        </Section>
 
         {/* The contour map's source, visible along the left edge while the map is behind the page. */}
         <p className="topo-attribution t-label" aria-hidden="true">
           {a.topo.attribution}
         </p>
-        <AboutTopo meta={topo} />
       </div>
     </PageTransition>
   )

@@ -146,10 +146,7 @@ export function IdleHint({ note }: { note: string }) {
         ))}
       </p>
       <svg className="idle-hint-arrow" viewBox="0 0 96 84" fill="none" stroke="currentColor">
-        <path
-          pathLength={1}
-          d="M88 6c-14 1-27 6-31 15-4 8 3 15 10 12 7-3 5-13-3-15-11-3-23 6-31 18-6 10-12 21-18 34"
-        />
+        <path pathLength={1} d="M88 6c-14 1-27 6-31 15-4 8 3 15 10 12 7-3 5-13-3-15-11-3-23 6-31 18-6 10-12 21-18 34" />
         <path pathLength={1} d="M24 64c-3 2-6 4-9 6-1-3-1-7-2-10" />
       </svg>
     </div>

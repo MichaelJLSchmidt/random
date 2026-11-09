@@ -5,7 +5,8 @@
 export const eggs = {
   mulligan: {
     on: true,
-    trigger: 'M on the start page, or (touch) a long press on the empty table there, not on a card or text (800 ms, 10 ms haptic)',
+    trigger:
+      'M on the start page, or (touch) a long press on the empty table there, not on a card or text (800 ms, 10 ms haptic)',
     full: 'the four cards fly off to the dealer (bottom right) and are dealt again, face down then face up',
     calm: 'cards fade out and back in',
     reduced: 'nothing moves; announced',
@@ -61,7 +62,8 @@ export const eggs = {
   },
   idleHint: {
     on: true,
-    trigger: 'home only: 30 s without a click, tap or key press (pointer movement and scrolling do not count), once per session',
+    trigger:
+      'home only: 30 s without a click, tap or key press (pointer movement and scrolling do not count), once per session',
     full: 'a handwritten note, "(a selection of my projects)", writes itself beside the hand, then a curly arrow draws toward the cards; the next click, tap or key press fades it out',
     calm: 'the same, every duration x 0.6',
     reduced: 'the note and arrow fade in and out (160 ms)',

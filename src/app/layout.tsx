@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { AboutSmallPrint } from '@/components/about-small-print'
 import { BackgroundField } from '@/components/background/background-field'
 import { fieldInitialCss } from '@/components/background/field-css'
 import { Hand } from '@/components/hand/hand'
@@ -73,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main" tabIndex={-1}>
           {children}
         </main>
-        <SiteFooter />
+        <SiteFooter about={<AboutSmallPrint />} />
         <Hand />
         <LiveRegion />
         <RouteFocus />

@@ -55,8 +55,7 @@
 .hand-card[data-inspect] :is(.card-summary, .card-facts) {
   display: revert;
 }
-.hand-card,
-.hand-counter {
+.hand-card {
   -webkit-touch-callout: none;
   user-select: none;
 }
@@ -252,14 +251,14 @@
   padding: var(--space-4);
   transform: rotateY(180deg);
   background: var(--glacier-field);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-lines) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--glacier-accent) 45%, transparent);
   text-align: left;
 }
 .on-table-name {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  color: var(--glacier-lines);
+  color: var(--glacier-accent);
 }
 .on-table-line {
   font-size: var(--text-sm);

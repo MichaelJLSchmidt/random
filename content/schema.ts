@@ -104,9 +104,6 @@ export type Site = {
     viewing: string
     /** aria-label of the Minimap nav. */
     sections: string
-    contactTitle: string
-    contactText: string
-    contactLink: string
     meta: Record<keyof CaseStudyMeta, string>
     decision: Record<keyof Decision, string>
     /** Column labels of the case-study role section: "What I owned", "What I didn't". */
@@ -305,29 +302,22 @@ export type Management = {
   metrics: SectionHead & { items: Metric[] }
 }
 
-export type MoreProjectItem = {
-  /** 1-based running number (shown padded, "01"). */
-  number: number
-  title: string
-  year: string
-  clientType: string
-  projectType: ProjectType
-}
+/** One row of About's "Projects" chapter: what it was, when, for whom, and what I did. */
+export type Project = { title: string; year: string; client: string; role: string }
 
-export type MoreProjects = {
-  title: string
-  /** The count line, e.g. "13 projects · 2014–2025". */
-  intro: Paragraph
-  columns: { number: string; title: string; year: string; projectType: string; clientType: string }
-  /** Visible label per project type (the glyph's neighbour). */
-  projectTypeLabels: Record<ProjectType, string>
-  items: MoreProjectItem[]
-  /** The closing line. */
-  end: string
-}
+export type ContactLink = { label: string; value: string; href?: string }
 
 /** About sections in reading order (after the hero). */
-export const aboutSectionKeys = ['story', 'timeline', 'howIWork', 'tcg', 'roots', 'onTheTable'] as const
+export const aboutSectionKeys = [
+  'story',
+  'timeline',
+  'howIWork',
+  'tcg',
+  'roots',
+  'onTheTable',
+  'projects',
+  'contact',
+] as const
 export type AboutSectionKey = (typeof aboutSectionKeys)[number]
 
 export type About = {
@@ -342,21 +332,23 @@ export type About = {
   roots: SectionHead & { title: string; body: Paragraph }
   /** "What's on the table": exactly five mini cards, face down, each flipping to its value (egg). */
   onTheTable: SectionHead & { title: string; items: { label: string; value: string }[] }
-  /** Heading of the colophon that credits every photo (ImageEntry kind "photo") and the topography. */
+  /**
+   * "Projects": a plain, non-interactive list (13 rows). `intro` is the count line
+   * ("13 projects · 2014–2025", checked against the items), `end` the closing line.
+   */
+  projects: SectionHead & {
+    title: string
+    intro: string
+    columns: Record<keyof Project, string>
+    items: Project[]
+    end: string
+  }
+  /** The final chapter: "Let's talk.", the body, the email (drawn underline), the links and a note. */
+  contact: SectionHead & { title: string; body: Paragraph; email: string; links: ContactLink[]; note: string }
+  /** Heading of the small print in the footer on About that credits every photo (kind "photo"). */
   creditsTitle: string
-  topo: { label: string; attribution: string; placeholderNote: string }
-}
-
-export type ContactLink = { label: string; value: string; href?: string }
-
-export type Contact = {
-  label: string
-  title: string
-  body: Paragraph
-  email: string
-  /** e.g. LinkedIn, location. */
-  links: ContactLink[]
-  note: string
+  /** The contour background: its place and the swisstopo attribution (shown on About). */
+  topo: { label: string; attribution: string }
 }
 
 export type NotFound = { title: string; body: Paragraph; back: string }
@@ -376,9 +368,7 @@ export type Content = {
   home: Home
   caseStudies: CaseStudy[]
   management: Management
-  moreProjects: MoreProjects
   about: About
-  contact: Contact
   notFound: NotFound
   coffeeEgg: CoffeeEgg
   workshopMethods: WorkshopMethods

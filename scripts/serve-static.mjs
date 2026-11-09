@@ -16,6 +16,10 @@ const types = {
   '.txt': 'text/plain',
   '.json': 'application/json',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.bin': 'application/octet-stream',
   '.ico': 'image/x-icon',
 }
 

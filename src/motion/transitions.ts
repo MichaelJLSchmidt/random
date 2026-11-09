@@ -3,7 +3,7 @@
  *   play:   a hand card zooms into its detail page
  *   return: the hero goes back into its hand slot (Back, Escape, wordmark)
  *   switch: from one detail page straight to another card
- *   nav:    any other link (About, Contact, More projects)
+ *   nav:    any other link (About, the wordmark)
  * Browser back/forward carries no type; every rule has an untyped default.
  */
 export const PLAY = 'play'

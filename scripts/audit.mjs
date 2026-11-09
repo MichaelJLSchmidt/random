@@ -20,9 +20,7 @@ const paths = [
   '/work/team-of-teams/',
   '/work/shared-foundations/',
   '/work/front-door/',
-  '/more-projects/',
   '/about/',
-  '/contact/',
   '/missing-page/',
 ]
 

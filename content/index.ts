@@ -14,10 +14,8 @@ import { sharedFoundations } from './cases/shared-foundations'
 import { teamOfTeams } from './cases/team-of-teams'
 import { coffeeEgg, hand } from './hand'
 import { about } from './pages/about'
-import { contact } from './pages/contact'
 import { home } from './pages/home'
 import { management } from './pages/management'
-import { moreProjects } from './pages/more-projects'
 import { notFound } from './pages/not-found'
 import { workshopMethods } from './pages/workshop-methods'
 import type { Content } from './schema'
@@ -29,9 +27,7 @@ export const content = {
   home,
   caseStudies: [teamOfTeams, sharedFoundations, frontDoor],
   management,
-  moreProjects,
   about,
-  contact,
   notFound,
   coffeeEgg,
   workshopMethods,
@@ -39,5 +35,5 @@ export const content = {
 
 export const { caseStudies } = content
 
-export { about, coffeeEgg, contact, hand, home, management, moreProjects, notFound, site, workshopMethods }
+export { about, coffeeEgg, hand, home, management, notFound, site, workshopMethods }
 export { images } from './images'

@@ -47,7 +47,8 @@ export async function mulligan() {
     await Promise.all(
       cards.map(
         (c) =>
-          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' }).finished,
+          c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: durFor(tier, 'm') * 1000, fill: 'forwards' })
+            .finished,
       ),
     )
     for (const card of cards) {
@@ -259,4 +260,5 @@ const TEXT_OR_CONTROL =
   '.hand, a, button, input, select, textarea, label, dialog, [role="switch"], p, h1, h2, h3, li, dt, dd, figure, svg, img'
 
 /** An element with text of its own (not only in its children). */
-const hasOwnText = (el: Element) => [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())
+const hasOwnText = (el: Element) =>
+  [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())

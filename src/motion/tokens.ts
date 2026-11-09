@@ -89,8 +89,8 @@ export const duration = {
   hoverIntent: 0.08,
   breath: 9,
   fieldIn: 1.2,
+  /** About: the gradient's colour bands narrow into the contour lines (and back on leaving). */
   topo: 1.6,
-  topoBand: 40,
   calmBloom: 0.5,
   // Reveals (the rest use the scale, dur.*)
   /** Digits: one value's strips, from the first strip's start to the last strip's end. */
@@ -240,8 +240,29 @@ export const field = {
   maxFrameMs: 24,
   frameWindow: 60,
   switchDip: 0.06,
-  topoLine: 0.22,
-  topoIndex: 0.38,
+  /**
+   * About's contours: the old portfolio's password-page field, unchanged (its
+   * contour-field.json): 1 px lines and every fifth an index line at 1.5 px, at
+   * these alphas over the ground (src/design/palette.ts contour.*); a slight zoom
+   * on the region's focus; lines on steep terrain at least `minSpacingPx` CSS px
+   * apart (that picks the interval); the drawing buffer at the device pixel ratio,
+   * capped. "desktop" is a fine pointer on a screen at least 900 px on its long
+   * side, everything else "mobile". `bandPx`: how much wider than a line the
+   * colour bands are when the gradient starts to morph into the lines (CSS px,
+   * narrowing to 0 as the morph ends).
+   */
+  contours: {
+    lineAlpha: 0.28,
+    indexAlpha: 0.42,
+    lineWidthPx: 1,
+    indexWidthPx: 1.5,
+    indexEvery: 5,
+    zoom: 1.06,
+    desktop: { dprMax: 1.5, minSpacingPx: 3.25 },
+    mobile: { dprMax: 1.25, minSpacingPx: 3 },
+    desktopMinScreen: 900,
+    bandPx: 20,
+  },
   /**
    * Pool drift (full tier, on top of the breath): a slow Lissajous offset of each pool's centre,
    * `poolDrift` of the viewport, one pair of loop lengths (s) per pool, all of them >= 90 s.

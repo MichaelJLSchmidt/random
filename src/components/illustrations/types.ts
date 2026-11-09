@@ -28,7 +28,7 @@ export type IllustrationProps = {
   variant?: IllustrationVariant
 }
 
-/** Project types on /more-projects, one glyph each. */
+/** Project types, one glyph each (ProjectTypeGlyph; not placed since More projects became a plain list on About). */
 export const projectTypes = ['form', 'map', 'dashboard', 'portal', 'calendar', 'checklist'] as const
 export type ProjectType = (typeof projectTypes)[number]
 

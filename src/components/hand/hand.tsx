@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { palette } from '@/design/palette'
+import { contour, palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
 import { cardForPath, coffeeEgg, handCards, handLabels } from '@/lib/hand-data'
 import { drawCards } from '@/motion/reveal'
@@ -133,12 +133,17 @@ export function Hand() {
     else card.dataset.drawn = ''
   }, [coffee])
 
-  // The scrim under the hand follows the page colour.
+  // The scrim under the hand follows the page colour (on About: the contour field's ground).
   useEffect(() => {
     const nav = root.current!
-    const paint = () => nav.style.setProperty('--page-field', palette[table.get().field.identity].field)
+    const paint = () => {
+      const f = table.get().field
+      nav.style.setProperty('--page-field', f.topo ? contour.ground : palette[f.identity].field)
+    }
     paint()
-    return table.subscribe((s, p) => s.field.seq !== p.field.seq && paint())
+    return table.subscribe((s, p) => {
+      if (s.field.seq !== p.field.seq) paint()
+    })
   }, [])
 
   // Slots, hover intent, keyboard.
