@@ -7,16 +7,18 @@
  * Colour is left out of the comparison for moments that change the identity
  * on purpose (recolour, concept 2's flip).
  *
- *   node src/lab/logo/tools/motion-check.mjs http://localhost:4100/random/logo-lab/ [concept numbers…]
+ *   [BROWSER=webkit|firefox] node src/lab/logo/tools/motion-check.mjs http://localhost:4100/random/logo-lab/ [concept ids…]
  */
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? '/opt/node22/lib/node_modules/playwright')
+const playwright = require(process.env.PLAYWRIGHT_MODULE ?? '/opt/node22/lib/node_modules/playwright')
+/** BROWSER=chromium (default) | webkit | firefox */
+const engine = process.env.BROWSER ?? 'chromium'
 
 const base = process.argv[2] ?? 'http://localhost:4100/random/logo-lab/'
-const only = process.argv.slice(3).map(Number)
-const concepts = only.length ? only : [1, 2, 3, 4, 5, 6, 7]
+const only = process.argv.slice(3).map((a) => a.toLowerCase())
+const concepts = only.length ? only : ['1', '3', '3b', '5', '8']
 
 const PROPS = [
   'opacity',
@@ -63,7 +65,7 @@ function diff(a, b, ignoreColour) {
   return out
 }
 
-const browser = await chromium.launch()
+const browser = await playwright[engine].launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 const errors = []
 page.on('pageerror', (e) => errors.push(e.message))
@@ -85,7 +87,7 @@ for (const n of concepts) {
     await page.waitForTimeout(150)
     const moments = [
       ['Replay', () => click('Replay'), 1600, false],
-      [extraName, () => click(extraName), 3200, n === 2],
+      [extraName, () => click(extraName), 3200, false],
       ['Foil glint', () => click('Foil glint'), 1800, false],
       ['Identity recolour', () => click('Identity recolour'), 900, true],
       ['Hover', () => click('Hover'), 1400, false],
@@ -116,6 +118,6 @@ for (const n of concepts) {
   }
 }
 console.log(errors.length ? `page errors:\n${errors.join('\n')}` : 'no page errors')
-console.log(failures ? `${failures} failure(s)` : 'all moments end on the static mark')
+console.log(`${engine}: ` + (failures ? `${failures} failure(s)` : 'all moments end on the static mark'))
 await browser.close()
 process.exit(failures ? 1 : 0)

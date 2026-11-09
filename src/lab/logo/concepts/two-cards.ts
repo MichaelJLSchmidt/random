@@ -73,23 +73,52 @@ function mCut(): string {
   return pathOf(clipBand(strokeOutline(pts, [1.75, 1.625, 1.625, 1.75]), top, base), true)
 }
 
+const box = (x1: number, y0: number, x2: number, y2: number) =>
+  pathOf(
+    [
+      [x1, y0],
+      [x2, y0],
+      [x2, y2],
+      [x1, y2],
+    ],
+    true,
+  )
+
 /** F cut: stem at card x 3.5–7 (over the M's right stem), arms to x 16 and 13.5. */
 function fCut(): string {
   const top = by + 7
   const base = by + 21
   const x0 = fx + 3.5
-  const box = (x1: number, y0: number, x2: number, y2: number) =>
+  return box(x0, top, x0 + 3.5, base) + box(x0, top, fx + 16, top + 3.5) + box(x0, by + 12.75, fx + 13.5, by + 16.25)
+}
+
+/** Concept 8's arm-end cut: 57 across for 85 down (56° from horizontal), top corner outermost. */
+export const ARM_CUT = 57 / 85
+
+/**
+ * 3B's F: the same stem; arm ends cut at concept 8's slant; the middle arm
+ * clearly shorter and set a little higher (optical centre), so the F stays
+ * light next to the M. Card-local x / y as for fCut.
+ */
+function fCutDynamic(): string {
+  const sw = 3.5
+  const top = by + 7
+  const base = by + 21
+  const x0 = fx + 3.5
+  const arm = (y0: number, end: number) =>
     pathOf(
       [
-        [x1, y0],
-        [x2, y0],
-        [x2, y2],
-        [x1, y2],
+        [x0, y0],
+        [fx + end, y0],
+        [fx + end - sw * ARM_CUT, y0 + sw],
+        [x0, y0 + sw],
       ],
       true,
     )
-  return box(x0, top, x0 + 3.5, base) + box(x0, top, fx + 16, top + 3.5) + box(x0, by + 12.75, fx + 13.5, by + 16.25)
+  return box(x0, top, x0 + sw, base) + arm(top, DYN.top) + arm(by + DYN.midY, DYN.mid)
 }
+/** 3B's arm ends (card x of the top-right corners) and the middle arm's top (card y). */
+const DYN = { top: 17, mid: 13, midY: 12.5 }
 
 const BIG = { x: -24, y: -24, width: 96, height: 96 }
 const mask = (id: string, ...children: SvgNode[]): SvgNode => ({
@@ -98,7 +127,7 @@ const mask = (id: string, ...children: SvgNode[]): SvgNode => ({
   children: [rect({ ...BIG, fill: 'white' }), ...children],
 })
 
-function build(label: string, letters: boolean, gap: number, frontPaint: string): Variant {
+function build(label: string, letters: boolean, gap: number, frontPaint: string, f: () => string = fCut): Variant {
   const card = (x: number, paint: string, maskId?: string) =>
     rect({ x, y: by, width: W, height: H, rx: R, fill: paint, mask: maskId ? urlOf(maskId) : undefined })
   const defs: SvgNode[] = [
@@ -123,7 +152,7 @@ function build(label: string, letters: boolean, gap: number, frontPaint: string)
   if (letters) {
     defs.push(
       mask(idOf('back-letters'), { tag: 'path', attrs: { 'data-part': 'cut-m', d: mCut(), fill: 'black' } }),
-      mask(idOf('front-letters'), { tag: 'path', attrs: { 'data-part': 'cut-f', d: fCut(), fill: 'black' } }),
+      mask(idOf('front-letters'), { tag: 'path', attrs: { 'data-part': 'cut-f', d: f(), fill: 'black' } }),
     )
   }
   return {
@@ -185,81 +214,115 @@ const out: Keyframe[] = [
   { opacity: 0, transform: 'translate(0px, 3px)' },
 ]
 
-export const twoCards: Concept = {
-  n: 3,
-  slug: 'two-cards',
-  name: 'Two Cards',
-  idea: 'Two fanned cards: an M cut out of the back one, an F out of the front one, sharing the stem where they overlap.',
+type Own = Pick<Concept, 'id' | 'label' | 'scoreKey' | 'slug' | 'name' | 'idea' | 'notes'>
+
+/** Concept 3 and its variations: everything but the F cut is shared. */
+const makeTwoCards = (own: Own, f: () => string): Concept => ({
+  ...own,
   parts: ['card-back', 'card-front', 'gap', 'cut-m', 'cut-f'],
   accent: ['card-front'],
   variants: {
-    master: build('Master', true, 1.5, ACCENT),
-    favicon: build('Favicon (letterless fan)', false, 3, NEUTRAL),
-    letterless: build('Letterless fan', false, 1.5, ACCENT),
+    master: build('Master', true, 1.5, ACCENT, f),
+    favicon: build('Favicon (letterless fan)', false, 3, NEUTRAL, f),
+    letterless: build('Letterless fan', false, 1.5, ACCENT, f),
   },
-  motion: {
-    reveal: {
-      label: 'Deal',
-      full: [
-        { part: 'card-back', at: 0, dur: 400, ease: 'enter', frames: deal(-10, -4), ...pivot },
-        ...front({ at: 120, dur: 400, ease: 'enter', frames: deal(10, 4), ...pivot }),
-      ],
-      calm: [
-        { part: 'card-back', at: 0, dur: 400, ease: 'enter', frames: fade },
-        ...front({ at: 120, dur: 400, ease: 'enter', frames: fade }),
-      ],
-    },
-    extra: {
-      label: 'Reveal letters',
-      full: [
-        { part: 'card-back', at: 0, dur: 600, ease: 'linear', frames: turn, ...centre },
-        { part: 'cut-m', at: 0, dur: 600, ease: 'linear', frames: showAtTurn },
-        ...front({ at: 120, dur: 600, ease: 'linear', frames: turn, ...centre }),
-        { part: 'cut-f', at: 120, dur: 600, ease: 'linear', frames: showAtTurn },
-      ],
-      calm: null,
-    },
-    hover: {
-      label: 'Hover',
-      full: [
-        { part: 'card-back', at: 0, dur: 240, ease: 'move', frames: fan(-1), ...pivot },
-        ...front({ at: 0, dur: 240, ease: 'move', frames: fan(1), ...pivot }),
-      ],
-      calm: [
-        { part: 'card-back', at: 0, dur: 240, ease: 'move', frames: fan(-1), ...pivot },
-        ...front({ at: 0, dur: 240, ease: 'move', frames: fan(1), ...pivot }),
-      ],
-    },
-    loading: {
-      label: 'Loading',
-      full: [
-        { part: 'card-back', at: 0, dur: 1600, ease: 'linear', frames: breathe(-1.5), ...pivot },
-        ...front({ at: 0, dur: 1600, ease: 'linear', frames: breathe(1.5), ...pivot }),
-      ],
-      calm: front({
-        at: 0,
-        dur: 1600,
-        ease: 'linear',
-        frames: [{ opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }],
-      }),
-    },
-    exit: {
-      label: 'Exit',
-      full: [
-        { part: 'card-back', at: 0, dur: 300, ease: 'exit', frames: out },
-        ...front({ at: 0, dur: 300, ease: 'exit', frames: out }),
-      ],
-      calm: [
-        { part: 'card-back', at: 0, dur: 300, ease: 'exit', frames: [{ opacity: 1 }, { opacity: 0 }] },
-        ...front({ at: 0, dur: 300, ease: 'exit', frames: [{ opacity: 1 }, { opacity: 0 }] }),
-      ],
-    },
+  motion,
+})
+
+const motion: Concept['motion'] = {
+  reveal: {
+    label: 'Deal',
+    full: [
+      { part: 'card-back', at: 0, dur: 400, ease: 'enter', frames: deal(-10, -4), ...pivot },
+      ...front({ at: 120, dur: 400, ease: 'enter', frames: deal(10, 4), ...pivot }),
+    ],
+    calm: [
+      { part: 'card-back', at: 0, dur: 400, ease: 'enter', frames: fade },
+      ...front({ at: 120, dur: 400, ease: 'enter', frames: fade }),
+    ],
   },
-  notes: [
-    'Cards and letters are filled by nature (cut-outs are mask shapes, not strokes); the letters keep the 3.5 monoline as outlines.',
-    'The front card is knocked out of the back card with a 1.5-unit gap (3 in the favicon), so the fan reads in one colour.',
-    'Front card 12 units to the right instead of 9: at 9 it covers 55 % of the back card and the M reads as an N.',
-    'The M’s right stem lies under the front card, behind the F’s stem, which stands in for it.',
-    'Letterless fan = favicon and a neutral mark next to the current wordmark.',
-  ],
+  extra: {
+    label: 'Reveal letters',
+    full: [
+      { part: 'card-back', at: 0, dur: 600, ease: 'linear', frames: turn, ...centre },
+      { part: 'cut-m', at: 0, dur: 600, ease: 'linear', frames: showAtTurn },
+      ...front({ at: 120, dur: 600, ease: 'linear', frames: turn, ...centre }),
+      { part: 'cut-f', at: 120, dur: 600, ease: 'linear', frames: showAtTurn },
+    ],
+    calm: null,
+  },
+  hover: {
+    label: 'Hover',
+    full: [
+      { part: 'card-back', at: 0, dur: 240, ease: 'move', frames: fan(-1), ...pivot },
+      ...front({ at: 0, dur: 240, ease: 'move', frames: fan(1), ...pivot }),
+    ],
+    calm: [
+      { part: 'card-back', at: 0, dur: 240, ease: 'move', frames: fan(-1), ...pivot },
+      ...front({ at: 0, dur: 240, ease: 'move', frames: fan(1), ...pivot }),
+    ],
+  },
+  loading: {
+    label: 'Loading',
+    full: [
+      { part: 'card-back', at: 0, dur: 1600, ease: 'linear', frames: breathe(-1.5), ...pivot },
+      ...front({ at: 0, dur: 1600, ease: 'linear', frames: breathe(1.5), ...pivot }),
+    ],
+    calm: front({
+      at: 0,
+      dur: 1600,
+      ease: 'linear',
+      frames: [{ opacity: 1 }, { opacity: 0.35 }, { opacity: 1 }],
+    }),
+  },
+  exit: {
+    label: 'Exit',
+    full: [
+      { part: 'card-back', at: 0, dur: 300, ease: 'exit', frames: out },
+      ...front({ at: 0, dur: 300, ease: 'exit', frames: out }),
+    ],
+    calm: [
+      { part: 'card-back', at: 0, dur: 300, ease: 'exit', frames: [{ opacity: 1 }, { opacity: 0 }] },
+      ...front({ at: 0, dur: 300, ease: 'exit', frames: [{ opacity: 1 }, { opacity: 0 }] }),
+    ],
+  },
 }
+
+const sharedNotes = [
+  'Cards and letters are filled by nature (cut-outs are mask shapes, not strokes); the letters keep the 3.5 monoline as outlines.',
+  'The front card is knocked out of the back card with a 1.5-unit gap (3 in the favicon), so the fan reads in one colour.',
+  'Front card 12 units to the right instead of 9: at 9 it covers 55 % of the back card and the M reads as an N.',
+  'The M’s right stem lies under the front card, behind the F’s stem, which stands in for it.',
+  'Letterless fan = favicon and a neutral mark next to the current wordmark.',
+]
+
+export const twoCards = makeTwoCards(
+  {
+    id: '3',
+    label: '3',
+    scoreKey: 'score-3',
+    slug: 'two-cards',
+    name: 'Two Cards',
+    idea: 'Two fanned cards: an M cut out of the back one, an F out of the front one, sharing the stem where they overlap.',
+    notes: sharedNotes,
+  },
+  fCut,
+)
+
+export const twoCardsDynamic = makeTwoCards(
+  {
+    id: '3b',
+    label: '3B',
+    scoreKey: 'score-3b',
+    slug: 'two-cards-dynamic-f',
+    name: 'Two Cards, dynamic F',
+    idea: 'Concept 3 with a faster F: arm ends cut at a slant, a short middle arm set a touch high.',
+    notes: [
+      'Identical to concept 3 (cards, fan, M cut, colours, motion, letterless favicon) except the F cut.',
+      `Arm ends cut at concept 8’s angle (${57} across per ${85} down, 56° from horizontal), top corner outermost.`,
+      `Top arm to card x ${DYN.top}, middle arm to ${DYN.mid} (visibly shorter), middle arm top at card y ${DYN.midY} instead of 12.75: the F balances the M’s open V and does not sag.`,
+      ...sharedNotes.slice(0, 2),
+    ],
+  },
+  fCutDynamic,
+)

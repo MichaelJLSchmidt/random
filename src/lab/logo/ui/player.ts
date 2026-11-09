@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import {
   type ColourSnapshot,
-  type Cue,
   type LabTier,
   type Run,
   exitAndReturn,
@@ -21,7 +20,7 @@ import type { Concept, Moment } from '../model'
  * first); hover and loading run beside it. Everything that is not allowed in
  * the current tier is a no-op that reports why.
  */
-export type PlayerOptions = { tier: LabTier; speed: number; onCue?: (cue: Cue) => void }
+export type PlayerOptions = { tier: LabTier; speed: number }
 export type Outcome = { ran: boolean; note?: string }
 
 const skipped = (tier: LabTier, what: string): Outcome => ({
@@ -68,7 +67,7 @@ export function usePlayer(concept: Concept, opts: PlayerOptions) {
     const seq = seqFor(moment, o.current.tier)
     stopMain()
     if (!svg || !seq) return skipped(o.current.tier, what)
-    const r = run(svg, seq, { speed: o.current.speed, paused, onCue: (c) => o.current.onCue?.(c) })
+    const r = run(svg, seq, { speed: o.current.speed, paused })
     main.current = r
     r.finished.then(() => {
       if (main.current === r) main.current = null

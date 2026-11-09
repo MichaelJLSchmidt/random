@@ -19,14 +19,6 @@ export const draw = (part: string, at: number, dur: number, ease: Ease = 'enter'
   ],
 })
 
-export const fadeIn = (part: string, at: number, dur: number, ease: Ease = 'enter'): CssTrack => ({
-  part,
-  at,
-  dur,
-  ease,
-  frames: [{ opacity: 0 }, { opacity: 1 }],
-})
-
 /** Stroke weight from thin to the static width (the site's thin-to-bold titles). */
 export const weigh = (
   part: string,
@@ -54,8 +46,6 @@ export const calmWeigh = (parts: { part: string; from: number; to: number }[], g
       ],
     },
   ])
-
-export const calmFade = (parts: string[], gap = 100, dur = 450): Seq => parts.map((p, i) => fadeIn(p, i * gap, dur))
 
 /** Exit: every part fades and sinks 3 units (300 ms). Calm: fade only. */
 export const exitFull = (parts: string[]): Seq =>

@@ -11,7 +11,6 @@ export const VB = 48
 export const CAP = 9
 export const BASE = 39
 export const CAP_H = BASE - CAP
-export const STROKE = 6
 
 export type Pt = [number, number]
 

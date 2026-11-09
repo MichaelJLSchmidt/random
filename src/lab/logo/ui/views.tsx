@@ -16,14 +16,15 @@ import { hStem } from '../glyphs'
 import { type Concept, type VariantKey, fileStem, conceptLabel } from '../model'
 import { drawInto, pngBlob, saveBlob, saveText } from '../raster'
 import { type Paints, toSvgString } from '../svg-string'
-import { type Container, buildMark, metricsOf } from '../tree'
+import { type Container, SQUARE_R, buildMark, heightFor as boxHeight, metricsOf, variantOf } from '../tree'
 import { Mark } from './mark'
 import { Segmented } from './controls'
 import { useStored } from './store'
 
 export const LADDER = [16, 24, 32, 48, 64, 128, 256, 512]
-const CARD = 184 / 132
-const heightFor = (w: number, container: Container) => (container === 'card' ? Math.round(w * CARD) : w)
+/** Whole-pixel height of a mark rendered `w` pixels wide. */
+const heightFor = (concept: Concept, v: VariantKey, w: number, container: Container) =>
+  Math.round(boxHeight(w, container, variantOf(concept, v)))
 
 /** Paints for a file: the favicon variant never takes the accent. */
 export function paintsFor(look: Look, variant: VariantKey): Paints {
@@ -143,7 +144,7 @@ export function PixelTrue({ concept, variant, look }: { concept: Concept; varian
       <div className="lab-pixels">
         {[16, 32, 48].map((n) => {
           const v: VariantKey = mode === 'auto' ? (n <= 32 ? 'favicon' : 'master') : variant
-          const h = heightFor(n, look.container)
+          const h = heightFor(concept, v, n, look.container)
           const svg = toSvgString(buildMark(concept, v, look.container), {
             paints: paintsFor(look, v),
             size: { width: n, height: h },
@@ -307,10 +308,11 @@ export function Lockup({ concept, variant, look }: { concept: Concept; variant: 
   const id = useId()
   const m = metricsOf(concept, variant)
   const capUnits = m.base - m.cap
-  const capPx = (capUnits / 48) * size
+  // The mark is `size` px wide; its units scale by size / box width.
+  const capPx = (capUnits / m.box.w) * size
   const fontSize = capPx / 0.66
   const w = wordmarkWeight(m.stem / capUnits, fontSize)
-  const drop = ((48 - m.base) / 48) * size
+  const drop = ((m.box.y + m.box.h - m.base) / m.box.w) * size
   const flat: Look = { ...look, container: 'none' }
   return (
     <section className="lab-section" aria-labelledby="lockup-title">
@@ -394,19 +396,14 @@ export function Downloads({ concept, look }: { concept: Concept; look: Look }) {
     })
   }
   const png = async (variant: VariantKey, w: number, name: string, opaque = false) => {
-    const c: Container = opaque ? 'none' : look.container
-    const h = heightFor(w, c)
+    // Apple touch icon: square and opaque, the container colour edge to edge (wide marks fitted by width).
+    const c: Container = opaque ? 'square' : look.container
+    const h = heightFor(concept, variant, w, c)
     let svg = toSvgString(buildMark(concept, variant, c), {
       paints: paintsFor(look, variant),
       size: { width: w, height: h },
     })
-    if (opaque) {
-      // Apple touch icon: no transparency, the container colour edge to edge.
-      svg = svg.replace(
-        /(<svg[^>]*>)/,
-        `$1<rect x="-24" y="-24" width="96" height="96" fill="${paintsFor(look, variant).container}"/>`,
-      )
-    }
+    if (opaque) svg = svg.replace(`rx="${SQUARE_R}"`, 'rx="0"')
     saveBlob(await pngBlob(svg, w, h), name)
     setStatus(`Saved ${name}`)
   }

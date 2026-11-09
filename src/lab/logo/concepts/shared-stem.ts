@@ -4,9 +4,12 @@ import { calmWeigh, chase, draw, exitCalm, exitFull, shift, wave, weigh } from '
 import { mLine } from './m-line'
 
 /*
- * 1 · Shared Stem. The M's right stem is also the F's stem: three strokes.
- * The M runs on into the F's top arm; the valley stops at 60 % of the cap
- * height (visible tip, +0.5 overshoot); the F's middle arm is the accent.
+ * 1 · Shared Stem, with a hinted F. Three strokes. The M runs on into the
+ * F's top arm (the M's stroke is the F's arm). The shared stem is kept only
+ * from the middle arm down: stem stub and middle arm form one Γ, which is the
+ * M's right stem and the F's lower half at once. The F's upper stem is not
+ * drawn; the gap under the top arm implies it. The valley stops at 60 % of the
+ * cap height (visible tip, +0.5 overshoot); the middle arm is the accent.
  */
 const PARTS = ['m-line', 'f-arm', 'stem']
 
@@ -34,7 +37,8 @@ function master(): Variant {
       // Under the stem, clipped from 1 unit right of its centre line: it slides out of the stem,
       // and while shifted it ends clear of the clip edge (no anti-aliased sliver).
       g({ 'clip-path': urlOf('f-slot') }, stroke('f-arm', 'M30 24H39', ACCENT, 6)),
-      stroke('stem', 'M30 9V39', NEUTRAL, 6),
+      // From the middle arm's top edge down: the F's upper stem is implied.
+      stroke('stem', 'M30 21V39', NEUTRAL, 6),
     ],
     metrics: { cap: CAP, base: BASE, stem: 6 },
     // Ink centroid (22.3, 21.9): left- and top-heavy.
@@ -44,7 +48,8 @@ function master(): Variant {
 
 /**
  * Favicon: stroke 9 (3 px at 16 px), every edge on the 3-unit grid:
- * stems x 3–12 and 27–36, arm to 45, middle arm y 24–33. Only 5 px sit
+ * stems x 3–12 and 27–36, arm to 45, middle arm y 24–33, stem stub from y 24
+ * (a 2 px gap under the top arm implies the upper stem). Only 5 px sit
  * between the stems, so the diagonals are thin (4.5) and the valley stops at
  * half the cap height (tip y 24): the notch between them stays open at 16 px.
  */
@@ -69,7 +74,7 @@ function favicon(): Variant {
     body: [
       m.wrap(stroke('m-line', m.d, NEUTRAL, 9)),
       g({ 'clip-path': urlOf('f-slot') }, stroke('f-arm', 'M31.5 28.5H42', NEUTRAL, 9)),
-      stroke('stem', 'M31.5 9V39', NEUTRAL, 9),
+      stroke('stem', 'M31.5 24V39', NEUTRAL, 9),
     ],
     metrics: { cap: CAP, base: BASE, stem: 9 },
   }
@@ -78,10 +83,12 @@ function favicon(): Variant {
 const thinToBold = [weigh('m-line', 0, 700, 2, 6), weigh('stem', 0, 700, 2, 6), weigh('f-arm', 0, 700, 2, 6)]
 
 export const sharedStem: Concept = {
-  n: 1,
+  id: '1',
+  label: '1',
+  scoreKey: 'score-1.r2',
   slug: 'shared-stem',
   name: 'Shared Stem',
-  idea: "The M's right stem is also the F's stem; the M runs on into the F's top arm.",
+  idea: "The M runs on into the F's top arm; below the middle arm the stem is shared, above it the F's stem is left to the eye.",
   parts: PARTS,
   accent: ['f-arm'],
   variants: { master: master(), favicon: favicon() },
@@ -138,6 +145,9 @@ export const sharedStem: Concept = {
     'Cap line = top edge (y 9), baseline y 39: the top arm runs at y 12 so its top edge sits on the cap line.',
     'Valley tip at 60 % of the cap height + 0.5 overshoot (y 27.5); the centreline vertex is solved from it.',
     'Diagonals 5.5 instead of 6 (clip outline); the apex miter spike is trimmed by a cap-line band.',
+    'Hinted F (round 2): the shared stem starts at the middle arm’s top edge (y 21). Stub and arm form one Γ, so the arm is anchored and the M keeps a right stem; the F’s upper stem is only the gap under the top arm.',
+    'The M’s run-on stroke doubles as the F’s top arm, the stub as both letters’ stem: one stroke per job, the F half drawn.',
+    'Considered and dropped: no stem at all (the M loses its right side, the arm floats) and a separating channel along the diagonal (concept 8’s idea).',
     'The middle arm sits under the stem, so the stem stays one neutral stroke and the accent starts at its edge.',
   ],
 }

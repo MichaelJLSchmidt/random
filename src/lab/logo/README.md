@@ -1,8 +1,10 @@
 # Logo lab (temporary)
 
-A hidden page for comparing seven monogram concepts (M and F fused into one glyph):
-`/logo-lab/` under the base path, e.g. `/random/logo-lab/`, and `?c=3` for a concept's detail
-view. It is not linked from the header, the hand, the footer or any page, and none of the marks
+A hidden page for comparing monogram concepts (M and F fused into one glyph):
+`/logo-lab/` under the base path, e.g. `/random/logo-lab/`, and `?c=<id>` for a concept's detail
+view. Round 2 keeps 1 (hinted F), 3, 3B, 5 (open F) and 8 (Diagonal Cut); ids are stable, so deep
+links and stored scores survive, and a concept whose geometry changes gets a new `scoreKey`
+(old scores are pruned on load). It is not linked from the header, the hand, the footer or any page, and none of the marks
 is used anywhere else on the site.
 
 **Delete the lab in one step:** remove `src/app/logo-lab/` and `src/lab/logo/`. Nothing else
@@ -12,7 +14,11 @@ references them. No shared file was changed for the lab.
 
 - `concepts/*.ts`: one file per concept, the single source of truth: geometry (an SVG node tree
   per variant: `master`, `favicon`, extras) and motion (tracks per moment). `concepts/index.ts`
-  lists them.
+  lists them. `two-cards.ts` builds 3 and 3B (only the F differs); `diagonal-cut.ts` rebuilds the
+  hand-drawn concept 8 from its outer edges and stroke weights (master, matched angles, thin
+  master for the weight morph, favicon) and keeps the drawing itself as the "As drawn" variant.
+- Wide marks (8) have their own viewBox (`Variant.box`); `tree.ts` fits them by width into square
+  and card containers.
 - `model.ts` (types), `geometry.ts` (grid constants, stroke outlines, valley solver),
   `motion-kit.ts` (track builders), `path-morph.ts` (path interpolation).
 - `tree.ts` wraps a variant in its root `<svg>` (container, optical nudge); `ui/mark.tsx` renders
@@ -34,6 +40,7 @@ viewBox `0 0 48 48`; the cap line is the top edge (y 9), the baseline y 39 (cap 
 stroke 6 (2 px at 16 px); butt caps and miter joins; acute miters trimmed by a cap-line band.
 Favicon variants use stroke 9 on the 3-unit grid (whole pixels at 16 px) and no accent.
 Every independently animated element carries `data-part`; drawn strokes have `pathLength="1"`.
+The page hides the site's hand of cards with `html:has(.lab)` (lab.css), so nothing shared changes.
 
 ## Dev tools (not part of the build)
 
@@ -44,7 +51,8 @@ Every independently animated element carries `data-part`; drawn strokes have `pa
 # PNG contact sheets of every concept and variant at 16–256 px, dark and light
 node --import ./src/lab/logo/tools/ts-register.mjs src/lab/logo/tools/render-check.mjs <out-dir>
 
-# Every moment ends on the static mark, in every tier (needs the built site served)
+# Every moment ends on the static mark, in every tier (needs the built site served);
+# BROWSER=webkit or firefox runs it in those engines (Playwright's builds)
 node src/lab/logo/tools/motion-check.mjs http://localhost:4100/random/logo-lab/
 ```
 

@@ -22,8 +22,13 @@ export const urlOf = (name: string) => `url(#@id:${name})`
 /** Lockup metrics in viewBox units: cap line, baseline, the stem (stroke) the wordmark should match. */
 export type Metrics = { cap: number; base: number; stem: number }
 
+/** A viewBox. */
+export type Box = { x: number; y: number; w: number; h: number }
+
 export type Variant = {
   label: string
+  /** Own viewBox for marks that are not square (concept 8); default 0 0 48 48. */
+  box?: Box
   /** Static helpers: clip paths, masks. */
   defs?: SvgNode[]
   /** The mark, back to front. Animated parts carry data-part. */
@@ -63,10 +68,7 @@ export type MorphTrack = {
   values: string[]
 }
 
-/** A cue for the host at a point in time (e.g. switch to the next identity mid-flip). */
-export type CueTrack = { kind: 'cue'; at: number; cue: 'next-identity' }
-
-export type Track = CssTrack | MorphTrack | CueTrack
+export type Track = CssTrack | MorphTrack
 export type Seq = Track[]
 
 /** full: as designed; calm: its own (fewer moving parts), the engine scales it × 0.6; null = static. */
@@ -86,10 +88,15 @@ export type ConceptMotion = {
   exit: Moment
 }
 
-export type VariantKey = 'master' | 'favicon' | 'letterless' | 'light' | 'contour'
+export type VariantKey = 'master' | 'favicon' | 'letterless' | 'light' | 'drawn' | 'matched'
 
 export type Concept = {
-  n: number
+  /** URL and storage id: ?c=<id>. Stable across rounds. */
+  id: string
+  /** Shown in the lab and in names: "3B". */
+  label: string
+  /** localStorage key of the scorecard; a new key resets the scores when the geometry changes. */
+  scoreKey: string
   slug: string
   name: string
   /** The one idea, in a sentence. */
@@ -104,5 +111,9 @@ export type Concept = {
   notes: string[]
 }
 
-export const conceptLabel = (c: Pick<Concept, 'n' | 'name'>) => `Logo concept ${c.n}, ${c.name}`
-export const fileStem = (c: Pick<Concept, 'n' | 'slug'>) => `monogram-${String(c.n).padStart(2, '0')}-${c.slug}`
+export const conceptLabel = (c: Pick<Concept, 'label' | 'name'>) => `Logo concept ${c.label}, ${c.name}`
+/** monogram-01-shared-stem, monogram-03b-two-cards-dynamic-f */
+export const fileStem = (c: Pick<Concept, 'label' | 'slug'>) => {
+  const n = c.label.toLowerCase()
+  return `monogram-${/^\d(\D|$)/.test(n) ? `0${n}` : n}-${c.slug}`
+}

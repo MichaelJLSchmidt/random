@@ -15,12 +15,13 @@ import { join, resolve } from 'node:path'
 import { concepts } from '../concepts/index.ts'
 import { toSvgString } from '../svg-string.ts'
 import { buildMark } from '../tree.ts'
+import { fileStem } from '../model.ts'
 
 const require = createRequire(import.meta.url)
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE ?? '/opt/node22/lib/node_modules/playwright')
 
 const out = resolve(process.argv[2] ?? 'logo-qa')
-const only = process.argv.slice(3).map(Number)
+const only = process.argv.slice(3).map((a) => a.toLowerCase())
 mkdirSync(out, { recursive: true })
 
 const themes = {
@@ -32,7 +33,7 @@ const sizes = [16, 24, 32, 48, 256]
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1500, height: 900 }, deviceScaleFactor: 1 })
 
-for (const c of concepts.filter((c) => !only.length || only.includes(c.n))) {
+for (const c of concepts.filter((c) => !only.length || only.includes(c.id))) {
   const rows = []
   for (const key of Object.keys(c.variants)) {
     for (const [theme, t] of Object.entries(themes)) {
@@ -41,7 +42,7 @@ for (const c of concepts.filter((c) => !only.length || only.includes(c.n))) {
     }
   }
   const html = `<!doctype html><body style="margin:0;padding:16px;background:#555;font:12px ui-monospace,monospace;color:#eee">
-  <h3 style="margin:0 0 8px">${c.n} · ${c.name}</h3><div id="rows"></div></body>`
+  <h3 style="margin:0 0 8px">${c.label} · ${c.name}</h3><div id="rows"></div></body>`
   await page.setContent(html)
   const files = await page.evaluate(
     async ({ rows, sizes }) => {
@@ -86,10 +87,10 @@ for (const c of concepts.filter((c) => !only.length || only.includes(c.n))) {
     },
     { rows, sizes },
   )
-  const dir = join(out, `${String(c.n).padStart(2, '0')}-${c.slug}`)
+  const dir = join(out, fileStem(c))
   mkdirSync(dir, { recursive: true })
   for (const f of files) writeFileSync(join(dir, f.name), Buffer.from(f.data.split(',')[1], 'base64'))
-  await page.screenshot({ path: join(out, `sheet-${String(c.n).padStart(2, '0')}-${c.slug}.png`), fullPage: true })
-  console.log(`${c.n} ${c.slug}: ${files.length} PNGs`)
+  await page.screenshot({ path: join(out, `sheet-${fileStem(c)}.png`), fullPage: true })
+  console.log(`${c.label} ${c.slug}: ${files.length} PNGs`)
 }
 await browser.close()

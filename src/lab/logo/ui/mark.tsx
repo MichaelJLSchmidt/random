@@ -2,7 +2,7 @@
 
 import { type ReactElement, type Ref, createElement, memo, useId, useMemo } from 'react'
 import type { Concept, SvgNode, VariantKey } from '../model'
-import { type Container, buildMark } from '../tree'
+import { type Container, buildMark, heightFor, variantOf } from '../tree'
 
 /*
  * The inline mark: the concept's tree rendered as React SVG. Neutral parts use
@@ -72,7 +72,7 @@ export const Mark = memo(function Mark({
   if (style) overrides.style = style
   if (size !== undefined) {
     overrides.width = String(size)
-    overrides.height = container === 'card' ? `${(Number(size) * 184) / 132}` : String(size)
+    overrides.height = String(heightFor(Number(size), container, variantOf(concept, variant)))
   }
   if (decorative) overrides['aria-hidden'] = 'true'
   return toReact(tree, `m${prefix}`, 'root', { ...overrides, ref })

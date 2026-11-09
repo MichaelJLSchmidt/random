@@ -2,15 +2,13 @@ import { type Pt, clipPath, g, path, pathOf, strokeOutline, valleyFor } from '..
 import { type SvgNode, idOf, urlOf } from '../model'
 
 /*
- * The stroked M of concepts 1, 6 and 7: one path from the bottom of the left
+ * The stroked M of concept 1: one path from the bottom of the left
  * stem over both apexes into the F's top arm. It draws as one stroke, and two
  * static clips shape it:
  *   band     a rect between the top line and the baseline; trims the miter
  *            spike of the acute left apex, so every top edge sits on one line
  *   outline  the designed outline: the same polyline offset with thinner
- *            diagonals (optical correction at the acute joins). It has the same
- *            point structure for any polyline of the same length, so a path
- *            morph can morph the clip with the line (concept 6's contour).
+ *            diagonals (optical correction at the acute joins).
  */
 export type MSpec = {
   /** Stem and arm stroke. */
@@ -35,12 +33,9 @@ export function mLine(spec: MSpec, paint: string, prefix = 'm') {
   const [top, bottom] = spec.band
   const defs: SvgNode[] = [
     clipPath(idOf(`${prefix}-band`), { tag: 'rect', attrs: { x: -12, y: top, width: 72, height: bottom - top } }),
-    clipPath(idOf(`${prefix}-outline`), path({ 'data-part': `${prefix}-shape`, d: pathOf(outline, true) })),
+    clipPath(idOf(`${prefix}-outline`), path({ d: pathOf(outline, true) })),
   ]
   const wrap = (line: SvgNode) =>
     g({ 'clip-path': urlOf(`${prefix}-band`) }, g({ 'clip-path': urlOf(`${prefix}-outline`) }, line))
   return { pts, half, valley, d: pathOf(pts), outline, defs, wrap, paint }
 }
-
-/** Outline path of any polyline with the M's point count (for morph keyframes). */
-export const outlineD = (pts: Pt[], half: number | number[]) => pathOf(strokeOutline(pts, half), true)

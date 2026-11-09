@@ -54,10 +54,10 @@ function Lineup({ concepts, identity }: { concepts: Concept[]; identity: Identit
           </thead>
           <tbody>
             {concepts.map((c) => (
-              <tr key={c.n}>
+              <tr key={c.id}>
                 <th scope="row">
-                  <a className="link" href={hrefFor(c.n)} onClick={(e) => (e.preventDefault(), go(c.n))}>
-                    {c.n} · {c.name}
+                  <a className="link" href={hrefFor(c.id)} onClick={(e) => (e.preventDefault(), go(c.id))}>
+                    {c.label} · {c.name}
                   </a>
                 </th>
                 {grounds.map((g) =>
@@ -83,16 +83,16 @@ function Tile({
 }: {
   concept: Concept
   look: Look
-  register: (n: number, p: Player | null) => void
+  register: (id: string, p: Player | null) => void
 }) {
   const { tier, speed } = useLabSettings()
   const player = usePlayer(concept, { tier, speed })
   const stage = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
-    register(concept.n, player)
-    return () => register(concept.n, null)
-  }, [concept.n, player, register])
+    register(concept.id, player)
+    return () => register(concept.id, null)
+  }, [concept.id, player, register])
 
   // The reveal plays once on entry: built at its start pose now, played when the tile is in view.
   useLayoutEffect(() => {
@@ -129,8 +129,8 @@ function Tile({
       </div>
       <div className="lab-tile-text">
         <h3 className="lab-tile-title t-h3">
-          <a href={hrefFor(concept.n)} className="lab-tile-link" onClick={(e) => (e.preventDefault(), go(concept.n))}>
-            <span className="lab-num">{concept.n}</span> {concept.name}
+          <a href={hrefFor(concept.id)} className="lab-tile-link" onClick={(e) => (e.preventDefault(), go(concept.id))}>
+            <span className="lab-num">{concept.label}</span> {concept.name}
           </a>
         </h3>
         <p className="lab-tile-idea">{concept.idea}</p>
@@ -144,10 +144,10 @@ function Tile({
 
 export function Overview({ concepts }: { concepts: Concept[] }) {
   const [identity, setIdentity] = useState<Identity>('ink')
-  const players = useRef(new Map<number, Player>())
-  const register = useCallback((n: number, p: Player | null) => {
-    if (p) players.current.set(n, p)
-    else players.current.delete(n)
+  const players = useRef(new Map<string, Player>())
+  const register = useCallback((id: string, p: Player | null) => {
+    if (p) players.current.set(id, p)
+    else players.current.delete(id)
   }, [])
   const look: Look = { identity, surface: 'field', colour: 'neutral', container: 'none' }
 
@@ -163,7 +163,7 @@ export function Overview({ concepts }: { concepts: Concept[] }) {
   }
 
   return (
-    <>
+    <div className="lab-overview">
       <Lineup concepts={concepts} identity={identity} />
       <section className="lab-section" aria-labelledby="concepts-title">
         <div className="lab-section-head">
@@ -184,11 +184,11 @@ export function Overview({ concepts }: { concepts: Concept[] }) {
         </p>
         <div className="lab-tiles">
           {concepts.map((c) => (
-            <Tile key={c.n} concept={c} look={look} register={register} />
+            <Tile key={c.id} concept={c} look={look} register={register} />
           ))}
         </div>
       </section>
       <ScoreSummary concepts={concepts} />
-    </>
+    </div>
   )
 }
