@@ -33,7 +33,8 @@ import styles from './header.module.css'
  * active one carries aria-current. Choosing the other stores the choice and
  * switches in place (src/motion/locale-switch.ts: a short cross-fade, the
  * scroll position kept). On the 404 page there is no such page, so the link
- * reloads the address and the 404 page picks the stored language.
+ * opens the same address under the other language's prefix (/de/… or /en/…),
+ * whose 404 page then speaks that language (the address's locale wins).
  *
  * On pages that scroll, the header leaves after a deliberate scroll down and
  * returns on a scroll up (src/motion/header-scroll.ts); every route change
