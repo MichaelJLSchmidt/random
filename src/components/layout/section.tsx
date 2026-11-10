@@ -27,6 +27,14 @@ type Props = {
    * holds a .col-wide / .col-full block, which needs columns 1–3.
    */
   pin?: number
+  /**
+   * A pinned scene that rides with the chapter's head (05 Key decisions: the DealRow): rendered
+   * after the h2 inside a track and a stage (`[data-stage-track]` > `[data-stage]`). Both are
+   * `display: contents` until the scene pins them (src/motion/scenes/deal-scene.ts), so the
+   * static chapter looks like any other; pinned, the head and the scene stay together on screen.
+   * `children` follow the track.
+   */
+  stage?: ReactNode
   className?: string
   /** Direct grid items, each placed with a .col-* / .cols-* class. */
   children?: ReactNode
@@ -39,6 +47,7 @@ type Props = {
  *
  *   [NumeralBreaker]                 content column to the right edge
  *   SectionIndex (sticky)  h2        columns 1–3 | 4–11
+ *   [stage]                          a pinned scene with the head (05 Key decisions)
  *   ...                    children
  *
  * A composition of the contract components, not a contract of its own.
@@ -53,19 +62,13 @@ export function Section({
   lift,
   space = 'm',
   pin = 2,
+  stage,
   className,
   children,
 }: Props) {
   const titleId = `${id}-title`
-  return (
-    <section
-      id={id}
-      className={cx('page-section spread-grid', `space-${space}`, titleHidden && 'title-hidden', className)}
-      data-section={id}
-      data-breaker={lift ? '' : undefined}
-      aria-labelledby={titleId}
-      style={{ '--index-rows': pin } as CSSProperties}
-    >
+  const head = (
+    <>
       {breaker && <NumeralBreaker value={number} />}
       <SectionIndex number={number} label={label} className="col-index" />
       {titleHidden ? (
@@ -77,6 +80,27 @@ export function Section({
         <Reveal as="h2" kind="lines" id={titleId} className="section-title t-h2 col-content">
           {title}
         </Reveal>
+      )}
+    </>
+  )
+  return (
+    <section
+      id={id}
+      className={cx('page-section spread-grid', `space-${space}`, titleHidden && 'title-hidden', className)}
+      data-section={id}
+      data-breaker={lift ? '' : undefined}
+      aria-labelledby={titleId}
+      style={{ '--index-rows': pin } as CSSProperties}
+    >
+      {stage ? (
+        <div className="section-track" data-stage-track="">
+          <div className="section-stage" data-stage="">
+            {head}
+            {stage}
+          </div>
+        </div>
+      ) : (
+        head
       )}
       {children}
     </section>

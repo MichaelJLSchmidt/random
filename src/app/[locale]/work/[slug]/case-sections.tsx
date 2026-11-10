@@ -285,13 +285,18 @@ export async function CaseSections({ study }: { study: CaseStudy }) {
       </Section>
 
       {/* 05 Decisions: the deal stage across all twelve columns. */}
-      <Section {...head('decisions')} breaker pin={1 + (hasBody(s.decisions) || fig.decisions ? 1 : 0)}>
+      {/* 05 Decisions: the chapter head rides with the dealt cards in the pinned stage (desktop). */}
+      <Section
+        {...head('decisions')}
+        breaker
+        pin={1}
+        stage={<DealRow decisions={s.decisions.items} className="col-wide" />}
+      >
         <Body body={s.decisions.body} list={s.decisions.list} className={fig.decisions ? 'cols-4-8' : 'col-content'} />
         {fig.decisions && (
           <Figure name={fig.decisions} id="decisions" className="decisions-figure row-mate cols-9-12" copy={copy} />
         )}
         <Note>{s.decisions.note}</Note>
-        <DealRow decisions={s.decisions.items} className="col-wide" />
       </Section>
 
       {/* 06 Artefacts: asymmetric gallery (7 + 5, then 4 + 8). */}

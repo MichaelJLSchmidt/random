@@ -162,6 +162,18 @@ function flush(r: Route) {
   items.forEach((el, i) => start(el, i * gap + delayOf(el), r))
 }
 
+/**
+ * Reveals a block a scene held back (data-reveal-hold) now, with its kind's animation (reduced:
+ * final at once). Chapter 05's numeral draws once its stage pins (scenes/deal-scene.ts).
+ */
+export function releaseReveal(el: HTMLElement) {
+  el.removeAttribute('data-reveal-hold')
+  const kind = kindOf(el)
+  if (!kind || el.hasAttribute('data-revealed')) return
+  if (readTier() === 'reduced') return revealNow(el)
+  schedule(el, 0, (ctx) => runKind(kind, ctx, el))
+}
+
 /** Ends running reveal animations at once (the intro skip). */
 export function completeReveals() {
   completeAll()
@@ -185,6 +197,8 @@ export function revealRoute(kind: NavigationKind) {
   const tier = readTier()
   const handled = new Set<HTMLElement>()
   const all = [...main.querySelectorAll<HTMLElement>('[data-reveal]')]
+  // A scene holds a block back and reveals it at its own moment (Chapter 05's numeral: as it pins).
+  for (const el of all) if (el.hasAttribute('data-reveal-hold')) handled.add(el)
   const r: Route = {
     stops: [],
     held: new Set(),

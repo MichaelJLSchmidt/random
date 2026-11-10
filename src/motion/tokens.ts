@@ -368,20 +368,21 @@ export const deal = {
   fan: { dur: 0.42, stagger: 0.08, rise: 32, tilt: 0.5, settle: 0.42 },
   /**
    * Chapter 05 (desktop): the chapter head (label, numeral, h2) rides in the sticky stage above the
-   * dealt cards. Only from `minPinnedHeight` px of viewport height: head about 280 px (the
-   * numeral's 192 px line box with the h2's two lines over its lower third) + a cards row of about
-   * 300 px at its smallest + `pinned.pad` around and between them (about 120 px with the header
-   * clearance) + a 40 px safety margin = 760. Below it the cards lie in a static row under the
-   * title, nothing pins.
+   * dealt cards, and only from `minPinnedHeight` px of viewport height. The arithmetic: the header
+   * (64) + the head row (`pinned.head`, 200: the numeral's 192 px line box with the h2 beside it)
+   * + the padding (3 × `pinned.pad`, about 40) + the hand's reserve under the cards (120) + a cards
+   * row of at least about 300 px + a 40 px safety margin = 764 ≈ 760. Below it the cards lie in a
+   * static row under the title and nothing pins.
    */
   minPinnedHeight: 760,
   /**
-   * The pinned stage's rows: the head row is `head` px; the canvas row gets the rest of the viewport
-   * under the header, measured once on mount and again only when the width changes (`debounce` s),
-   * never from the head or the scroll. Cards taller than the canvas are scaled to fit it; a fit
-   * below `minScale` keeps the static row instead (the cards would be too small to read).
+   * The pinned stage's rows: the head row is `head` px; the canvas row gets the viewport under the
+   * header less the head row, the padding and the hand's reserve, measured once on mount and again
+   * only when the width changes (`debounce` s), never from the head or the scroll. Cards taller
+   * than the canvas are scaled to fit it; a fit below `minScale` keeps the static row instead (the
+   * cards' text would be too small to read: at 0.72 the body is about 14 px).
    */
-  pinned: { head: 280, pad: 16, minScale: 0.75, debounce: 0.15 },
+  pinned: { head: 200, pad: 12, minScale: 0.72, debounce: 0.15 },
 } as const
 
 /** A cubic bézier as four numbers (x1, y1, x2, y2), all within [0, 1]: no overshoot. */
@@ -778,6 +779,9 @@ export function motionCss(): string {
     `--hero-drift:${reveal.heroDrift * 100}%`,
     `--reveal-mask:${reveal.mask * 100}%`,
     `--contour-drift-scale:${field.contourDrift.scale}`,
+    // Chapter 05's pinned stage (layout.css): its head row and the space around and between rows.
+    `--deal-head:${deal.pinned.head}px`,
+    `--deal-pad:${deal.pinned.pad}px`,
     ...cardPlayConstants(),
   ]
   return [

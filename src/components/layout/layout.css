@@ -79,13 +79,16 @@
 .page-section.space-l {
   margin-top: var(--space-l);
 }
-.page-section > * {
+.page-section > *,
+.section-stage > * {
   min-width: 0;
 }
-.page-section > :not(.section-index, .section-title, .numeral-breaker) {
+.page-section > :not(.section-index, .section-title, .numeral-breaker),
+.section-stage > :not(.section-index, .section-title, .numeral-breaker) {
   margin-top: var(--block-gap);
 }
-.page-section > .section-title + * {
+.page-section > .section-title + *,
+.section-stage > .section-title + * {
   margin-top: var(--title-gap);
 }
 .page-section.title-hidden > .section-title + * {
@@ -134,7 +137,8 @@
   background: color-mix(in srgb, currentColor 60%, transparent);
 }
 @media (min-width: 1024px) {
-  .page-section > .section-index {
+  .page-section > .section-index,
+  .section-stage > .section-index {
     position: sticky;
     top: calc(var(--header-h) + var(--space-5));
     z-index: 1;
@@ -188,7 +192,8 @@
 }
 /* Below 1024 the index label leads, then the numeral with the h2 over its lower third. */
 @media (max-width: 1023.98px) {
-  .page-section > .numeral-breaker + .section-index {
+  .page-section > .numeral-breaker + .section-index,
+  .section-stage > .numeral-breaker + .section-index {
     order: -1;
   }
 }
@@ -200,6 +205,62 @@
   .numeral-breaker ~ .section-index {
     position: sticky;
   }
+}
+
+/*
+ * ---------- A chapter head riding in a pinned stage (05 Key decisions) ----------
+ * Section's `stage` (section.tsx): the track and the stage are `display: contents` until the
+ * deal scene pins them (src/motion/scenes/deal-scene.ts, [data-pinned]: from 1024 px wide and
+ * deal.minPinnedHeight tall, when the cards fit). Pinned, the track is deal.stage svh tall and the
+ * stage sticks under the header: a subgrid with a fixed head row (--deal-head: the label, the
+ * outlined numeral and the h2 beside it) and a fixed canvas row (--deal-canvas, clear of the hand,
+ * measured once on mount and on width changes, never on scroll) where the cards are dealt,
+ * scaled to fit it (--deal-scale). Head and cards leave together when the track ends.
+ */
+.section-track,
+.section-stage {
+  display: contents;
+}
+.section-track[data-pinned] {
+  display: grid;
+  grid-column: full-start / full-end;
+  grid-template-columns: subgrid;
+  align-content: start;
+}
+.section-track[data-pinned] > .section-stage {
+  --numeral-box: calc(var(--type-numeral-size) * var(--type-numeral-leading));
+  position: sticky;
+  top: var(--header-h);
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  grid-template-rows: var(--deal-head) var(--deal-canvas);
+  row-gap: var(--deal-pad);
+  align-items: start;
+  padding-top: var(--deal-pad);
+}
+.section-track[data-pinned] > .section-stage > * {
+  grid-row: 1;
+  margin: 0;
+}
+/* The head in one row: the label, the numeral, the h2 beside it, centred on the numeral's line box. */
+.section-track[data-pinned] > .section-stage > .numeral-breaker {
+  grid-column: 5 / 8;
+}
+.section-track[data-pinned] > .section-stage > .section-title {
+  grid-column: 8 / content-end;
+  align-self: center;
+}
+.section-track[data-pinned] > .section-stage > .section-index {
+  position: static;
+  align-self: center;
+}
+.section-track[data-pinned] > .section-stage > .deal-row {
+  grid-row: 2;
+}
+.section-track[data-pinned] .deal-row-list {
+  scale: var(--deal-scale, 1);
+  transform-origin: 50% 0;
 }
 
 /*
