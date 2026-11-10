@@ -25,8 +25,23 @@ One session, in this order (the background first: every other check depends on i
 8. **Item 8**, the master's thesis page (first draft).
 9. **Item 9**, the idle note only where it fits; verification; push `main`; deploy check.
 
-- **Card → detail transition.** Fine-tune the play morph (lift, zoom and the page's first
-  reveals after it): timing, the crossfade window and how the hero lands.
+- **Card play on real devices.** In the CPU-only test container the view transition starts
+  150–340 ms after the navigation (React renders the case page and waits for its hero image; the
+  snapshots rasterise in software), and the 520–600 ms morphs run slower than their tokens. Check
+  on a desktop and a mid-range phone (DevTools frame rendering stats, 60 fps, also at 4× CPU
+  throttle) that V follows the navigation within a frame or two and that the field holds 60 fps
+  through the ring and the bloom.
+- **Nested view-transition groups.** Once Safari and Firefox ship `view-transition-group` (Chrome
+  140+ has it), let the frame contain the band (`view-transition-group: contain` on the frame) so
+  the band is clipped to the card's radius during the morph; today the band's group clips itself
+  (`overflow: clip`) and the design does not depend on it.
+- **Chapter 05 in German at 1440 × 900.** The German decision cards run about 15% longer (722 px
+  against 629 px at 1440 px wide), so they would need a 0.66 scale under the pinned head; below
+  `deal.pinned.minScale` (0.72) the chapter keeps its static row there (English pins at 0.76). Shorter
+  German copy, or a compact card layout for the stage, would let it pin from 900 px too.
+- **The returned card on top.** After Back the card lies on its neighbours (`data-returned`, as it
+  arrived above the hand) until the pointer next moves over the hand, then it slides back under
+  its right-hand neighbour. Check that this reads as intended, or settle it with a short delay.
 - **Home intro timings.** Fine-tune the first-visit sequence (`at.firstLoad` in
   `src/motion/tokens.ts`): offsets, durations and the hand's deal. (The smoke check now reads each
   part's start from its animations' own timing, so tuning no longer upsets it; feedback round 2.)
@@ -53,6 +68,13 @@ One session, in this order (the background first: every other check depends on i
 - **JS budget.** 180.9 KB gzip initial JS (advisory 170 KB, D7) after round 3.
 
 ## Resolved
+
+- **Card → detail transition**, card play (contracts P1–P8). The play is "the card hits the table":
+  a clone flies to the table's centre, lands with an accelerating drop, a hold, the contact shadow
+  and the field's ring, then a three-part container transform (frame, band, title) becomes the
+  page; return, switch, browser back / forward, a slow network and offline follow it. The mobile
+  rail plays a card in one tap (the bottom sheet is gone); Chapter 05's head rides in the pinned
+  deal stage.
 
 - **Flicker in chapter 05 (team-of-teams deal scene)**, feedback round 3, item 4. *Cause:* when
   the decision row pinned or unpinned, the field engine switched the canvas to half resolution

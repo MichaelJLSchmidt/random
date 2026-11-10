@@ -5,8 +5,8 @@ Content & Images) worked in parallel against it; the Integration session merged 
 [integration decisions](#integration-decisions-i1i27) and updated this file to match the code.
 [Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there,
 [Locales](#locales-l1l11) made the site bilingual (German and English),
-[Feedback round 2](#feedback-round-2) and [Feedback round 3](#feedback-round-3) changed the
-decisions listed there; every reference section
+[Feedback round 2](#feedback-round-2), [Feedback round 3](#feedback-round-3) and
+[Card play](#card-play-p1p8) changed the decisions listed there; every reference section
 below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
@@ -35,6 +35,7 @@ below were written for Wave 1 and apply again only if a future wave runs in para
 Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisions-i1i27) ·
 [Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
 [Feedback round 2](#feedback-round-2) · [Feedback round 3](#feedback-round-3) ·
+[Card play](#card-play-p1p8) ·
 [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
@@ -62,7 +63,8 @@ other `.col-margin` element sit in column 12 plus the right outer track. Below 1
 MarginNote renders inline in the content column as an aside with a 1 px left rule.
 *Implemented by Foundation.*
 
-**D3. Hero target.** The case hero's media frame carries `data-hero-target`: the element that
+**D3. Hero target** (its `heroTarget()` superseded by P2: the played card lands at the table's
+centre, not on the hero). The case hero's media frame carries `data-hero-target`: the element that
 frames the played card on a detail page (today `.hero-slot` in `case-hero.tsx`, already marked;
 Layout keeps the attribute on the frame of its redesigned hero). Motion changes `heroTarget()` in
 `src/motion/play.ts` to measure `[data-hero-target]` with `getBoundingClientRect()` at play time
@@ -246,7 +248,8 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   (critically damped), instant in reduced. Reduced (system): on, disabled, hint
   `site.settings.reducedHint` ("Set by your system").
 - **G3. Header.** Links: the home slot and About only. More projects and Contact are pages no
-  more (A1–A3); the mobile bottom sheet lists the four cards only (`ul.hand-sheet-links` gone).
+  more (A1–A3); the mobile bottom sheet lists the four cards only (`ul.hand-sheet-links` gone;
+  the sheet itself is gone since P5: the rail plays a card with one tap).
 - **G4. Home slot** (its morph superseded by R3). One link at the top left (`a[data-slot-mode="mark|back"]` in
   `header.tsx`): the logo (`.mark`, `src/components/logo.tsx`), or on detail
   pages (the case studies and Management) a back arrow + "Back" (`.back`: an SVG shaft and head,
@@ -288,7 +291,7 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
 
 **Detail pages**
 
-- **D1. Hero sequence.** After the card morph or on a direct load: the title and the hero image
+- **D1. Hero sequence** (its timings superseded by P3: `cardPlay.*.hero`, label before summary). After the card morph or on a direct load: the title and the hero image
   as before, then (`at.detail`) the summary +200 ms, the top label and counter +360 ms, then the
   meta pairs from +500 ms, 100 ms apart left to right, each a `pair` reveal (rule, then label,
   then value; 300 ms). Only blocks in the first viewport when the sequence starts join it
@@ -299,7 +302,8 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   (`object-fit: cover`), at most 1200 px wide and 72svh tall (the height cap narrows the frame); consecutive images alternate sides
   (`imageSides()`, starting left: the hero runs right); caption beside the image from 1680, below
   otherwise; edge to edge at 4:3 below 1024. The case hero frame is capped at 1200 px.
-- **D3. No mini card.** When the hero frame has scrolled away nothing carries `card-<id>`: a
+- **D3. No mini card** (superseded by P3: Back always folds the page into the full-screen frame,
+  which shrinks into the slot; `dealIn()`, `heroVisible()` and `distance.returnDeal` are gone). When the hero frame has scrolled away nothing carries `card-<id>`: a
   return then deals the card into its slot (`dealIn()` in `play.ts`: a 24 px rise with opacity,
   `distance.returnDeal`), no shared-element morph, nothing from off screen. The case hero reports
   its visibility (`heroVisible()`); the title's transition name follows it too.
@@ -397,8 +401,8 @@ motion and the three tiers are unchanged.
   the same way (no stored choice).
 - **L8. Cross-fade.** Every part with words cross-fades once in place over `--dur-s` (calm × 0.6 until M1,
   reduced 160 ms linear): the page and the card faces get the class `locale-fade` from the
-  `[LOCALE]` entries of the React maps (`pageEnter`, `pageExit`, `heroShare`, `heroTitleShare`,
-  `handShare`, `handTitleShare`), the header, hand, rail and footer through
+  `[LOCALE]` entries of the React maps (`pageEnter`, `pageExit`, the hero's and the hand's frame,
+  band and title maps, `thesisShare`; P3), the header, hand, rail and footer through
   `:root[data-locale-switch]` (`view-transitions.css`). Groups do not move; the field stays live.
   Never a card morph.
 - **L9. No replay.** The reveal system runs the remounted page as kind `locale` (`table`'s intent
@@ -450,7 +454,7 @@ below describe the new state.
   one passive scroll listener, rAF-throttled, writes `html[data-header="hidden"]`. Hidden after
   more than `header.threshold` (8 px) of scrolling down in one direction past the header's height;
   shown after 8 px up, near the top (within the header's height), on pages that do not scroll, on
-  focus inside the header, while the mobile sheet is open and after every route change. Overscroll
+  focus inside the header and after every route change (the mobile sheet is gone, P5). Overscroll
   bounce and scroll changes during a view transition (`transitionRunning()` in
   `view-transition.ts`) are ignored. CSS: `translate: 0 -100%`, `duration.headerHide` 200 ms
   `ease.in`, `duration.headerShow` 240 ms outQuint; the reading hairline stays on screen at the top
@@ -695,6 +699,130 @@ logo (it is not a card page) and morphs with the timeline card instead.
 
 ---
 
+## Card play (P1–P8)
+
+The play, return and switch choreography rebuilt as "the card hits the table", applied by one
+session. Earlier decisions it changes are marked above; the reference sections below describe the
+new state. Every value is a token in `cardPlay` (`src/motion/tokens.ts`; desktop `play` from
+1024 px, `mobilePlay` below), CSS reads them as custom properties (`--play-*`, `--return-*`,
+`--rail-*`, `--loading-*`, `--reduced-*`, emitted by `motionCss()`, the phone values under
+`@media (max-width: 1023.98px)`).
+
+**P1. Tokens.** `cardPlay.play` / `.mobilePlay`: `press` (90 / 80 ms, `cubic-bezier(0.33,1,0.68,1)`,
+scale 0.97), `haptic` (press 8 ms, impact 12 ms), `lift` (110 ms, outQuint, −16 px, ×1.04; none on
+phones), `flight` (300 / 320 ms: x `cubic-bezier(0.45,0,0.25,1)`, y `cubic-bezier(0.2,0.6,0.35,1)`,
+rotate and tilt `cubic-bezier(0.3,0,0.2,1)` to 0; phones start −3° further), `rise` (180 / 220 ms to
+1.06 / 1.04, outQuint), `drop` (120 / 100 ms to 1.00, `cubic-bezier(0.55,0,0.85,0.35)`), `shadow`
+(lifted `0 28px 56px -12px rgba(0,0,0,.55)` at `rest` 0.5 in the hand, contact `0 2px 4px
+rgba(0,0,0,.5)` spreading 4 → 10 px over 80 ms ease-out into `settled`), `hold` (60 / 50 ms),
+`navigate` (560 / 450 ms after the press), `card` (212 × 296; phones `min(54vw, 240px)` at 63:88),
+`landing` (the viewport's centre, 46% / 44% of its height), `ring` (700 / 600 ms, outExpo,
+0.14 → 0), `morph` (600 / 520 ms, `cubic-bezier(0.3,0,0,1)`; band +20, title +40 / +30; the old
+face gone after 150 / 130; band out +60 / 240 (+50 / 200), image in +120 / 300 (+100 / 260), title
+out +40 / 200 (+30 / 180), h1 in +140 / 240 (+120 / 220); the frame dissolves from +460 / +400 over
+260 / 220 ms, `cubic-bezier(0,0,0.2,1)`; the page left exits 180 ms, ease-in, 8 px down), `hero`
+(label +420 / +360, summary +500 / +430, 240 / 220 ms, outQuint, 8 / 6 px; meta pairs from +620 /
++540, 100 / 80 ms apart, each rule 240 ms, label +60 and value +120, 200 ms each), `rail` (phones).
+`cardPlay.return` (details out 160 ms, the frame back over 140 ms, navigate at 160 ms; morph 520 ms
+`cubic-bezier(0.5,0,0.1,1)`; the hand face in at +260; home content at +200 over 280 ms),
+`cardPlay.switch` (hero dim 0.3; the left card re-enters at +300 / +260, 12 px), `cardPlay.loading`
+(cue 350 ms, breath 1.6 s ±6%, label 1.5 s, long wait 12 s, image fade 320 ms, offline: hold 200 ms,
+back 420 ms `cubic-bezier(0.5,0,0.1,1)`, message 5 s), `cardPlay.reduced` (out 120 ms, in 200 ms,
+bloom 300 ms). `spring.gap` (bounce 0, visualDuration 0.28, Motion's own conversion) moves the
+hand's siblings; `field.play.dprMax` 1.5. Removed: `ease.zoom` (0.76,0,0.24,1), `ease.return`,
+`duration.{press, gap, zoom, return, switchIn, switchDelay, exitPlay, exitReturn, exitSwitch,
+liftTimeout, sheet}`, `at.{navigate, switchNavigate, detail}`, `distance.{exitPlay, exitReturn,
+exitSwitch, landY, returnDeal}`, `angle.lift`, `hand.{hero, liftScale, pressScale, sheet, scrim}`,
+`reveal.zoomLanded`, `tiers.*.vt`, `--hero-w`, `--z-sheet`; `duration.navFade` (200 ms) times plain
+page fades.
+
+**P2. Stage 1: the table card** (`src/motion/play.ts`, `src/motion/flight.ts`,
+`src/components/hand/table-card.tsx`). `play(id, href, source?)` sets the flight store; the hand
+renders a portal clone of the card face (`.table-card`, aria-hidden) laid out at the table size at
+the landing point and FLIP-inverted to the source (a fan card: its centre, size, rotation and the
+fan's 8° tilt; a rail edge: its width, the clone's top on the edge's top; the Next project card's
+face). Four nested layers (`[data-layer="x|y|pose|scale"]`) each carry one channel as a Motion
+(`motion/mini`, WAAPI) animation, so x and y run on their own curves (the arc) and all of it is
+compositor work; the shadows are opacity layers inside the named frame. The source is hidden on
+the next frame (`visibility`). At contact (the scale's end): identity transform (the snapshot is
+rasterised at full size), the contact shadow spreads, `navigator.vibrate(12)` where it exists, the
+field rings and blooms from the landing point (`table.play(…, ring)`); after the hold, navigate
+(`play` or `switch`). The view-transition names move from the hand card to the clone for the
+flight (`CardFace standDown`); the clone unmounts in the commit of the new route, which pairs its
+names with the page's. A second play while one flies, waits or returns is ignored; Escape calls it
+off (`cancelPlay()`), a route change settles it (`settlePlay()`). Siblings close the gap on
+`spring.gap` and open around the ghost again.
+
+**P3. Stage 2: the three-part morph** (`src/styles/view-transitions.css`, `case-hero.tsx`).
+Names: `card-<slug>` (the hand face / clone ↔ the page's `.play-frame`, fixed, full screen, the
+face's fill and 1 px accent edge), `card-band-<slug>` (the face's band ↔ `[data-hero-target]`),
+`card-title-<slug>` (the face's title ↔ the h1), plus the chrome's and the root. Classes, not
+types (Firefox 144+ has `view-transition-class`, not types): the page's maps give `vt-play` (play,
+switch) or `vt-morph vt-in` (no type: back / forward), the hand's maps `vt-return` or `vt-morph
+vt-out`, each with `vt-frame` / `vt-band` / `vt-title`; About's Master's card and the thesis hero
+use `thesisShare` (`vt-morph` alone). Stacking: page groups, the card's parts (z 1–3), the hand and
+rail (10), the parts on their way back into the hand (11–13), the header (20); the DOM keeps the
+same order (`--z-*` in tokens.css). The frame's new image holds opaque until the DOM dissolve has
+ended (`--play-hold`), so the transition (and its order) lasts as long as the dissolve. The old
+title and band and the new hand face, band and title keep their own size (never shown scaled up).
+The hero's label, summary and meta pairs are not in the transition: the reveal engine starts them
+from the transition's `ready` (V), or from mount without one. After `finished` the h1 has focus,
+the page at its top. Return: `html[data-returning]` fades the details and brings the frame back
+(above the hand, with the hero's image and title) before navigating; the hand card that came back
+lies on top of its neighbours (`data-returned`) until the pointer returns. Switch: the open hero
+dims during the flight (`html[data-switching]`), its names stand down, its page exits and its card
+re-enters its slot. Browser back / forward is replayed without a type: the default `vt-morph`.
+
+**P4. Slow network and offline** (`src/motion/use-play-pending.ts`,
+`src/components/hand/play-status.tsx`). `<Link>` prefetch stays "auto" (never `prefetch={true}`:
+in Next 16 static exports it fetches HTML instead of the `__next.*.txt` segments and leaves the
+link dead); the play also prefetches on pointerenter, focus and pointerdown. The press warms the
+hero image (a detached `<picture>` with the page's own sources and `heroSizes`,
+`src/lib/hero-images.ts`, then `decode()`); the hero `<img>` has no `onLoad` prop (React then
+stops waiting for it before the transition), it waits on the frame's identity colour and fades in
+once decoded (`data-loaded`, a ref listener). The pending signal is set when navigate is called
+and cleared in the hand's layout effect when the route changes: after 350 ms the field breathes
+around the resting card, after 1.5 s a plain "Loading…" (role="status") shows under it, after 12 s
+"Still loading…". Offline at the impact: no navigation (Next 16.4.5 answers a failed RSC fetch
+with a full page load: `fetchServerResponse` logs "Falling back to browser navigation"); the card
+flies back, the bloom recedes (`table.cancelPlay()`), the message shows near the hand for 5 s.
+Going offline while waiting shows it too. Three keys per locale: `hand.labels.loading`,
+`stillLoading`, `offline`.
+
+**P5. One-tap rail** (phones off home). `nav.hand-rail[aria-label]` of four `<Link>`s
+(`a.rail-card[data-play]`), each a quarter of the width and the full 48 px height,
+`touch-action: manipulation`, `aria-current="page"` on the open card (lower, dimmed, an accent
+line). The press shows from pointerdown and is called off by pointercancel or more than 10 px of
+movement; the play runs on click (the browser suppresses it once it takes over a scroll); Enter
+runs the same path. The open card's edge scrolls its page to the top (at once under reduced
+motion). The bottom sheet (`#hand-sheet` popover), `table.sheetOpen` / `setSheet`,
+`data-sheet-moving`, `duration.sheet`, `hand.sheet` / `scrim` and the sheet's CSS are gone; the
+fan is a `nav` of its own and the hand's root a `div.hand` (it holds the two navs; one shows).
+
+**P6. The field's answer** (`shader.ts`, `field-engine.ts`). Uniforms `uImpact`, `uRing`
+(radius, strength, width), `uRingCol`, `uWait`: one soft ring in the card's colour from the
+landing point (its strength falls on the clock), the bloom from the same point, and the waiting
+breath driven by the pending signal. During a play the field draws every frame and never above
+1.5 DPR (About's morph included). Still not pointer-reactive. Reduced: the bloom is a 300 ms colour
+fade, no ring, no breath.
+
+**P7. Reduced motion.** No clone, no flight, no shared morph: the page cross-fades as one (old out
+120 ms, new in 200 ms; the card's groups hold their old place, then show the new one), the field's
+colour fades over 300 ms, the hero's details are final at once and focus moves to the h1. Haptics
+stay.
+
+**P8. Chapter 05** (`scenes/deal-scene.ts`, Section's `stage`). From 1024 px wide and
+`deal.minPinnedHeight` (760) tall, the chapter's label, numeral and h2 ride in the sticky stage
+above the dealt cards; head and cards are pinned through the 180svh track and leave together. The
+stage is a subgrid with a fixed head row (`deal.pinned.head`, 200 px: the label, the numeral and
+the h2 beside it) and a fixed canvas row, clear of the hand's reserve, sized on mount and on width
+changes only (debounced ResizeObserver), never from the head or the scroll; cards taller than it
+scale to fit, and a fit below `deal.pinned.minScale` (0.72) keeps the static row. The numeral's
+reveal is held (`data-reveal-hold`, `releaseReveal()`) until the stage pins, then it draws once.
+Below the gate, below 1024 px or under reduced motion: the standard chapter head and a static row.
+
+---
+
 ## Ownership (Wave 1)
 
 Wave 1 is merged; the table is kept as the default split for future parallel waves.
@@ -729,7 +857,7 @@ session other than Layout needs to touch it.
 Responsibilities the decisions place (no path changes owner):
 
 - D1: `hand.tsx` (Foundation) and the pre-paint line in `src/motion/preferences.ts` (Motion keeps it).
-- D3: `data-hero-target` on the hero frame: Layout; `heroTarget()`: Motion.
+- D3: `data-hero-target` on the hero frame: Layout (`heroTarget()` is gone, P2).
 - D4: Layout writes only `<Reveal>`; Motion implements and removes the legacy kinds; Integration
   deletes leftovers.
 - D5: DealRow's position label: Layout (not Motion).
@@ -776,11 +904,13 @@ src/motion/
   reveal.ts                    the reveal engine; kinds.ts (the ten kinds), jobs.ts (scheduler),
                                first-load.ts, split.ts (Motion+ splitText), deal.ts, choreography.ts
                                (tier helpers only)
-  play.ts, transitions.ts, preferences.ts, use-tier.ts, view-transition.ts (Motion)
+  play.ts, flight.ts (the card in flight), use-play-pending.ts (the wait for the next page),
+  transitions.ts, preferences.ts, use-tier.ts, view-transition.ts (Motion)
   header-scroll.ts             the header leaving on a scroll down, returning on a scroll up (N1)
   locale-switch.ts             the language switch: store, reading position, focus, settle (L7)
 src/components/
-  hand/                        hand.tsx, card-face.tsx (Foundation)
+  hand/                        hand.tsx, card-face.tsx, table-card.tsx (the played card's clone),
+                               play-status.tsx (the play's status line) (Foundation)
   layout/                      SectionIndex, NumeralBreaker, OffsetImage, MetaPairs, Scoreboard,
                                DealRow, WorkshopRow, MarginNote, Minimap (+ MinimapObserver),
                                Section, use-deal-position.ts, layout.css, index.ts (Layout)
@@ -810,6 +940,7 @@ src/lib/
   request-locale.ts            server: setRequestLocale / requestLocale (the render's locale, React cache)
   metadata.ts                  server: pageAlternates (canonical, hreflang, x-default)
   chrome.tsx                   client: ChromeProvider, useChrome(), activeChrome() (the active locale's chrome, D7)
+  hero-images.ts               server: the case heroes' sources and heroSizes (warmed on a press, P4)
   hand-data.ts                 client-safe: buildChrome (handCards, cardById, cardForPath, nextCard, href),
                                cardIdForPath, identityOf, cardIds (language-free)
   format.ts                    pad2, cardNumber, fill (no imports)
@@ -827,7 +958,7 @@ Source: `src/styles/layout.css`. Typed mirror: `src/design/layout.ts` (`breakpoi
 **Breakpoints** (min-width): `sm` 640, `md` 1024, `lg` 1440, `marginNotes` 1680 (CSS
 `--breakpoint-sm`, `--breakpoint-md`, `--breakpoint-lg`, `--breakpoint-margin-notes`; media
 queries cannot read custom properties, so the `@media` rules repeat the values). Mobile first.
-The hand switches from rail/sheet to the desktop fan at `md` (1024).
+The hand switches from the rail (phones off home) to the desktop fan at `md` (1024).
 
 | Range | Columns | Margin | Gutter | Notes |
 | --- | --- | --- | --- | --- |
@@ -941,21 +1072,21 @@ carries `data-motion="full|reduced"`. There is no other motion setting (R2): the
 ambient motion follows the tier and stops while the tab is hidden.
 
 **Table vocabulary**: `ease.outSoft` (= outQuint), `draw` (= outExpo), `bloom` (= inOut),
-`zoom`, `return`, `in` → `--ease-out-soft`, `--ease-draw`, `--ease-bloom`, `--ease-zoom`,
-`--ease-return`, `--ease-in`; springs `play`, `hover`, `land` → `--spring-play`,
-`--spring-hover`, `--spring-land` and `--spring-*-dur`; `duration.*` → `--dur-<kebab>` (e.g.
-`--dur-zoom`, `--dur-sheet`, `--dur-fast`), tier-scaled by `tiers.{vt,ui}`; `distance.*` →
+`in` → `--ease-out-soft`, `--ease-draw`, `--ease-bloom`, `--ease-in`; springs `play` (the
+workshop draw's turn), `hover`, `land`, `gap` (P1) → `--spring-play`, `--spring-hover`,
+`--spring-land`, `--spring-gap` and `--spring-*-dur`; `duration.*` → `--dur-<kebab>` (e.g.
+`--dur-nav-fade`, `--dur-fast`), tier-scaled by `tiers.ui`; the card play: `cardPlay` (P1);
+`distance.*` →
 `--travel-<kebab>` (0 in reduced); `stagger.contours` (60 ms between a chapter numeral's contours, R6), `stagger.digits` (40 ms between a Scoreboard value's
 strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label, copy
 `{ at, end }`, divider, items `{ at, dur, stagger }`, cards `{ at, dur, stagger }`; H4),
-`at.detail` (summary, label, meta `{ at, stagger, dur, part, cascade }`; D1), `at.navigate`,
-`at.switchNavigate`; `idle` (`after` 10 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5, M3);
+`cardPlay.*.hero` (the detail hero's label, summary and meta pairs, P1, P3); `idle` (`after` 10 s, `write`, `gap`, `arrow`, `arrowCurl`, `fade`; H5, M3);
 `header.threshold` (8 px) and `duration.headerHide` / `headerShow` (200 / 240 ms; N1);
 `reveal.mask` also as `--reveal-mask`; `duration.slotMorph` / `slotLag` (Back's arrow and label,
 G4), `duration.logoExit` / `logoBackFade` and `logo.*` (the header logo, R3; `ease.enter`,
 `ease.move`, `ease.exit` are its curves), `duration.topo` (About's morph, 1.6 s) and
 `duration.contourHandoff` (the SVG's crossfade, 0.3 s; R1);
-`distance.returnDeal` (24 px, D3); `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
+`angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `ignoreHeight` (R4), `poolDrift`, `poolDriftPeriods`
 (G1), `contourDrift` (R1: `x` 8 px, `y` 5 px, one `period` 120 s loop from the identity
 offset, `scale` 1.03 static → `--contour-drift-scale`) and `morph` (R1: `dprMax` 2, `slowScale`
@@ -964,12 +1095,13 @@ offset, `scale` 1.03 static → `--contour-drift-scale`) and `morph` (R1: `dprMa
 **Reveal choreography** (I3): `duration.digits` 700 ms, `duration.svgDraw` 1200 ms,
 `distance.block` 12 px; `reveal` = trigger (`amount` 0.35, `margin` −18% at the bottom,
 `tallAmount` 0.45, `endSlack` 4 px; R5), `breakerAmount` 0.25 (the field's lift), `mask`
-1.1 (lines rise from 110%), `image` (`inset` 0.1, `scale` 1.12), `digitRoll` 5, `zoomLanded` 0.6
-(after a play or switch the page reveals once 60% of the zoom has run), `mobileJobs` 8,
+1.1 (lines rise from 110%), `image` (`inset` 0.1, `scale` 1.12), `digitRoll` 5, `mobileJobs` 8,
 `heroDrift` 0.06 (`--hero-drift`); `deal` = `stage` 180 svh, `phases`, `landTilt`,
 `flipPerspective`, `toss`, `below`, and the About cards' `deal` reveal: `deck` (R7: `stagger`
 70 ms, `reach` 240 px, `tilt` −4°, `appear` 0.3, on the `land` spring as `linear()`), `fan` (A3:
-`dur` 420 ms, `stagger` 80 ms, `rise` 32 px, `tilt` 0.5 of `angle.hand`, `settle` 420 ms);
+`dur` 420 ms, `stagger` 80 ms, `rise` 32 px, `tilt` 0.5 of `angle.hand`, `settle` 420 ms),
+Chapter 05's `minPinnedHeight` (760) and `pinned` (`head` 200 px, `pad` 12 px, `minScale` 0.72,
+`debounce` 0.15 s; P8);
 `discard` = `drop`, `fade`. `src/motion/choreography.ts` only applies the tiers (`msFor`, `spanFor`, `gapFor`,
 `drawFor`).
 
@@ -1004,29 +1136,33 @@ lives in the SVGs, B1). On About the hand's scrim takes the contour ground.
   `path` is its page without the locale, its `href` the link in the current locale.
 - **Reserve (D1)**: the hand sets `data-hand="collapsed"` on `<html>` on every route except home
   (and the pre-paint script does the same for the first paint).
-- `<nav class="hand" aria-label="{hand.labels.nav}">` ("Projekte" / "Work"), one tab stop (roving `tabindex`, arrows, Home/End).
-  Card links: `a.hand-card[data-play="<id>"][data-roving="<id>"]` in `li.hand-slot[data-slot="<id>"]`.
-  The open card shows `.hand-ghost` ("Viewing").
-- Desktop (≥ 1024): fan at the bottom centre. Mobile: fan on home; elsewhere a 48 px peek rail
-  (`button.hand-rail`) that opens the list as a bottom sheet (`#hand-sheet`, native popover) with
-  the four cards only (G3). The rail leaves and returns with the header (`html[data-header]`, N1).
+- `div.hand` holds two navigations, one shown at a time (P5): the fan
+  `<nav class="hand-fan" aria-label="{hand.labels.nav}">` ("Projekte" / "Work"), one tab stop
+  (roving `tabindex`, arrows, Home/End), card links `a.hand-card[data-play="<id>"][data-roving="<id>"]`
+  in `li.hand-slot[data-slot="<id>"]`; and the rail `<nav class="hand-rail" aria-label=…>` of four
+  `a.rail-card[data-play][data-slot-anchor]` links. The open card shows `.hand-ghost` ("Viewing")
+  in the fan and `aria-current="page"` on both.
+- Desktop (≥ 1024): fan at the bottom centre. Mobile: fan on home; elsewhere the 48 px rail: one
+  tap plays a card, the open card's edge scrolls to the top (P5). No bottom sheet. The rail leaves
+  and returns with the header (`html[data-header]`, N1).
 - No card counter (H2). New hand by touch: a long press on the empty table on home.
-- A return with the hero scrolled away deals the card into its slot (`dealIn()`, D3); a return
-  with the hero in view morphs it back as before.
+- Back and Escape fold the page into the full-screen frame, which shrinks into the card's slot
+  (P3); with the hero scrolled away the band and title simply do not take part.
 - **Table store** (`src/motion/table-store.ts`, Foundation): `table.get()` →
-  `{ activeCard, hoverCard, lastPlayed, tier, sheetOpen, breaker, field }`;
-  `table.subscribe((state, prev) => …)`; `hover(id)`, `play(id, rect, href)`, `returnHome(href)`
+  `{ activeCard, hoverCard, lastPlayed, tier, breaker, field }` (`field.ring`: a card met the table);
+  `table.subscribe((state, prev) => …)`; `hover(id)`, `play(id, rect, href, ring?)`,
+  `cancelPlay()` (a play called off after its bloom, P4), `returnHome(href)`
   (`href`: home in the current locale), `switchLocale()`, `route(path, initial)` (paths carry the
-  locale; a route that differs only by locale changes nothing, L9), `setTier`, `setSheet`,
-  `setBreaker`, `registerSlots`, `slotOf`, `takeIntent()` (`'play' | 'switch' | 'return' |
-  'locale' | null`). Subscribers write DOM / uniforms
+  locale; a route that differs only by locale changes nothing, L9), `setTier`,
+  `setBreaker`, `registerSlots`, `slotOf`, `takeIntent()` / `peekIntent()` (`'play' | 'switch' |
+  'return' | 'locale' | null`). Subscribers write DOM / uniforms
   directly; hovering or playing never re-renders React.
-- View-transition names: `card-<id>`, `card-title-<id>` (hand card ↔ detail hero), `hand`,
+- View-transition names: `card-<id>`, `card-band-<id>`, `card-title-<id>` (hand card or its
+  clone ↔ the page's play frame, hero image and h1; P3), `hand`,
   `hand-rail`, `site-header`, `home-slot` (R3), `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
   `locale` (`src/motion/transitions.ts`; `locale`: L7, L8).
-- Stage 1 of play lifts the card toward the hero; `heroTarget()` in `src/motion/play.ts`
-  measures `main [data-hero-target]` at play time when it is on screen (D3) and falls back to the
-  computed geometry otherwise (playing from home, where no hero is mounted yet).
+- Stage 1 of a play runs on the card's clone on the table (`.table-card`, P2): press, lift
+  (desktop), the arced flight with its rise and drop into contact, the hold, then the navigation.
 
 ---
 
@@ -1163,8 +1299,9 @@ After Wave 1 the kinds below are the only reveal system (D4).
   `data-revealed`, runs its kind, and at the end cancels its animations and removes `will-change`
   (nothing animated at rest). Below 1024 px at most `reveal.mobileJobs` jobs run at once.
 - Triggers: `data-reveal-order` blocks in the first viewport play in sequence (base + 80 ms ×
-  (order + 1) + delay; base = 0, or `reveal.zoomLanded` of the morph as the tier runs it after a
-  play (`duration.zoom`) or switch (`switchDelay + switchIn`), × `tiers[tier].vt`, 0 in reduced);
+  (order + 1) + delay; base = 0, or after a play or switch the hero label's offset from the
+  transition's start, `cardPlay.*.hero.label`; 0 in reduced); a block with `data-reveal-hold` is
+  left to its scene (`releaseReveal(el)`, Chapter 05's numeral, P8);
   everything else reveals by the one shared rule (`src/motion/reveal-trigger.ts`, R5): once 35%
   of it is inside the viewport less its bottom 18% (`reveal.amount` 0.35, `reveal.margin`
   `0px 0px -18% 0px`; a block taller than the viewport needs `min(0.35, 0.45 × innerHeight /
@@ -1176,8 +1313,9 @@ After Wave 1 the kinds below are the only reveal system (D4).
   `lines` reveal before it in its section.
 - Page titles (I2): `PageTitle` is `<Reveal as="h1" kind="lines" order={0}>`; after a play or
   switch the engine marks it revealed at once (the morph delivers it).
-- Detail hero (D1): the `data-reveal-step` blocks in the first viewport follow the title's turn
-  by `at.detail` (summary, then label and counter, then each meta pair 100 ms apart); the rest
+- Detail hero (D1, P3): the `data-reveal-step` blocks in the first viewport start from the view
+  transition's `ready` (or from mount without one) by `cardPlay.*.hero`: the label and counter,
+  the summary (each a `block` rise of 8 / 6 px), then each meta pair 100 / 80 ms apart; the rest
   reveal on scroll. Sequences with their own timing are exact (no neighbour spacing).
 - Kinds: `lines` paragraph lines rise from a mask (Motion+ `splitText` after the fonts are ready;
   WeightText titles per word; stagger lines); `block` rises `distance.block` with opacity; `list`
@@ -1186,8 +1324,8 @@ After Wave 1 the kinds below are the only reveal system (D4).
   SVG strokes draw by group (`[data-draw]`, `[data-draw-group]`, stagger svgGroups), labels
   (`[data-draw-label]`) fade in as their group starts and tints (`[data-draw-fill]`) once it is
   drawn (I4; chapter numerals' contours `stagger.contours` apart, R6); `note` fades in after its paragraph; `pair` a ruled row: its `[data-pair-rule]`
-  draws from the left, then each `[data-pair-part]` rises in turn (`at.detail.meta`: 300 ms,
-  parts 50 ms apart; MetaPairs, About's projects); `deal` About's face-up cards
+  draws from the left, then each `[data-pair-part]` rises in turn (`cardPlay.play.hero.meta`: the rule 240 ms, the
+  label at +60 and the value at +120, 200 ms each; MetaPairs, About's projects); `deal` About's face-up cards
   (`[data-deal-item]`), by the block's `--deal-mode`: `deck` (the timeline, R7: each card dealt in
   document order from a deck at the block's start, `deal.deck`), `fan` (each card rises into a
   slight fan, then the row settles straight, `deal.fan`), `list`, otherwise a `block` rise. (The
@@ -1217,13 +1355,18 @@ type DealSceneState = { active: boolean }
 function useDealScene(ref: RefObject<HTMLElement | null>, options: DealSceneOptions): DealSceneState
 ```
 
-Full tier, from 1024 px, used only by the case-study `DealRow` (I9): the root becomes a
-`deal.stage` (180 svh) sticky stage, the card row pins under the header and Motion's `scroll()`
-deals the four cards face up (readable from the moment they move, D6) from a deck in five phases
-(`deal.phases`), each landing with a quarter of its hand-fan tilt, then the row squares up. The
-cards carry `will-change: transform` from the scene's mount to its unmount (never toggled at the
-pin boundaries); the background field is never resized by a scene (R4). Reduced, narrow screens or a row
-taller than the space under the header: nothing is touched and the static row stays. Returns
+Full tier, from 1024 px wide and `deal.minPinnedHeight` (760 px) tall, used only by the
+case-study `DealRow` (I9) inside its Section's `stage` (P8): the section's track
+(`[data-stage-track]`) becomes `deal.stage` (180 svh) tall and its stage (`[data-stage]`: the
+chapter's label, numeral and h2, then the cards) sticks under the header, a subgrid with a fixed
+head row and a fixed canvas row clear of the hand (`--deal-head`, `--deal-canvas`, `--deal-scale`;
+sized on mount and on width changes only). Motion's `scroll()` deals the four cards face up
+(readable from the moment they move, D6) from a deck in five phases (`deal.phases`), each landing
+with a quarter of its hand-fan tilt, then the row squares up. The numeral draws once, as the stage
+pins. The cards carry `will-change: transform` while the stage is pinned (set on mount or a width
+change, never toggled at the pin boundaries while scrolling); the background field is never
+resized by a scene (R4). Reduced, narrow or short screens, or cards that would fit the canvas only
+below `deal.pinned.minScale`: nothing is touched and the static row stays under the title. Returns
 `{ active }` (`data-scene-active` on the root while it runs). The mobile "1 / 4" position is not
 scene state; DealRow (Layout) tracks it (D5). (The About timeline's scroll-linked drawing is gone:
 its cards use the `deal` reveal, A2.)
@@ -1373,7 +1516,7 @@ optional image with an optional `caption` (I16).
 | Type | Fields |
 | --- | --- |
 | `Site` (`content/<locale>/site.ts`) | `name, description, wordmark, skipLink, introSkip, header { homeLabel, back, about, nav, language }, footer { note }, shortcuts { title, close, items[{ keys, label }] }, eggs { dealt, turned, rare, coffeeDealt, tableFlipped }` (templates) `, labels { facts, next, viewing, sections, meta: Record<keyof CaseStudyMeta,string>, decision: Record<keyof Decision,string>, owned, notOwned, workshop { duration, who, outcome } }` |
-| `HandContent` (`content/<locale>/hand.ts`; `order` and `identity` from `content/deck.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing }` |
+| `HandContent` (`content/<locale>/hand.ts`; `order` and `identity` from `content/deck.ts`) | `order: [CardId ×4], identity: Record<CardId,Identity>, railLabel: Record<CardId,string>, cards: Record<CardId,HandCardCopy>, labels { nav, viewing, loading, stillLoading, offline }` (the last three: the play's status line, P4) |
 | `HandCardCopy` | `title` (equals the page title; "Management" for the fourth card)`, type, year, inspect, tapLine, facts: Fact[]` (the card's own facts, each with its label; two in the final content) |
 | `CoffeeEgg` (`content/<locale>/hand.ts`) | `title, body, cta` |
 | `Home` | `label` (e.g. "Bern, Switzerland — UX Team Lead")`, title, role, intro, hint` ("Pick a card", above the hand)`, bring { label, items: string[] }` ("What I bring to the table", 3 items)`, idleNote` (the idle hint egg) |
@@ -1473,14 +1616,21 @@ pages), About, the language switcher (L6); it leaves on a scroll down (N1). Ever
 | `data-detail="<id>"`, `data-home` | page roots / hand nav | page hooks (`thesis` on the thesis overview, R8) |
 | `data-about-map` | `<html>` | About's contour map shows whole before the engine runs (pre-paint script, About only; R8) |
 | `data-play="<id>"`, `data-roving`, `data-slot`, `data-slot-anchor`, `data-play-link` | hand, Next project | play / roving / slot geometry |
-| `data-tapped`, `data-inspect`, `data-rare`, `data-drawn`, `data-lifting`, `data-closing` | hand cards / slots / row | egg and play states |
-| `data-sheet-moving` | `nav.hand` | the mobile sheet moving |
+| `data-tapped`, `data-inspect`, `data-rare`, `data-drawn`, `data-closing`, `data-opening`, `data-returned` | hand cards / slots / row | egg and play states (the siblings closing / opening the gap; the card just back from its page lies on top) |
+| `data-pressed`, `data-playing` | `a.rail-card` / `nav.hand-rail` | the rail's press; a card leaving the rail (the other edges step back) |
+| `data-layer="x\|y\|pose\|scale\|lifted\|contact\|spread"`, `data-from`, `data-landed` | `.table-card` (the played card's clone) and its layers | the flight's channels and shadows; where it came from; at rest on the table |
+| `data-arrival="play\|rest"` | `.play-frame` | arrived by a play (the frame dissolves) or not (transparent) |
+| `data-returning`, `data-switching` | `<html>` | Back: the frame materialises again before the page leaves; a switch: the open hero dims |
+| `data-loaded` | the hero `<img>` | decoded: it fades in over the frame's colour |
+| `data-where="table\|hand"`, `data-shown` | `.play-status` | the play's status line: under the card while waiting, near the hand when offline |
+| `data-stage-track`, `data-stage`, `data-pinned` | Section's stage (Chapter 05) | the deal's track and sticky stage; pinned while the scene runs |
+| `data-reveal-hold` | a reveal block | its scene reveals it (`releaseReveal()`; Chapter 05's numeral) |
 | `data-motion="full\|reduced"` | `<html>` | motion tier (pre-paint script, M1) |
 | `data-header="hidden"` | `<html>` | the header (and the mobile rail) has left on a scroll down (N1) |
 | `data-intro="first|repeat"`, `data-reveal="armed|live"`, `data-reveal-skip` | `<html>` | intro and reveal arming |
 | `data-field="<identity>"`, `data-renderer="gl|css"` | `<html>` | background field |
 | `data-hand="collapsed"` | `<html>` | every route except home (hand component + pre-paint script); switches `--hand-reserve` to 120 px from 1024 (D1) |
-| `data-hero-target` | the detail hero's media frame (`.case-hero-frame`) | measured by `heroTarget()` at play time (D3); clips the `.hero-drift` picture (I6) |
+| `data-hero-target` | the detail hero's media frame (`.case-hero-frame`) | the card's band grows into it (`card-band-<slug>`, P3); clips the `.hero-drift` picture (I6) |
 
 ---
 
@@ -1494,7 +1644,7 @@ with the four-card hand:
 | New hand (Mulligan) | M on home, or by touch a long press (800 ms) on the empty table (not on a card or text); the four cards fly off to the dealer (bottom right, off screen) and are dealt again |
 | Workshop draw | "Draw a workshop method" (`management.workshops.drawButton`) on /management; `<WorkshopDraw button again drawn methods>` gets its copy as props (D7) |
 | Rare pull | 1 in 40 loads, or `?rare` |
-| Tap 90° | T on a focused card, or a double tap while a card lifts (mobile) |
+| Tap 90° | T on a focused card, or a double tap on a card as it flies to the table (mobile) |
 | Inspect | hold Space on a focused card, or a long press (mobile) |
 | Shortcut sheet | `?` |
 | Coffee | type "draw" on home: a fifth card (`coffeeEgg`: title, body, cta) dealt from off screen, opens About's contact chapter (`/about#contact`); announced with `site.eggs.coffeeDealt` |
@@ -1513,7 +1663,10 @@ with the four-card hand:
   `node scripts/smoke.mjs http://localhost:4100/random/<locale>/ [--motion=full|reduced]`
   (behaviour at 1440×900 and 390×844: intro order (from the animations' own start times, F3) and
   length, home on one screen, header links (no pause button, R2), the header leaving and returning
-  on a case study with the rail, play / switch / return, the detail hero order, a return with the
+  on a case study with the rail, play / switch / return (the h1 focused after a play and a switch,
+  the clone gone and the frame dissolved, the rail a nav of four links that plays in one tap with
+  no popover, its open card scrolling to the top), browser back / forward with the default morph,
+  Chapter 05 pinned with its head (or static where the cards would not fit), the detail hero order, a return with the
   hero scrolled away, the idle hint (after 10 s), About's morph (full resolution only while it
   runs, the SVG covering the canvas, back to rest on leaving; R1) and contour layer (base path,
   cover, 42%, scale 1.03, no mask, no frames at rest, drift by tier, no pointer reaction, the

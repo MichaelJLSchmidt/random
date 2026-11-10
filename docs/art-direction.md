@@ -36,13 +36,24 @@ dividers and illustration strokes.
 ## Behaviour
 
 - **Hover** a card: the background blends toward the card's colour.
-- **Play** a card: it lifts, then a shared-element view transition zooms it into the detail hero
-  while its colour blooms fullscreen. **Back** (the header's top-left slot on detail pages, where
-  the logo compresses into a back arrow) returns the card to the hand: it morphs back from
-  the hero, or, when the hero has scrolled away, is dealt into its slot.
+- **Play** a card: the card hits the table. It gives a little under the finger, lifts out of the
+  hand and flies in a low arc to the centre of the table, rising toward the eye and then dropping
+  into contact at speed: no rebound, just the contact shadow snapping tight, a 60 ms hold, a short
+  haptic where the device has one, and one soft ring in the card's colour running out across the
+  field as its colour blooms from where the card landed. Then the card becomes its page in one
+  container transform: its frame grows to the full screen and dissolves, its coloured band becomes
+  the hero image, its title the page's h1; the hero's details follow on the page. **Back** (the
+  header's top-left slot on detail pages, where the logo compresses into a back arrow, or Escape)
+  folds the page back into the card, which shrinks into its slot and lies on top of the hand.
+  Playing another card from an open page dims that page's hero while the new card flies; the old
+  card goes back to its slot.
+- **Waiting**: if the next page is slow, the card rests on the table and the field breathes softly
+  under it; after a moment a plain "Loading…" appears beneath it. Offline, the card lands, comes back
+  to the hand and a plain line says so. No spinners, no progress bars.
 - **Desktop**: the hand is always visible at the bottom in a perspective fan.
-- **Mobile**: the fan on home; elsewhere a 48 px peek rail that opens a bottom sheet with the four
-  cards.
+- **Mobile**: the fan on home; elsewhere a 48 px rail of the four cards' edges: one tap plays a
+  card (a press shows under the thumb, a scroll calls it off), the open card's edge sits lower with
+  an accent line and takes the page back to its top.
 - **Header**: the logo (two fanned cards with an M and an F cut out) or Back at the top left,
   About and "DE · EN" at the right. On pages that scroll it leaves on a deliberate scroll down and
   returns on any scroll up (the mobile rail with it); the reading hairline stays at the top edge.
@@ -53,7 +64,8 @@ dividers and illustration strokes.
 - **Home** is one screen: the name, the intro, what I bring to the table and the hand. On a first
   visit it builds up in reading order in about two seconds, the hand last.
 - **Detail pages**: chapters open with big outlined numerals that draw themselves, contour by
-  contour, as the chapter comes into view; images are offset editorial frames
+  contour, as the chapter comes into view (Key decisions keeps its head pinned above the cards as
+  they are dealt, and draws its numeral as the stage pins); images are offset editorial frames
   that echo the hero's offset (anchored to the reading column, reaching toward one edge, sides
   alternating), never full bleed on desktop.
 - **About** keeps to the table: its timeline and "How I work" are face-up cards in the same family
@@ -73,9 +85,11 @@ dividers and illustration strokes.
 
 - Calm, subtle, smooth, professional, with playful moments (the easter eggs).
 - Only the background moves at rest; everything else is still until the visitor scrolls or
-  interacts. No bounce, no overshoot.
-- Two motion tiers: full, and reduced (`prefers-reduced-motion`: 160 ms crossfades only, and the
-  background's ambient motion is still). There is no motion setting on the site.
+  interacts. No bounce, no overshoot: impact comes from acceleration into contact, a hold, the
+  shadow and the field's answer.
+- Two motion tiers: full, and reduced (`prefers-reduced-motion`: crossfades only, no flight and no
+  shared morph, and the background's ambient motion is still). There is no motion setting on the
+  site.
 - Dark mode first. Mobile first, with full creativity on desktop.
 - Type: Bricolage Grotesque (display, opsz + wght), Hanken Grotesk (text), Martian Mono (labels,
   numbers); Caveat (handwriting) only for the idle hint's note on home.
