@@ -34,8 +34,9 @@ import { onTierChange, readTier } from '../use-tier'
  * the scroll (resizing it mid-scroll is what flickered before). Cards taller
  * than the canvas are scaled to fit it; a fit below deal.pinned.minScale (or a
  * viewport under 760 px) keeps the static row: the cards under the title,
- * nothing pinned. The cards carry will-change: transform for as long as the
- * scene is mounted (set once, never toggled at the pin boundaries); the
+ * nothing pinned. The cards carry will-change: transform while the stage is
+ * pinned (set on mount or a width change, never toggled at the pin boundaries
+ * while scrolling); the
  * background field is never resized by the scene. Reduced, narrow or short
  * screens, no JavaScript: nothing is touched (no CSS ever hides the cards).
  * Everything the scene writes is inline and removed again.
@@ -163,6 +164,9 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     track.style.setProperty('--deal-scale', String(scale))
     if (!pinned) {
       pinned = true
+      // One compositor layer per card while pinned: promoted here (mount or a width change), never
+      // toggled while scrolling past the pin boundaries.
+      for (const card of cards) card.style.willChange = 'transform'
       track.dataset.pinned = ''
       track.style.height = `${DEAL.stage}svh`
       root.dataset.sceneActive = ''
@@ -180,6 +184,7 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     stopScroll?.()
     stopScroll = null
     clear()
+    for (const card of cards) card.style.willChange = ''
     delete track.dataset.pinned
     delete root.dataset.sceneActive
     track.style.height = ''
@@ -203,8 +208,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     pin(canvas, scale)
   }
 
-  // One compositor layer per card for the scene's lifetime: promoted once here, released on unmount.
-  for (const card of cards) card.style.willChange = 'transform'
   size()
   let width = section.getBoundingClientRect().width
   let timer = 0
@@ -224,7 +227,6 @@ function mount(root: HTMLElement, count: number, setActive: (on: boolean) => voi
     ro.disconnect()
     clearTimeout(timer)
     unpin()
-    for (const card of cards) card.style.willChange = ''
     // Torn down while the page stays (a resize below the breakpoint): the numeral shows as usual.
     if (release) drawNumeral()
     else numeral?.removeAttribute('data-reveal-hold')

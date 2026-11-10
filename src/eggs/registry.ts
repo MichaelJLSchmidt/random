@@ -24,7 +24,7 @@ export const eggs = {
   },
   tap: {
     on: true,
-    trigger: 'T on a focused card, or a double tap on a card while it lifts (mobile)',
+    trigger: 'T on a focused card, or a double tap on a card as it flies to the table (mobile)',
     full: 'the card turns 90 degrees on the hover spring and shows the line on its long edge; untaps on the next navigation',
     reduced: 'turns at once',
   },

@@ -7,6 +7,7 @@ import { cardNumber, pad2 } from '@/lib/format'
 import type { HandCard } from '@/lib/hand-data'
 import { getFlight, useFlight } from '@/motion/flight'
 import { table } from '@/motion/table-store'
+import { afterReady } from '@/motion/view-transition'
 import {
   bandName,
   cardName,
@@ -109,6 +110,20 @@ export function CaseHero({ card, title = card.title, label, summary, media, medi
     }
   }, [])
 
+  // The frame's dissolve (CSS, delays from mount) is anchored to the view transition's start, V:
+  // a CSS animation only starts once the compositor picks it up, which a busy first frame of the
+  // transition can delay; with its start time set to V it keeps the tokenised timing regardless.
+  const frame = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (arrival !== 'play') return
+    afterReady(() => {
+      const dissolve = frame.current
+        ?.getAnimations()
+        .find((a) => (a as CSSAnimation).animationName === 'play-frame-out')
+      if (dissolve) dissolve.startTime = document.timeline.currentTime
+    })
+  }, [arrival])
+
   const named = !standDown
   return (
     <header className="case-hero spread-grid" data-identity={card.identity} data-media={mediaKind}>
@@ -119,7 +134,7 @@ export function CaseHero({ card, title = card.title, label, summary, media, medi
         exit="none"
         default="none"
       >
-        <div className="play-frame" data-arrival={arrival} aria-hidden="true" />
+        <div ref={frame} className="play-frame" data-arrival={arrival} aria-hidden="true" />
       </ViewTransition>
       <Reveal as="p" kind="block" step="label" className="case-hero-meta t-label">
         <span className="case-hero-counter">

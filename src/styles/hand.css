@@ -344,6 +344,10 @@
 .table-card[data-landed] .table-card-layer {
   will-change: auto;
 }
+/* While it flies a touch on it is the Tap egg's second tap (hand.tsx); at rest it takes none. */
+.table-card:not([data-landed]) {
+  pointer-events: auto;
+}
 .card-body {
   position: absolute;
   inset: 0;

@@ -143,7 +143,8 @@ export function Hand({ heroes }: { heroes: Record<string, HeroImage> }) {
     }
   }, [path, route, cardForPath])
 
-  // Eggs on the hand: inspect, tap (T, or a double tap while a card flies), new hand (long press on the table).
+  // Eggs on the hand: inspect, tap (T, a double tap on a card, or a tap on it while it flies), new hand
+  // (long press on the table).
   useEffect(() => {
     const nav = root.current!
     const off = attachHandEggs(nav)
@@ -396,7 +397,16 @@ export function Hand({ heroes }: { heroes: Record<string, HeroImage> }) {
           </ul>
         </div>
       </nav>
-      {flying && flyingCard && <TableCard flight={flying} card={flyingCard} />}
+      {flying && flyingCard && (
+        <TableCard
+          flight={flying}
+          card={flyingCard}
+          onTap={() => {
+            const card = source('.hand-card', flyingCard.id)
+            if (cancelPlay() && card) tap(card)
+          }}
+        />
+      )}
     </div>
   )
 }

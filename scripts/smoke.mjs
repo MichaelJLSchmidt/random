@@ -293,6 +293,17 @@ async function tableSuite(browser, device) {
     JSON.stringify(vts.at(-1)),
   )
   check('play: H1 focused', (await focused(page)) === 'h1#page-heading')
+  const rest = await page.evaluate(() => ({
+    clone: document.querySelectorAll('.table-card').length,
+    frame: Number(getComputedStyle(document.querySelector('.play-frame') ?? document.body).opacity),
+    scrollY: Math.round(scrollY),
+    status: document.querySelector('.play-status')?.textContent ?? '',
+  }))
+  check(
+    'play: the clone is gone, the frame has dissolved, the page is at its top, no status line',
+    rest.clone === 0 && (rest.frame === 0 || motion === 'reduced') && rest.scrollY === 0 && rest.status === '',
+    JSON.stringify(rest),
+  )
   check(
     'play: the home slot shows Back',
     (await page.locator('header [data-slot-mode="back"]').count()) === 1 &&
@@ -306,15 +317,30 @@ async function tableSuite(browser, device) {
   const ember = await regionColour(page, sky)
   check('play: field is the card colour (ember)', ember[0] > ember[1] + 10 && ember[0] > ember[2] + 10, `${ember}`)
 
-  // Switch (desktop: from the hand; phone: from the sheet).
+  // Switch (desktop: from the hand; phone: one tap on the rail, no sheet).
   if (device === 'phone') {
-    await page.tap('.hand-rail')
-    await wait(page, 600)
+    const rail = await page.evaluate(() => {
+      const nav = document.querySelector('nav.hand-rail')
+      return {
+        nav: nav?.getAttribute('aria-label'),
+        links: [...(nav?.querySelectorAll('a.rail-card[data-play]') ?? [])].map((a) => {
+          const r = a.getBoundingClientRect()
+          return { h: Math.round(r.height), w: Math.round(r.width), touch: getComputedStyle(a).touchAction }
+        }),
+        current: nav?.querySelector('[aria-current="page"]')?.dataset.play,
+        popovers: document.querySelectorAll('[popover], #hand-sheet').length,
+      }
+    })
     check(
-      'phone: rail opens the sheet',
-      await page.evaluate(() => document.getElementById('hand-sheet').matches(':popover-open')),
+      'phone: the rail is a nav of four links, 48 px tall, a quarter wide each, no popover',
+      rail.nav === hand.labels.nav &&
+        rail.links.length === 4 &&
+        rail.links.every((l) => l.h >= 44 && l.w >= 80 && l.touch === 'manipulation') &&
+        rail.current === 'team-of-teams' &&
+        rail.popovers === 0,
+      JSON.stringify(rail),
     )
-    await page.tap('#hand-sheet .hand-card[data-play="front-door"]')
+    await page.tap('.rail-card[data-play="front-door"]')
   } else await page.click('.hand-card[data-play="front-door"]')
   await page.waitForURL(/front-door/, { timeout: 4000 })
   await wait(page, 1400)
@@ -324,11 +350,21 @@ async function tableSuite(browser, device) {
     vts.at(-1)?.types.includes('switch') && vts.at(-1)?.ok === true,
     JSON.stringify(vts.at(-1)),
   )
-  if (device === 'phone')
+  check('switch: H1 focused', (await focused(page)) === 'h1#page-heading')
+  if (device === 'phone') {
+    check('phone: one tap on the rail played the card', path(page).includes('front-door'))
+    // The open card's edge: a tap scrolls its page to the top and goes nowhere.
+    await page.evaluate(() => scrollTo(0, 1200))
+    await wait(page, 300)
+    await page.evaluate(() => scrollBy(0, -60))
+    await wait(page, 500)
+    await page.tap('.rail-card[aria-current="page"]')
+    await wait(page, 1200)
     check(
-      'phone: sheet closed after playing',
-      !(await page.evaluate(() => document.getElementById('hand-sheet').matches(':popover-open'))),
+      'phone: the open card on the rail scrolls to the top, no navigation',
+      path(page).includes('front-door') && (await page.evaluate(() => scrollY)) < 4,
     )
+  }
   const grove = await regionColour(page, sky)
   check('switch: field crossfaded to grove', grove[1] > grove[0] && grove[1] > grove[2], `${grove}`)
 
@@ -354,8 +390,8 @@ async function tableSuite(browser, device) {
   check('browser back: page and H1 shown', await page.locator('h1').isVisible())
   vts = await page.evaluate(() => window.__vts)
   check(
-    'browser back: the card zooms in from its slot (view transition)',
-    vts.at(-1)?.types.includes('play') && vts.at(-1)?.ok === true,
+    'browser back: a view transition with no type (the default shared morph)',
+    vts.at(-1)?.types.length === 0 && vts.at(-1)?.ok === true,
     JSON.stringify(vts.at(-1)),
   )
   const back = await regionColour(page, sky)
@@ -371,8 +407,8 @@ async function tableSuite(browser, device) {
   )
   vts = await page.evaluate(() => window.__vts)
   check(
-    'browser back again: "switch" view transition',
-    vts.at(-1)?.types.includes('switch'),
+    'browser back again: a view transition with no type (the default shared morph)',
+    vts.at(-1)?.types.length === 0 && vts.at(-1)?.ok === true,
     JSON.stringify(vts.at(-1)),
   )
   await page.goForward()
@@ -962,17 +998,38 @@ async function motionSuite(browser, device) {
   })
   await page.goto(url('/work/team-of-teams/'), { waitUntil: 'networkidle' })
   await wait(page, 600)
-  const deal = await page.evaluate(() => {
-    const el = document.querySelector('[data-scene="deal"]')
-    return el && { active: el.hasAttribute('data-scene-active'), ratio: el.offsetHeight / innerHeight }
-  })
+  const { deal: DEAL } = await load('src/motion/tokens.ts')
+  const deal = await page.evaluate(
+    ({ head, pad, reserve }) => {
+      const el = document.querySelector('[data-scene="deal"]')
+      const track = el?.closest('[data-stage-track]')
+      if (!el || !track) return null
+      const list = el.querySelector('.deal-row-list')
+      // Would the cards fit the canvas at a readable scale (the scene's own rule)?
+      const fit = (innerHeight - 64 - reserve - head - 3 * pad) / list.offsetHeight
+      const stage = track.querySelector('[data-stage]')
+      return {
+        active: el.hasAttribute('data-scene-active'),
+        pinned: track.hasAttribute('data-pinned'),
+        ratio: track.getBoundingClientRect().height / innerHeight,
+        headInStage: Boolean(stage.querySelector('.section-title') && stage.querySelector('[data-numeral]')),
+        fit: Math.round(fit * 100) / 100,
+      }
+    },
+    { head: DEAL.pinned.head, pad: DEAL.pinned.pad, reserve: 120 },
+  )
   if (deal) {
-    if (motion === 'full' && device === 'desktop')
-      check('deal scene: pinned 180svh stage (full, desktop)', deal.active && deal.ratio > 1.7, JSON.stringify(deal))
+    const room = (await page.evaluate(() => innerHeight)) >= DEAL.minPinnedHeight
+    if (motion === 'full' && device === 'desktop' && room && deal.fit >= DEAL.pinned.minScale)
+      check(
+        'deal scene: head and cards pinned in a 180svh track (full, desktop)',
+        deal.active && deal.pinned && deal.ratio > 1.7 && deal.headInStage,
+        JSON.stringify(deal),
+      )
     else
       check(
-        `deal scene: static row, cards stack (${motion}, ${device})`,
-        !deal.active && deal.ratio < 1.5,
+        `deal scene: static row under the title (${motion}, ${device}, fit ${deal.fit})`,
+        !deal.active && !deal.pinned && deal.headInStage,
         JSON.stringify(deal),
       )
   }
@@ -1011,9 +1068,9 @@ async function motionSuite(browser, device) {
   }))
   check('motion: every reveal ends visible after scrolling', rest.hidden.length === 0, rest.hidden.join(','))
   check('motion: no will-change left at rest', rest.willChange === 0, String(rest.willChange))
-  if (motion === 'full' && device === 'desktop')
+  if (motion === 'full' && device === 'desktop' && deal?.pinned)
     check(
-      'deal scene: its cards keep one layer while it is mounted (never toggled at the pin, R4)',
+      'deal scene: its cards keep one layer while it is pinned (never toggled at the pin boundaries while scrolling, R4)',
       rest.dealLayers.length === 4 && rest.dealLayers.every((v) => v === 'transform'),
       rest.dealLayers.join(),
     )
@@ -1071,11 +1128,11 @@ async function feedbackSuite(browser, device) {
         tick()
       }),
   )
-  const keys = ['title', 'summary', 'label', 'pair1', 'pair2'].filter((k) => k in seen)
+  const keys = ['title', 'label', 'summary', 'pair1', 'pair2'].filter((k) => k in seen)
   const order = keys.map((k) => `${k} ${seen[k]}ms`).join(', ')
   if (motion !== 'reduced')
     check(
-      'detail hero: title, summary, label, then the meta pairs left to right',
+      'detail hero: title, label, summary, then the meta pairs left to right',
       keys.length >= 3 && keys.every((k, i) => i === 0 || seen[keys[i - 1]] <= seen[k] + 20),
       order,
     )
@@ -1095,7 +1152,7 @@ async function feedbackSuite(browser, device) {
     }
   })
   check(
-    'return (hero scrolled away): the card is dealt into its slot',
+    'return (hero scrolled away): the frame folds back into the card, which ends in its slot',
     back.opacity === '1' && back.running === 0 && back.focused,
     JSON.stringify(back),
   )

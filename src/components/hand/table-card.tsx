@@ -22,12 +22,21 @@ import { CardFace } from './card-face'
  * layers inside the named frame, so its snapshot keeps the contact shadow.
  * The hand stops rendering it when the route changes: it unmounts in the same
  * commit as the page mounts, which is what pairs its names with the page's.
+ * While it flies it takes touches: a second tap is the Tap egg's double tap.
  */
-export function TableCard({ flight, card }: { flight: Flight; card: HandCard }) {
+export function TableCard({ flight, card, onTap }: { flight: Flight; card: HandCard; onTap: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => runFlight(ref.current!, flight), [flight])
   return createPortal(
-    <div ref={ref} className="table-card" data-identity={card.identity} data-from={flight.from} aria-hidden="true">
+    <div
+      ref={ref}
+      className="table-card"
+      data-identity={card.identity}
+      data-from={flight.from}
+      aria-hidden="true"
+      // The Tap egg by touch: a second tap on the card while it flies calls the play off.
+      onPointerDown={(e) => e.pointerType === 'touch' && !ref.current?.hasAttribute('data-landed') && onTap()}
+    >
       <div className="table-card-layer" data-layer="x">
         <div className="table-card-layer" data-layer="y">
           <div className="table-card-layer" data-layer="pose">
