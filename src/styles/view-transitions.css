@@ -45,6 +45,17 @@
 ::view-transition-new(hand-rail) {
   animation: none;
 }
+/* On phones the hand changes form between home (the fan) and other pages (the rail): the one that
+   leaves fades out, the one that arrives fades in, both in the page's exit time. */
+::view-transition-old(hand):only-child,
+::view-transition-old(hand-rail):only-child {
+  display: block;
+  animation: vt-fade-out var(--play-exit-dur) var(--play-exit-ease) both;
+}
+::view-transition-new(hand):only-child,
+::view-transition-new(hand-rail):only-child {
+  animation: vt-fade-in var(--play-exit-dur) linear var(--play-exit-dur) both;
+}
 ::view-transition-group(site-footer) {
   animation: none;
 }
@@ -97,8 +108,9 @@
  * the contact shadow) lies above the new frame and is gone within the first quarter. The new
  * frame stays opaque: it is a live rendering of .play-frame, whose own dissolve (detail.css, from
  * mount) shows through; its hold keeps the transition alive until the dissolve has ended. Band and
- * title hand over in staggered windows, the old one above; the old title is never scaled (it
- * keeps its size and fades), the h1 arrives over it.
+ * title hand over in staggered windows, the old one above; the old band and title are never
+ * scaled (they keep their size and fade, the band centred in its growing group), the hero image
+ * and the h1 arrive over them.
  */
 ::view-transition-group(.vt-play),
 ::view-transition-group(.vt-in) {
@@ -133,6 +145,11 @@
 }
 ::view-transition-old(.vt-play.vt-band),
 ::view-transition-old(.vt-in.vt-band) {
+  /* Its own size, centred: the band's type is never shown scaled up while it fades. */
+  inset: 0;
+  inline-size: auto;
+  block-size: auto;
+  margin: auto;
   animation: vt-fade-out var(--play-band-out-dur) linear var(--play-band-out-at) both;
 }
 ::view-transition-new(.vt-play.vt-band),
@@ -169,6 +186,22 @@
 ::view-transition-new(.vt-return.vt-frame),
 ::view-transition-new(.vt-out.vt-frame) {
   animation: vt-fade-in var(--return-face-in-dur) linear var(--return-face-in-at) both;
+}
+/* The hand's face, band and title arrive at their own size (never shown scaled up): the face
+   centred in the shrinking frame, the band in its group, the title at its group's corner. */
+::view-transition-new(.vt-return.vt-frame),
+::view-transition-new(.vt-out.vt-frame),
+::view-transition-new(.vt-return.vt-band),
+::view-transition-new(.vt-out.vt-band) {
+  inset: 0;
+  inline-size: auto;
+  block-size: auto;
+  margin: auto;
+}
+::view-transition-new(.vt-return.vt-title),
+::view-transition-new(.vt-out.vt-title) {
+  inline-size: auto;
+  block-size: auto;
 }
 ::view-transition-old(.vt-return.vt-band),
 ::view-transition-new(.vt-return.vt-band),

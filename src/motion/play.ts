@@ -423,6 +423,8 @@ export function cancelPlay() {
 export function settlePlay(route: string) {
   const f = getFlight()
   if (f && f.route !== route) setFlight(null)
+  // The next page has committed: the wait is over (the pending signal, use-play-pending.ts).
+  clearPending()
   openGap()
   const root = document.documentElement
   delete root.dataset.switching
@@ -467,9 +469,6 @@ if (typeof window !== 'undefined')
   addEventListener('offline', () => {
     if (getPending()) markPendingOffline()
   })
-
-/** The next page has committed: the wait is over (hand/play-status.tsx, a layout effect). */
-export const endPending = clearPending
 
 // ---------------------------------------------------------------- browser back / forward
 
