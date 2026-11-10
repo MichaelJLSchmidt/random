@@ -67,6 +67,9 @@ export const hand: HandContent = {
   labels: {
     nav: 'Work',
     viewing: 'Viewing',
+    loading: 'Loading…',
+    stillLoading: 'Still loading…',
+    offline: "You're offline. Try again once you're connected.",
   },
 }
 

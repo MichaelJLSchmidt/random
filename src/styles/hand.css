@@ -373,6 +373,32 @@
 }
 
 /*
+ * ---------- The play's status line (hand/play-status.tsx) ----------
+ * Plain text, no spinner: under the resting card while its page is slow, near the hand when the
+ * card came back offline. It fades (opacity only).
+ */
+.play-status {
+  position: fixed;
+  inset-inline: var(--grid-margin);
+  z-index: var(--z-table-card);
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--loading-fade) linear;
+}
+.play-status[data-where='table'] {
+  top: calc(var(--table-landing-y) + var(--table-card-h) / 2 + var(--space-4));
+}
+.play-status[data-where='hand'] {
+  bottom: calc(var(--hand-reserve) + var(--space-4));
+}
+.play-status[data-shown] {
+  opacity: 1;
+}
+
+/*
  * ---------- Rail (phones, off home): one tap plays a card ----------
  * Four links, each a quarter of the width and the rail's full 48 px height (the target); the
  * visible edge is the label inside. The press shows from pointerdown ([data-pressed]); while a

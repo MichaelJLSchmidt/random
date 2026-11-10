@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { AboutSmallPrint } from '@/components/about-small-print'
 import { Hand } from '@/components/hand/hand'
+import { PlayStatus } from '@/components/hand/play-status'
 import { Header } from '@/components/header'
 import { LiveRegion } from '@/components/live-region'
 import { LocaleSync } from '@/components/locale-sync'
@@ -78,6 +79,7 @@ export default async function LocaleLayout({ children, params }: Props & { child
       <SiteFooter about={<AboutSmallPrint />} />
       <Hand heroes={heroImages(locale)} />
       <LiveRegion />
+      <PlayStatus />
       <RouteFocus />
       {/* After a language switch: <html lang>, the same place on the page (before Reveals measures). */}
       <LocaleSync />

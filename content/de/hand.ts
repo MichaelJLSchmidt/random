@@ -67,6 +67,9 @@ export const hand: HandContent = {
   labels: {
     nav: 'Projekte',
     viewing: 'Offen',
+    loading: 'Wird geladen…',
+    stillLoading: 'Wird noch geladen…',
+    offline: 'Du bist offline. Versuch es nochmal, sobald du verbunden bist.',
   },
 }
 
