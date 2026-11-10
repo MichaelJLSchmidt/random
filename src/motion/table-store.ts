@@ -30,6 +30,8 @@ export type FieldTarget = {
   /** About's contour lines. */
   topo: 0 | 1
   kind: FieldKind
+  /** A card met the table at `origin`: the field runs one soft ring in the identity's colour from there. */
+  ring?: boolean
   /** Increments on every change, so subscribers can tell targets apart. */
   seq: number
 }
@@ -39,7 +41,6 @@ export type TableState = {
   hoverCard: string | null
   lastPlayed: string | null
   tier: MotionTier
-  sheetOpen: boolean
   breaker: boolean
   field: FieldTarget
 }
@@ -51,7 +52,6 @@ let state: TableState = {
   hoverCard: null,
   lastPlayed: null,
   tier: 'full',
-  sheetOpen: false,
   breaker: false,
   field: { identity: 'ink', spread: 0, origin: [0.5, 1], topo: 0, kind: 'instant', seq: 0 },
 }
@@ -87,7 +87,6 @@ export const table = {
     return () => void listeners.delete(fn)
   },
   setTier: (tier: MotionTier) => set({ tier }),
-  setSheet: (sheetOpen: boolean) => set({ sheetOpen }),
   setBreaker: (breaker: boolean) => state.breaker !== breaker && set({ breaker }),
   /** The hand tells the table where each card slot is (viewport fractions). */
   registerSlots(fn: (id: string) => [number, number] | null) {
@@ -101,20 +100,50 @@ export const table = {
     intent = null
     return value
   },
+  /** The intent of the navigation under way, without clearing it (the new page reads it while it renders). */
+  peekIntent: () => intent,
 
   hover(id: string | null) {
     if (state.hoverCard !== id) set({ hoverCard: id })
   },
 
-  /** Play: the field blooms from the card into its colour. */
-  play(id: string, rect: DOMRect, href: string) {
+  /**
+   * Play: the field blooms from the card into its colour. `ring`: the card has just met the table
+   * at `rect` (the play's impact), so the field also rings once from there.
+   */
+  play(id: string, rect: DOMRect, href: string, ring = false) {
     const identity = identityOf(id)
     if (!identity) return
     pendingPath = normalise(href)
     const switching = state.field.spread === 1
     intent = state.activeCard ? 'switch' : 'play'
     set({ hoverCard: null, lastPlayed: id })
-    field({ identity, spread: 1, origin: center(rect), topo: 0, kind: switching ? 'switch' : 'bloom' })
+    field({ identity, spread: 1, origin: center(rect), topo: 0, kind: switching ? 'switch' : 'bloom', ring })
+  },
+
+  /**
+   * A play called off after its bloom started (offline at the impact, Escape): no navigation
+   * follows, so the intent goes and the field returns to what the current route shows (the bloom
+   * recedes into where it came from; on an open card's page, that card's colour comes back).
+   */
+  cancelPlay() {
+    pendingPath = null
+    intent = null
+    const current = state.activeCard
+    const identity = identityOf(current)
+    if (current && identity) {
+      field({ identity, spread: 1, origin: state.field.origin, topo: 0, kind: 'switch' })
+      return
+    }
+    const page = lastRoute?.page ?? '/'
+    const glacier = page === '/about' || page === '/about/thesis'
+    field({
+      identity: glacier ? 'glacier' : 'ink',
+      spread: 0,
+      origin: state.field.origin,
+      topo: page === '/about' ? 1 : 0,
+      kind: 'unbloom',
+    })
   },
 
   /** Language switch: the same page in the other locale; the reveal system shows it final at once. */

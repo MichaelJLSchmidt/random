@@ -8,8 +8,10 @@ import { completeAll, revealNow, revealed, schedule } from './jobs'
 import { type Kind, type KindOptions, isHeroImage, runKind } from './kinds'
 import { loadSplit } from './split'
 import { table } from './table-store'
-import { at as AT, reveal as R, duration as D, stagger, tiers } from './tokens'
+import { playTokens } from './play'
+import { reveal as R, stagger } from './tokens'
 import { readTier } from './use-tier'
+import { afterReady } from './view-transition'
 
 export { dealOffset, drawCards, fanCards } from './deal'
 
@@ -225,13 +227,9 @@ export function revealRoute(kind: NavigationKind) {
     else if (seq) revisit(seq, h1, blocks)
   }
 
-  // The page title outside the home sequence: after a play or switch the card → hero morph
-  // delivers it, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
+  // The page title outside the home sequence: after a play or switch the card's title becomes the
+  // h1 in the morph, so it is final at once; otherwise it reveals as "lines" in the ordered sequence.
   const morphed = kind === 'play' || kind === 'switch'
-  // The page starts revealing once the morph has mostly landed: zoomLanded of the view
-  // transition as this tier runs it (reduced has no offsets).
-  const morph = kind === 'switch' ? D.switchDelay + D.switchIn : D.zoom
-  const base = morphed && tier !== 'reduced' ? morph * tiers[tier].vt * R.zoomLanded * 1000 : 0
   if (morphed)
     for (const el of all) {
       if (handled.has(el) || el.tagName !== 'H1') continue
@@ -247,32 +245,34 @@ export function revealRoute(kind: NavigationKind) {
       revealNow(el)
     }
 
-  // Detail pages (case studies, Management): the hero's sequence after its title (at.detail): the
-  // summary, the top label and counter, then the meta pairs left to right. Only blocks in the
-  // viewport now join it (measured once, here); the rest reveal on scroll like any other block.
-  const titleAt = base + gapFor(tier, stagger.cards)
-  let pairs = 0
+  // Detail pages (case studies, Management): the hero's own parts (not in the view transition)
+  // reveal on the page from the transition's start (V, its `ready`), or from now without one (a
+  // direct load, a plain navigation): the top label and counter, the summary, then the meta pairs
+  // left to right (cardPlay.*.hero). Only blocks in the viewport now join (measured once, here);
+  // the rest reveal on scroll like any other block. Ordered blocks after a play wait for the label.
+  const H = playTokens().hero
+  const hero: HTMLElement[] = []
   for (const el of all) {
-    const step = el.dataset.revealStep
-    if (!step || handled.has(el) || seq?.contains(el) || !kindOf(el) || !inFirstViewport(el)) continue
+    if (!el.dataset.revealStep || handled.has(el) || seq?.contains(el) || !kindOf(el) || !inFirstViewport(el)) continue
     handled.add(el)
-    if (step === 'meta') {
-      const at = AT.detail.meta.at + pairs++ * AT.detail.meta.stagger
-      start(el, titleAt + gapFor(tier, at), r, { dur: spanFor(tier, AT.detail.meta.dur) })
-    } else {
-      const at = step === 'summary' ? AT.detail.summary : AT.detail.label
-      start(el, titleAt + gapFor(tier, at), r, {})
-    }
+    hero.push(el)
   }
-
-  // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
   const ordered = all
     .filter((el) => !handled.has(el) && kindOf(el) && orderOf(el) !== null && inFirstViewport(el))
     .sort((a, b) => orderOf(a)! - orderOf(b)! || byDocument(a, b))
-  for (const el of ordered) {
-    handled.add(el)
-    start(el, base + gapFor(tier, (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
-  }
+  for (const el of ordered) handled.add(el)
+  const base = morphed && tier !== 'reduced' ? H.label * 1000 : 0
+  afterReady(() => {
+    if (!r.live) return
+    let pairs = 0
+    for (const el of hero) {
+      const step = el.dataset.revealStep
+      if (step === 'meta') start(el, (H.meta.at + pairs++ * H.meta.stagger) * 1000, r, {})
+      else start(el, (step === 'summary' ? H.summary : H.label) * 1000, r, { dur: H.dur * 1000, rise: H.y })
+    }
+    // Ordered blocks in the first viewport: in sequence (neighbours of the same kind are spaced by start()).
+    for (const el of ordered) start(el, base + gapFor(tier, (orderOf(el)! + 1) * stagger.cards) + delayOf(el), r)
+  })
 
   // Everything else: by the shared rule (reveal-trigger.ts).
   for (const el of all) {

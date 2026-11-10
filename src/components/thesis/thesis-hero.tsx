@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useRef, useState, ViewTransition } from 'rea
 import { PageTitle } from '@/components/page-title'
 import { Reveal } from '@/components/reveals'
 import { headerHeight } from '@/design/layout'
-import { heroShare, pageEnter, pageExit, thesisName } from '@/motion/transitions'
+import { pageEnter, pageExit, thesisName, thesisShare } from '@/motion/transitions'
 
 type Props = {
   eyebrow: string
@@ -36,7 +36,7 @@ export function ThesisHero({ eyebrow, title, subtitle, card }: Props) {
       <Reveal as="p" kind="block" step="label" className="case-hero-meta t-label">
         <span className="case-hero-label">{eyebrow}</span>
       </Reveal>
-      <ViewTransition name={inView ? thesisName : undefined} share={heroShare} enter={pageEnter} exit={pageExit}>
+      <ViewTransition name={inView ? thesisName : undefined} share={thesisShare} enter={pageEnter} exit={pageExit}>
         <div ref={ref} className="case-hero-frame" data-hero-target="">
           {card}
         </div>

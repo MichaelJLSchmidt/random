@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState, ViewTransition } from 'react'
 import { useChrome } from '@/lib/chrome'
-import { PLAY, handShare, pageEnter, pageExit, thesisName } from '@/motion/transitions'
+import { PLAY, pageEnter, pageExit, thesisName, thesisShare } from '@/motion/transitions'
 
 type Props = {
   className: string
@@ -34,7 +34,7 @@ export function ThesisStop({ linkLabel, children, ...li }: Props) {
     return () => io.disconnect()
   }, [])
   return (
-    <ViewTransition name={inView ? thesisName : undefined} share={handShare} enter={pageEnter} exit={pageExit}>
+    <ViewTransition name={inView ? thesisName : undefined} share={thesisShare} enter={pageEnter} exit={pageExit}>
       <li ref={ref} {...li} data-thesis="">
         {children}
         <Link className="career-thesis-link link" href={href('/about/thesis')} transitionTypes={[PLAY]}>

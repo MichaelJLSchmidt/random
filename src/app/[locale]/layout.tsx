@@ -10,6 +10,7 @@ import { SiteFooter } from '@/components/site-footer'
 import { Eggs } from '@/eggs/eggs'
 import { ChromeProvider } from '@/lib/chrome'
 import { contentFor, images, localeParams } from '@/lib/content'
+import { heroImages } from '@/lib/hero-images'
 import { locales, ogLocales } from '@/lib/i18n'
 import { asLocale, setRequestLocale } from '@/lib/request-locale'
 import { absoluteUrl } from '@/lib/site'
@@ -75,7 +76,7 @@ export default async function LocaleLayout({ children, params }: Props & { child
         {children}
       </main>
       <SiteFooter about={<AboutSmallPrint />} />
-      <Hand />
+      <Hand heroes={heroImages(locale)} />
       <LiveRegion />
       <RouteFocus />
       {/* After a language switch: <html lang>, the same place on the page (before Reveals measures). */}

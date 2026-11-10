@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { cardIdForPath } from '@/lib/hand-data'
 import { pagePath } from '@/lib/i18n'
-import { heroWasVisible, land } from '@/motion/play'
 import { afterTransition } from '@/motion/view-transition'
 import { announce } from './live-region'
 
@@ -12,12 +11,12 @@ const normalise = (path: string) => path.replace(/\/$/, '') || '/'
 
 /*
  * After every client navigation, once the view transition has finished:
- *   back on the table from a card page: the card takes focus (and, when it
- *   morphed back from its hero, lands in its slot; otherwise the hand has
- *   already dealt it in)
+ *   back on the table from a card page: the card takes focus (it has just
+ *   folded back into its slot)
  *   the same page in the other language: focus stays where it is (the
  *   switcher link the visitor chose)
- *   anywhere else: focus the page's <h1> (tabIndex -1)
+ *   anywhere else: focus the page's <h1> (tabIndex -1, without scrolling: a
+ *   play leaves the new page at its top)
  * and announce the page title in the polite live region.
  */
 export function RouteFocus() {
@@ -41,7 +40,6 @@ export function RouteFocus() {
       if (left && pagePath(path) === '/') {
         const card = document.querySelector<HTMLElement>(`.hand-card[data-play="${CSS.escape(left)}"]`)
         if (card && card.getClientRects().length) {
-          if (heroWasVisible(left)) land(card)
           card.focus({ preventScroll: true })
           announce(title)
           return

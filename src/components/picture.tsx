@@ -44,6 +44,37 @@ export function getImage(id: ImageId): ImageEntry {
 const fallbackWidth = (widths: number[]) =>
   [...widths].sort((a, b) => a - b).find((w) => w >= 1280) ?? Math.max(...widths)
 
+/**
+ * The URLs a <Picture> of `id` offers at `sizes`: its <source>s (type and srcset), the <img>'s
+ * srcset and fallback src. Also used to warm a hero image before its page opens (the play), so
+ * the browser picks the very file the page will ask for.
+ */
+export function pictureSet(id: ImageId, sizes: string) {
+  const image = getImage(id)
+  if (image.local) {
+    const { widths, formats } = image.local
+    const url = (w: number, format: ImageFormat) => withBase(`/images/${id}-${w}.${ext[format]}`)
+    const srcSet = (format: ImageFormat) => widths.map((w) => `${url(w, format)} ${w}w`).join(', ')
+    return {
+      sources: sourceFormats.filter((f) => formats.includes(f)).map((f) => ({ type: mime[f], srcSet: srcSet(f) })),
+      src: url(fallbackWidth(widths), 'jpeg'),
+      srcSet: srcSet('jpeg'),
+      sizes,
+    }
+  }
+  if (image.remote) {
+    const { src, widths } = image.remote
+    const at = (w: number) => src.replace('{w}', String(w))
+    return {
+      sources: [],
+      src: at(fallbackWidth(widths)),
+      srcSet: widths.map((w) => `${at(w)} ${w}w`).join(', '),
+      sizes,
+    }
+  }
+  throw new Error(`content/images.ts: "${id}" needs local or remote sources.`)
+}
+
 export async function Picture({ id, sizes, priority = false, className, alt }: Props) {
   const image = getImage(id)
   const { imageAlt } = await getContent()
@@ -58,33 +89,14 @@ export async function Picture({ id, sizes, priority = false, className, alt }: P
     style: image.placeholder ? { backgroundColor: image.placeholder } : undefined,
   }
 
-  if (image.local) {
-    const { widths, formats } = image.local
-    const url = (w: number, format: ImageFormat) => withBase(`/images/${id}-${w}.${ext[format]}`)
-    const srcSet = (format: ImageFormat) => widths.map((w) => `${url(w, format)} ${w}w`).join(', ')
-    return (
-      <picture className={className} data-image={id}>
-        {sourceFormats
-          .filter((f) => formats.includes(f))
-          .map((f) => (
-            <source key={f} type={mime[f]} srcSet={srcSet(f)} sizes={sizes} />
-          ))}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url(fallbackWidth(widths), 'jpeg')} srcSet={srcSet('jpeg')} {...imgProps} />
-      </picture>
-    )
-  }
-
-  if (image.remote) {
-    const { src, widths } = image.remote
-    const at = (w: number) => src.replace('{w}', String(w))
-    return (
-      <picture className={className} data-image={id}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={at(fallbackWidth(widths))} srcSet={widths.map((w) => `${at(w)} ${w}w`).join(', ')} {...imgProps} />
-      </picture>
-    )
-  }
-
-  throw new Error(`content/images.ts: "${id}" needs local or remote sources.`)
+  const set = pictureSet(id, sizes)
+  return (
+    <picture className={className} data-image={id}>
+      {set.sources.map((s) => (
+        <source key={s.type} type={s.type} srcSet={s.srcSet} sizes={sizes} />
+      ))}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={set.src} srcSet={set.srcSet} {...imgProps} />
+    </picture>
+  )
 }

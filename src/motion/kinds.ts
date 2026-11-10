@@ -4,7 +4,7 @@ import { lineIndexes, loadSplit, splitLines, splitLoaded } from './split'
 import {
   type DurationStep,
   angle,
-  at,
+  cardPlay,
   deal as DEAL,
   distance,
   duration,
@@ -42,6 +42,8 @@ export type KindOptions = {
   stagger?: number
   /** rule: draw like a link underline (outSoft) instead of the default inOut. */
   underline?: boolean
+  /** block: the rise in px (default distance.block). */
+  rise?: number
 }
 
 const E = { outExpo: bezier(ease.outExpo), outQuint: bezier(ease.outQuint), inOut: bezier(ease.inOut) }
@@ -79,7 +81,7 @@ export function block(ctx: JobContext, el: Element, delay = 0, opts: KindOptions
   ctx.animate(
     el,
     [
-      { opacity: 0, translate: `0 ${distance.block}px` },
+      { opacity: 0, translate: `0 ${opts.rise ?? distance.block}px` },
       { opacity: 1, translate: '0 0' },
     ],
     { duration: opts.dur ?? msFor(ctx.tier, 'm'), delay, easing: E.outQuint, fill: 'backwards' },
@@ -259,29 +261,28 @@ export function rule(ctx: JobContext, el: HTMLElement, delay = 0, opts: KindOpti
 }
 
 /**
- * pair: one meta pair (rule, label, value; MetaPairs). The rule draws from the left, then the
- * label and the value rise into place, each `cascade` after the one before, all within `dur`
- * (at.detail.meta). Reduced: one crossfade.
+ * pair: one meta pair (rule, label, value; MetaPairs, About's projects). The rule draws from the
+ * left over `meta.rule`, then the label rises at `meta.label.at` and the value at `meta.value.at`
+ * (cardPlay.play.hero.meta: 240 ms, then +60 and +120 ms, 200 ms each). Reduced: one crossfade.
  */
-export function pair(ctx: JobContext, el: HTMLElement, opts: KindOptions = {}) {
+export function pair(ctx: JobContext, el: HTMLElement) {
   if (ctx.tier === 'reduced') return fade(ctx, el)
-  const total = opts.dur ?? spanFor(ctx.tier, at.detail.meta.dur)
-  const step = gapFor(ctx.tier, at.detail.meta.cascade)
-  const part = Math.max(0, total - 2 * step)
+  const M = cardPlay.play.hero.meta
   const ruleEl = el.querySelector<HTMLElement>('[data-pair-rule]')
   const parts = [...el.querySelectorAll<HTMLElement>('[data-pair-part]')]
-  if (ruleEl) rule(ctx, ruleEl, 0, { dur: part, underline: true })
-  parts.forEach((p, i) =>
+  if (ruleEl) rule(ctx, ruleEl, 0, { dur: M.rule * 1000, underline: true })
+  parts.forEach((p, i) => {
+    const step = i === 0 ? M.label : M.value
     ctx.animate(
       p,
       [
         { opacity: 0, translate: `0 ${distance.reveal}px` },
         { opacity: 1, translate: '0 0' },
       ],
-      { duration: part, delay: (i + 1) * step, easing: E.outQuint, fill: 'backwards' },
+      { duration: step.dur * 1000, delay: step.at * 1000, easing: E.outQuint, fill: 'backwards' },
       'transform, opacity',
-    ),
-  )
+    )
+  })
 }
 
 /** Tint fills (8% of the accent) and labels: they fade with their group instead of drawing. */
@@ -521,7 +522,7 @@ export function runKind(kind: Kind, ctx: JobContext, el: HTMLElement, opts: Kind
     case 'note':
       return note(ctx, el)
     case 'pair':
-      return pair(ctx, el, opts)
+      return pair(ctx, el)
     case 'deal':
       return dealCards(ctx, el)
   }

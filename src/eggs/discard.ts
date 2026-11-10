@@ -1,7 +1,7 @@
 import { bezier, spanFor } from '@/motion/choreography'
 import type { JobContext } from '@/motion/jobs'
 import { fade } from '@/motion/kinds'
-import { duration as D, angle, discard as DISCARD, distance, ease } from '@/motion/tokens'
+import { duration as D, angle, discard as DISCARD, ease } from '@/motion/tokens'
 
 /*
  * 404 discard (egg, see registry.ts): the .lost-card (a draw reveal around
@@ -23,7 +23,7 @@ export function discard(ctx: JobContext, card: HTMLElement) {
   ctx.animate(
     card,
     [
-      { opacity: 0, translate: above(distance.exitPlay * DISCARD.drop), rotate: from },
+      { opacity: 0, translate: above(DISCARD.drop), rotate: from },
       { opacity: 1, offset: DISCARD.fade },
       { opacity: 1, ...rest },
     ],

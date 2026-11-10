@@ -1,12 +1,22 @@
 'use client'
 
-import { type ReactNode, useEffect, useRef, useState, ViewTransition } from 'react'
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState, ViewTransition } from 'react'
 import { headerHeight } from '@/design/layout'
 import { useChrome } from '@/lib/chrome'
 import { cardNumber, pad2 } from '@/lib/format'
 import type { HandCard } from '@/lib/hand-data'
-import { heroVisible } from '@/motion/play'
-import { cardName, heroShare, heroTitleShare, pageEnter, pageExit, titleName } from '@/motion/transitions'
+import { getFlight, useFlight } from '@/motion/flight'
+import { table } from '@/motion/table-store'
+import {
+  bandName,
+  cardName,
+  heroBandShare,
+  heroFrameShare,
+  heroTitleShare,
+  pageEnter,
+  pageExit,
+  titleName,
+} from '@/motion/transitions'
 import { PageTitle } from './page-title'
 import { Reveal } from './reveals'
 
@@ -19,9 +29,9 @@ type Props = {
   /** Case study summary, or Management's lead. */
   summary: string
   /**
-   * What the played card becomes: the hero <Picture priority> (never inside an
-   * image reveal) or an illustration. Rendered by the server page, so this
-   * client component never imports page content (D7).
+   * What the played card's band becomes: the hero <Picture priority> (never inside an image
+   * reveal) or an illustration. Rendered by the server page, so this client component never
+   * imports page content (D7).
    */
   media: ReactNode
   /** "image" crops a photo to the frame; "illustration" sets a drawing on the card's field. */
@@ -29,22 +39,32 @@ type Props = {
 }
 
 /*
- * The detail hero continues the played card: 72vh on desktop, 64vh on phones.
- * The card's colour is already the page; the card itself lands in the media
- * frame, which slides off the right edge of the table ([data-hero-target],
- * D3). The frame carries the card's view-transition name while it is in view,
- * the h1 carries the title's, so play / switch / return morph into and out of
- * it. Once the frame has scrolled away nothing carries the name: Back then
- * deals the card into its slot (no shared-element morph, nothing flies in from
- * off screen; src/components/hand/hand.tsx). The frame is capped at 1200 px.
+ * The detail hero continues the played card, in three parts (the view
+ * transition's container transform, src/styles/view-transitions.css):
  *
- * Above the fold (src/motion/reveal.ts, at.detail): the title and the frame
- * as they come, then the summary, then the top label and counter, then the
- * meta pairs (MetaPairs) left to right, each data-reveal-step.
+ *   .play-frame         the card's frame grown to the full screen: fixed,
+ *                       pointer-events none, the identity's fill with a 1 px
+ *                       accent edge (card-<slug>). After a play it dissolves
+ *                       (CSS, from the tokenised delay on mount: its
+ *                       snapshot in the transition is live, so the fade shows
+ *                       through); at rest it is transparent. Back makes it
+ *                       materialise again before the page leaves, so the
+ *                       card has a frame to shrink into its slot.
+ *   [data-hero-target]  the card's band grown into the hero image's frame
+ *                       (card-band-<slug>); the frame's colour is the
+ *                       identity's, the image fades in once decoded
+ *   h1                  the card's title (card-title-<slug>)
  *
- *   desktop   counter + label in the index column; frame from column 6 to the
+ * The band and title carry their names only while the frame is in view
+ * (nothing flies in from off screen). On a switch away from this page all
+ * three names stand down: its card re-enters its slot instead of morphing
+ * back. The label and counter, the summary and the meta pairs are not part
+ * of the transition: they reveal on the page (src/motion/reveal.ts) from the
+ * transition's start, after the morph has mostly landed.
+ *
+ *   desktop   counter + label in the index column; frame from column 7 to the
  *             right edge, full height; the display h1 runs onto the frame,
- *             summary below it in columns 1–5
+ *             summary below it
  *   mobile    counter + label, frame (content start to the right edge), h1
  *             overlapping the frame's lower edge, summary
  */
@@ -52,35 +72,74 @@ export function CaseHero({ card, title = card.title, label, summary, media, medi
   const { handCards } = useChrome()
   const ref = useRef<HTMLDivElement>(null)
   const [inView, setInView] = useState(true)
+  const standDown = useFlight()?.leaving === card.id
+  // Arrived by a play (or a switch, or the history replay of one): the frame dissolves from opaque.
+  const [arrival] = useState(() => {
+    const intent = table.peekIntent()
+    return getFlight()?.id === card.id || intent === 'play' || intent === 'switch' ? 'play' : 'rest'
+  })
 
   useEffect(() => {
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        setInView(entry.isIntersecting)
-        heroVisible(card.id, entry.isIntersecting)
-      },
-      { rootMargin: `-${headerHeight}px 0px 0px 0px` },
-    )
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), {
+      rootMargin: `-${headerHeight}px 0px 0px 0px`,
+    })
     io.observe(ref.current!)
     return () => io.disconnect()
   }, [card.id])
 
+  // The hero image fades in once decoded (over the frame's identity colour); listened to through
+  // the ref, never an onLoad prop, so React keeps waiting for it before the view transition.
+  useLayoutEffect(() => {
+    const img = ref.current?.querySelector('img')
+    if (!img) return
+    const shown = () => (img.dataset.loaded = '')
+    if (img.complete && img.naturalWidth > 0) return void shown()
+    let live = true
+    const onLoad = () =>
+      void img
+        .decode()
+        .catch(() => {})
+        .then(() => live && shown())
+    img.addEventListener('load', onLoad, { once: true })
+    img.addEventListener('error', shown, { once: true })
+    return () => {
+      live = false
+      img.removeEventListener('load', onLoad)
+      img.removeEventListener('error', shown)
+    }
+  }, [])
+
+  const named = !standDown
   return (
     <header className="case-hero spread-grid" data-identity={card.identity} data-media={mediaKind}>
+      <ViewTransition
+        name={named ? cardName(card.id) : undefined}
+        share={heroFrameShare}
+        enter="none"
+        exit="none"
+        default="none"
+      >
+        <div className="play-frame" data-arrival={arrival} aria-hidden="true" />
+      </ViewTransition>
       <Reveal as="p" kind="block" step="label" className="case-hero-meta t-label">
         <span className="case-hero-counter">
           <span className="case-hero-index">{cardNumber(card.index)}</span> / {pad2(handCards.length)}
         </span>
         <span className="case-hero-label">{label}</span>
       </Reveal>
-      <ViewTransition name={inView ? cardName(card.id) : undefined} share={heroShare} enter={pageEnter} exit={pageExit}>
+      <ViewTransition
+        name={inView && named ? bandName(card.id) : undefined}
+        share={heroBandShare}
+        enter={pageEnter}
+        exit={pageExit}
+      >
         <div ref={ref} className="case-hero-frame" data-hero-target="">
           {media}
         </div>
       </ViewTransition>
       <div className="case-hero-text">
         <ViewTransition
-          name={inView ? titleName(card.id) : undefined}
+          name={inView && named ? titleName(card.id) : undefined}
           share={heroTitleShare}
           enter="none"
           exit="none"
@@ -88,7 +147,7 @@ export function CaseHero({ card, title = card.title, label, summary, media, medi
         >
           <PageTitle className="case-hero-title t-display">{title}</PageTitle>
         </ViewTransition>
-        <Reveal as="p" kind="lines" step="summary" className="case-hero-summary t-lead">
+        <Reveal as="p" kind="block" step="summary" className="case-hero-summary t-lead">
           {summary}
         </Reveal>
       </div>

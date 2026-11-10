@@ -74,27 +74,30 @@
   --card-w-sm: 100px;
   --card-h-sm: 140px;
   --card-ratio: 132 / 184;
-  /* Played card on detail pages (mirrors hand.hero in tokens.ts). */
-  --hero-w: min(clamp(280px, 28vw, 400px), calc((100dvh - var(--header-h) - 220px) * 132 / 184));
+  /* A card lying on the table (the played card, and the frame it grows into on its page). */
+  --table-card-radius: 12px;
   --rail-h: 48px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* Layers */
+  /*
+   * Layers. The played card's frame lies over the page (and the hero's image and title over the
+   * frame), the hand over the frame, the header over the hand. While a card flies it is above the
+   * hand; while the page folds back into its card (Back) the frame and the hero rise above the
+   * hand too, as their view-transition groups do (view-transitions.css), so nothing re-stacks.
+   */
   --z-field: -1;
-  --z-header: 20;
-  --z-hand: 30;
-  --z-sheet: 40;
+  --z-play-frame: 5;
+  --z-hero: 6;
+  --z-hand: 20;
+  --z-table-card: 25;
+  --z-returning: 25;
+  --z-returning-hero: 26;
+  --z-header: 30;
   --z-skip: 100;
 }
 
 @supports (padding: env(safe-area-max-inset-bottom)) {
   :root {
     --safe-bottom: max(env(safe-area-inset-bottom, 0px), env(safe-area-max-inset-bottom, 0px));
-  }
-}
-
-@media (max-width: 1023.98px) {
-  :root {
-    --hero-w: min(72vw, 320px);
   }
 }

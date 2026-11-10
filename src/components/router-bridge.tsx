@@ -20,10 +20,12 @@ export function RouterBridge() {
   route.current = pathname
 
   useEffect(() => {
-    registerNavigate((href, types, replace) =>
-      replace
-        ? router.replace(href, { transitionTypes: types, scroll: false })
-        : router.push(href, { transitionTypes: types }),
+    registerNavigate(
+      (href, types, replace) =>
+        replace
+          ? router.replace(href, { transitionTypes: types, scroll: false })
+          : router.push(href, { transitionTypes: types }),
+      (href) => router.prefetch(href),
     )
     const offHistory = interceptHistory(() => route.current.replace(/\/$/, '') || '/')
     return () => {

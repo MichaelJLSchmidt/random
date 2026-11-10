@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { DetailPage } from '@/components/detail-page'
 import { Picture } from '@/components/picture'
 import { caseStudySectionKeys, contentFor, getContent } from '@/lib/content'
+import { heroSizes } from '@/lib/hero-images'
 import { pageAlternates } from '@/lib/metadata'
 import { asLocale, setRequestLocale } from '@/lib/request-locale'
 import { CaseSections } from './case-sections'
@@ -53,14 +54,7 @@ export default async function CaseStudyPage({ params }: Props) {
       card={card}
       label={`${card.projectType} · ${card.year}`}
       summary={study.summary}
-      media={
-        <Picture
-          id={study.heroImage}
-          priority
-          sizes="(min-width: 1440px) 66vw, (min-width: 1024px) 62vw, 92vw"
-          className="case-hero-picture hero-drift"
-        />
-      }
+      media={<Picture id={study.heroImage} priority sizes={heroSizes} className="case-hero-picture hero-drift" />}
       meta={meta}
       metrics={study.metrics}
       sections={sections}

@@ -8,6 +8,69 @@
   display: grid;
 }
 
+/*
+ * ---------- The played card's frame, grown to the full screen (case-hero.tsx) ----------
+ * The card's body without its details: the face's fill and its 1 px accent edge. Fixed over the
+ * page (the hero's image and title lie over it), under the hand and the header. After a play it
+ * dissolves from opaque (the view transition shows it live); at rest it is transparent. Back:
+ * the hero's details fade out while the frame materialises again (html[data-returning]) and rises
+ * above the hand with the hero, as its view-transition group does. Reduced: not rendered.
+ */
+.play-frame {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-play-frame);
+  border-radius: var(--table-card-radius);
+  background:
+    radial-gradient(130% 70% at 0% 100%, color-mix(in oklab, var(--id-glow) 42%, transparent), transparent 72%),
+    linear-gradient(to bottom, color-mix(in oklab, var(--id-mid) 38%, var(--id-field)), var(--id-field) 55%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--id-accent) 30%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.play-frame[data-arrival='play'] {
+  animation: play-frame-out var(--play-dissolve-dur) var(--play-dissolve-ease) var(--play-dissolve-at) both;
+}
+:root[data-returning] .play-frame {
+  z-index: var(--z-returning);
+  animation: play-frame-in var(--return-frame-dur) linear var(--return-frame-at) both;
+}
+:root[data-motion='reduced'] .play-frame {
+  display: none;
+}
+@keyframes play-frame-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes play-frame-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+:root[data-returning] :is(.case-hero-meta, .case-hero-summary, .detail-facts, .minimap) {
+  animation: hero-detail-out var(--return-details) linear both;
+}
+@keyframes hero-detail-out {
+  to {
+    opacity: 0;
+  }
+}
+/* A switch: while the other card flies to the table, this page's hero steps back. */
+:root[data-switching] :is(.case-hero-meta, .case-hero-frame, .case-hero-text) {
+  opacity: var(--switch-dim);
+  transition: opacity var(--play-contact) var(--ease-out-soft);
+}
+:root[data-motion='reduced'][data-switching] :is(.case-hero-meta, .case-hero-frame, .case-hero-text) {
+  opacity: 1;
+}
+
 /* ---------- Hero: 64vh on phones, 72vh from 1024 ---------- */
 .case-hero {
   position: relative;
@@ -29,9 +92,10 @@
 .case-hero-index {
   color: var(--accent);
 }
-/* The card, grown and slid off the right edge of the table. */
+/* The card's band, grown and slid off the right edge of the table: over the play frame. */
 .case-hero-frame {
   position: relative;
+  z-index: var(--z-hero);
   grid-column: content-start / full-end;
   height: clamp(208px, 32svh, 400px);
   /* clip, not hidden: a hidden overflow makes a scroll container, and the .hero-drift view()
@@ -60,6 +124,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity var(--loading-image) linear;
+}
+/* The image waits on the frame's identity colour until it is decoded, then fades in (case-hero.tsx). */
+:root[data-reveal]:not([data-motion='reduced']) .case-hero-frame img:not([data-loaded]) {
+  opacity: 0;
 }
 .case-hero-art {
   position: absolute;
@@ -75,7 +144,7 @@
 }
 .case-hero-text {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-hero);
   grid-column: content-start / content-end;
   /* The title's first line sits half on the frame. */
   margin-top: calc(var(--type-display-size) * var(--type-display-leading) * -0.5);
@@ -126,6 +195,10 @@
     max-width: 30ch;
     margin-top: var(--space-5);
   }
+}
+
+:root[data-returning] :is(.case-hero-frame, .case-hero-text) {
+  z-index: var(--z-returning-hero);
 }
 
 /* Capped at 1200 px from a 2425 px wide viewport (column 7 to the edge is half the width − 12 px): round its far side too. */

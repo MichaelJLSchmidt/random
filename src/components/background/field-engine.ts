@@ -479,7 +479,6 @@ export class FieldEngine {
     if (s.field.seq !== p.field.seq) this.applyField(s.field)
     if (s.hoverCard !== p.hoverCard) this.applyHover(s.hoverCard)
     if (s.breaker !== p.breaker) this.go('breaker', [s.breaker ? 1 : 0], this.dur(D.hoverIn), 'outSoft')
-    if (s.sheetOpen !== p.sheetOpen) this.setPaused()
   }
 
   /** Tier-scaled duration: full as given, reduced one 160 ms crossfade. */
@@ -736,7 +735,7 @@ export class FieldEngine {
   // ---------------------------------------------------------------- loop
 
   private setPaused() {
-    const paused = document.hidden || table.get().sheetOpen
+    const paused = document.hidden
     if (paused === this.paused) return
     this.paused = paused
     if (paused) {

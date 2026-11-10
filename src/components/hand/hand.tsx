@@ -1,52 +1,73 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { contour, palette } from '@/design/palette'
 import { attachHandEggs, tap, untapAll } from '@/eggs/hand-eggs'
 import { useChrome } from '@/lib/chrome'
 import { pagePath } from '@/lib/i18n'
+import { routeKey, useFlight } from '@/motion/flight'
+import {
+  type HeroImage,
+  cancelPlay,
+  play,
+  playTokens,
+  prefetchCard,
+  registerHeroImages,
+  returnHome,
+  settlePlay,
+} from '@/motion/play'
 import { drawCards } from '@/motion/reveal'
-import { cancelPlay, dealIn, heroWasVisible, play, returnHome, settleLift } from '@/motion/play'
 import { table } from '@/motion/table-store'
-import { angle, duration, hand as H } from '@/motion/tokens'
+import { angle, cardPlay, duration, ease } from '@/motion/tokens'
 import { NAV } from '@/motion/transitions'
 import '@/motion/view-transition'
 import { CardBack, CardFace } from './card-face'
+import { TableCard } from './table-card'
 
 /** Outer cards sit a little lower: the hand's arc (px at desktop size). */
 const ARC = [10, 2, 2, 10]
+const bezier = (b: readonly number[]) => `cubic-bezier(${b.join(',')})`
 
 /*
  * The hand: exactly four cards (three case studies and Management) as the
- * primary navigation. One list serves every layout:
- *   desktop      a fan fixed at the bottom centre (72% visible on home, 45% elsewhere)
- *   mobile home  the same fan, smaller
- *   mobile else  a 48px peek rail; tapping or swiping it up opens the list as
- *                a bottom sheet (a native popover, so it also works without JS)
- *                with the four cards only (About is in the header)
- * Hover and focus are pure CSS; the background hears about them through the
- * table store after an 80 ms intent delay. Nothing here re-renders React
- * except a route change. Card copy and links come from the active locale
- * (useChrome); routes are matched without their locale, so a language switch
- * re-renders the words and moves nothing. Foundation-owned (read-only in
- * Wave 1); styles in src/styles/hand.css (Motion). Contract: docs/contracts.md#hand.
+ * primary navigation, in two navs (one shows at a time):
+ *   fan    desktop on every route, phones on home: the cards in a perspective
+ *          fan at the bottom (72% visible on home, 45% elsewhere)
+ *   rail   phones off home: a 48 px rail of four real links, each a quarter of
+ *          the width and the rail's full height; one tap plays the card (the
+ *          press shows on pointerdown and is called off by a scroll, the play
+ *          runs on click); the open card's edge sits lower with an accent line
+ *          and scrolls its page to the top
+ * Playing a card (src/motion/play.ts) renders its clone on the table
+ * (table-card.tsx) while the route is still this one; the face in the hand
+ * hands its view-transition names over meanwhile. Hover and focus are pure
+ * CSS; the background hears about them through the table store after an
+ * 80 ms intent delay. Nothing here re-renders React except a route change and
+ * a play. Card copy and links come from the active locale (useChrome); routes
+ * are matched without their locale, so a language switch re-renders the words
+ * and moves nothing. Styles in src/styles/hand.css. Contract: docs/contracts.md#hand.
  */
-export function Hand() {
+export function Hand({ heroes }: { heroes: Record<string, HeroImage> }) {
   const chrome = useChrome()
   const { handCards, handLabels, coffeeEgg, cardForPath } = chrome
-  const path = pagePath(usePathname())
+  const pathname = usePathname()
+  const route = routeKey(pathname)
+  const path = pagePath(pathname)
   const home = path === '/'
   const active = cardForPath(path)?.id ?? null
-  const router = useRouter()
   const homeHref = chrome.href('/')
   const homeRef = useRef(homeHref)
   homeRef.current = homeHref
   const hrefs = handCards.map((c) => c.href).join(' ')
-  const root = useRef<HTMLElement>(null)
-  const sheet = useRef<HTMLDivElement>(null)
-  // Roving tabindex: one tab stop for the whole hand, on the open card if any.
+  const cardHref = useRef((id: string) => handCards.find((c) => c.id === id)?.href ?? null)
+  cardHref.current = (id: string) => handCards.find((c) => c.id === id)?.href ?? null
+  const root = useRef<HTMLDivElement>(null)
+  const flight = useFlight()
+  const flying = flight && flight.route === route ? flight : null
+  const flyingCard = flying ? (handCards.find((c) => c.id === flying.id) ?? null) : null
+  // Roving tabindex: one tab stop for the whole fan, on the open card if any.
   const roving = useRef<string>(active ?? handCards[0].id)
   const lastActive = useRef(active)
   if (active && lastActive.current !== active) roving.current = active
@@ -55,18 +76,22 @@ export function Hand() {
   const [coffee, setCoffee] = useState(false)
   const coffeeRef = useRef<HTMLAnchorElement>(null)
 
-  // Prefetch of every card route, Escape returns. (The router for play / return and the
-  // back / forward replay live in RouterBridge, in the root layout: they outlive a language switch.)
+  useEffect(() => registerHeroImages(heroes), [heroes])
+
+  // Escape calls a play off while the card flies, and otherwise returns from an open card's page.
+  // (The router for play / return and the back / forward replay live in RouterBridge, in the root
+  // layout: they outlive a language switch.) Prefetch: Next's <Link> prefetches on its own
+  // ("auto"); the play also prefetches on intent (pointerenter, focus, pointerdown).
   useEffect(() => {
-    for (const href of hrefs.split(' ')) router.prefetch(href)
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented || !table.get().activeCard) return
-      if (document.querySelector(':popover-open, dialog[open]')) return
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (cancelPlay()) return
+      if (!table.get().activeCard || document.querySelector('dialog[open]')) return
       returnHome(homeRef.current)
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [router, hrefs])
+  }, [hrefs])
 
   // The hand shows 72% on home and 45% elsewhere: off home, pages keep the collapsed
   // reserve (:root[data-hand="collapsed"] -> --hand-reserve 120px in layout.css). The
@@ -77,22 +102,48 @@ export function Hand() {
     else root.dataset.hand = 'collapsed'
   }, [home])
 
-  // Inside the view transition's update: the lifted card drops back as the ghost; tapped cards untap.
-  // Leaving a card page whose hero had scrolled away: no morph carries the card back, so it is
-  // dealt into its slot (a short rise, never from off screen).
+  // Inside the view transition's update, once the route has changed: the flight is over (its
+  // clone unmounted in this commit), the siblings open around the ghost again, tapped cards untap.
+  // A switch: the card whose page was left re-enters its slot (or its rail edge returns), late,
+  // rising a little. A return: the card that came back sits on top of its neighbours (as it did
+  // while it morphed in, above the hand) until the pointer next moves over the hand.
   const prevPath = useRef(path)
   useLayoutEffect(() => {
-    settleLift()
-    untapAll()
     const from = prevPath.current
     prevPath.current = path
-    const left = from !== path ? cardForPath(from) : undefined
-    if (!left || heroWasVisible(left.id)) return
-    const card = root.current?.querySelector<HTMLElement>(`.hand-fan .hand-card[data-play="${CSS.escape(left.id)}"]`)
-    if (card && card.getClientRects().length) dealIn(card)
-  }, [path])
+    const intent = table.peekIntent()
+    settlePlay(route)
+    untapAll()
+    const nav = root.current
+    if (!nav || from === path) return
+    for (const slot of nav.querySelectorAll<HTMLElement>('[data-returned]')) delete slot.dataset.returned
+    const left = cardForPath(from)
+    if (!left || table.get().tier !== 'full') return
+    if (intent === 'switch') {
+      const S = cardPlay.switch.reenter
+      const wideView = playTokens() === cardPlay.play
+      for (const el of nav.querySelectorAll<HTMLElement>(`[data-play="${CSS.escape(left.id)}"]`)) {
+        if (!el.getClientRects().length) continue
+        el.animate(
+          [
+            { opacity: 0, transform: `translateY(${S.y}px)` },
+            { opacity: 1, transform: 'none' },
+          ],
+          {
+            duration: S.dur * 1000,
+            delay: (wideView ? S.at : S.atMobile) * 1000,
+            easing: bezier(ease.outQuint),
+            fill: 'backwards',
+          },
+        )
+      }
+    } else if (intent === 'return') {
+      const slot = nav.querySelector<HTMLElement>(`.hand-slot[data-slot="${CSS.escape(left.id)}"]`)
+      if (slot) slot.dataset.returned = ''
+    }
+  }, [path, route, cardForPath])
 
-  // Eggs on the hand: inspect, tap (T, or a double tap while a card lifts), new hand (long press on the table).
+  // Eggs on the hand: inspect, tap (T, or a double tap while a card flies), new hand (long press on the table).
   useEffect(() => {
     const nav = root.current!
     const off = attachHandEggs(nav)
@@ -121,7 +172,7 @@ export function Hand() {
     else card.dataset.drawn = ''
   }, [coffee])
 
-  // The scrim under the hand follows the page colour (on About: the contour field's ground).
+  // The scrim under the fan follows the page colour (on About: the contour field's ground).
   useEffect(() => {
     const nav = root.current!
     const paint = () => {
@@ -134,7 +185,7 @@ export function Hand() {
     })
   }, [])
 
-  // Slots, hover intent, keyboard.
+  // Slots, hover intent, prefetch on intent, keyboard, the rail's press.
   useEffect(() => {
     const nav = root.current!
     table.registerSlots((id) => {
@@ -156,20 +207,51 @@ export function Hand() {
       if (id) timer = window.setTimeout(() => table.hover(id), duration.hoverIntent * 1000)
       else table.hover(null)
     }
-    const cardOf = (el: EventTarget | null) =>
-      el instanceof Element ? (el.closest<HTMLElement>('[data-play]')?.dataset.play ?? null) : null
+    const linkOf = (el: EventTarget | null) =>
+      el instanceof Element ? el.closest<HTMLAnchorElement>('a[data-play]') : null
+    const cardOf = (el: EventTarget | null) => linkOf(el)?.dataset.play ?? null
+    // Prefetch on intent: the card's route as the router knows it (no base path).
+    const warm = (el: EventTarget | null) => {
+      const id = cardOf(el)
+      const href = id && id !== table.get().activeCard ? cardHref.current(id) : null
+      if (href) prefetchCard(href)
+    }
 
     const onOver = (e: PointerEvent) => {
+      for (const slot of nav.querySelectorAll<HTMLElement>('[data-returned]')) delete slot.dataset.returned
+      warm(e.target)
       if (e.pointerType === 'touch') return
       intent(cardOf(e.target))
     }
     const onLeave = () => intent(null)
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target as HTMLElement
-      if (el.matches(':focus-visible')) intent(cardOf(el))
+      warm(el)
+      if (el.matches(':focus-visible') && el.closest('.hand-fan')) intent(cardOf(el))
     }
     const onFocusOut = (e: FocusEvent) => {
       if (!nav.contains(e.relatedTarget as Node)) intent(null)
+    }
+
+    // The rail: the press shows from pointerdown; a scroll (pointercancel) or more than `slop` px of
+    // movement calls it off. The play itself runs on click, which the browser suppresses once it
+    // has taken the gesture over for a scroll: that is the tap / scroll distinction.
+    const slop = cardPlay.mobilePlay.rail.slop
+    let pressed: { el: HTMLElement; x: number; y: number } | null = null
+    const release = () => {
+      if (pressed) delete pressed.el.dataset.pressed
+      pressed = null
+    }
+    const onDown = (e: PointerEvent) => {
+      warm(e.target)
+      const el = e.target instanceof Element ? e.target.closest<HTMLElement>('.rail-card') : null
+      release()
+      if (!el || e.button !== 0) return
+      pressed = { el, x: e.clientX, y: e.clientY }
+      el.dataset.pressed = ''
+    }
+    const onMove = (e: PointerEvent) => {
+      if (pressed && Math.hypot(e.clientX - pressed.x, e.clientY - pressed.y) > slop) release()
     }
 
     const items = () =>
@@ -199,6 +281,10 @@ export function Hand() {
 
     nav.addEventListener('pointerover', onOver)
     nav.addEventListener('pointerleave', onLeave)
+    nav.addEventListener('pointerdown', onDown)
+    nav.addEventListener('pointermove', onMove)
+    nav.addEventListener('pointerup', release)
+    nav.addEventListener('pointercancel', release)
     nav.addEventListener('focusin', onFocusIn)
     nav.addEventListener('focusout', onFocusOut)
     nav.addEventListener('keydown', onKey)
@@ -207,108 +293,48 @@ export function Hand() {
       table.hover(null)
       nav.removeEventListener('pointerover', onOver)
       nav.removeEventListener('pointerleave', onLeave)
+      nav.removeEventListener('pointerdown', onDown)
+      nav.removeEventListener('pointermove', onMove)
+      nav.removeEventListener('pointerup', release)
+      nav.removeEventListener('pointercancel', release)
       nav.removeEventListener('focusin', onFocusIn)
       nav.removeEventListener('focusout', onFocusOut)
       nav.removeEventListener('keydown', onKey)
     }
   }, [])
 
-  // Mobile: a swipe up on the rail opens the sheet; the open sheet pauses the background field.
-  // The rail hides and returns with the header (html[data-header], src/motion/header-scroll.ts).
-  useEffect(() => {
-    const nav = root.current!
-    const pop = sheet.current!
-    const rail = nav.querySelector<HTMLElement>('.hand-rail')!
+  /** The element a card leaves when it is played from here (Next's onNavigate passes no DOM event). */
+  const source = (kind: string, id: string) =>
+    root.current?.querySelector<HTMLElement>(`${kind}[data-play="${CSS.escape(id)}"]`) ?? null
 
-    let startY: number | null = null
-    let swallow = false
-    const onDown = (e: PointerEvent) => {
-      startY = e.clientY
-      swallow = false
-    }
-    const onMove = (e: PointerEvent) => {
-      if (startY === null || swallow) return
-      if (startY - e.clientY > 24) {
-        swallow = true
-        startY = null
-        pop.showPopover()
-      }
-    }
-    const onUp = () => {
-      startY = null
-    }
-    // A swipe already opened the sheet: the click that follows must not toggle it shut.
-    const onClick = (e: MouseEvent) => {
-      if (!swallow) return
-      swallow = false
-      e.preventDefault()
-    }
-
-    let moving = 0
-    const onBeforeToggle = () => {
-      clearTimeout(moving)
-      nav.dataset.sheetMoving = ''
-      moving = window.setTimeout(() => delete nav.dataset.sheetMoving, duration.sheet * 1000 + 100)
-    }
-    const onToggle = (e: Event) => {
-      const open = (e as ToggleEvent).newState === 'open'
-      table.setSheet(open)
-      if (open) {
-        const target =
-          pop.querySelector<HTMLElement>(`[data-roving="${roving.current}"]`) ??
-          pop.querySelector<HTMLElement>('[data-roving]')
-        target?.focus({ preventScroll: true })
-      }
-    }
-    // The sheet only exists below the breakpoint.
-    const wide = matchMedia(`(min-width: ${H.breakpoint}px)`)
-    const onWide = () => wide.matches && pop.matches(':popover-open') && pop.hidePopover()
-
-    rail.addEventListener('pointerdown', onDown)
-    rail.addEventListener('pointermove', onMove)
-    rail.addEventListener('pointerup', onUp)
-    rail.addEventListener('pointercancel', onUp)
-    rail.addEventListener('click', onClick)
-    pop.addEventListener('beforetoggle', onBeforeToggle)
-    pop.addEventListener('toggle', onToggle)
-    wide.addEventListener('change', onWide)
-    return () => {
-      rail.removeEventListener('pointerdown', onDown)
-      rail.removeEventListener('pointermove', onMove)
-      rail.removeEventListener('pointerup', onUp)
-      rail.removeEventListener('pointercancel', onUp)
-      rail.removeEventListener('click', onClick)
-      clearTimeout(moving)
-      pop.removeEventListener('beforetoggle', onBeforeToggle)
-      pop.removeEventListener('toggle', onToggle)
-      wide.removeEventListener('change', onWide)
-    }
-  }, [])
-
-  // Playing a card from the sheet closes it (the header's watch shows the rail again on every route).
-  useEffect(() => {
-    const pop = sheet.current!
-    if (pop.matches(':popover-open')) pop.hidePopover()
-  }, [path])
-
-  const railName = `${handLabels.nav}: ${handCards.map((c) => c.railLabel).join(', ')}`
+  /** The open card: back to the top of its page (at once under reduced motion), no navigation. */
+  const toTop = () => scrollTo({ top: 0, behavior: table.get().tier === 'full' ? 'smooth' : 'auto' })
 
   return (
-    <nav ref={root} className="hand" aria-label={handLabels.nav} data-home={home ? '' : undefined}>
-      <button type="button" className="hand-rail" popoverTarget="hand-sheet" aria-label={railName}>
+    <div ref={root} className="hand" data-home={home ? '' : undefined}>
+      <nav className="hand-rail" aria-label={handLabels.nav}>
         {handCards.map((card) => (
-          <span
+          <Link
             key={card.id}
+            href={card.href}
             className="rail-card"
             data-identity={card.identity}
+            data-play={card.id}
             data-slot-anchor={card.id}
-            data-active={card.id === active ? '' : undefined}
+            aria-current={card.id === active ? 'page' : undefined}
+            onNavigate={(e) => {
+              if (card.id === active) {
+                e.preventDefault()
+                toTop()
+              } else if (play(card.id, card.href, source('.rail-card', card.id))) e.preventDefault()
+            }}
           >
-            {card.railLabel}
-          </span>
+            <span className="rail-card-label">{card.railLabel}</span>
+            <span className="sr-only">{card.title}</span>
+          </Link>
         ))}
-      </button>
-      <div ref={sheet} id="hand-sheet" className="hand-fan" popover="auto">
+      </nav>
+      <nav className="hand-fan" aria-label={handLabels.nav}>
         <div className="hand-row">
           <ul className="hand-list">
             {handCards.map((card, i) => (
@@ -328,10 +354,9 @@ export function Hand() {
                   aria-current={card.id === active ? 'page' : undefined}
                   onNavigate={(e) => {
                     if (card.id === active) {
-                      // The open card: back to the top of its page.
                       e.preventDefault()
-                      scrollTo({ top: 0, behavior: table.get().tier === 'full' ? 'smooth' : 'auto' })
-                    } else if (play(card.id, card.href)) e.preventDefault()
+                      toTop()
+                    } else if (play(card.id, card.href, source('.hand-card', card.id))) e.preventDefault()
                   }}
                 >
                   {card.id === active ? (
@@ -341,7 +366,7 @@ export function Hand() {
                     </span>
                   ) : (
                     <>
-                      <CardFace card={card} />
+                      <CardFace card={card} standDown={flyingCard?.id === card.id} />
                       {/* Seen only while the card flips during the first-visit draw. */}
                       <CardBack />
                     </>
@@ -370,7 +395,8 @@ export function Hand() {
             )}
           </ul>
         </div>
-      </div>
-    </nav>
+      </nav>
+      {flying && flyingCard && <TableCard flight={flying} card={flyingCard} />}
+    </div>
   )
 }

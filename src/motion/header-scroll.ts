@@ -1,4 +1,3 @@
-import { table } from './table-store'
 import { header as HEADER } from './tokens'
 import { VT_DONE, transitionRunning } from './view-transition'
 
@@ -10,8 +9,8 @@ import { VT_DONE, transitionRunning } from './view-transition'
  * reduced: a crossfade, no slide) and the mobile hand rail with it.
  *
  *   shown    near the top (the scroll position within the header's height), on
- *            pages that do not scroll, while focus is inside the header, while
- *            the mobile hand sheet is open, and after every route change
+ *            pages that do not scroll, while focus is inside the header, and
+ *            after every route change
  *   hidden   after more than header.threshold px down in one direction, past
  *            the header's height
  *   shown    after more than header.threshold px up
@@ -27,7 +26,7 @@ function setHidden(hidden: boolean) {
   else if (root().dataset.header) delete root().dataset.header
 }
 
-/** Shows the header now (route changes, focus, the sheet). */
+/** Shows the header now (route changes, focus). */
 export const showHeader = () => setHidden(false)
 
 /** Starts the controller for `header`; returns the cleanup. */
@@ -63,7 +62,7 @@ export function watchHeader(header: HTMLElement) {
     last = y
     if (Math.abs(y - from) <= HEADER.threshold) return
     if (direction < 0) return showHeader()
-    if (header.contains(document.activeElement) || table.get().sheetOpen) return
+    if (header.contains(document.activeElement)) return
     setHidden(true)
   }
   const onScroll = () => {
@@ -79,15 +78,11 @@ export function watchHeader(header: HTMLElement) {
   addEventListener('resize', onResize, { passive: true })
   addEventListener(VT_DONE, onTransitionDone)
   header.addEventListener('focusin', onFocus)
-  const offTable = table.subscribe((s, p) => {
-    if (s.sheetOpen && !p.sheetOpen) showHeader()
-  })
   return () => {
     cancelAnimationFrame(frame)
     removeEventListener('scroll', onScroll)
     removeEventListener('resize', onResize)
     removeEventListener(VT_DONE, onTransitionDone)
     header.removeEventListener('focusin', onFocus)
-    offTable()
   }
 }

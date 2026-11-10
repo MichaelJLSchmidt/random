@@ -9,7 +9,7 @@ import { localeHref, localeNames, locales, pagePath } from '@/lib/i18n'
 import { withBase } from '@/lib/site'
 import { showHeader, watchHeader } from '@/motion/header-scroll'
 import { beginLocaleSwitch, rememberLocale } from '@/motion/locale-switch'
-import { table } from '@/motion/table-store'
+import { returnHome } from '@/motion/play'
 import { LOCALE, NAV, RETURN } from '@/motion/transitions'
 import { Logo, type LogoHandle } from './logo'
 import { ReadingHairline } from './reading-hairline'
@@ -69,7 +69,8 @@ export function Header() {
         transitionTypes={[back ? RETURN : NAV]}
         // On home the logo takes the click (it would only reload the table): the letters egg.
         onClick={(e) => logo.current?.claimClick(path === '/') && e.preventDefault()}
-        onNavigate={() => back && table.returnHome(home)}
+        // Back: the page folds into its card first (src/motion/play.ts), then the router navigates.
+        onNavigate={(e) => back && returnHome(home) && e.preventDefault()}
       >
         <span className={styles.mark} aria-hidden={back || undefined}>
           <Logo ref={logo} className={styles.logo} mode={back ? 'back' : 'mark'} slot={slot} />
