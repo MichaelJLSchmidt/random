@@ -16,6 +16,12 @@
  * derivative (fwidth, in its Euclidean form), heights read
  * with texelFetch and interpolated here (Catmull-Rom on exact texels). The
  * engine then hands over to the SVG. Nothing here reads the pointer.
+ *
+ * A played card meeting the table (uImpact, uRing): one soft ring in the card's colour grows from
+ * the landing point toward the farthest corner and fades as it goes (nothing lingers), while the
+ * bloom (uSpread) fills from the same point. While the next page is slow to arrive (uWait) the
+ * field breathes softly around the resting card: its luminance rises and falls a few per cent
+ * within a soft radius.
  */
 export const vertexSource = `#version 300 es
 in vec2 aPos;
@@ -54,6 +60,10 @@ uniform vec2 uWidths;       // line and index line width (drawing-buffer px)
 uniform vec4 uAlphas;       // line, index line, lake, layer opacity
 uniform vec3 uLine;         // line colour
 uniform vec3 uLake;         // lake colour
+uniform vec2 uImpact;       // where a played card met the table, viewport fractions (y down)
+uniform vec3 uRing;         // the impact's ring: radius 0..1 (eased), strength, soft width
+uniform vec3 uRingCol;      // the ring's colour (the played card's glow, sRGB)
+uniform vec2 uWait;         // the waiting breath: luminance offset (+/-), radius (viewport heights)
 
 out vec4 outColor;
 
@@ -122,6 +132,15 @@ vec3 gradient() {
     float d = length(p - o) + (n - 0.5) * 0.12 * uSpread * (1.0 - uSpread) * 4.0;
     float mask = 1.0 - smoothstep(r - soft, r, d);
     col = mix(colA, colB, mask);
+  }
+  if (uRing.y > 0.0 || uWait.x != 0.0) {
+    float di = length(p - vec2(uImpact.x * uAspect, uImpact.y));
+    if (uRing.y > 0.0) {
+      float rr = uRing.x * (uMaxD + uRing.z);
+      float ring = exp(-pow((di - rr) / uRing.z, 2.0));
+      col = mix(col, uRingCol, clamp(ring * uRing.y, 0.0, 1.0));
+    }
+    if (uWait.x != 0.0) col *= 1.0 + uWait.x * exp(-(di * di) / (uWait.y * uWait.y));
   }
   col *= uBreath.y * uLum * uFade;
   col += (hash(gl_FragCoord.xy + 0.5) - 0.5) * uGrain;

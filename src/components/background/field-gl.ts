@@ -39,6 +39,13 @@ export type FieldFrame = {
     line: [number, number, number]
     lake: [number, number, number]
   }
+  /** Where a played card met the table (viewport fractions, y down). */
+  impact: [number, number]
+  /** The impact's ring: radius 0..1, strength (0: none), soft width (viewport heights). */
+  ring: [number, number, number]
+  ringColour: [number, number, number]
+  /** The waiting breath: luminance offset (0: none) and radius (viewport heights). */
+  wait: [number, number]
 }
 
 const UNIFORMS = [
@@ -71,6 +78,10 @@ const UNIFORMS = [
   'uAlphas',
   'uLine',
   'uLake',
+  'uImpact',
+  'uRing',
+  'uRingCol',
+  'uWait',
 ] as const
 
 type Probe = readonly (readonly number[])[]
@@ -131,7 +142,7 @@ function checked(ok?: boolean) {
 /*
  * One WebGL2 context on one canvas. The field engine sets the drawing buffer's size: half the CSS
  * size with devicePixelRatio capped at 1 at rest (CSS scales it up), the device's resolution
- * (capped at 2) while About's morph runs. Throws when WebGL2 or the shader is unavailable, so the
+ * (capped at 2, at 1.5 while a card is played) while About's morph runs. Throws when WebGL2 or the shader is unavailable, so the
  * caller can keep the CSS fallback. About's heightmap (terrain.ts) is loaded on demand into
  * texture unit 0.
  */
@@ -279,6 +290,10 @@ export class GlField {
     gl.uniform1f(u.uFade, f.fade)
     gl.uniform1f(u.uTopo, f.topo)
     gl.uniform3f(u.uGround, ...f.ground)
+    gl.uniform2f(u.uImpact, f.impact[0], f.impact[1])
+    gl.uniform3f(u.uRing, ...f.ring)
+    gl.uniform3f(u.uRingCol, ...f.ringColour)
+    gl.uniform2f(u.uWait, f.wait[0], f.wait[1])
     const c = f.contours
     const lines = c.fade > 0 && this.terrainTex !== null && f.topo > 0
     gl.uniform1f(u.uContours, lines ? c.fade : 0)

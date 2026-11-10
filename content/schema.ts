@@ -146,6 +146,12 @@ export type HandContent = {
   labels: {
     nav: string
     viewing: string
+    /** A played card's page is slow to arrive (after 1.5 s, under the card on the table). */
+    loading: string
+    /** …and still not there after 12 s. */
+    stillLoading: string
+    /** Offline: when the card met the table (it goes back to the hand), or while its page loads. */
+    offline: string
   }
 }
 

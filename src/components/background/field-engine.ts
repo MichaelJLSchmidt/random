@@ -2,8 +2,10 @@ import { contour, palette, type Identity } from '@/design/palette'
 import { identityOf } from '@/lib/hand-data'
 import { INTRO_DONE } from '@/motion/preferences'
 import { VT_DONE } from '@/motion/view-transition'
+import { playTokens } from '@/motion/play'
 import { type FieldTarget, type TableState, table } from '@/motion/table-store'
-import { type MotionTier, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
+import { type MotionTier, cardPlay, duration as D, field as F, reducedCrossfade } from '@/motion/tokens'
+import { getPending, onPending } from '@/motion/use-play-pending'
 import { ContourLayer, PRIMED } from './contour-layer'
 import { contourLevels, contourQuery, contourStyle } from './contours'
 import { CssField } from './field-css'
@@ -26,6 +28,10 @@ import { type EaseName, Track, easeCss } from './tracks'
  *   bloom    B (the card's identity) spreads from the played card to fill the page
  *   unbloom  B contracts into the slot, then the residual tint settles to ink
  *   switch   B crossfades in OKLab with a 6% luminance dip at the midpoint
+ *   impact   a played card meets the table: one soft ring in its colour from
+ *            the landing point (cardPlay.*.ring) as the bloom fills from there
+ *   waiting  the next page is slow: the field breathes softly around the
+ *            resting card (cardPlay.loading.breath) until the route commits
  *   About    the pools contract and fade into the contour ground while the
  *            contour lines rise from a noise relief onto the region's heights
  *            (1.6 s inOut, the canvas at the device's resolution meanwhile);
@@ -51,6 +57,8 @@ type Name =
   | 'fade'
   | 'motion'
   | 'lines'
+  | 'ring'
+  | 'wait'
 
 const swatch = (id: Identity) => [
   ...hexToLab(palette[id].field),
@@ -137,6 +145,8 @@ export class FieldEngine {
       fade: new Track([1]),
       motion: new Track([0]),
       lines: new Track([0]),
+      ring: new Track([1]),
+      wait: new Track([0]),
     }
     this.frame = {
       time: 0,
@@ -164,6 +174,10 @@ export class FieldEngine {
         line: srgb(contourStyle.line),
         lake: srgb(contourStyle.lake),
       },
+      impact: [0.5, 0.5],
+      ring: [1, 0, 0.07],
+      ringColour: [0, 0, 0],
+      wait: [0, 0.45],
     }
     this.saveData = Boolean((navigator as Navigator & { connection?: Connection }).connection?.saveData)
     this.tracks.motion.jump([this.animated() ? 1 : 0], performance.now())
@@ -196,6 +210,8 @@ export class FieldEngine {
     const onIntroDone = () => this.go('fade', [1], 0, 'linear')
     addEventListener(INTRO_DONE, onIntroDone)
     this.offs.push(() => removeEventListener(INTRO_DONE, onIntroDone))
+    // A play waiting for its page: the field breathes around the resting card after the cue.
+    this.offs.push(onPending(() => this.onPending()))
     // A view transition can hold rendering past a short retarget (reduced: 160 ms): the
     // frames drawn meanwhile are never shown, so draw the settled state once it ends.
     const onTransitionDone = () => this.kick(true)
@@ -237,6 +253,7 @@ export class FieldEngine {
 
   destroy() {
     cancelAnimationFrame(this.raf)
+    clearTimeout(this.waitTimer)
     clearTimeout(this.outTimer)
     this.contours.stopDrift()
     for (const off of this.offs) off()
@@ -514,6 +531,8 @@ export class FieldEngine {
 
     let kind = t.kind
     if (kind !== 'instant' && this.tier !== 'full') kind = 'crossfade'
+    // A card met the table: one ring from the landing point (full tier; the bloom follows below).
+    if (t.ring && this.tier === 'full' && this.mode === 'gl') this.startRing(t)
     if (kind === 'bloom' && spreadNow > 0.01) kind = 'switch'
 
     switch (kind) {
@@ -564,8 +583,8 @@ export class FieldEngine {
         break
 
       case 'crossfade': {
-        // Reduced turns bloom / unbloom / switch into a 160 ms crossfade.
-        const dur = this.dur(D.crossfade)
+        // Reduced turns bloom / unbloom / switch into a plain colour fade (cardPlay.reduced.bloom).
+        const dur = this.tier === 'reduced' && t.kind !== 'crossfade' ? cardPlay.reduced.bloom : this.dur(D.crossfade)
         if (settled && spreadNow > 0.99 && !t.spread) {
           // Flatten B into A (invisible), then fade A.
           this.jump('a', tr.b.value)
@@ -598,6 +617,45 @@ export class FieldEngine {
         break
       }
     }
+  }
+
+  // ---------------------------------------------------------------- the play
+
+  /** Where the last card met the table (the ring's and the waiting breath's centre). */
+  private impact: [number, number] = [0.5, 0.5]
+  private ring = { strength: 0, width: 0 }
+  private waitTimer = 0
+  private waitStart = 0
+
+  private startRing(t: FieldTarget) {
+    const R = playTokens().ring
+    this.impact = t.origin
+    this.ring = { strength: R.intensity, width: R.width }
+    this.frame.ringColour = srgb(palette[t.identity].glow)
+    this.jump('ring', [0])
+    this.go('ring', [1], R.dur, 'outExpo')
+  }
+
+  /** The pending signal changed: after the cue the breath eases in around the card; it eases out when the page commits. */
+  private onPending() {
+    const p = getPending()
+    const L = cardPlay.loading
+    clearTimeout(this.waitTimer)
+    if (p && this.tier === 'full' && this.mode === 'gl') {
+      const at = Math.max(0, L.cue * 1000 - (performance.now() - p.at))
+      this.waitTimer = window.setTimeout(() => {
+        if (getPending() !== p) return
+        this.impact = p.point
+        this.waitStart = performance.now()
+        this.go('wait', [1], L.breath.ramp, 'outSoft')
+      }, at)
+    } else if (this.tracks.wait.to[0] !== 0) this.go('wait', [0], L.breath.ramp, 'outSoft')
+  }
+
+  /** A play's field response is running (the ring, the waiting breath): draw every frame. */
+  private playing() {
+    const now = performance.now()
+    return this.tracks.ring.remaining(now) > 0 || this.tracks.wait.value[0] > 0 || this.tracks.wait.remaining(now) > 0
   }
 
   private applyHover(id: string | null) {
@@ -711,7 +769,9 @@ export class FieldEngine {
     if (this.hiRes) {
       const M = F.morph
       const k = this.slowMorph ? M.slowScale : 1
-      return dpr <= M.dprMax ? ([dw * k, dh * k] as const) : ([w * M.dprMax * k, h * M.dprMax * k] as const)
+      // A card is being played meanwhile (leaving About by a play): never above field.play.dprMax.
+      const max = this.playing() ? Math.min(M.dprMax, F.play.dprMax) : M.dprMax
+      return dpr <= max ? ([dw * k, dh * k] as const) : ([w * max * k, h * max * k] as const)
     }
     const scale = Math.min(dpr, 1) * F.renderScale
     return [w * scale, h * scale] as const
@@ -788,7 +848,8 @@ export class FieldEngine {
     if (still) moving = false
     else if (this.phase === 'in' && this.frame.topo < 1 && topo.value[0] >= 1) this.dirty = true
     const continuous = !still && this.continuous()
-    if (!moving && !continuous && !this.dirty && !this.leaveFrame) return
+    const playing = !still && this.playing()
+    if (!moving && !continuous && !playing && !this.dirty && !this.leaveFrame) return
     this.raf = requestAnimationFrame(this.tick)
 
     const interval = this.lastFrame ? now - this.lastFrame : 0
@@ -800,8 +861,8 @@ export class FieldEngine {
     if (this.mode !== 'gl') return
     // A new buffer size is applied at the start of a frame and drawn in that same frame.
     const resized = this.applySize()
-    // The resting field draws at F.fps; a morph every frame.
-    if (!resized && !this.hiRes && now - this.lastDraw < 1000 / F.fps - 2) return
+    // The resting field draws at F.fps; a morph and a play every frame.
+    if (!resized && !this.hiRes && !playing && now - this.lastDraw < 1000 / F.fps - 2) return
     const dt = this.lastDraw ? Math.min(now - this.lastDraw, 100) / 1000 : 0
     this.lastDraw = now
     if (continuous) this.time += dt
@@ -901,6 +962,21 @@ export class FieldEngine {
     f.lum = 1 - F.switchDip * Math.sin(Math.PI * t.dip.value[0])
     f.fade = t.fade.value[0]
     f.topo = t.topo.value[0]
+    // The impact's ring: grows on outExpo and fades as it grows; the waiting breath: a slow sine.
+    // (Its strength falls on the clock, not on the eased radius, so it stays visible as it travels.)
+    const ring = t.ring.value[0]
+    const span = t.ring.end - t.ring.start
+    const left = span > 0 ? Math.min(1, Math.max(0, (t.ring.end - performance.now()) / span)) : 0
+    f.impact = this.impact
+    f.ring[0] = ring
+    f.ring[1] = ring < 1 ? this.ring.strength * left : 0
+    f.ring[2] = this.ring.width
+    const B = cardPlay.loading.breath
+    const wait = t.wait.value[0]
+    f.wait[0] = wait
+      ? B.lum * wait * Math.sin((2 * Math.PI * (performance.now() - this.waitStart)) / (B.period * 1000))
+      : 0
+    f.wait[1] = B.radius
     this.contourFrame()
     this.gl!.draw(f)
     if (this.root.dataset.mode !== 'gl') {
