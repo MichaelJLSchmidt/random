@@ -8,8 +8,8 @@ Motion+, WebGL2, plain CSS. Built as a static export and deployed to GitHub Page
 `BASE_PATH`. Never indexed (robots meta and a disallow-all robots.txt).
 
 The site is bilingual: every page exists in German under `/de/` and in English under `/en/`
-(Swiss Standard German, informal "du"). The root picks the language; the header's "DE · EN"
-switches it in place. All visible text lives in `/content`, one set per language. The persona,
+(Swiss Standard German, informal "du"). The root picks the language; the header's switcher (DE,
+EN, the active one on a chip) switches it in place. All visible text lives in `/content`, one set per language. The persona,
 names, links, email and case studies there are fictional test content.
 
 The redesign was built by several sessions in parallel and merged by an integration session. The
@@ -99,7 +99,7 @@ build time): open `/de/` or `/en/`.
   shows links to both. On the 404 page the address's own `/de/` or `/en/` decides; only an
   address without one is picked the same way. It keeps the unknown address; an old address
   without a language (`/random/about/`) moves to the same page in the picked language.
-- The header's "DE · EN" links each language to the same page in it. Switching stores the choice,
+- The header's switcher (DE, EN) links each language to the same page in it. Switching stores the choice,
   keeps the page and the reading position, and cross-fades once (never the card transition,
   never the home intro).
 - German copy: Swiss Standard German ("ss", never "ß"), informal "du", no em-dashes or semicolons
@@ -132,9 +132,10 @@ Motion+ is an optional dependency: without a token `motion-plus` resolves to
   band, a one-line summary and the facts. Desktop: a fan at the bottom centre (176x246 cards, 72%
   visible on home, 45% elsewhere); hover or focus lifts a card until 90% shows. Mobile: the fan
   on home, elsewhere a 48px peek rail that opens a bottom sheet (a native popover) with the
-  cards. One tab stop (arrows, Home/End). The header holds the home slot (the logo, or Back on
-  detail pages), About and the language switcher. On pages that scroll it leaves on a scroll down and returns on a scroll up (the
-  mobile rail with it).
+  cards. One tab stop (arrows, Home/End). The header holds the home slot (the logo, its F card
+  in one of four gradients per load, or Back on detail pages) and the tray (About and the
+  language switcher on one capsule). On pages that scroll it leaves on a scroll down and returns
+  on a scroll up (the mobile rail with it); on detail pages Back stays on a floating chip.
 - **Detail pages**: the played card continues as the hero: its media frame slides off the right
   edge (the hero photo, or Management's drawing), the display H1 runs onto it, then the facts,
   the Scoreboard and numbered sections on the Spread grid (outlined chapter numerals, sticky

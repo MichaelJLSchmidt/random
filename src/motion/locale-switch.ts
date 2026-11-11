@@ -6,7 +6,7 @@ import { table } from './table-store'
 import { afterTransition } from './view-transition'
 
 /*
- * The language switch (the header's "DE · EN"): a client navigation to the
+ * The language switch (the header's switcher, DE / EN): a client navigation to the
  * same page in the other locale, typed "locale". The root layout (the field,
  * <html>) stays; the [locale] layout remounts with the other words, and every
  * part of the page cross-fades once in place (view-transitions.css,

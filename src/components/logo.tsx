@@ -12,7 +12,11 @@ import { readTier } from '@/motion/use-tier'
  * The logo: two fanned cards in the hand's card ratio, an M cut out of the back
  * card and an F out of the front one; the front card covers the M's right stem,
  * so the two letters share it. The back card is the text colour, the front card
- * the page accent (`--accent`, the ink identity's warm grey in the header).
+ * a gradient from the cards' colours: one of four per page load (palette.ts
+ * logoGradients, picked by the pre-paint script, --logo-a / -b / -c), whose
+ * colours flow along the card very slowly (header.module.css, `logo.flow`;
+ * phase-locked to the page clock, so a remount, e.g. a language switch, does
+ * not jump). Reduced motion: the gradient holds still.
  *
  * Geometry from the logo lab (concept 3, master), copied here so the lab can be
  * deleted without touching the site: user units of the lab's 48-unit box, the
@@ -27,7 +31,8 @@ import { readTier } from '@/motion/use-tier'
  * never fight over one transform.
  *   deal    the home intro deals the cards once a session (CHROME_IN)
  *   hover   hover (Motion hover(): no emulated touch hovers) and focus-visible
- *           widen the fan; leaving or blurring closes it
+ *           open the fan: the cards turn apart, part and lift (the front card
+ *           a beat later and higher); leaving or blurring closes it
  *   turn    the letters egg (claimClick() on home, a long press by touch):
  *           the cards turn, the cut-outs showing once they are edge-on; they
  *           turn back after logo.turn.hold
@@ -90,6 +95,7 @@ export function Logo({ className, mode, slot, ref }: Props) {
     cutM: useRef<SVGPathElement>(null),
     cutF: useRef<SVGPathElement>(null),
   }
+  const svg = useRef<SVGSVGElement>(null)
   const running = useRef<Controls[]>([])
   const turning = useRef(0)
   const lastLongPress = useRef(0)
@@ -229,6 +235,12 @@ export function Logo({ className, mode, slot, ref }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs and stable helpers
   }, [mode])
 
+  // The gradient's flow (CSS animations on its stops) runs on the page clock, not from this mount:
+  // a remounted logo (a language switch) carries on where the one it replaces was.
+  useLayoutEffect(() => {
+    for (const a of svg.current?.getAnimations({ subtree: true }) ?? []) if (a instanceof CSSAnimation) a.startTime = 0
+  }, [])
+
   // The home intro deals the cards in, once a session (full tier); a skipped intro ends it at once.
   useEffect(() => {
     const root = document.documentElement
@@ -272,11 +284,14 @@ export function Logo({ className, mode, slot, ref }: Props) {
       const p = parts()
       if (!p || readTier() === 'reduced') return
       for (const c of fan) c.stop()
-      const deg = open ? L.hover.deg : 0
-      const opts = { duration: L.hover.dur, ease: bezier(ease.move) }
+      const H = L.hover
+      const opts = { duration: H.dur, ease: bezier(ease.move) }
+      // Same function list open and closed, so the browser interpolates each part on its own.
+      const back = open ? pose({ x: -H.spread, y: -H.lift.back, deg: -H.deg }) : IDENTITY
+      const front = open ? pose({ x: H.spread, y: -H.lift.front, deg: H.deg }) : IDENTITY
       const now = [
-        animate([p.backFan], { transform: `rotate(${-deg}deg)` }, opts),
-        animate([p.frontFan, p.gapFan], { transform: `rotate(${deg}deg)` }, opts),
+        animate([p.backFan], { transform: back }, opts),
+        animate([p.frontFan, p.gapFan], { transform: front }, { ...opts, delay: open ? H.front : 0 }),
       ]
       fan = now
       // Closed again: nothing left on the fan groups.
@@ -350,8 +365,14 @@ export function Logo({ className, mode, slot, ref }: Props) {
   )
 
   return (
-    <svg className={className} viewBox="5 8.5 38 31" aria-hidden="true" focusable="false">
+    <svg ref={svg} className={className} viewBox="5 8.5 38 31" aria-hidden="true" focusable="false">
       <defs>
+        {/* The front card's paint: three colours that flow along it (header.module.css). */}
+        <linearGradient id={mask('paint')} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" data-logo-stop="0" />
+          <stop offset="0.5" data-logo-stop="1" />
+          <stop offset="1" data-logo-stop="2" />
+        </linearGradient>
         <mask id={mask('gap')} {...props}>
           <rect {...AREA} fill="white" />
           <g transform={FRONT}>
@@ -383,7 +404,7 @@ export function Logo({ className, mode, slot, ref }: Props) {
       <g transform={FRONT}>
         <g ref={refs.frontMove} data-logo-part="">
           <g ref={refs.frontFan} data-logo-part="">
-            <rect x="20.235" {...CARD} fill="var(--accent, currentColor)" mask={`url(#${mask('f')})`} />
+            <rect x="20.235" {...CARD} fill={`url(#${mask('paint')})`} mask={`url(#${mask('f')})`} />
           </g>
         </g>
       </g>

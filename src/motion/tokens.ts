@@ -122,6 +122,13 @@ export const duration = {
   /** The logo's cards leave before Back appears (logo.exit), and Back fades before they return. */
   logoExit: 0.3,
   logoBackFade: 0.16,
+  /**
+   * The header's chips: the language chip sliding in from the language before on a switch, and
+   * Back's chip drawing in on hover (or coming up while the header is away).
+   */
+  chip: 0.36,
+  /** Back's hover: the arrow pulling back and each letter's roll (stagger.letters apart). */
+  backPull: 0.42,
   /** The header (and the mobile rail with it) leaving on a scroll down (ease.in) and returning (outQuint). */
   headerHide: 0.2,
   headerShow: 0.24,
@@ -145,6 +152,8 @@ export const stagger = {
   digits: 0.04,
   /** Chapter numerals: between the contours as they draw (the left digit's first). */
   contours: 0.06,
+  /** Back's letters rolling on hover. */
+  letters: 0.025,
 } as const
 
 /** Seconds from the start of a sequence. */
@@ -203,11 +212,16 @@ export const header = { threshold: 8 } as const
  *   deal    part of the home intro, once a session: the back card, then the front one `front` s
  *           later, `dur` s each (ease.enter), from a small offset and turn, opaque at `opaque` of
  *           the way; returning from Back the front card follows `returnFront` s later
- *   hover   hover and focus-visible: the fan widens by `deg` either way (ease.move)
+ *   hover   hover and focus-visible: the fan opens by `deg` either way, the cards part by
+ *           `spread` units and lift (the front card more, `front` s later), `dur` s (ease.move);
+ *           closing, both together
  *   turn    the letters egg: each card turns (scaleX 1 -> 0 -> 1, ease.exit then ease.enter), the
  *           M and F cut-outs showing from the moment it is edge-on; it turns back after `hold` s;
  *           touch: a `longPress` s hold
  *   exit    to Back: the cards close up (`close` units) and sink (`sink`) as they fade
+ *   flow    the front card's gradient (one of palette.ts logoGradients per page load): its three
+ *           colours travel along the card, one loop every `dur` s, linear (CSS --logo-flow);
+ *           phase-locked to the page clock; reduced: still
  */
 export const logo = {
   deal: {
@@ -217,7 +231,8 @@ export const logo = {
     opaque: 0.45,
     from: { back: { x: -4, y: 10, deg: -10 }, front: { x: 4, y: 10, deg: 10 } },
   },
-  hover: { dur: 0.24, deg: 1 },
+  hover: { dur: 0.36, deg: 4, spread: 1.5, lift: { back: 0.5, front: 1.5 }, front: 0.04 },
+  flow: { dur: 24 },
   turn: { dur: 0.6, front: 0.12, hold: 1.6 },
   exit: { dur: duration.logoExit, sink: 3, close: 6 },
   longPress: 0.5,
@@ -782,6 +797,8 @@ export function motionCss(): string {
     // Chapter 05's pinned stage (layout.css): its head row and the space around and between rows.
     `--deal-head:${deal.pinned.head}px`,
     `--deal-pad:${deal.pinned.pad}px`,
+    // The header logo's gradient loop (reduced: no animation, header.module.css).
+    `--logo-flow:${ms(logo.flow.dur)}`,
     ...cardPlayConstants(),
   ]
   return [

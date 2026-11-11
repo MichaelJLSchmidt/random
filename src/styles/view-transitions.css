@@ -21,26 +21,34 @@
   animation: none;
 }
 
-/* Persistent chrome stays live and still. */
+/*
+ * Persistent chrome stays live and still. The language switcher (locale-switcher) is live in
+ * every transition, the language switch included: its chip slides across in the new header
+ * (header.module.css) instead of cross-fading.
+ */
 ::view-transition-group(site-header),
 ::view-transition-group(home-slot),
+::view-transition-group(locale-switcher),
 ::view-transition-group(hand),
 ::view-transition-group(hand-rail) {
   animation: none;
   z-index: 10;
 }
 ::view-transition-group(site-header),
-::view-transition-group(home-slot) {
+::view-transition-group(home-slot),
+::view-transition-group(locale-switcher) {
   z-index: 20;
 }
 ::view-transition-old(site-header),
 ::view-transition-old(home-slot),
+::view-transition-old(locale-switcher),
 ::view-transition-old(hand),
 ::view-transition-old(hand-rail) {
   display: none;
 }
 ::view-transition-new(site-header),
 ::view-transition-new(home-slot),
+::view-transition-new(locale-switcher),
 ::view-transition-new(hand),
 ::view-transition-new(hand-rail) {
   animation: none;
@@ -355,7 +363,8 @@
  * other language. Everything with words cross-fades once, in place, over --dur-s (reduced
  * 160 ms): the page and the card faces (.locale-fade, from the React maps in
  * transitions.ts), the header, the hand, the rail and the footer. Nothing moves or resizes; the
- * field (root) stays live. Never the card morph.
+ * field (root) stays live. Never the card morph. The switcher's codes are the same in both
+ * languages: it stays live, and only its chip moves (above).
  */
 ::view-transition-group(.locale-fade),
 :root[data-locale-switch]::view-transition-group(site-header),

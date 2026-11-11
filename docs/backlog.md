@@ -2,6 +2,30 @@
 
 Follow-ups that are known and deliberately not done yet. Take one at a time.
 
+## Feedback round 4: plan
+
+Small header changes, one session, in this order (the logo first: its slot is shared with Back).
+Contract: [Feedback round 4](contracts.md#feedback-round-4) (T1–T5). Report:
+`docs/handoff/feedback-4.md`.
+
+1. **T1, logo hover.** The fan opens wider (±4°, was ±1°), the cards part and lift (the front
+   card more, a beat later), 360 ms `ease.move`; tokens in `logo.hover`.
+2. **T2, the F card's gradient.** Four gradients from the four cards' colours (`logoGradients`
+   in `palette.ts`); the pre-paint script picks one per page load, never the previous load's
+   (localStorage); the three colours flow very slowly along the card (CSS on the gradient's
+   stops, 24 s loop, phase-locked to the page clock so a remount does not jump); reduced: still.
+3. **T5, Back.** On card pages Back stays on screen when the header leaves (it holds its place,
+   counter to the header's slide; reduced: it does not fade) and gets a floating chip behind it;
+   a richer hover: the arrow pulls back (head and stretching shaft), the letters roll one after
+   another, a chip draws in behind; a press gives a little.
+4. **T3, the switcher.** The active language sits on a filled chip (ink on text colour), the
+   other is muted; switching slides the chip across (the switcher is a live view-transition
+   group of its own, so the cross-fade does not double it); reduced: no slide.
+5. **T4, the header's right side.** About, a hairline and the switcher share one capsule (the
+   tray); the same chip language as Back's floating chip.
+6. Docs (contracts, art direction, README), the smoke check (Back stays, the chip), build,
+   verification at 1440 × 900 and 390 × 844 in both languages and tiers; push `main`; deploy check.
+
 ## Feedback round 3: plan
 
 One session, in this order (the background first: every other check depends on it). Report:
@@ -65,7 +89,8 @@ One session, in this order (the background first: every other check depends on i
   container without a GPU, where the shader runs in software and frames drop; check the frame
   rate (DevTools frame rendering stats, 60 fps, also at 4× CPU throttle) on a desktop and a
   mid-range phone. The 0.75× guard is the lever if a phone struggles.
-- **JS budget.** 180.9 KB gzip initial JS (advisory 170 KB, D7) after round 3.
+- **JS budget.** 180.9 KB gzip initial JS (advisory 170 KB, D7) after round 3; 184.6 KB after
+  card play, 185.0 KB after round 4.
 
 ## Resolved
 

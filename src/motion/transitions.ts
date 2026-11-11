@@ -4,7 +4,7 @@
  *   return: the page goes back into the card and the card into its hand slot (Back, Escape)
  *   switch: from one card's page straight to another card
  *   nav:    any other link (About, the 404 page's link home)
- *   locale: the same page in the other language (the header's "DE · EN"): the
+ *   locale: the same page in the other language (the header's switcher): the
  *           [locale] layout remounts and every part cross-fades once, in place;
  *           never a card morph
  * Browser back / forward carries no type: every map falls back to its default

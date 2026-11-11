@@ -5,8 +5,9 @@ Content & Images) worked in parallel against it; the Integration session merged 
 [integration decisions](#integration-decisions-i1i27) and updated this file to match the code.
 [Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there,
 [Locales](#locales-l1l11) made the site bilingual (German and English),
-[Feedback round 2](#feedback-round-2), [Feedback round 3](#feedback-round-3) and
-[Card play](#card-play-p1p8) changed the decisions listed there; every reference section
+[Feedback round 2](#feedback-round-2), [Feedback round 3](#feedback-round-3),
+[Card play](#card-play-p1p8) and [Feedback round 4](#feedback-round-4) changed the decisions
+listed there; every reference section
 below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
@@ -28,14 +29,15 @@ below were written for Wave 1 and apply again only if a future wave runs in para
   leading `/` for assets.
 - No personal names in code, comments, docs or commits (the fictional "Moritz Lauber" in test
   content is fine). Plain labels; no job-seeking language, CV download or testimonials.
-- Calm by default: only the background field moves at rest. Everything else is still until the
-  visitor scrolls or interacts, and every stub already renders its final, readable state.
+- Calm by default: only the background field (and, since T2, the very slow flow of the header
+  logo's gradient) moves at rest. Everything else is still until the visitor scrolls or
+  interacts, and every stub already renders its final, readable state.
 - Run `npm run build` before you push (it type-checks; output in `dist/`).
 
 Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisions-i1i27) ·
 [Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
 [Feedback round 2](#feedback-round-2) · [Feedback round 3](#feedback-round-3) ·
-[Card play](#card-play-p1p8) ·
+[Card play](#card-play-p1p8) · [Feedback round 4](#feedback-round-4) ·
 [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
@@ -386,10 +388,10 @@ motion and the three tiers are unchanged.
   labels) and `imageAlt` (German alt text; English: the registry's). The build-time checks run
   for both locales and check that they tell the same story (slugs, card order); German strings
   may not contain "ß", em-dashes or semicolons.
-- **L6. Switcher.** `nav[data-locale-switcher]` in the header after About (the calm switch until M2, the pause button until R2):
-  "DE · EN", one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
+- **L6. Switcher** (its look superseded by T3 and T4). `nav[data-locale-switcher]` in the header after About (the calm switch until M2, the pause button until R2):
+  "DE · EN" (since T3 "DE EN" on a sliding chip), one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
   language, the active one `aria-current="page"` (its `.link` underline drawn, like the current
-  page link); each a 44 × 44 px target. On the 404 page the other language's link reloads the
+  page link; since T3 it sits on the face-up chip); each a 44 × 44 px target. On the 404 page the other language's link reloads the
   address (the 404 page then picks the stored language; since F1 it opens the same address under the
   other language's prefix, and the address's locale decides).
 - **L7. The switch** (`src/motion/locale-switch.ts`): stores the choice, finishes running
@@ -457,7 +459,7 @@ below describe the new state.
   focus inside the header and after every route change (the mobile sheet is gone, P5). Overscroll
   bounce and scroll changes during a view transition (`transitionRunning()` in
   `view-transition.ts`) are ignored. CSS: `translate: 0 -100%`, `duration.headerHide` 200 ms
-  `ease.in`, `duration.headerShow` 240 ms outQuint; the reading hairline stays on screen at the top
+  `ease.in`, `duration.headerShow` 240 ms outQuint (on card pages Back stays, T5); the reading hairline stays on screen at the top
   edge; reduced: the header's content and backdrop crossfade (160 ms), nothing slides. The mobile
   rail follows the same attribute and timings (`data-rail` and `hand.railHideAfter` are gone).
   `scroll-padding-top: var(--header-h)` keeps anchors clear.
@@ -602,7 +604,7 @@ it (hover); the front card's knock-out in the back card moves with it.
   intro reveals the chrome (`CHROME_IN`), the back card, then the front card 120 ms later, 400 ms
   each, from a small offset and turn (−4 / 4 units, 10 down, ∓10°) with opacity 0 (opaque at 45%),
   `ease.enter`, no bounce. A skipped intro completes it.
-- *Hover and focus-visible*: the fan widens ±1° (240 ms, `ease.move`) and closes on leave or blur
+- *Hover and focus-visible* (superseded by T1: wider, parting and lifting): the fan widens ±1° (240 ms, `ease.move`) and closes on leave or blur
   (Motion `hover()`, which ignores emulated touch hovers; focus / blur listeners).
 - *Letters egg*: on home a click on the logo (it would only reload the table) is taken
   (`claimClick()`, no navigation) and plays the 600 ms turn (scaleX 1 → 0 → 1 per card, front
@@ -821,6 +823,64 @@ scale to fit, and a fit below `deal.pinned.minScale` (0.72) keeps the static row
 reveal is held (`data-reveal-hold`, `releaseReveal()`) until the stage pins, then it draws once.
 Below the gate, below 1024 px or under reduced motion: the standard chapter head and a static row.
 
+## Feedback round 4
+
+Small header changes, applied by one session (plan in `docs/backlog.md`, report in
+`docs/handoff/feedback-4.md`). Items T1–T5. Earlier decisions it changes are marked above; the
+reference sections below describe the new state.
+
+**T1. The logo's hover** (supersedes R3's ±1°): hover and focus-visible open the fan ±4°, part
+the cards by 1.5 units and lift them (the back card 0.5, the front card 1.5 units, 40 ms later),
+360 ms `ease.move`; closing, both together. Both states use the same transform function list
+(`translate() rotate()`), so each part interpolates on its own. Tokens: `logo.hover` (`dur`,
+`deg`, `spread`, `lift.back` / `lift.front`, `front`). Reduced: nothing moves (as before).
+
+**T2. The F card's gradient.** The front card is painted with an SVG `linearGradient` (the card's
+corner to its far corner, stops at 0, 0.5, 1, `[data-logo-stop]`) instead of `--accent`. Four
+gradients, one per card, from the four cards' colours: the card's glow, its accent and the accent
+of the next card round the colour wheel (`logoGradients` in `src/design/palette.ts`: ember → saffron,
+saffron → grove, grove → tide, tide → ember). `logoGradientCss()` (injected in the root layout)
+gives `:root` the first and each `html[data-logo-gradient="<name>"]` its three colours as
+`--logo-a`, `--logo-b`, `--logo-c`. The pre-paint script picks one per page load at random among
+the ones the last load did not show (localStorage `logo-gradient`, `LOGO_GRADIENT_KEY`), so every
+load and reload shows another; client navigations and language switches keep it. The flow: each
+stop runs through a → b → c → a in one `logo.flow.dur` loop (24 s, `--logo-flow`, linear), the
+stops a third of the loop apart, so the colours travel slowly along the card (CSS keyframes on
+`stop-color` in `header.module.css`); `logo.tsx` sets their start time to the page clock (0) on
+mount, so a remounted logo carries on in phase. Reduced: no animation, the gradient in its own
+order. This is the one thing besides the field that moves at rest.
+
+**T3. The switcher's chip.** The codes (`DE`, `EN`) in Martian Mono, 0.75 rem, in two 44 px
+segments; the active one (`aria-current="page"`) sits on a face-up chip (36 × 28 px, the text
+colour, ink letters), the other is muted and shows a hairline chip and the text colour on hover
+and focus. The chip is one element (`[class*="chip"]` inside `[data-locale-switcher]`, aria-hidden)
+at `--active` × `--seg` (`--active`: the locale's index, inline). A header mounted by a language
+switch (`html[data-locale-switch]` set at mount) marks the switcher `data-arrived` in a layout
+effect: the chip slides in from the other segment (`duration.chip`, 360 ms, outQuint) while the
+two codes trade colours between 30% and 70% of it. The switcher has its own view-transition name,
+`locale-switcher`, live and not animated in every transition (like `home-slot`), so the switch's
+cross-fade never shows two chips. Reduced: no slide. The "·" between the codes is gone.
+
+**T4. The tray.** The header's right side is one capsule (`.end::before`: 36 px high inside the
+44 px targets, a 1 px edge in `--chip-line` (text 13%) on `--chip-fill` (ink field 62%), fully
+rounded): About (no resting underline inside the tray; it draws on hover and stays drawn as the
+current page), a 16 px hairline, then the switcher, whose chip sits 4 px inside the capsule's
+end. Back's chip (T5) speaks the same language. The tray's width follows About's label, so during
+a language switch its edge cross-fades with the header.
+
+**T5. Back stays, and its hover.** On card pages (`a[data-slot-mode="back"]`), when the header
+leaves on a scroll down the slot moves down by `--header-h` in step with it (the same duration and
+curve, `will-change: translate`), so it holds its place (checked: the arrow does not move a
+fraction of a pixel through the slide), keeps taking clicks (`pointer-events: auto`) and its chip
+comes up as a floating backdrop (the ink field at 80%, the tray's edge). Reduced: the header's
+other parts fade, Back does not; its chip fades in. Hover and focus-visible: the arrow pulls back
+(the head 3 px left, the shaft stretching after it, `transform`, so the morph's delayed `scale`
+and `opacity` never hold it back), the letters roll up one after another, each replaced by its
+copy from below (`duration.backPull` 420 ms, `stagger.letters` 25 ms, outQuint; the label is read
+once from a visually hidden copy, the rolling letters are aria-hidden), and the chip draws in
+(a faint text-colour fill, from 92%, `duration.chip`); a press scales Back to 0.96
+(`duration.fast`). Reduced: the chip fades, nothing moves.
+
 ---
 
 ## Ownership (Wave 1)
@@ -919,7 +979,7 @@ src/components/
   reveals.tsx                  <Reveals/>, <Reveal>, <FirstLoadSequence> (Motion)
   reading-hairline.tsx         <ReadingHairline/> (Motion), mounted in header.tsx
   picture.tsx                  <Picture> (Content & Images)
-  header.tsx                   header: home slot (wordmark / Back morph), About, language switcher, AmbientToggle, hairline
+  header.tsx                   header: home slot (logo / Back morph, Back stays), the tray (About, language switcher), hairline
   locale-sync.tsx              <html lang> on the client; settles a language switch (L3, L7)
   router-bridge.tsx            root layout: registerNavigate + the back / forward replay (L2)
   site-footer.tsx, footer-shell.tsx, about-small-print.tsx   footer (none on home; About's small print)
@@ -1084,7 +1144,9 @@ strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label
 `header.threshold` (8 px) and `duration.headerHide` / `headerShow` (200 / 240 ms; N1);
 `reveal.mask` also as `--reveal-mask`; `duration.slotMorph` / `slotLag` (Back's arrow and label,
 G4), `duration.logoExit` / `logoBackFade` and `logo.*` (the header logo, R3; `ease.enter`,
-`ease.move`, `ease.exit` are its curves), `duration.topo` (About's morph, 1.6 s) and
+`ease.move`, `ease.exit` are its curves; `logo.hover` T1, `logo.flow` T2 → `--logo-flow`),
+`duration.chip` (the switcher's chip and Back's chip, 360 ms) and `duration.backPull` (Back's
+hover, 420 ms) with `stagger.letters` (25 ms; T3, T5), `duration.topo` (About's morph, 1.6 s) and
 `duration.contourHandoff` (the SVG's crossfade, 0.3 s; R1);
 `angle.*` (`--angle-discard`, `--angle-tap`), `weight.*`
 (`--wght-<kebab>`), `opsz`, `field.*` (incl. `ignoreHeight` (R4), `poolDrift`, `poolDriftPeriods`
@@ -1117,7 +1179,10 @@ the current identity is `--id-field`, `--id-mid`, `--id-glow`, `--id-accent`, `-
 metrics, dividers, illustration strokes; text on a glow surface uses the identity's `ink`.
 Other: `--text`, `--muted`, `--line`, `--glacier-text`, and About's contour ground:
 `contour.ground` `#1B1C18` (`--contour-ground`; the old password page's; its line colour `#8A8C80`
-lives in the SVGs, B1). On About the hand's scrim takes the contour ground.
+lives in the SVGs, B1). On About the hand's scrim takes the contour ground. The header logo's
+front card: `logoGradients` (four three-colour gradients from the cards' glow and accents, T2),
+`logoGradientCss()` → `--logo-a`, `--logo-b`, `--logo-c` on `:root` and per
+`html[data-logo-gradient]`.
 
 ---
 
@@ -1159,7 +1224,7 @@ lives in the SVGs, B1). On About the hand's scrim takes the contour ground.
   directly; hovering or playing never re-renders React.
 - View-transition names: `card-<id>`, `card-band-<id>`, `card-title-<id>` (hand card or its
   clone ↔ the page's play frame, hero image and h1; P3), `hand`,
-  `hand-rail`, `site-header`, `home-slot` (R3), `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
+  `hand-rail`, `site-header`, `home-slot` (R3), `locale-switcher` (T3), `site-footer`. Transition types: `play`, `return`, `switch`, `nav`,
   `locale` (`src/motion/transitions.ts`; `locale`: L7, L8).
 - Stage 1 of a play runs on the card's clone on the table (`.table-card`, P2): press, lift
   (desktop), the arced flight with its rise and drop into contact, the hold, then the navigation.
@@ -1574,7 +1639,8 @@ Spread grid (D9).
 
 `/more-projects` and `/contact` are gone (A3; the 404 page answers). `/<locale>/logo-lab` is the
 unlinked logo lab (English, `lang="en"`). Header: the home slot (logo, or Back on card
-pages), About, the language switcher (L6); it leaves on a scroll down (N1). Every page has one `h1` (`PageTitle`,
+pages), and the tray with About and the language switcher (L6, T3, T4); it leaves on a scroll down
+(N1), Back stays (T5). Every page has one `h1` (`PageTitle`,
 `id="page-heading"`, focus target after navigation).
 
 ---
@@ -1592,7 +1658,10 @@ pages), About, the language switcher (L6); it leaves on a scroll down (N1). Ever
 | `data-side="left\|right"` | OffsetImage | the edge the image extends toward from 1024 |
 | `data-slot-mode="mark\|back"` | the header's home slot | logo or Back (G4, R3) |
 | `data-logo-part` | the logo's card groups (move and fan, and the front card's knock-out) | animated by logo.tsx; turn and fan about their bottom centre (R3) |
-| `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6) |
+| `data-logo-stop="0\|1\|2"` | the front card's gradient stops | their colours flow (T2) |
+| `data-logo-gradient="ember\|tide\|grove\|saffron"` | `<html>` | this page load's logo gradient, from the pre-paint script (T2) |
+| `data-locale-switcher`, `data-locale="de\|en"` | the header's language nav and its links | the switcher (L6, T3) |
+| `data-arrived` | the language nav | mounted by a language switch: its chip slides in (T3) |
 | `data-locale-switch` | `<html>` | while a language switch runs: the chrome cross-fades (L7, L8) |
 | `data-idle-hint`, `data-ready` | the idle hint (home) | the note; ready once its font has loaded |
 | `data-contours="off\|morph\|shown"`, `data-contours-primed`, `data-canvas-covered` | `.field` | About's SVG layer: hidden, morphing in or out, at rest; rendered at opacity 0 because About is near; the SVG layer covers the canvas, which is not composited (R1) |

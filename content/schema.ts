@@ -84,7 +84,7 @@ export type Site = {
   introSkip: string
   /**
    * The home slot (wordmark, or Back on detail pages), the one page link (About), the name of
-   * the site navigation and of the language switcher ("DE · EN").
+   * the site navigation and of the language switcher (DE, EN).
    */
   header: { homeLabel: string; back: string; about: string; nav: string; language: string }
   footer: { note: string }

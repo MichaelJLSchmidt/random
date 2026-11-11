@@ -54,11 +54,16 @@ dividers and illustration strokes.
 - **Mobile**: the fan on home; elsewhere a 48 px rail of the four cards' edges: one tap plays a
   card (a press shows under the thumb, a scroll calls it off), the open card's edge sits lower with
   an accent line and takes the page back to its top.
-- **Header**: the logo (two fanned cards with an M and an F cut out) or Back at the top left,
-  About and "DE · EN" at the right. On pages that scroll it leaves on a deliberate scroll down and
-  returns on any scroll up (the mobile rail with it); the reading hairline stays at the top edge.
-- **Logo**: on the first home visit its two cards are dealt in with the rest of the table. Hover
-  or focus widens the fan a little. A click on the logo on home (or a long press by touch) turns
+- **Header**: the logo (two fanned cards with an M and an F cut out) or Back at the top left; at
+  the right one capsule, the tray: About, a hairline and the language switcher, whose active
+  language lies on a face-up chip that slides across when you switch. On pages that scroll it
+  leaves on a deliberate scroll down and returns on any scroll up (the mobile rail with it); the
+  reading hairline stays at the top edge. On card pages Back never leaves: it holds its place on a
+  floating chip. Its hover pulls the arrow back, rolls the letters and draws the chip in.
+- **Logo**: on the first home visit its two cards are dealt in with the rest of the table. The F
+  card wears one of four gradients made from the cards' colours, a different one on every load,
+  its colours flowing along it very slowly (still under reduced motion). Hover or focus opens the
+  fan: the cards turn apart, part and lift. A click on the logo on home (or a long press by touch) turns
   the cards to show their letters, and back. Entering a detail page the cards close up and leave
   before "← Back" appears; coming back they are dealt again.
 - **Home** is one screen: the name, the intro, what I bring to the table and the hand. On a first
@@ -84,7 +89,7 @@ dividers and illustration strokes.
 ## Tone
 
 - Calm, subtle, smooth, professional, with playful moments (the easter eggs).
-- Only the background moves at rest; everything else is still until the visitor scrolls or
+- Only the background (and the logo's slow gradient) moves at rest; everything else is still until the visitor scrolls or
   interacts. No bounce, no overshoot: impact comes from acceleration into contact, a hold, the
   shadow and the field's answer.
 - Two motion tiers: full, and reduced (`prefers-reduced-motion`: crossfades only, no flight and no
@@ -96,7 +101,7 @@ dividers and illustration strokes.
 - Plain labels. No job-seeking language, CV download or testimonials. No personal names in code,
   comments, docs or commits.
 - Two languages, German (Swiss Standard German, informal "du", no em-dashes or semicolons) and
-  English, the same design in both. The header's "DE · EN" switches in place with one short
+  English, the same design in both. The header's switcher (DE, EN) switches in place with one short
   cross-fade; the table, the field and the reading position stay.
 
 ## Constraints

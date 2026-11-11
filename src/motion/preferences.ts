@@ -11,6 +11,10 @@
  *   data-hand:    "collapsed" on every route except home (the hand shows 45%
  *                 there), so --hand-reserve is right from the first paint; the
  *                 hand component keeps it in step on client navigations.
+ *   data-logo-gradient: the header logo's front card gradient for this page
+ *                 load, one of logoGradients (src/design/palette.ts) at random
+ *                 but never the one the last load showed (localStorage
+ *                 LOGO_GRADIENT_KEY), so every reload shows another.
  *   data-reveal:  "armed" so reveal targets can start hidden from first paint.
  *                 If the reveal system has not taken over 4 s later, the
  *                 attributes are dropped and every page shows its final state.
@@ -19,8 +23,11 @@
  * background motion follows prefers-reduced-motion and stops while the tab is
  * hidden (the pause button of round 2 is gone, R2).
  */
+import { logoGradientNames } from '@/design/palette'
 import { locales } from '@/lib/i18n'
 
+/** localStorage: the logo gradient the last page load showed (the next load picks another). */
+export const LOGO_GRADIENT_KEY = 'logo-gradient'
 /** sessionStorage: set once the home draw sequence has played in this session. */
 export const INTRO_KEY = 'table-drawn'
 /** Fired when the first-visit intro completes or is skipped (the field finishes its fade-in). */
@@ -32,4 +39,4 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 const LOCALE_PREFIX = `^/(${locales.join('|')})(?=/|$)`
 
 export const prefsScript = (fields: Record<string, string>, maps: string[]) =>
-  `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function a(){d.dataset.motion=m.matches?"reduced":"full"}a();m.addEventListener("change",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}var p=location.pathname.slice(${JSON.stringify(BASE)}.length).replace(new RegExp(${JSON.stringify(LOCALE_PREFIX)}),"").replace(/\\/$/,"")||"/",f=${JSON.stringify(fields)}[p];if(f)d.dataset.field=f;if(${JSON.stringify(maps)}.indexOf(p)>-1)d.dataset.aboutMap="";if(p==="/"){d.dataset.intro=s?"repeat":"first"}else{d.dataset.hand="collapsed"}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`
+  `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function a(){d.dataset.motion=m.matches?"reduced":"full"}a();m.addEventListener("change",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}var p=location.pathname.slice(${JSON.stringify(BASE)}.length).replace(new RegExp(${JSON.stringify(LOCALE_PREFIX)}),"").replace(/\\/$/,"")||"/",f=${JSON.stringify(fields)}[p];if(f)d.dataset.field=f;if(${JSON.stringify(maps)}.indexOf(p)>-1)d.dataset.aboutMap="";if(p==="/"){d.dataset.intro=s?"repeat":"first"}else{d.dataset.hand="collapsed"}var g=${JSON.stringify(logoGradientNames)},l=null;try{l=localStorage.getItem("${LOGO_GRADIENT_KEY}")}catch(e){}var o=g.filter(function(n){return n!==l}),n=o[Math.floor(Math.random()*o.length)];d.dataset.logoGradient=n;try{localStorage.setItem("${LOGO_GRADIENT_KEY}",n)}catch(e){}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`

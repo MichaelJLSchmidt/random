@@ -38,6 +38,33 @@ export const contour = { ground: '#1B1C18', line: '#8A8C80', lake: '#8FC7E8' } a
 export const identities = Object.keys(palette) as Identity[]
 
 /**
+ * The header logo's front card (the F) is one of four gradients, one per card, from the four
+ * cards' own colours: the card's glow, its accent, and the accent of the next card round the
+ * colour wheel (ember, saffron, grove, tide, ember), so no two look alike. The
+ * pre-paint script (src/motion/preferences.ts) picks one per page load, never the one the last
+ * load showed; the logo's stops read them as --logo-a / -b / -c (logoGradientCss()) and let the
+ * three flow along the card (header.module.css). Without JavaScript: the first.
+ */
+export const logoGradients = {
+  ember: [palette.ember.glow, palette.ember.accent, palette.saffron.accent],
+  tide: [palette.tide.glow, palette.tide.accent, palette.ember.accent],
+  grove: [palette.grove.glow, palette.grove.accent, palette.tide.accent],
+  saffron: [palette.saffron.glow, palette.saffron.accent, palette.grove.accent],
+} as const satisfies Partial<Record<Identity, readonly [string, string, string]>>
+
+export type LogoGradient = keyof typeof logoGradients
+export const logoGradientNames = Object.keys(logoGradients) as LogoGradient[]
+
+/** :root's logo colours (the first gradient) and one html[data-logo-gradient] scope per gradient. */
+export function logoGradientCss(): string {
+  const vars = (name: LogoGradient) => logoGradients[name].map((c, i) => `--logo-${'abc'[i]}:${c}`).join(';')
+  return (
+    `:root{${vars(logoGradientNames[0])}}` +
+    logoGradientNames.map((n) => `:root[data-logo-gradient="${n}"]{${vars(n)}}`).join('')
+  )
+}
+
+/**
  * CSS custom properties for every identity, plus [data-identity] scopes. Each
  * scope also re-declares --accent, so it follows the scope's --id-accent
  * (declared only on :root it would resolve once, to the ink accent).

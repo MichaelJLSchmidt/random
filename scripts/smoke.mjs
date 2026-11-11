@@ -17,6 +17,7 @@ const motion = flags.find((f) => f.startsWith('--motion='))?.slice(9) ?? 'full'
 const root = base.endsWith('/') ? base : `${base}/`
 const locale = new URL(root).pathname.split('/').filter(Boolean).at(-1)
 const { locales } = await load('src/lib/i18n.ts')
+const { logoGradientNames } = await load('src/design/palette.ts')
 if (!locales.includes(locale)) throw new Error(`The URL must end in a locale (${locales.join(', ')}): ${root}`)
 const other = locales.find((l) => l !== locale)
 const { hand } = await load(`content/${locale}/hand.ts`)
@@ -261,6 +262,33 @@ async function tableSuite(browser, device) {
     ambient: document.documentElement.dataset.ambient ?? null,
   }))
   check('header: no pause / play button', header.toggle === 0 && header.ambient === null, JSON.stringify(header))
+  // T2: every load picks one of the logo's gradients, never the one the load before showed; the
+  // front card is painted with it, and its colours flow only in the full tier.
+  const gradients = []
+  for (let i = 0; i < 4; i++) {
+    if (i) await page.reload({ waitUntil: 'networkidle' })
+    gradients.push(
+      await page.evaluate(() => {
+        const stop = document.querySelector('header [data-logo-stop="1"]')
+        return {
+          name: document.documentElement.dataset.logoGradient,
+          flowing: stop.getAnimations().length > 0,
+          paint: document.querySelector('header [data-logo-part] rect[fill^="url("]') !== null,
+        }
+      }),
+    )
+  }
+  check(
+    'logo: a gradient per load, never the last one; flowing in the full tier only',
+    gradients.every(
+      (g, i) =>
+        logoGradientNames.includes(g.name) &&
+        g.paint &&
+        g.flowing === (motion === 'full') &&
+        (i === 0 || g.name !== gradients[i - 1].name),
+    ),
+    JSON.stringify(gradients),
+  )
   if (motion === 'full') {
     const frames = await fieldFrames(1000)
     check('field: the resting field breathes (frames at rest on home)', frames > 5, String(frames))
@@ -428,17 +456,26 @@ async function tableSuite(browser, device) {
       const shown = (el) => {
         if (!el || !el.getClientRects().length) return null
         const r = el.getBoundingClientRect()
-        // The header fades its children (reduced), the rail itself.
+        // The header fades its children (reduced; read on the tray, since Back never fades), the rail itself.
         const o = Math.min(
           Number(getComputedStyle(el).opacity),
-          Number(getComputedStyle(el.firstElementChild ?? el).opacity),
+          Number(getComputedStyle(el.querySelector(':scope > div') ?? el).opacity),
         )
         return r.bottom > 1 && r.top < innerHeight - 1 && o > 0.5
       }
+      // T5: Back stays where it was, opaque and clickable, whatever the header does.
+      const slot = header.querySelector('a[data-slot-mode="back"]')
+      const back = (() => {
+        if (!slot) return null
+        const r = slot.getBoundingClientRect()
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('a') === slot
+        return { top: Math.round(r.top), opacity: Number(getComputedStyle(slot).opacity), hit }
+      })()
       return {
         attr: document.documentElement.dataset.header ?? null,
         header: shown(header),
         rail: shown(rail),
+        back,
         hairline: Math.round(document.querySelector('[data-reading-hairline]').getBoundingClientRect().top),
       }
     })
@@ -466,6 +503,13 @@ async function tableSuite(browser, device) {
       up.attr === null &&
       up.header,
     JSON.stringify({ nearTop, down, nudge, up }),
+  )
+  check(
+    'header: Back stays in place, opaque and clickable while the header is away',
+    [nearTop, down, up].every((st) => st.back && st.back.opacity === 1 && st.back.hit) &&
+      down.back.top === nearTop.back.top &&
+      up.back.top === nearTop.back.top,
+    JSON.stringify({ nearTop: nearTop.back, down: down.back, up: up.back }),
   )
   if (device === 'phone')
     check(
@@ -743,7 +787,7 @@ async function tableSuite(browser, device) {
  * Locales: the root picks the language (a stored choice, then navigator.languages; other languages
  * English, none German) and replaces the URL; without JavaScript it links both. The 404 page picks
  * the same way at the unknown address. Every page carries <html lang> and hreflang alternates. The
- * switcher ("DE · EN") opens the same page in the other language: a "locale" cross-fade (never a
+ * switcher (DE / EN, the active one on a chip) opens the same page in the other language: a "locale" cross-fade (never a
  * card transition, never the home intro), the field and the motion tier untouched, the reading
  * position and the switcher's focus kept, the choice stored; 44 px targets on phones.
  */
@@ -911,6 +955,13 @@ async function localeSuite(browser, device) {
       }).length,
     }))
     const vts = (await page.evaluate(() => window.__vts)).slice(vtsBefore)
+    // T3: once the switch has settled, the face-up chip lies under the active language.
+    const chip = await page.evaluate(() => {
+      const c = document.querySelector('[data-locale-switcher] [class*="chip"]')?.getBoundingClientRect()
+      const a = document.querySelector('[data-locale-switcher] [aria-current]')?.getBoundingClientRect()
+      return c && a ? Math.round(Math.abs(c.left + c.width / 2 - (a.left + a.width / 2))) : null
+    })
+    check(`switch on ${p}: the chip lies under the active language`, chip === 0, String(chip))
     check(
       `switch ${locale} → ${other} on ${p}: same page, "${titles[other][p]}", lang, choice stored`,
       after.lang === other &&
@@ -1054,9 +1105,13 @@ async function motionSuite(browser, device) {
       .getAnimations()
       .filter(
         (a) =>
-          a.playState === 'running' && a.timeline instanceof DocumentTimeline && !a.effect?.target?.closest?.('.field'),
+          a.playState === 'running' &&
+          a.timeline instanceof DocumentTimeline &&
+          !a.effect?.target?.closest?.('.field') &&
+          // T2: the logo's gradient flows at rest, very slowly (its stops only).
+          !a.effect?.target?.matches?.('header [data-logo-stop]'),
       )
-      .map((a) => a.effect?.target?.className || a.effect?.target?.tagName),
+      .map((a) => a.effect?.target?.className?.baseVal ?? (a.effect?.target?.className || a.effect?.target?.tagName)),
     progress: Number(
       getComputedStyle(document.querySelector('[data-reading-hairline]')).getPropertyValue('--reading-progress'),
     ),
@@ -1074,7 +1129,11 @@ async function motionSuite(browser, device) {
       rest.dealLayers.length === 4 && rest.dealLayers.every((v) => v === 'transform'),
       rest.dealLayers.join(),
     )
-  check('motion: only the background moves at rest', rest.moving.length === 0, rest.moving.join(','))
+  check(
+    "motion: only the background (and the logo's gradient) moves at rest",
+    rest.moving.length === 0,
+    rest.moving.join(','),
+  )
   check('hairline: follows the scroll (mid page)', rest.progress > 0.2 && rest.progress < 0.8, String(rest.progress))
   const moves = rest.props.filter((p) => /transform|translate|scale|rotate|clipPath/.test(p))
   if (motion === 'reduced') {
