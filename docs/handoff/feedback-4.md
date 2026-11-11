@@ -44,8 +44,7 @@ The logo first (its slot is shared with Back), then Back, then the right side:
 ## Verification
 
 - `npm run build` (type check, content checks, both locales).
-- `scripts/smoke.mjs` for `de` and `en`, full: all passed; reduced: running at the first commit
-  (no failures so far), result in the next commit.
+- `scripts/smoke.mjs` for `de` and `en`, full and reduced: all passed.
 - Back through the header's slide (transitions paused at 0, 40, … 260 ms): the arrow's top stays at
   the same position to 0.01 px while the header goes from 0 to −64 px; `elementFromPoint` over it
   hits Back while the header is away.
