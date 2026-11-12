@@ -41,6 +41,8 @@ export function durFor(tier: MotionTier, step: DurationStep) {
 const outExpo = [0.16, 1, 0.3, 1] as const
 const outQuint = [0.22, 1, 0.36, 1] as const
 const inOut = [0.65, 0, 0.35, 1] as const
+/** A plain ease-out (the card's press, text links). */
+const outCubic = [0.33, 1, 0.68, 1] as const
 
 /** Cubic béziers. The first three are the scale; the rest are the table's named curves. */
 export const ease = {
@@ -57,6 +59,8 @@ export const ease = {
   enter: [0.05, 0.7, 0.1, 1],
   move: [0.2, 0, 0, 1],
   exit: [0.3, 0, 0.8, 0.15],
+  /** Text links (globals.css .link): the marker's morph and the triangle's fade, a plain ease-out that settles. */
+  link: outCubic,
 } as const
 
 /**
@@ -115,7 +119,17 @@ export const duration = {
   /** New hand: each card flies off to the dealer. */
   gather: 0.44,
   // UI
+  /** The next project card's title underline (detail.css). */
   underline: 0.16,
+  /**
+   * Text links (globals.css .link): hovering in, the marker block slides left and down and
+   * collapses into the underline (`linkIn`) while the triangle fades in (`linkMarkIn`); hovering
+   * out runs the reverse, faster (`linkOut`, `linkMarkOut`). ease.link. Reduced: instant.
+   */
+  linkIn: 0.24,
+  linkOut: 0.16,
+  linkMarkIn: 0.16,
+  linkMarkOut: 0.1,
   /** Header home slot: Back's arrow and label appearing, and the beat before the head and label. */
   slotMorph: 0.42,
   slotLag: 0.12,
@@ -405,7 +419,6 @@ type Curve = readonly [number, number, number, number]
 /** A part of a sequence: starts `at` s after its anchor and runs `dur` s. */
 type Span = { readonly at: number; readonly dur: number }
 
-const outCubic: Curve = [0.33, 1, 0.68, 1]
 /** Into contact: accelerating, so the card meets the table at speed (no rebound follows). */
 const intoContact: Curve = [0.55, 0, 0.85, 0.35]
 const morphCurve: Curve = [0.3, 0, 0, 1]

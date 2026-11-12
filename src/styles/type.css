@@ -9,6 +9,17 @@
  * component needs one property only. Foundation-owned; read-only in Wave 1.
  */
 :root {
+  /*
+   * Each family's descent (em): how far an inline box's background reaches below the baseline
+   * (typo = hhea descender, USE_TYPO_METRICS set in all three files, so every platform agrees).
+   * Text links anchor their marker to the baseline with it (globals.css .link). Declared next to
+   * every font-family below; Hanken Grotesk 0.303, Martian Mono 0.2, Bricolage Grotesque 0.27.
+   */
+  --descent-text: 0.303;
+  --descent-mono: 0.2;
+  --descent-display: 0.27;
+  --font-descent: var(--descent-text);
+
   /* label: Martian Mono 500, 11 -> 12 px, +0.08em, uppercase */
   --type-label-size: clamp(0.6875rem, 0.6643rem + 0.0952vw, 0.75rem);
   --type-label-leading: 1rem;
@@ -59,6 +70,7 @@
 /* ---------- Scale classes ---------- */
 .t-label {
   font-family: var(--font-mono);
+  --font-descent: var(--descent-mono);
   font-size: var(--type-label-size);
   line-height: var(--type-label-leading);
   font-weight: var(--type-label-weight);
@@ -68,6 +80,7 @@
 }
 .t-body {
   font-family: var(--font-text);
+  --font-descent: var(--descent-text);
   font-size: var(--type-body-size);
   line-height: var(--type-body-leading);
   font-weight: var(--type-body-weight);
@@ -75,6 +88,7 @@
 }
 .t-lead {
   font-family: var(--font-text);
+  --font-descent: var(--descent-text);
   font-size: var(--type-lead-size);
   line-height: var(--type-lead-leading);
   font-weight: var(--type-lead-weight);
@@ -105,6 +119,7 @@
 .t-display,
 .t-numeral {
   font-family: var(--font-display);
+  --font-descent: var(--descent-display);
   font-weight: var(--wght);
   font-variation-settings: 'opsz' var(--opsz);
   text-wrap: balance;
@@ -147,6 +162,7 @@
 /* ---------- Base elements ---------- */
 body {
   font-family: var(--font-text);
+  --font-descent: var(--descent-text);
   font-size: var(--type-body-size);
   font-weight: var(--wght-body);
 }
@@ -156,6 +172,7 @@ h2,
 h3,
 .display {
   font-family: var(--font-display);
+  --font-descent: var(--descent-display);
   font-weight: var(--wght);
   letter-spacing: var(--tracking-display);
 }
@@ -186,6 +203,7 @@ h3 {
 time,
 .metric {
   font-family: var(--font-mono);
+  --font-descent: var(--descent-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-mono);
 }

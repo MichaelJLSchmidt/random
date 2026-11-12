@@ -95,19 +95,22 @@
   list-style: none;
 }
 
+/*
+ * About: a standalone text link (globals.css .link, on the inner span: its marker block at rest,
+ * the line and the triangle on hover and focus; the line alone as the current page). One line
+ * of 44 px, so the span stays an inline box on the text's baseline. The triangle's room after
+ * the label stands in for most of the right padding.
+ */
 .about {
-  display: inline-flex;
-  align-items: center;
+  display: block;
   min-height: 44px;
-  padding: 0 var(--space-3) 0 var(--space-4);
+  padding: 0 var(--space-1) 0 var(--space-4);
   color: var(--text);
   font-size: var(--text-sm);
   font-weight: var(--wght-label);
+  line-height: 44px;
+  white-space: nowrap;
   text-decoration: none;
-}
-/* In the tray the capsule already says "control": no resting underline, only the drawn one. */
-.about > :global(.link) {
-  --link-rest: transparent;
 }
 
 .rule {
@@ -502,6 +505,6 @@
 /* Phones: the tray's About sits a little tighter. */
 @media (max-width: 639.98px) {
   .about {
-    padding-inline: var(--space-3) var(--space-2);
+    padding-inline: var(--space-3) 0;
   }
 }

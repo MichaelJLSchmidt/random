@@ -187,8 +187,8 @@ export default async function AboutPage({ params }: Props) {
             {p.end}
           </Reveal>
           <p className="projects-thesis col-content">
-            <Link className="link" href={href('/about/thesis')} transitionTypes={[NAV]}>
-              {p.thesis} →
+            <Link className="link link-standalone" href={href('/about/thesis')} transitionTypes={[NAV]}>
+              {p.thesis}
             </Link>
           </p>
         </Section>
@@ -198,19 +198,19 @@ export default async function AboutPage({ params }: Props) {
           <Reveal as="p" kind="lines" className="contact-body t-lead col-content">
             {c.body}
           </Reveal>
-          <div className="contact-email-line col-content">
-            <a className="contact-email t-h2" href={`mailto:${c.email}`}>
+          {/* The email's marker block draws in from the left as the chapter reveals (a `rule` with a marker). */}
+          <Reveal as="p" kind="rule" className="contact-email-line t-h2 col-content" data-reveal-marker="">
+            <a className="contact-email link link-standalone" href={`mailto:${c.email}`}>
               {c.email}
             </a>
-            <Reveal as="hr" kind="rule" className="contact-underline" />
-          </div>
+          </Reveal>
           <dl className="contact-pairs col-content">
             {c.links.map((l) => (
               <div key={l.label} className="contact-pair">
                 <dt className="t-label">{l.label}</dt>
                 <dd className="t-label">
                   {l.href ? (
-                    <a className="link" href={l.href}>
+                    <a className="link link-standalone" href={l.href}>
                       {l.value}
                     </a>
                   ) : (
@@ -228,7 +228,7 @@ export default async function AboutPage({ params }: Props) {
         {/* The contour map's credit along the left edge from 1024, while the map is behind the page. The
             footer's small print carries the same link for keyboards and screen readers. */}
         <p className="topo-attribution t-label" aria-hidden="true">
-          <a href={a.topo.href} tabIndex={-1}>
+          <a className="link link-vertical" href={a.topo.href} tabIndex={-1}>
             {a.topo.attribution}
           </a>
         </p>

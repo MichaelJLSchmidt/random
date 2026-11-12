@@ -65,9 +65,43 @@ export function logoGradientCss(): string {
 }
 
 /**
+ * Text links (globals.css .link): at rest a marker block in a deeper shade of the page's identity
+ * behind the text, on hover an underline in the identity's accent at full strength. The shade is
+ * the identity's glow mixed toward its field in OKLab by `mix`, tuned per identity so the text
+ * (`text`) over it keeps at least 4.5:1 and the block still reads as the colour (contrast values:
+ * docs/contracts.md#colour). Ink pages (home, 404) follow the logo: the block and the line are
+ * the page load's three logo colours as a gradient along the link, flowing with the logo's front
+ * card; the block takes each colour to OKLCH lightness `inkDepth` with its chroma and hue kept (a
+ * plain mix toward the ink field turns the light accents grey), or, where relative colours are
+ * unsupported, mixes it toward the ink field by `inkMix`.
+ */
+export const linkMark = {
+  mix: { ember: 0.25, tide: 0.28, grove: 0.39, saffron: 0.49, glacier: 0.05 },
+  inkDepth: 0.49,
+  inkMix: 0.52,
+} as const satisfies { mix: Record<Exclude<Identity, 'ink'>, number>; inkDepth: number; inkMix: number }
+
+/**
+ * A scope's link colours: the line's three stops (`--link-a/-b/-c`), the block's shade
+ * (`--link-rest`; ink: none, the link derives it from its flowing colours) and the flow
+ * (`--link-flow`: the animation that carries the logo's colours along the link, ink only).
+ */
+function linkVars(id: Identity): string {
+  if (id === 'ink')
+    return '--link-a:var(--logo-a);--link-b:var(--logo-b);--link-c:var(--logo-c);--link-rest:initial;--link-flow:link-flow'
+  const pct = Math.round(linkMark.mix[id] * 100)
+  const line = `var(--${id}-accent)`
+  return `--link-a:${line};--link-b:${line};--link-c:${line};--link-rest:color-mix(in oklab,var(--${id}-glow),var(--${id}-field) ${pct}%);--link-flow:none`
+}
+
+/**
  * CSS custom properties for every identity, plus [data-identity] scopes. Each
  * scope also re-declares --accent, so it follows the scope's --id-accent
  * (declared only on :root it would resolve once, to the ink accent).
+ *
+ * Links outside the page (the header's About, the footer's small print) take the identity of the
+ * page shown: the page's own scope, the direct child of <main> (never the hand's cards, which carry
+ * identities too), sets :root's link colours through :has(), so they change on every navigation.
  */
 export function identityCss(): string {
   const root = [
@@ -75,6 +109,9 @@ export function identityCss(): string {
     `--muted:${muted}`,
     `--glacier-text:${glacierText}`,
     `--contour-ground:${contour.ground}`,
+    `--link-depth:${linkMark.inkDepth}`,
+    `--link-ink-mix:${Math.round(linkMark.inkMix * 100)}%`,
+    linkVars('ink'),
   ]
   for (const id of identities) {
     for (const [k, v] of Object.entries(palette[id])) root.push(`--${id}-${k}:${v}`)
@@ -82,8 +119,9 @@ export function identityCss(): string {
   const scopes = identities
     .map(
       (id) =>
-        `[data-identity="${id}"]{--id-field:var(--${id}-field);--id-mid:var(--${id}-mid);--id-glow:var(--${id}-glow);--id-accent:var(--${id}-accent);--id-ink:var(--${id}-ink);--accent:var(--id-accent)}`,
+        `[data-identity="${id}"]{--id-field:var(--${id}-field);--id-mid:var(--${id}-mid);--id-glow:var(--${id}-glow);--id-accent:var(--${id}-accent);--id-ink:var(--${id}-ink);--accent:var(--id-accent);${linkVars(id)}}`,
     )
     .join('')
-  return `:root{${root.join(';')}}${scopes}`
+  const pages = identities.map((id) => `:root:has(#main>[data-identity="${id}"]){${linkVars(id)}}`).join('')
+  return `:root{${root.join(';')}}${scopes}${pages}`
 }

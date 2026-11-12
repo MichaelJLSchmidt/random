@@ -81,6 +81,13 @@ dividers and illustration strokes.
   overview with the card-to-hero morph. "How I work" is dealt with a slight fan that settles
   straight.
 
+- **Text links**: a thick marker block in a deeper shade of the page's colour sits behind the
+  lower part of the text, shifted a little to the right; on hover or focus it slides left and down
+  and thins into an underline in the page's accent, in one quick ease-out move, and back. Links
+  that stand alone get a small solid triangle after the text that fades in with the line. On home
+  and 404 the marker is the logo's gradient, flowing with it. Links outside the page (the header's
+  About, the footer) take the colour of the page shown; the current page shows the line alone.
+
 - **Thesis overview**: the case-study template in glacier, reached from the Master's card in the
   timeline (the card grows into the hero). It reads in three layers: the hero, the one-line answer
   and the figures; each chapter's lead and four dealt insight cards; the chapters in full, with
@@ -89,7 +96,8 @@ dividers and illustration strokes.
 ## Tone
 
 - Calm, subtle, smooth, professional, with playful moments (the easter eggs).
-- Only the background (and the logo's slow gradient) moves at rest; everything else is still until the visitor scrolls or
+- Only the background (and the logo's slow gradient, shared by text links on home and 404) moves
+  at rest; everything else is still until the visitor scrolls or
   interacts. No bounce, no overshoot: impact comes from acceleration into contact, a hold, the
   shadow and the field's answer.
 - Two motion tiers: full, and reduced (`prefers-reduced-motion`: crossfades only, no flight and no

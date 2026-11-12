@@ -34,6 +34,12 @@ import styles from './header.module.css'
  * which roll on hover, are aria-hidden. Back never leaves the screen: when the
  * header slides away it holds its place on a floating chip (header.module.css).
  *
+ * About is a standalone text link (globals.css .link: its marker, line and
+ * triangle). The header is outside the page, so its colour is the identity
+ * of the page shown (palette.ts: :root's link colours follow the page's own
+ * scope), updated on every navigation, card play, Back and language switch
+ * included; the logo's flowing gradient on home and 404.
+ *
  * The language switcher links each language to the same page in it; the
  * active one carries aria-current and sits on a face-up chip. Choosing the
  * other stores the choice and switches in place (src/motion/locale-switch.ts:
@@ -116,7 +122,7 @@ export function Header() {
                 transitionTypes={[NAV]}
                 aria-current={current('/about')}
               >
-                <span className="link">{site.header.about}</span>
+                <span className="link link-standalone">{site.header.about}</span>
               </Link>
             </li>
           </ul>

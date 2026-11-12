@@ -350,12 +350,17 @@
   padding-left: var(--space-3);
   border-left: 1px dashed color-mix(in srgb, var(--glacier-accent) 35%, transparent);
 }
-/* The Master's card: "Thesis overview" is its link; the whole card is the target. */
+/*
+ * The Master's card: "Thesis overview" is its link (a standalone text link on the inner span);
+ * the whole card is the target.
+ */
 .career-thesis-link {
   margin-top: auto;
+  /* The link's triangle room may hang into the card's padding: the label keeps its one line. */
+  margin-right: calc(-1 * var(--space-3));
   padding-top: var(--space-1);
   font-size: 0.875rem;
-  color: var(--accent);
+  text-decoration: none;
 }
 .career-thesis-link::after {
   content: '';
@@ -619,7 +624,7 @@
   margin-top: var(--space-6);
 }
 
-/* The contour map's credit: a link along the left edge while the map shows (from 1024). */
+/* The contour map's credit: a text link (.link-vertical) along the left edge while the map shows (from 1024). */
 .topo-attribution {
   display: none;
 }
@@ -635,15 +640,6 @@
     writing-mode: vertical-rl;
     rotate: 180deg;
     color: color-mix(in srgb, var(--glacier-text) 60%, transparent);
-  }
-  .topo-attribution a {
-    color: inherit;
-    text-decoration: none;
-  }
-  .topo-attribution a:hover {
-    color: var(--glacier-text);
-    text-decoration: underline;
-    text-underline-offset: 0.25em;
   }
 }
 
@@ -749,7 +745,8 @@
 
 /*
  * 08 Contact: the end point. "Let's talk." is the h2; the body, the email set
- * large with its drawn underline, the LinkedIn and location rows, the note.
+ * large (a standalone text link whose marker block draws in from the left as
+ * it reveals), the LinkedIn and location rows, the note.
  */
 .about-contact > .col-content {
   margin-top: var(--space-6);
@@ -760,27 +757,15 @@
 .contact-body {
   max-width: 48ch;
 }
+/* The block reaches half an em under the baseline: the line's box makes room for it. */
 .contact-email-line {
   justify-self: start;
-  width: fit-content;
   max-width: 100%;
+  padding-bottom: 0.3em;
+  text-wrap: wrap;
 }
 .contact-email {
-  display: block;
-  color: var(--text);
-  text-decoration: none;
   overflow-wrap: anywhere;
-  transition: color var(--dur-s) var(--ease-out-quint);
-}
-.contact-email:is(:hover, :focus-visible) {
-  color: var(--accent);
-}
-.contact-underline {
-  height: 2px;
-  margin: var(--space-2) 0 0;
-  border: 0;
-  background: var(--accent);
-  transform-origin: 0 50%;
 }
 .contact-pairs {
   display: grid;

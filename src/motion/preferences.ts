@@ -18,6 +18,10 @@
  *   data-reveal:  "armed" so reveal targets can start hidden from first paint.
  *                 If the reveal system has not taken over 4 s later, the
  *                 attributes are dropped and every page shows its final state.
+ * It also puts every text link's colour flow (the CSS animation LINK_FLOW,
+ * globals.css: the logo's colours along a link on ink pages) onto the page
+ * clock as it starts, like the logo's own flow (logo.tsx), so links and logo
+ * stay in phase whenever a link mounts or a navigation turns its flow on.
  * The script follows the reduced-motion media query, so it is the single
  * place that writes data-motion. There is no site setting for motion: ambient
  * background motion follows prefers-reduced-motion and stops while the tab is
@@ -34,9 +38,11 @@ export const INTRO_KEY = 'table-drawn'
 export const INTRO_DONE = 'table:intro-done'
 /** Fired when the first-visit intro starts revealing the chrome (the header logo deals in then). */
 export const CHROME_IN = 'table:chrome-in'
+/** The text links' colour flow (globals.css @keyframes link-flow). */
+export const LINK_FLOW = 'link-flow'
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 /** The locale prefix of a path ("/de", "/en"), dropped before the path is matched. */
 const LOCALE_PREFIX = `^/(${locales.join('|')})(?=/|$)`
 
 export const prefsScript = (fields: Record<string, string>, maps: string[]) =>
-  `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function a(){d.dataset.motion=m.matches?"reduced":"full"}a();m.addEventListener("change",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}var p=location.pathname.slice(${JSON.stringify(BASE)}.length).replace(new RegExp(${JSON.stringify(LOCALE_PREFIX)}),"").replace(/\\/$/,"")||"/",f=${JSON.stringify(fields)}[p];if(f)d.dataset.field=f;if(${JSON.stringify(maps)}.indexOf(p)>-1)d.dataset.aboutMap="";if(p==="/"){d.dataset.intro=s?"repeat":"first"}else{d.dataset.hand="collapsed"}var g=${JSON.stringify(logoGradientNames)},l=null;try{l=localStorage.getItem("${LOGO_GRADIENT_KEY}")}catch(e){}var o=g.filter(function(n){return n!==l}),n=o[Math.floor(Math.random()*o.length)];d.dataset.logoGradient=n;try{localStorage.setItem("${LOGO_GRADIENT_KEY}",n)}catch(e){}d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`
+  `(function(){var d=document.documentElement,m=matchMedia("(prefers-reduced-motion: reduce)");function a(){d.dataset.motion=m.matches?"reduced":"full"}a();m.addEventListener("change",a);var s=null;try{s=sessionStorage.getItem("${INTRO_KEY}")}catch(e){}var p=location.pathname.slice(${JSON.stringify(BASE)}.length).replace(new RegExp(${JSON.stringify(LOCALE_PREFIX)}),"").replace(/\\/$/,"")||"/",f=${JSON.stringify(fields)}[p];if(f)d.dataset.field=f;if(${JSON.stringify(maps)}.indexOf(p)>-1)d.dataset.aboutMap="";if(p==="/"){d.dataset.intro=s?"repeat":"first"}else{d.dataset.hand="collapsed"}var g=${JSON.stringify(logoGradientNames)},l=null;try{l=localStorage.getItem("${LOGO_GRADIENT_KEY}")}catch(e){}var o=g.filter(function(n){return n!==l}),n=o[Math.floor(Math.random()*o.length)];d.dataset.logoGradient=n;try{localStorage.setItem("${LOGO_GRADIENT_KEY}",n)}catch(e){}document.addEventListener("animationstart",function(e){if(e.animationName==="${LINK_FLOW}")e.target.getAnimations().forEach(function(x){if(x.animationName==="${LINK_FLOW}")x.startTime=0})},true);d.dataset.reveal="armed";setTimeout(function(){if(d.dataset.reveal==="armed"){d.removeAttribute("data-reveal");d.removeAttribute("data-intro")}},4000)})()`

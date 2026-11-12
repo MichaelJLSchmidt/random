@@ -232,7 +232,7 @@ export default async function ThesisPage({ params }: Props) {
             </Reveal>
           </div>
           <p className="thesis-back col-content">
-            <Link className="link t-lead" href={href('/about#timeline')} transitionTypes={[RETURN]}>
+            <Link className="link link-standalone t-lead" href={href('/about#timeline')} transitionTypes={[RETURN]}>
               ← {t.back}
             </Link>
           </p>

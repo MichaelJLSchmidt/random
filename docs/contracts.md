@@ -6,8 +6,8 @@ Content & Images) worked in parallel against it; the Integration session merged 
 [Feedback round 1](#feedback-round-1) (one session) then changed the decisions listed there,
 [Locales](#locales-l1l11) made the site bilingual (German and English),
 [Feedback round 2](#feedback-round-2), [Feedback round 3](#feedback-round-3),
-[Card play](#card-play-p1p8) and [Feedback round 4](#feedback-round-4) changed the decisions
-listed there; every reference section
+[Card play](#card-play-p1p8), [Feedback round 4](#feedback-round-4) and
+[Text links](#text-links-k1k4) changed the decisions listed there; every reference section
 below describes the code as it is now. Everything here exists in the repository
 as typed code. Read this file, `docs/art-direction.md`, `CLAUDE.md` and the files named below
 before planning. Known follow-ups: `docs/backlog.md`.
@@ -30,7 +30,7 @@ below were written for Wave 1 and apply again only if a future wave runs in para
 - No personal names in code, comments, docs or commits (the fictional "Moritz Lauber" in test
   content is fine). Plain labels; no job-seeking language, CV download or testimonials.
 - Calm by default: only the background field (and, since T2, the very slow flow of the header
-  logo's gradient) moves at rest. Everything else is still until the visitor scrolls or
+  logo's gradient, which text links on home and 404 share since K2) moves at rest. Everything else is still until the visitor scrolls or
   interacts, and every stub already renders its final, readable state.
 - Run `npm run build` before you push (it type-checks; output in `dist/`).
 
@@ -38,7 +38,7 @@ Contents: [Decisions](#decisions) · [Integration decisions](#integration-decisi
 [Feedback round 1](#feedback-round-1) · [Locales](#locales-l1l11) ·
 [Feedback round 2](#feedback-round-2) · [Feedback round 3](#feedback-round-3) ·
 [Card play](#card-play-p1p8) · [Feedback round 4](#feedback-round-4) ·
-[Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
+[Text links](#text-links-k1k4) · [Ownership](#ownership-wave-1) · [Files](#file-map) · [Layout tokens](#layout-tokens) ·
 [Type tokens](#type-tokens) · [Motion tokens](#motion-tokens) · [Colour](#colour) ·
 [Hand](#hand) · [Layout components](#layout-components) · [Reveal](#reveal) ·
 [Scenes](#scenes) · [Reading hairline](#reading-hairline) · [Illustrations](#illustrations) ·
@@ -327,7 +327,8 @@ feedback's numbers (G, H, D, A); its D1–D8 are not the Wave 1 decisions D1–D
   numbers, no glyphs, not interactive (no links, no focus, no hover); rows reveal with their
   drawn rules (`pair`). Count line and closing line kept.
 - **A2. Contact** is chapter 08 on About (`id="contact"`): label, "Let's talk.", body, the email
-  with its drawn underline, LinkedIn and location, the note. The photo credits and the terrain
+  with its drawn underline (since K3 its marker block, drawn in from the left), LinkedIn and
+  location, the note. The photo credits and the terrain
   attribution are small print in the footer on About (`AboutSmallPrint`).
 - **A3. Routes.** `/more-projects` and `/contact` are gone (the 404 page answers); Coffee leads
   to `/about#contact`.
@@ -391,7 +392,7 @@ motion and the three tiers are unchanged.
 - **L6. Switcher** (its look superseded by T3 and T4). `nav[data-locale-switcher]` in the header after About (the calm switch until M2, the pause button until R2):
   "DE · EN" (since T3 "DE EN" on a sliding chip), one link per locale (`a[data-locale][hreflang][lang]`) to the same page in that
   language, the active one `aria-current="page"` (its `.link` underline drawn, like the current
-  page link; since T3 it sits on the face-up chip); each a 44 × 44 px target. On the 404 page the other language's link reloads the
+  page link; since T3 it sits on the face-up chip, no `.link`); each a 44 × 44 px target. On the 404 page the other language's link reloads the
   address (the 404 page then picks the stored language; since F1 it opens the same address under the
   other language's prefix, and the address's locale decides).
 - **L7. The switch** (`src/motion/locale-switch.ts`): stores the choice, finishes running
@@ -864,7 +865,7 @@ cross-fade never shows two chips. Reduced: no slide. The "·" between the codes 
 **T4. The tray.** The header's right side is one capsule (`.end::before`: 36 px high inside the
 44 px targets, a 1 px edge in `--chip-line` (text 13%) on `--chip-fill` (ink field 62%), fully
 rounded): About (no resting underline inside the tray; it draws on hover and stays drawn as the
-current page), a 16 px hairline, then the switcher, whose chip sits 4 px inside the capsule's
+current page; superseded by K1–K2: a standalone text link in the page's colour), a 16 px hairline, then the switcher, whose chip sits 4 px inside the capsule's
 end. Back's chip (T5) speaks the same language. The tray's width follows About's label, so during
 a language switch its edge cross-fades with the header.
 
@@ -880,6 +881,56 @@ copy from below (`duration.backPull` 420 ms, `stagger.letters` 25 ms, outQuint; 
 once from a visually hidden copy, the rolling letters are aria-hidden), and the chip draws in
 (a faint text-colour fill, from 92%, `duration.chip`); a press scales Back to 0.96
 (`duration.fast`). Reduced: the chip fades, nothing moves.
+
+## Text links (K1–K4)
+
+One treatment for every text link (`.link`, `src/app/globals.css`), applied by one session.
+
+**K1. The marker.** At rest a block sits behind the lower part of the text: as wide as the text,
+shifted 0.4em right (it overhangs the end by 0.4em), from 0.3em above the baseline to 0.5em below
+it, in a deeper shade of the page's identity. Hover (`@media (hover: hover)`, no sticky hover on
+touch) and `:focus-visible` (the focus ring stays): in one move it slides left and down and
+collapses into the underline (aligned with the text, top 0.15em below the baseline, 0.12em thick,
+at least 2px) in the identity's accent; out again the exact reverse. One registered number,
+`--lk-p` (0 block, 1 line), drives position, size and colour. Every line fragment gets its own
+block and line (`box-decoration-break: clone`). Sizes in em; the marker is anchored to the baseline
+through each family's descent (`--font-descent` in `type.css`: Hanken 0.303, Martian Mono 0.2,
+Bricolage 0.27, declared next to every `font-family` there). Link text is `--text`, never changes
+colour and never moves. Tokens: `duration.linkIn` 240 ms, `linkOut` 160 ms, `linkMarkIn` 160 ms,
+`linkMarkOut` 100 ms, `ease.link` (`cubic-bezier(0.33,1,0.68,1)`); reduced: instant. Forced
+colours: an underline.
+
+**K2. Colour.** Each `[data-identity]` scope gives `--link-a / -b / -c` (the line's stops) and
+`--link-rest` (the block): the accent, and the glow mixed toward the field in OKLab by
+`linkMark.mix` (`palette.ts`: ember 25%, tide 28%, grove 39%, saffron 49%, glacier 5%; `--text`
+over the block 4.77 / 4.77 / 4.79 / 4.72 / 5.23 : 1). Ink pages (home, 404) follow the logo: the
+page load's `--logo-a / -b / -c` as a gradient along the link, flowing with the logo's front card
+(`@keyframes link-flow`, one `--logo-flow` loop; `--link-flow` names it on ink scopes; the
+pre-paint script sets every `link-flow` animation's start to the page clock as it starts, as
+`logo.tsx` does for the logo); the block takes each colour to OKLCH lightness `linkMark.inkDepth`
+0.49 with chroma and hue kept (4.92–5.70 : 1 over the whole flow; without relative colours a 52%
+mix toward the ink field, at least 4.90 : 1). Reduced: the gradient holds still. Links outside the
+page (the header's About, the footer's small print) take the identity of the page shown:
+`identityCss()` sets `:root`'s link colours from `:root:has(#main > [data-identity])`, the page's
+own scope (never the hand's cards), so they follow every navigation, card play, Back, switch and
+language switch.
+
+**K3. Variants.** `.link-standalone` (nothing after it on its line: the header's About, the
+projects' thesis link, the thesis page's way back, the timeline's Master's card, the contact
+links, the email): a solid right-pointing triangle, 0.45em tall, 0.3em after the last letter,
+centred on the x-height, in the text colour, fades in with the line (never moves; the line does
+not run under it); its room (0.75em) is reserved at rest, and a word joiner keeps it with the last
+word. Other links (photo credits, the terrain credit) keep their spacing in the sentence (a
+negative margin cancels the overhang). `.link-vertical`: the same with the axes swapped (the
+terrain credit along About's left edge). The current page (`aria-current="page"`): the line in the
+accent, no block, no triangle, no hover. The class sits on the `<a>` or on a span directly inside
+it (the `<a>` is the target and carries the focus ring: the header's About, the Master's card).
+Typed arrows the triangle replaces are gone ("Thesis overview →"). The 404 page's way home is a
+button, not a text link.
+
+**K4. The email** (About, 08 Contact) is a standalone text link set at h2 size; the `rule` reveal
+around it (`p[data-reveal-marker]`) no longer draws a separate `<hr>`: the text shows from the
+start and its block draws in from the left (`--ue` 0 → 1, inherited; `reveal.css`, `kinds.ts`).
 
 ---
 
@@ -1145,6 +1196,7 @@ strips); `at.firstLoad` (home, first visit: `{ at, dur }` per part: title, label
 `reveal.mask` also as `--reveal-mask`; `duration.slotMorph` / `slotLag` (Back's arrow and label,
 G4), `duration.logoExit` / `logoBackFade` and `logo.*` (the header logo, R3; `ease.enter`,
 `ease.move`, `ease.exit` are its curves; `logo.hover` T1, `logo.flow` T2 → `--logo-flow`),
+`duration.linkIn` / `linkOut` / `linkMarkIn` / `linkMarkOut` and `ease.link` (text links, K1),
 `duration.chip` (the switcher's chip and Back's chip, 360 ms) and `duration.backPull` (Back's
 hover, 420 ms) with `stagger.letters` (25 ms; T3, T5), `duration.topo` (About's morph, 1.6 s) and
 `duration.contourHandoff` (the SVG's crossfade, 0.3 s; R1);
@@ -1182,7 +1234,8 @@ Other: `--text`, `--muted`, `--line`, `--glacier-text`, and About's contour grou
 lives in the SVGs, B1). On About the hand's scrim takes the contour ground. The header logo's
 front card: `logoGradients` (four three-colour gradients from the cards' glow and accents, T2),
 `logoGradientCss()` → `--logo-a`, `--logo-b`, `--logo-c` on `:root` and per
-`html[data-logo-gradient]`.
+`html[data-logo-gradient]`. Text links (K2): `--link-a / -b / -c`, `--link-rest`, `--link-flow` per
+scope and on `:root` from the page shown; `linkMark` (`mix`, `inkDepth`, `inkMix`).
 
 ---
 
@@ -1693,6 +1746,7 @@ pages), and the tray with About and the language switcher (L6, T3, T4); it leave
 | `data-loaded` | the hero `<img>` | decoded: it fades in over the frame's colour |
 | `data-where="table\|hand"`, `data-shown` | `.play-status` | the play's status line: under the card while waiting, near the hand when offline |
 | `data-stage-track`, `data-stage`, `data-pinned` | Section's stage (Chapter 05) | the deal's track and sticky stage; pinned while the scene runs |
+| `data-reveal-marker` | a `rule` reveal holding a text link (About's email) | the link's marker block draws in from the left (`--ue`), the text shows from the start (K4) |
 | `data-reveal-hold` | a reveal block | its scene reveals it (`releaseReveal()`; Chapter 05's numeral) |
 | `data-motion="full\|reduced"` | `<html>` | motion tier (pre-paint script, M1) |
 | `data-header="hidden"` | `<html>` | the header (and the mobile rail) has left on a scroll down (N1) |

@@ -18,8 +18,17 @@
 
 :root[data-reveal]:not([data-motion='reduced'])
   main
-  [data-reveal]:not([data-revealed]):not([data-reveal='image']:has(img[fetchpriority='high'])) {
+  [data-reveal]:not([data-revealed]):not([data-reveal='image']:has(img[fetchpriority='high'])):not(
+    [data-reveal-marker]
+  ) {
   opacity: 0;
+}
+/*
+ * A rule drawn as a link's marker (the email on About, data-reveal-marker): the text shows from
+ * the start, its block waits at zero width and draws in from the left (--ue, kinds.ts rule).
+ */
+:root[data-reveal]:not([data-motion='reduced']) main [data-reveal-marker]:not([data-revealed]) {
+  --ue: 0;
 }
 /* Reduced: only the home intro waits for its (160 ms) crossfade; every other block is final at once. */
 :root[data-reveal][data-motion='reduced'] [data-first-load] [data-reveal]:not([data-revealed], [data-reveal='digits']) {
